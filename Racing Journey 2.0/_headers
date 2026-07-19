@@ -1,0 +1,11 @@
+# App shell + code: always revalidate so new deploys reach users immediately.
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# The service worker must never be HTTP-cached, or updates can be delayed.
+/service-worker.js
+  Cache-Control: no-cache
+
+# HTML entry point: never serve a stale shell.
+/index.html
+  Cache-Control: no-cache

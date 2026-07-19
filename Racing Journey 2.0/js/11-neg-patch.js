@@ -1,0 +1,824 @@
+/// === Racing Journey: F1 Dreams ===
+// Module: 11-neg-patch
+// Extension du système de négociation :
+//   - 8 nouvelles clauses & primes (championnat pilotes/constructeurs,
+//     pré-saison garantie, clause de performance, jours médias limités,
+//     prime de meilleur tour, bonus dépassements, clause anti-dump)
+//   - Affichage dans _negSummaryHTML + _negActionsListHTML
+//   - Application des primes en fin de saison (wrap showSeasonEnd)
+//   - Calibrage patience/acceptance pour chaque nouvelle action
+// ===========================================================================
+
+(function _rjNegPatch() {
+  'use strict';
+
+  // =========================================================================
+  // A. DÉFINITIONS DES NOUVELLES CLAUSES & PRIMES
+  // =========================================================================
+
+  // Chaque entrée : { id, labelSuccess, labelFail, detailSuccess, detailFail,
+  //   patienceCost, acceptanceMod, applyFn, summaryLabel, summaryValueFn }
+
+  var NEG_NEW_ACTIONS = {
+
+    // -- PRIMES RÉSULTATS --
+
+    'bonus_champ_driver': {
+      section: 'primes',
+      label: 'Prime championnat pilotes',
+      sub: 'Si tu es champion cette saison',
+      iconColor: '#FBBF24',
+      patienceCost: 14,
+      acceptanceMod: -0.08,
+      labelSuccess: 'Prime champion pilotes accordée',
+      labelFail: 'Prime champion pilotes refusée',
+      apply: function(offer) {
+        var base = offer.bonusWin || 1800;
+        offer.cBonusChampDriver = Math.round(base * 4 / 500) * 500;
+      },
+      summaryKey: 'cBonusChampDriver',
+      summaryLabel: 'Champion Pilotes',
+      summaryColor: '#FBBF24',
+      disabledIf: function(offer) { return !!offer.cBonusChampDriver; }
+    },
+
+    'bonus_champ_constructor': {
+      section: 'primes',
+      label: 'Prime championnat constructeurs',
+      sub: 'Si ton écurie est championne',
+      iconColor: '#F59E0B',
+      patienceCost: 10,
+      acceptanceMod: -0.04,
+      labelSuccess: 'Prime constructeurs accordée',
+      labelFail: 'Prime constructeurs refusée',
+      apply: function(offer) {
+        var base = offer.bonusWin || 1800;
+        offer.cBonusChampConstructor = Math.round(base * 2.5 / 500) * 500;
+      },
+      summaryKey: 'cBonusChampConstructor',
+      summaryLabel: 'Champion Constructeurs',
+      summaryColor: '#F59E0B',
+      disabledIf: function(offer) { return !!offer.cBonusChampConstructor; }
+    },
+
+    'bonus_fastest_lap': {
+      section: 'primes',
+      label: 'Prime meilleur tour en course',
+      sub: 'Petit bonus par meilleur tour signé',
+      iconColor: '#22D3EE',
+      patienceCost: 5,
+      acceptanceMod: 0.10,
+      labelSuccess: 'Prime meilleur tour accordée',
+      labelFail: 'Prime meilleur tour refusée',
+      apply: function(offer) {
+        var base = offer.bonusPodium || 700;
+        offer.cBonusFastestLap = Math.round(base * 0.15 / 100) * 100;
+      },
+      summaryKey: 'cBonusFastestLap',
+      summaryLabel: 'Meilleur tour',
+      summaryColor: '#22D3EE',
+      disabledIf: function(offer) { return !!offer.cBonusFastestLap; }
+    },
+
+    'bonus_top3_season': {
+      section: 'primes',
+      label: 'Prime Top 3 au championnat',
+      sub: 'Si tu finis dans les 3 premiers',
+      iconColor: '#34D399',
+      patienceCost: 9,
+      acceptanceMod: 0.02,
+      labelSuccess: 'Prime Top 3 accordée',
+      labelFail: 'Prime Top 3 refusée',
+      apply: function(offer) {
+        var base = offer.bonusWin || 1800;
+        offer.cBonusTop3Season = Math.round(base * 1.5 / 500) * 500;
+      },
+      summaryKey: 'cBonusTop3Season',
+      summaryLabel: 'Top 3 Saison',
+      summaryColor: '#34D399',
+      disabledIf: function(offer) { return !!offer.cBonusTop3Season; }
+    },
+
+    // -- CLAUSES CONTRACTUELLES --
+
+    'clause_preseason': {
+      section: 'clauses',
+      label: 'Présence pré-saison garantie',
+      sub: 'Tests hiver assurés — pas de mise à l\'écart',
+      iconColor: '#A78BFA',
+      patienceCost: 8,
+      acceptanceMod: 0.05,
+      labelSuccess: 'Présence pré-saison garantie',
+      labelFail: 'Clause pré-saison refusée',
+      apply: function(offer) { offer.cPreseasonGuaranteed = true; },
+      summaryKey: 'cPreseasonGuaranteed',
+      summaryLabel: 'Pré-saison garantie',
+      summaryColor: '#A78BFA',
+      disabledIf: function(offer) { return !!offer.cPreseasonGuaranteed; }
+    },
+
+    'clause_media_cap': {
+      section: 'clauses',
+      label: 'Plafond jours médias',
+      sub: 'Max 8 obligations médias/an',
+      iconColor: '#60A5FA',
+      patienceCost: 7,
+      acceptanceMod: 0.03,
+      labelSuccess: 'Plafond médias accordé',
+      labelFail: 'Plafond médias refusé',
+      apply: function(offer) { offer.cMediaCap = true; },
+      summaryKey: 'cMediaCap',
+      summaryLabel: 'Médias plafonnés',
+      summaryColor: '#60A5FA',
+      disabledIf: function(offer) { return !!offer.cMediaCap; }
+    },
+
+    'clause_performance': {
+      section: 'clauses',
+      label: 'Clause de performance',
+      sub: 'Si top 5 champ → automatiquement libre',
+      iconColor: '#EF4444',
+      patienceCost: 20,
+      acceptanceMod: -0.25,
+      labelSuccess: 'Clause de performance accordée',
+      labelFail: 'Clause de performance refusée',
+      apply: function(offer) { offer.cPerformanceClause = true; },
+      summaryKey: 'cPerformanceClause',
+      summaryLabel: 'Clause performance (Top 5)',
+      summaryColor: '#EF4444',
+      disabledIf: function(offer) { return !!offer.cPerformanceClause || !!offer.cReleaseClause; }
+    },
+
+    'clause_no_dump': {
+      section: 'clauses',
+      label: 'Clause anti-remplacement',
+      sub: 'Ils ne peuvent pas te remplacer en cours de saison',
+      iconColor: '#F97316',
+      patienceCost: 16,
+      acceptanceMod: -0.18,
+      labelSuccess: 'Clause anti-remplacement accordée',
+      labelFail: 'Clause anti-remplacement refusée',
+      apply: function(offer) { offer.cNoDump = true; },
+      summaryKey: 'cNoDump',
+      summaryLabel: 'Anti-remplacement',
+      summaryColor: '#F97316',
+      disabledIf: function(offer) { return !!offer.cNoDump; }
+    }
+  };
+
+  // =========================================================================
+  // B. PATCH _negActionPatienceCost — ajouter les coûts des nouvelles actions
+  // =========================================================================
+
+  (function _rjPatchPatienceCost() {
+    function doPatch() {
+      if (typeof window._negActionPatienceCost !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window._negActionPatienceCost._rjNegPatched) return;
+      var orig = window._negActionPatienceCost;
+      window._negActionPatienceCost = function(action) {
+        var def = NEG_NEW_ACTIONS[action];
+        if (def) return def.patienceCost;
+        return orig.apply(this, arguments);
+      };
+      window._negActionPatienceCost._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // =========================================================================
+  // C. PATCH _negComputeAcceptance — ajouter les modificateurs
+  // =========================================================================
+
+  (function _rjPatchAcceptance() {
+    function doPatch() {
+      if (typeof window._negComputeAcceptance !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window._negComputeAcceptance._rjNegPatched) return;
+      var orig = window._negComputeAcceptance;
+      window._negComputeAcceptance = function(state, offer, action, params) {
+        var def = NEG_NEW_ACTIONS[action];
+        if (def) {
+          var pat = state.patience;
+          var base = pat / 100;
+          var mod = def.acceptanceMod || 0;
+          var agentBoost = (typeof G !== 'undefined' && G.agent && G.agent.type !== 'parent')
+            ? (G.agent.skill || 30) / 800 : 0;
+          var repBoost = (typeof G !== 'undefined') ? (G.reputation || 0) / 600 : 0;
+          var chance = base + mod + agentBoost + repBoost;
+          if (state.usedActions[action] && state.usedActions[action] >= 2) chance -= 0.15;
+          return Math.max(0.05, Math.min(0.92, chance));
+        }
+        return orig.apply(this, arguments);
+      };
+      window._negComputeAcceptance._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // =========================================================================
+  // D. PATCH _negApplyAction — traiter les nouvelles actions
+  // =========================================================================
+
+  (function _rjPatchApplyAction() {
+    function doPatch() {
+      if (typeof window._negApplyAction !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window._negApplyAction._rjNegPatched) return;
+      var orig = window._negApplyAction;
+      window._negApplyAction = function(state, offer, action, params) {
+        var def = NEG_NEW_ACTIONS[action];
+        if (def) {
+          state.usedActions[action] = (state.usedActions[action] || 0) + 1;
+          var cost = def.patienceCost;
+          state.patience -= cost;
+          state.lastActionCost = cost;
+          var chance = window._negComputeAcceptance(state, offer, action, params);
+          state.lastChance = Math.round(chance * 100);
+          var success = Math.random() < chance;
+          state.lastSuccess = success;
+          if (success) {
+            try { def.apply(offer); } catch(e) {}
+          }
+          state.lastMsg = success ? def.labelSuccess : def.labelFail;
+          var pat = state.patience;
+          if (success) {
+            state.lastDetail = pat > 60
+              ? 'L\'écurie reste très ouverte. Tu peux continuer à pousser.'
+              : pat > 30
+                ? 'Ils acceptent, mais leur patience s\'amenuise.'
+                : 'Ils acceptent du bout des lèvres. Attention à ne pas les pousser trop loin.';
+          } else {
+            state.lastDetail = pat > 50
+              ? 'Refus poli. Tu peux essayer autre chose.'
+              : pat > 20 ? 'Refus ferme. Le ton se tend.' : 'Refus catégorique. Ils sont à bout.';
+          }
+          state.history.push({ action: action, success: success, patience: pat, msg: state.lastMsg });
+          if (state.patience <= 0) {
+            state.status = 'expired';
+            state.lastDetail += ' L\'écurie met fin à la discussion.';
+          }
+          return state;
+        }
+        return orig.apply(this, arguments);
+      };
+      window._negApplyAction._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // =========================================================================
+  // E. PATCH _negSummaryHTML — afficher les nouvelles clauses & primes
+  // =========================================================================
+
+  (function _rjPatchSummaryHTML() {
+    function doPatch() {
+      if (typeof window._negSummaryHTML !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window._negSummaryHTML._rjNegPatched) return;
+      var orig = window._negSummaryHTML;
+      window._negSummaryHTML = function(offer) {
+        var html = orig.apply(this, arguments);
+
+        // Primes négociées
+        var primes = [];
+        var clauses = [];
+
+        Object.keys(NEG_NEW_ACTIONS).forEach(function(id) {
+          var def = NEG_NEW_ACTIONS[id];
+          var key = def.summaryKey;
+          if (!offer[key]) return;
+          var val = offer[key];
+          var displayVal;
+          if (typeof val === 'boolean') {
+            displayVal = '✓';
+          } else {
+            displayVal = '+' + val.toLocaleString('fr-FR') + ' €';
+          }
+          var item = { label: def.summaryLabel, value: displayVal, color: def.summaryColor };
+          if (def.section === 'primes') primes.push(item);
+          else clauses.push(item);
+        });
+
+        if (primes.length > 0) {
+          html += '<div style="margin-top:10px">';
+          html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#FBBF24;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Primes négociées</div>';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+          primes.forEach(function(p) {
+            html += '<div class="neg-stat">';
+            html += '<div class="neg-stat-label">' + p.label + '</div>';
+            html += '<div class="neg-stat-value" style="color:' + p.color + '">' + p.value + '</div>';
+            html += '</div>';
+          });
+          html += '</div></div>';
+        }
+
+        if (clauses.length > 0) {
+          html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(167,139,250,0.07);border-left:2px solid #A78BFA;border-radius:6px">';
+          html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#A78BFA;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Clauses</div>';
+          html += '<div style="display:flex;flex-wrap:wrap;gap:5px">';
+          clauses.forEach(function(c) {
+            html += '<span style="padding:3px 8px;background:' + c.color + '15;border:1px solid ' + c.color + '40;border-radius:5px;font-size:10px;font-weight:700;color:' + c.color + '">' + c.label + '</span>';
+          });
+          html += '</div></div>';
+        }
+
+        return html;
+      };
+      window._negSummaryHTML._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // =========================================================================
+  // F. PATCH _negActionsListHTML — injecter 2 nouvelles sections
+  // =========================================================================
+
+  (function _rjPatchActionsListHTML() {
+    function doPatch() {
+      if (typeof window._negActionsListHTML !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window._negActionsListHTML._rjNegPatched) return;
+      var orig = window._negActionsListHTML;
+      window._negActionsListHTML = function(state, offer) {
+        var html = orig.apply(this, arguments);
+
+        // Injecter avant la section "Décision finale" (qui est à la fin)
+        var decisionIdx = html.lastIndexOf('<div class="neg-section-title">');
+        if (decisionIdx < 0) decisionIdx = html.length;
+
+        var newHtml = '';
+
+        // Section : Primes bonus
+        newHtml += '<div class="neg-section-title">';
+        newHtml += (typeof renderIcon === 'function' ? renderIcon('trophy', 14, '#FBBF24') : '🏆');
+        newHtml += ' Primes & Bonus</div>';
+        newHtml += '<div class="neg-actions-grid">';
+        ['bonus_champ_driver','bonus_champ_constructor','bonus_fastest_lap','bonus_top3_season'].forEach(function(id) {
+          var def = NEG_NEW_ACTIONS[id];
+          var disabled = def.disabledIf(offer);
+          newHtml += _rjNegActionBtn(id, def.label, def.sub, {
+            iconColor: def.iconColor,
+            disabled: disabled,
+            patienceCost: def.patienceCost
+          });
+        });
+        newHtml += '</div>';
+
+        // Section : Clauses contractuelles avancées
+        newHtml += '<div class="neg-section-title">';
+        newHtml += (typeof renderIcon === 'function' ? renderIcon('diplome', 14, '#A78BFA') : '📋');
+        newHtml += ' Clauses avancées</div>';
+        newHtml += '<div class="neg-actions-grid">';
+        ['clause_preseason','clause_media_cap','clause_performance','clause_no_dump'].forEach(function(id) {
+          var def = NEG_NEW_ACTIONS[id];
+          var disabled = def.disabledIf(offer);
+          newHtml += _rjNegActionBtn(id, def.label, def.sub, {
+            iconColor: def.iconColor,
+            disabled: disabled,
+            patienceCost: def.patienceCost
+          });
+        });
+        newHtml += '</div>';
+
+        return html.slice(0, decisionIdx) + newHtml + html.slice(decisionIdx);
+      };
+      window._negActionsListHTML._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // Helper : bouton d'action compatible avec le style existant
+  function _rjNegActionBtn(action, label, sub, opts) {
+    opts = opts || {};
+    var disabled = opts.disabled || false;
+    var iconColor = opts.iconColor || 'var(--text2)';
+    var cost = opts.patienceCost || 10;
+    var html = '<button class="neg-action-btn"'
+      + (disabled
+        ? ' disabled style="opacity:.4;cursor:not-allowed"'
+        : ' onclick="negDoAction(\'' + action + '\')"')
+      + '>';
+    html += '<div class="neg-action-stripe" style="background:' + iconColor + '"></div>';
+    html += '<div class="neg-action-body">';
+    html += '<div class="neg-action-label">' + label + '</div>';
+    html += '<div class="neg-action-sub">' + sub + '</div>';
+    html += '</div>';
+    html += '<div class="neg-action-cost" style="color:' + iconColor + '">−' + cost + '</div>';
+    html += '</button>';
+    return html;
+  }
+
+  // =========================================================================
+  // G. PATCH negDoAction — router les nouvelles actions
+  // =========================================================================
+
+  (function _rjPatchNegDoAction() {
+    function doPatch() {
+      if (typeof window.negDoAction !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window.negDoAction._rjNegPatched) return;
+      var orig = window.negDoAction;
+      window.negDoAction = function(action) {
+        // Si c'est une nouvelle action, on la traite via _negApplyAction
+        if (NEG_NEW_ACTIONS[action]) {
+          var offer = G.offers[NEG_IDX];
+          if (!offer || !NEG_STATE || NEG_STATE.status !== 'active') return;
+          window._negApplyAction(NEG_STATE, offer, action);
+          if (typeof renderNegScreen === 'function') renderNegScreen();
+          return;
+        }
+        return orig.apply(this, arguments);
+      };
+      window.negDoAction._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // =========================================================================
+  // H. APPLICATION DES NOUVELLES CLAUSES À LA SIGNATURE (signContract)
+  // =========================================================================
+
+  (function _rjPatchSignContract() {
+    function doPatch() {
+      if (typeof window.signContract !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window.signContract._rjNegPatched) return;
+      var orig = window.signContract;
+      window.signContract = function(idx) {
+        var offer = G.offers && G.offers[idx];
+        if (offer) {
+          // Copier les nouvelles clauses sur G.pendingTransfer / G directement
+          // On les stocke sur G pour les retrouver en fin de saison
+          G._negClauses = G._negClauses || {};
+          var keys = ['cBonusChampDriver','cBonusChampConstructor','cBonusFastestLap',
+                      'cBonusTop3Season','cPreseasonGuaranteed','cMediaCap',
+                      'cPerformanceClause','cNoDump'];
+          keys.forEach(function(k) {
+            if (offer[k] != null) G._negClauses[k] = offer[k];
+            else delete G._negClauses[k];
+          });
+        }
+        return orig.apply(this, arguments);
+      };
+      window.signContract._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  // =========================================================================
+  // I. APPLICATION DES PRIMES EN FIN DE SAISON (wrap showSeasonEnd)
+  // =========================================================================
+
+  (function _rjPatchShowSeasonEnd() {
+    function doPatch() {
+      if (typeof window.showSeasonEnd !== 'function') {
+        setTimeout(doPatch, 400); return;
+      }
+      if (window.showSeasonEnd._rjNegPatched) return;
+      var orig = window.showSeasonEnd;
+      window.showSeasonEnd = function() {
+        // Calculer et appliquer les primes avant l'affichage
+        var bonusReport = _rjApplySeasonBonuses();
+        var result = orig.apply(this, arguments);
+        // Injecter le rapport des primes dans le bilan de fin de saison
+        if (bonusReport && bonusReport.length > 0) {
+          setTimeout(function() {
+            _rjInjectBonusReport(bonusReport);
+          }, 200);
+        }
+        return result;
+      };
+      window.showSeasonEnd._rjNegPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doPatch);
+    } else { doPatch(); }
+  })();
+
+  function _rjApplySeasonBonuses() {
+    if (!G || !G._negClauses) return [];
+    var clauses = G._negClauses;
+    var report = [];
+
+    // Calculer le classement final du pilote
+    var standings = [];
+    standings.push({ pts: G.champPts, me: true });
+    (G.rivals || []).forEach(function(r) { standings.push({ pts: r.pts, me: false }); });
+    standings.sort(function(a, b) { return b.pts - a.pts; });
+    var pilotPos = standings.findIndex(function(s) { return s.me; }) + 1;
+
+    // Championnat constructeurs
+    var isConstructorChamp = false;
+    if (typeof getConstructorChampion === 'function') {
+      var cc = getConstructorChampion();
+      isConstructorChamp = !!(cc && cc.playerTeam && cc.team === cc.playerTeam);
+    }
+
+    // Meilleurs tours en course — le champ réel est bestLap.isPlayer (pas fastestLap)
+    var fastestLaps = (G.races || []).filter(function(r) {
+      return r.bestLap && r.bestLap.isPlayer === true;
+    }).length;
+
+    // -- Prime champion pilotes --
+    if (clauses.cBonusChampDriver && pilotPos === 1) {
+      var amt = clauses.cBonusChampDriver;
+      G.budget = (G.budget || 0) + amt;
+      report.push({ label: '🏆 Champion Pilotes', amount: amt, color: '#FBBF24' });
+    }
+
+    // -- Prime champion constructeurs --
+    if (clauses.cBonusChampConstructor && isConstructorChamp) {
+      var amt2 = clauses.cBonusChampConstructor;
+      G.budget = (G.budget || 0) + amt2;
+      report.push({ label: '🏗 Champion Constructeurs', amount: amt2, color: '#F59E0B' });
+    }
+
+    // -- Prime meilleur tour --
+    if (clauses.cBonusFastestLap && fastestLaps > 0) {
+      var amt3 = (clauses.cBonusFastestLap || 0) * fastestLaps;
+      G.budget = (G.budget || 0) + amt3;
+      report.push({ label: '⚡ Meilleurs tours ×' + fastestLaps, amount: amt3, color: '#22D3EE' });
+    }
+
+    // -- Prime Top 3 saison --
+    if (clauses.cBonusTop3Season && pilotPos <= 3) {
+      var amt4 = clauses.cBonusTop3Season;
+      G.budget = (G.budget || 0) + amt4;
+      report.push({ label: '🥉 Top 3 Championnat (P' + pilotPos + ')', amount: amt4, color: '#34D399' });
+    }
+
+    // -- Clause de performance : libération automatique si top 5 --
+    if (clauses.cPerformanceClause && pilotPos <= 5) {
+      G._performanceClauseTriggered = true;
+      report.push({ label: '🔓 Clause performance déclenchée (P' + pilotPos + ')', amount: null, color: '#EF4444', note: 'Tu es libre de tout contrat pour la prochaine saison.' });
+    }
+
+    return report;
+  }
+
+  function _rjInjectBonusReport(report) {
+    // Chercher le conteneur de fin de saison
+    var seEl = document.getElementById('season-end-screen') || document.querySelector('.scr.on');
+    if (!seEl) return;
+
+    // Chercher ou créer le bloc primes
+    var existing = document.getElementById('rj-neg-bonus-report');
+    if (existing) existing.remove();
+
+    var totalCash = report.reduce(function(s, r) { return s + (r.amount || 0); }, 0);
+    if (totalCash === 0 && !report.some(function(r) { return r.note; })) return;
+
+    var div = document.createElement('div');
+    div.id = 'rj-neg-bonus-report';
+    div.style.cssText = 'margin:0 16px 16px;padding:14px;background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.3);border-radius:14px';
+
+    var html = '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#FBBF24;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Primes contractuelles</div>';
+
+    report.forEach(function(r) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">';
+      html += '<span style="font-size:12px;color:var(--text2)">' + r.label + '</span>';
+      if (r.amount != null) {
+        html += '<span style="font-family:var(--font-display);font-size:13px;font-weight:900;color:' + r.color + '">+' + r.amount.toLocaleString('fr-FR') + ' €</span>';
+      } else if (r.note) {
+        html += '<span style="font-size:11px;color:' + r.color + ';font-weight:700">' + r.note + '</span>';
+      }
+      html += '</div>';
+    });
+
+    if (totalCash > 0) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 0">';
+      html += '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Total versé</span>';
+      html += '<span style="font-family:var(--font-display);font-size:16px;font-weight:900;color:#FBBF24">+' + totalCash.toLocaleString('fr-FR') + ' €</span>';
+      html += '</div>';
+    }
+
+    div.innerHTML = html;
+
+    // Insérer dans le scroll de S-season-end
+    var scroll = seEl.querySelector('.scroll') || seEl;
+    var firstChild = scroll.firstChild;
+    if (firstChild) scroll.insertBefore(div, firstChild.nextSibling || firstChild);
+    else scroll.appendChild(div);
+  }
+
+  // =========================================================================
+  // J. PERSISTANCE — save/load des clauses négociées
+  // =========================================================================
+
+  (function _rjPersistNegClauses() {
+    function wrapSave() {
+      if (typeof window.saveGame !== 'function') { setTimeout(wrapSave, 500); return; }
+      if (window.saveGame._rjNegClausesPatched) return;
+      var orig = window.saveGame;
+      window.saveGame = function(slot) {
+        try {
+          if (G) G._negClausesSave = G._negClauses || {};
+        } catch(e) {}
+        return orig.apply(this, arguments);
+      };
+      window.saveGame._rjNegClausesPatched = true;
+    }
+    function wrapLoad() {
+      if (typeof window.loadSave !== 'function') { setTimeout(wrapLoad, 500); return; }
+      if (window.loadSave._rjNegClausesPatched) return;
+      var orig = window.loadSave;
+      window.loadSave = function(slot) {
+        var r = orig.apply(this, arguments);
+        try {
+          if (G && G._negClausesSave) G._negClauses = G._negClausesSave;
+        } catch(e) {}
+        return r;
+      };
+      window.loadSave._rjNegClausesPatched = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(wrapSave, 400); setTimeout(wrapLoad, 400);
+      });
+    } else {
+      setTimeout(wrapSave, 400); setTimeout(wrapLoad, 400);
+    }
+  })();
+
+  // =========================================================================
+  // K. AFFICHAGE DES CLAUSES ACTIVES SUR L'ÉCRAN CONTRATS
+  // =========================================================================
+
+  window.renderActiveNegClauses = function() {
+    var el = document.getElementById('neg-active-clauses');
+    if (!el) return;
+    var clauses = G._negClauses || {};
+    var keys = Object.keys(clauses);
+    if (!keys.length) { el.innerHTML = ''; return; }
+
+    var html = '<div style="margin:0 0 12px;padding:10px 12px;background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.25);border-radius:10px">';
+    html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#A78BFA;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px">Clauses & primes en cours</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:4px">';
+
+    keys.forEach(function(k) {
+      var def = null;
+      Object.keys(NEG_NEW_ACTIONS).forEach(function(id) {
+        if (NEG_NEW_ACTIONS[id].summaryKey === k) def = NEG_NEW_ACTIONS[id];
+      });
+      if (!def) return;
+      var val = clauses[k];
+      var displayVal = typeof val === 'boolean' ? '✓ Actif' : '+' + val.toLocaleString('fr-FR') + ' € si atteint';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)">';
+      html += '<span style="font-size:11px;color:var(--text2)">' + def.summaryLabel + '</span>';
+      html += '<span style="font-size:11px;font-weight:700;color:' + def.summaryColor + '">' + displayVal + '</span>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+    el.innerHTML = html;
+  };
+
+  // Hook refreshScreen pour S-contracts
+  (function _rjHookContractsRefresh() {
+    function doHook() {
+      if (typeof window.refreshScreen !== 'function') { setTimeout(doHook, 500); return; }
+      if (window.refreshScreen._rjNegClausesHooked) return;
+      var orig = window.refreshScreen;
+      window.refreshScreen = function(screenId) {
+        var r = orig.apply(this, arguments);
+        try {
+          if (screenId === 'S-contracts') {
+            // Injecter le div si absent
+            var offresDiv = document.getElementById('ct-offres');
+            if (offresDiv && !document.getElementById('neg-active-clauses')) {
+              var d = document.createElement('div');
+              d.id = 'neg-active-clauses';
+              offresDiv.insertBefore(d, offresDiv.firstChild);
+            }
+            setTimeout(renderActiveNegClauses, 50);
+          }
+        } catch(e) {}
+        return r;
+      };
+      window.refreshScreen._rjNegClausesHooked = true;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doHook);
+    } else { doHook(); }
+  })();
+
+  console.log('[11-neg-patch] Patch négociation chargé — 8 nouvelles clauses & primes');
+
+})();
+
+// ===========================================================================
+// [N1] CORRECTIF : openNeg — supprimer le check negRound>=3 obsolète
+// ---------------------------------------------------------------------------
+// negRound n'est plus le mécanisme de limite. C'est la patience de NEG_STATE.
+// Le check bloquait l'accès après 3 ouvertures d'une même offre.
+// ===========================================================================
+(function _rjFixOpenNeg() {
+  function doFix() {
+    if (typeof window.openNeg !== 'function') { setTimeout(doFix, 400); return; }
+    if (window.openNeg._rjNegFixed) return;
+    window.openNeg = function(idx) {
+      var offer = G.offers && G.offers[idx];
+      if (!offer) return;
+      // Offre déjà signée via négociation
+      if (offer.negOk) {
+        if (typeof showFb === 'function')
+          showFb('cont-fb', 'ok', 'Offre déjà négociée', 'Tu peux signer cette offre directement.');
+        return;
+      }
+      // Négociation précédente terminée sur cette même offre
+      if (typeof NEG_STATE !== 'undefined' && NEG_STATE &&
+          NEG_STATE.status === 'expired' && NEG_IDX === idx) {
+        if (typeof showFb === 'function')
+          showFb('cont-fb', 'err', 'Négociation terminée', "L'écurie ne souhaite plus discuter des conditions.");
+        return;
+      }
+      // S'assurer que NEG_IDX est accessible globalement
+      window.NEG_IDX = idx;
+      // Mettre à jour le titre
+      var titleEl = document.getElementById('neg-title');
+      if (titleEl) titleEl.textContent = 'Négociation';
+      // Lancer
+      if (typeof negEnter === 'function') {
+        negEnter(idx);
+      } else if (typeof _negStart === 'function' && typeof renderNegScreen === 'function') {
+        _negStart(idx);
+        renderNegScreen();
+        if (typeof go === 'function') go('S-neg');
+      }
+    };
+    window.openNeg._rjNegFixed = true;
+    console.log('[11-neg-patch] openNeg corrigé — check negRound supprimé');
+  }
+  // Déclaration globale sécurisée de NEG_IDX
+  if (typeof NEG_IDX === 'undefined') window.NEG_IDX = -1;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', doFix);
+  } else { doFix(); }
+})();
+
+// ===========================================================================
+// [N4] CORRECTIF : _negBuildFeedback — couvrir les nouvelles actions
+// ---------------------------------------------------------------------------
+// L'original ne connaît pas les 8 actions ajoutées par ce module →
+// feedback générique. On wrappe pour injecter les labels spécifiques.
+// ===========================================================================
+(function _rjFixNegBuildFeedback() {
+  var NEW_LABELS = {
+    'bonus_champ_driver':     { ok: 'Prime champion pilotes accordée ✓',     ko: 'Prime champion pilotes refusée' },
+    'bonus_champ_constructor':{ ok: 'Prime constructeurs accordée ✓',         ko: 'Prime constructeurs refusée' },
+    'bonus_fastest_lap':      { ok: 'Prime meilleur tour accordée ✓',         ko: 'Prime meilleur tour refusée' },
+    'bonus_top3_season':      { ok: 'Prime Top 3 saison accordée ✓',          ko: 'Prime Top 3 saison refusée' },
+    'clause_preseason':       { ok: 'Pré-saison garantie ✓',                  ko: 'Clause pré-saison refusée' },
+    'clause_media_cap':       { ok: 'Plafond médias accordé ✓',               ko: 'Plafond médias refusé' },
+    'clause_performance':     { ok: 'Clause de performance accordée ✓',       ko: 'Clause de performance refusée' },
+    'clause_no_dump':         { ok: 'Clause anti-remplacement accordée ✓',    ko: 'Clause anti-remplacement refusée' }
+  };
+
+  function doFix() {
+    if (typeof window._negBuildFeedback !== 'function') { setTimeout(doFix, 400); return; }
+    if (window._negBuildFeedback._rjNegFixed) return;
+    var orig = window._negBuildFeedback;
+    window._negBuildFeedback = function(action, success, state, offer) {
+      var lbl = NEW_LABELS[action];
+      if (lbl) {
+        var headline = success ? lbl.ok : lbl.ko;
+        var pat = state.patience;
+        var detail = success
+          ? (pat > 60 ? "L'écurie reste très ouverte. Tu peux continuer à pousser."
+              : pat > 30 ? "Ils acceptent, mais leur patience s'amenuise."
+              : "Ils acceptent du bout des lèvres. Attention.")
+          : (pat > 50 ? "Refus poli. Tu peux essayer autre chose."
+              : pat > 20 ? "Refus ferme. Le ton se tend." : "Refus catégorique. Ils sont à bout.");
+        return { headline: headline, detail: detail };
+      }
+      return orig.apply(this, arguments);
+    };
+    window._negBuildFeedback._rjNegFixed = true;
+    console.log('[11-neg-patch] _negBuildFeedback étendu aux nouvelles actions');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', doFix);
+  } else { doFix(); }
+})();
