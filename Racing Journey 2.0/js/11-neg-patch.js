@@ -917,7 +917,9 @@
          weeks >= 20 ? Math.round(weeks / 4) + ' mois' : weeks + ' sem.');
 
       head.setAttribute('style',
-        'position:relative;margin:0 0 14px;padding:14px;border-radius:var(--r,10px);overflow:hidden;' +
+        'position:relative;margin:5px 14px 14px;padding:14px;border-radius:var(--r,10px);overflow:hidden;' +
+        // mêmes marges latérales que les cartes d'offre (14px) pour un bord aligné
+        '' +
         'background:linear-gradient(135deg,' + rgba(teamColor(team), .16) + ' 0%,var(--bg2) 55%,var(--bg) 100%);' +
         'border:1px solid ' + rgba(teamColor(team), .45) + ';border-left:3px solid ' + col + ';');
       head.innerHTML =
@@ -1039,7 +1041,7 @@
   var STYLE_NOMS = { A: 'Poignée de profil', B: 'Paumes ouvertes', C: 'Chevrons', D: 'Mitaines' };
 
   function styleActuel() {
-    try { return localStorage.getItem('rj_neg_hands') || 'A'; } catch (e) { return 'A'; }
+    try { return localStorage.getItem('rj_neg_hands') || 'B'; } catch (e) { return 'B'; }
   }
   function styleSuivant() {
     var i = STYLES.indexOf(styleActuel());
@@ -1048,6 +1050,9 @@
     return next;
   }
 
+  // Recentrage du style B après rotation (valeurs ajustées par mesure).
+  var BR_DX = 2.2, BR_DY = 0.9;
+
   function dessinMain(style, dirn, gap, col) {
     var x = dirn < 0 ? -gap / 2 : gap / 2;
     var sc = dirn < 0 ? 1 : -1;
@@ -1055,7 +1060,10 @@
                '" stroke-linecap="round" stroke-linejoin="round">';
     var d = '';
     if (style === 'B') {
-      d = '<g stroke-width="1.5">' +
+      // Paumes ouvertes, orientées à l'HORIZONTALE : on fait pivoter de 90°
+      // le dessin vertical (rotate(90) envoie les doigts vers la droite),
+      // puis on recentre le tout dans la bande via BR_DX / BR_DY.
+      d = '<g stroke-width="1.5" transform="translate(' + BR_DX + ',' + BR_DY + ') rotate(90 -23 14.5)">' +
           '<path d="M-30 26 v-9 a3 3 0 0 1 3 -3 h8"/>' +
           '<path d="M-27 14 v-9 a2 2 0 0 1 4 0 v9"/>' +
           '<path d="M-23 14 v-11 a2 2 0 0 1 4 0 v11"/>' +
@@ -1085,15 +1093,18 @@
 
   function handshakeSVG(prog, pat) {
     var col = pat > 0.6 ? '#34D399' : pat > 0.3 ? '#F59E0B' : '#EF4444';
-    var gap = Math.round((1 - prog) * 46);
+    // 46 d'écart au départ ; on retire en plus la largeur propre des mains à
+    // mesure qu'on progresse, pour qu'elles se TOUCHENT à l'accord (mesuré :
+    // 11 unités de séparation résiduelle à écart nul).
+    var gap = Math.round((1 - prog) * 46 - prog * 11);
     var joint = prog >= 0.92;
     var st = styleActuel();
     var etat = joint ? 'Accord à portée' : prog > 0.55 ? 'Ça se rapproche' : prog > 0.2 ? 'Discussions engagées' : 'Premiers échanges';
     var tension = pat > 0.6 ? 'Écurie sereine' : pat > 0.3 ? 'Écurie qui se crispe' : 'Écurie à bout';
 
     return '' +
-      '<div id="rj-handshake" style="padding:14px 12px 10px;border-radius:var(--r,10px);cursor:pointer;' +
-      'touch-action:manipulation;border:1px solid ' + rgba(col, .35) + ';' +
+      '<div id="rj-handshake" style="padding:14px 12px 10px;border-radius:var(--r,10px);' +
+      'border:1px solid ' + rgba(col, .35) + ';' +
       'background:linear-gradient(160deg,' + rgba(col, .10) + ' 0%,var(--bg2) 60%,var(--bg) 100%)">' +
         '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
         'letter-spacing:.14em;text-transform:uppercase;text-align:center">Où en est la négociation</div>' +
@@ -1104,8 +1115,6 @@
         '<div style="text-align:center;font-family:var(--font-display);font-size:13px;font-weight:900;color:' + col + ';' +
         'letter-spacing:.04em">' + etat + '</div>' +
         '<div style="text-align:center;font-size:11px;color:var(--text2);margin-top:3px">' + tension + '</div>' +
-        '<div style="text-align:center;font-size:9px;color:var(--dim,#6b6b78);margin-top:6px;letter-spacing:.06em">' +
-        'Style ' + st + ' · ' + (STYLE_NOMS[st] || '') + ' — appuie pour changer</div>' +
       '</div>';
   }
 
@@ -1123,8 +1132,6 @@
     if (bar) {
       var prog = progres(), pat = patience();
       bar.innerHTML = handshakeSVG(prog, pat);
-      var hs = document.getElementById('rj-handshake');
-      if (hs) hs.addEventListener('click', function () { styleSuivant(); enhanceNeg(); });
       // on retire l'ancien affichage « Patience de l'écurie xx/100 »
       if (sum) {
         sum.querySelectorAll('div').forEach(function (d) {
@@ -1262,6 +1269,14 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
+
+  // Changement de style possible si besoin : _rjNegHands('A'|'B'|'C'|'D')
+  window._rjNegHands = function (st) {
+    if (STYLES.indexOf(st) < 0) return STYLES.join(', ');
+    try { localStorage.setItem('rj_neg_hands', st); } catch (e) {}
+    try { enhanceNeg(); } catch (e) {}
+    return 'style ' + st + ' — ' + (STYLE_NOMS[st] || '');
+  };
 
   window._rjContractsUIUninstall = function () {
     sweepObs.disconnect();
