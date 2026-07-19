@@ -1027,38 +1027,85 @@
     return 1;
   }
 
-  /* Deux mains qui se rapprochent : l'écart traduit les concessions
-   * obtenues, la couleur la marge de patience de l'écurie. */
+  /* ---------------------------------------------------------------------
+   * Deux mains qui se rapprochent : l'écart traduit les concessions
+   * obtenues, la couleur la marge de patience de l'écurie.
+   *
+   * QUATRE STYLES sont fournis : je ne peux pas juger correctement le rendu
+   * de mes propres dessins, donc le choix te revient — un appui sur le bloc
+   * fait défiler les styles, et le choix est mémorisé.
+   * ------------------------------------------------------------------- */
+  var STYLES = ['A', 'B', 'C', 'D'];
+  var STYLE_NOMS = { A: 'Poignée de profil', B: 'Paumes ouvertes', C: 'Chevrons', D: 'Mitaines' };
+
+  function styleActuel() {
+    try { return localStorage.getItem('rj_neg_hands') || 'A'; } catch (e) { return 'A'; }
+  }
+  function styleSuivant() {
+    var i = STYLES.indexOf(styleActuel());
+    var next = STYLES[(i + 1) % STYLES.length];
+    try { localStorage.setItem('rj_neg_hands', next); } catch (e) {}
+    return next;
+  }
+
+  function dessinMain(style, dirn, gap, col) {
+    var x = dirn < 0 ? -gap / 2 : gap / 2;
+    var sc = dirn < 0 ? 1 : -1;
+    var open = '<g transform="translate(' + x + ',0) scale(' + sc + ',1)" fill="none" stroke="' + col +
+               '" stroke-linecap="round" stroke-linejoin="round">';
+    var d = '';
+    if (style === 'B') {
+      d = '<g stroke-width="1.5">' +
+          '<path d="M-30 26 v-9 a3 3 0 0 1 3 -3 h8"/>' +
+          '<path d="M-27 14 v-9 a2 2 0 0 1 4 0 v9"/>' +
+          '<path d="M-23 14 v-11 a2 2 0 0 1 4 0 v11"/>' +
+          '<path d="M-19 14 v-10 a2 2 0 0 1 4 0 v10"/>' +
+          '<path d="M-15 14 v-7 a2 2 0 0 1 4 0 v9"/>' +
+          '<path d="M-30 20 h-5 a3 3 0 0 0 0 6 h5"/></g>';
+    } else if (style === 'C') {
+      d = '<g stroke-width="2">' +
+          '<path d="M-34 4 l10 10 l-10 10" opacity=".35"/>' +
+          '<path d="M-26 4 l10 10 l-10 10" opacity=".7"/>' +
+          '<path d="M-18 6 l8 8 l-8 8"/></g>';
+    } else if (style === 'D') {
+      d = '<g stroke-width="1.6">' +
+          '<path d="M-44 10 h10 v8 h-10 z" opacity=".45"/>' +
+          '<path d="M-34 8 h8 c7 0 11 3 11 6 c0 3 -4 6 -11 6 h-8 a2 2 0 0 1 -2 -2 v-8 a2 2 0 0 1 2 -2 z"/>' +
+          '<path d="M-26 8 v-3 a3 3 0 0 1 6 1 v2"/>' +
+          '<path d="M-15 12 h4 M-15 16 h4" opacity=".5"/></g>';
+    } else {
+      d = '<g stroke-width="1.6">' +
+          '<path d="M-46 9 h14"/><path d="M-46 19 h14"/>' +
+          '<path d="M-32 6 h6 a4 4 0 0 1 4 4 v2"/>' +
+          '<path d="M-22 12 c6 0 9 2 9 6 c0 4 -3 6 -9 6 h-10 v-12 z"/>' +
+          '<path d="M-24 12 v-3 a3 3 0 0 1 6 0 v3"/></g>';
+    }
+    return open + d + '</g>';
+  }
+
   function handshakeSVG(prog, pat) {
     var col = pat > 0.6 ? '#34D399' : pat > 0.3 ? '#F59E0B' : '#EF4444';
-    var gap = Math.round((1 - prog) * 46);           // 46px d'écart au départ, 0 à l'accord
+    var gap = Math.round((1 - prog) * 46);
     var joint = prog >= 0.92;
+    var st = styleActuel();
     var etat = joint ? 'Accord à portée' : prog > 0.55 ? 'Ça se rapproche' : prog > 0.2 ? 'Discussions engagées' : 'Premiers échanges';
     var tension = pat > 0.6 ? 'Écurie sereine' : pat > 0.3 ? 'Écurie qui se crispe' : 'Écurie à bout';
 
-    // main gauche et main droite (silhouettes simples), décalées selon l'écart
-    function main(dir) {
-      var x = dir < 0 ? -gap / 2 : gap / 2;
-      var s = dir < 0 ? 1 : -1;
-      return '<g transform="translate(' + x + ',0) scale(' + s + ',1)">' +
-        '<path d="M-34 4 h16 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-16 z" fill="' + rgba(col, .30) + '" stroke="' + col + '" stroke-width="1.6"/>' +
-        '<path d="M-13 0 h9 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-9 a4 4 0 0 1 -4 -4 v-16 a4 4 0 0 1 4 -4 z" fill="' + rgba(col, .22) + '" stroke="' + col + '" stroke-width="1.8"/>' +
-        '<path d="M-13 8 h11 M-13 14 h11" stroke="' + rgba(col, .55) + '" stroke-width="1.2"/>' +
-        '</g>';
-    }
-
     return '' +
-      '<div style="padding:14px 12px 12px;border-radius:var(--r,10px);border:1px solid ' + rgba(col, .35) + ';' +
+      '<div id="rj-handshake" style="padding:14px 12px 10px;border-radius:var(--r,10px);cursor:pointer;' +
+      'touch-action:manipulation;border:1px solid ' + rgba(col, .35) + ';' +
       'background:linear-gradient(160deg,' + rgba(col, .10) + ' 0%,var(--bg2) 60%,var(--bg) 100%)">' +
         '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
         'letter-spacing:.14em;text-transform:uppercase;text-align:center">Où en est la négociation</div>' +
-        '<svg viewBox="-60 0 120 28" width="100%" height="66" style="display:block;margin:6px 0 2px">' +
-          main(-1) + main(1) +
-          (joint ? '<circle cx="0" cy="12" r="13" fill="none" stroke="' + col + '" stroke-width="1.2" opacity=".55"/>' : '') +
+        '<svg viewBox="-60 -4 120 36" width="100%" height="76" style="display:block;margin:6px 0 2px">' +
+          dessinMain(st, -1, gap, col) + dessinMain(st, 1, gap, col) +
+          (joint ? '<circle cx="0" cy="14" r="15" fill="none" stroke="' + col + '" stroke-width="1.2" opacity=".5"/>' : '') +
         '</svg>' +
         '<div style="text-align:center;font-family:var(--font-display);font-size:13px;font-weight:900;color:' + col + ';' +
         'letter-spacing:.04em">' + etat + '</div>' +
         '<div style="text-align:center;font-size:11px;color:var(--text2);margin-top:3px">' + tension + '</div>' +
+        '<div style="text-align:center;font-size:9px;color:var(--dim,#6b6b78);margin-top:6px;letter-spacing:.06em">' +
+        'Style ' + st + ' · ' + (STYLE_NOMS[st] || '') + ' — appuie pour changer</div>' +
       '</div>';
   }
 
@@ -1076,6 +1123,8 @@
     if (bar) {
       var prog = progres(), pat = patience();
       bar.innerHTML = handshakeSVG(prog, pat);
+      var hs = document.getElementById('rj-handshake');
+      if (hs) hs.addEventListener('click', function () { styleSuivant(); enhanceNeg(); });
       // on retire l'ancien affichage « Patience de l'écurie xx/100 »
       if (sum) {
         sum.querySelectorAll('div').forEach(function (d) {
