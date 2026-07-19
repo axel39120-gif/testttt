@@ -41,6 +41,16 @@
    * survenait plus bas, le module apparaissait « non chargé » alors que le
    * fichier était bien présent, ce qui envoyait chercher un problème de
    * déploiement inexistant. On expose aussi un état de diagnostic. */
+  /* --------------------------------------------------------------------
+   * COUCHE VISUELLE — DÉSACTIVÉE (retour au design précédent, à ta demande).
+   * Passer à true réactive : icônes d'expéditeur dans la liste, bulles aux
+   * couleurs du rôle, avatars en icônes, boutons d'action restylés et
+   * nouvelle carte d'état vide. Tout le reste du module (regroupement des
+   * fils, variantes de texte, nouveaux expéditeurs, notification des offres)
+   * reste actif indépendamment de ce réglage.
+   * ------------------------------------------------------------------ */
+  var DESIGN = false;
+
   var etat = { charge: true, installe: false, erreur: null, essais: 0 };
   window._rj62Uninstall = function () {
     try {
@@ -54,6 +64,13 @@
     console.log("[62-mail-overhaul] désinstallé");
   };
   window._rj62Status = function () { return etat; };
+  // Réactivation à la volée si tu veux revoir la version colorée :
+  //   _rj62Design(true)  puis rouvrir la messagerie
+  window._rj62Design = function (v) {
+    DESIGN = !!v;
+    try { if (typeof renderMailbox === "function") renderMailbox(); } catch (e) {}
+    return "design " + (DESIGN ? "activé" : "désactivé");
+  };
 
   /* ------------------------------------------------- 1. identité visuelle */
   var ICONES = {
@@ -84,6 +101,7 @@
   // La liste des conversations n'affiche qu'un avatar texte : on y place
   // l'icône du rôle, lisible d'un coup d'œil.
   function habillerListe() {
+    if (!DESIGN) return;
     var list = document.getElementById("mailbox-list");
     if (!list) return;
     var lignes = list.querySelectorAll('[onclick*="openMailThread"]');
@@ -357,6 +375,7 @@
   }
 
   function habillerFil() {
+    if (!DESIGN) return;
     var list = document.getElementById("mailbox-list");
     if (!list) return;
     var enFil = !!list.querySelector('[onclick*="backToMailList"]');
