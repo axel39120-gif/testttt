@@ -37,6 +37,24 @@
 
   var wrapped = {};
 
+  /* Le marqueur d'installation est posé IMMÉDIATEMENT : si une erreur
+   * survenait plus bas, le module apparaissait « non chargé » alors que le
+   * fichier était bien présent, ce qui envoyait chercher un problème de
+   * déploiement inexistant. On expose aussi un état de diagnostic. */
+  var etat = { charge: true, installe: false, erreur: null, essais: 0 };
+  window._rj62Uninstall = function () {
+    try {
+      Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+      if (typeof WEEKLY_TICK_HOOKS !== "undefined" && WEEKLY_TICK_HOOKS) {
+        for (var i = WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--) {
+          if (WEEKLY_TICK_HOOKS[i] && WEEKLY_TICK_HOOKS[i].id === "rj62Mail") WEEKLY_TICK_HOOKS.splice(i, 1);
+        }
+      }
+    } catch (e) {}
+    console.log("[62-mail-overhaul] désinstallé");
+  };
+  window._rj62Status = function () { return etat; };
+
   /* ------------------------------------------------- 1. identité visuelle */
   var ICONES = {
     agent: "msg_agent", team_boss: "msg_ecurie", sponsor: "msg_sponsor",
@@ -565,26 +583,25 @@
 
   var essais = 0;
   function boot() {
+    try {
+      return bootInterne();
+    } catch (e) {
+      etat.erreur = String(e && e.message || e);
+      console.warn("[62-mail-overhaul] installation interrompue :", e);
+    }
+  }
+  function bootInterne() {
     if (installer()) {
+      etat.installe = true;
       console.log("[62-mail-overhaul] actif — icônes d'expéditeur, fils regroupés, variantes, 4 nouveaux contacts");
       return;
     }
-    if (essais++ < 80) setTimeout(boot, 80);
+    etat.essais = ++essais;
+    if (essais < 80) setTimeout(boot, 80);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 
-  window._rj62Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
-    try {
-      if (typeof WEEKLY_TICK_HOOKS !== "undefined" && WEEKLY_TICK_HOOKS) {
-        for (var i = WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--) {
-          if (WEEKLY_TICK_HOOKS[i] && WEEKLY_TICK_HOOKS[i].id === "rj62Mail") WEEKLY_TICK_HOOKS.splice(i, 1);
-        }
-      }
-    } catch (e) {}
-    console.log("[62-mail-overhaul] désinstallé");
-  };
   window._rj62Tick = tickCourrier;
   window._rj62ScanOffres = scanOffres;
 })();
