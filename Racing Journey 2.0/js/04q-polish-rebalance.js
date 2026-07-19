@@ -697,17 +697,23 @@
   }
 
   function _qualiCompound(name) {
-    var c = _ctx();
-    var seg = (window.QUALI_STATE && QUALI_STATE.session) || 1; // 1=Q1, 2=Q2, 3=Q3
-    var rng = _rng(['Q', seg, c.s, c.m, c.cat, name]);
-    if (_isWet()) return rng() < 0.6 ? 'inter' : 'wet';
-    // Qualif sèche : presque tout le monde en tendre. Un peu de medium en début de Q1
-    // (runs d'ouverture sur gomme plus dure), occasionnellement en Q2, jamais en Q3.
-    var softProb = seg >= 3 ? 1.0 : seg === 2 ? 0.86 : 0.80;
-    return rng() < softProb ? 'soft' : 'medium';
-  }
+   // Le composé de qualification n'est PAS un choix individuel : il découle de
+   // l'état de la piste, identique pour tout le monde à un instant donné.
+   //   - piste détrempée (pluie battante) -> pneu pluie pour tous
+   //   - piste humide                     -> intermédiaire pour tous
+   //   - sec, nuageux ou chaud            -> tendre pour tous
+   // Auparavant chaque pilote tirait sa gomme au hasard (60/40 inter-wet sous
+   // la pluie, et jusqu'à 20 % de medium en Q1), ce qui donnait des grilles
+   // incohérentes : deux pneus pluie différents dans la même séance.
+   if (_isWet()) {
+     var w = window.RACE_STATE && window.RACE_STATE.weather;
+     var id = w && w.id;
+     return id === 'storm' ? 'wet' : 'inter';
+   }
+   return 'soft';
+ }
 
-  function _raceCompound(name, isPlayer) {
+ function _raceCompound(name, isPlayer) {
     var c = _ctx(), rng = _rng(['R', c.s, c.m, c.cat, name]);
     if (_isWet()) return rng() < 0.62 ? 'inter' : 'wet';
     var two = _twoCompounds(c.cat);
