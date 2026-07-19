@@ -822,3 +822,401 @@
     document.addEventListener('DOMContentLoaded', doFix);
   } else { doFix(); }
 })();
+
+/* ===========================================================================
+ * SECTION D — REFONTE VISUELLE : CONTRATS & NÉGOCIATION
+ * ---------------------------------------------------------------------------
+ * Ajouts (présentation uniquement, la logique de négociation est inchangée) :
+ *
+ *  1. Bouton « Signer » écrasé à 32 px : la classe .btn impose width:100%, si
+ *     bien que le bouton « x » (flex:0 1 auto) réclamait toute la largeur.
+ *     On force des bases de flex explicites.
+ *  2. Bloc « Contrat en cours » redessiné, avec le logo de l'écurie.
+ *  3. « e » remplacé par « € » partout, « /mois » retiré, et plus de « + »
+ *     devant les montants.
+ *  4. Chaque offre prend la couleur de son écurie (extraite de son logo) :
+ *     liseré, en-tête et valeurs des conditions.
+ *  5. Écran de négociation : la patience n'est plus un « 64/100 » mais deux
+ *     mains qui se rapprochent à mesure que les concessions sont obtenues,
+ *     et se rejoignent quand l'accord est à portée. La tension de l'écurie
+ *     est portée par la couleur.
+ *  6. Les 24 options sont regroupées en 5 rubriques dépliables (une seule
+ *     ouverte à la fois) au lieu d'une liste de 1700 px.
+ *  7. Les boutons de décision ne passent plus sous la barre de navigation.
+ *
+ * Réversible : window._rjContractsUIUninstall().
+ * =========================================================================== */
+(function _rjContractsUI() {
+  'use strict';
+
+  var wrapped = {};
+  var colorCache = {};
+  var negSnapshot = null;
+
+  /* ---------------------------------------------------- couleur d'écurie */
+  function teamColor(team) {
+    if (!team) return null;
+    if (colorCache[team] !== undefined) return colorCache[team];
+    var best = null, bestScore = -1;
+    try {
+      var svg = (typeof getTeamLogo === 'function') ? String(getTeamLogo(team) || '') : '';
+      (svg.match(/#[0-9A-Fa-f]{6}/g) || []).forEach(function (h) {
+        var r = parseInt(h.substr(1, 2), 16), g = parseInt(h.substr(3, 2), 16), b = parseInt(h.substr(5, 2), 16);
+        var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+        var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        if (lum < 0.20) return;                    // fond sombre du logo
+        var sat = mx === 0 ? 0 : (mx - mn) / mx;
+        var score = sat * 0.7 + lum * 0.3;
+        if (score > bestScore) { bestScore = score; best = h; }
+      });
+    } catch (e) {}
+    colorCache[team] = best;
+    return best;
+  }
+
+  function rgba(hex, a) {
+    if (!hex) return 'rgba(255,255,255,' + a + ')';
+    var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  /* ------------------------------------------------- montants et euros */
+  function cleanMoney(root) {
+    if (!root) return;
+    var w;
+    try { w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null); } catch (e) { return; }
+    var nodes = [], n;
+    while ((n = w.nextNode())) nodes.push(n);
+    nodes.forEach(function (t) {
+      var v = t.nodeValue;
+      if (!v || !/\d/.test(v)) return;
+      var out = v.replace(/(\d(?:[\s\u00A0]?\d{3})*)\s*e\b/g, '$1 €');   // 180 000 e -> 180 000 €
+      out = out.replace(/€\s*\/\s*mois/g, '€');                          // €/mois -> €
+      if (/€/.test(out)) out = out.replace(/\+\s*(?=\d)/g, '');          // + devant un montant
+      if (out !== v) t.nodeValue = out;
+    });
+  }
+
+  /* ================================================== A. ÉCRAN CONTRATS */
+  function enhanceOffers() {
+    var list = document.getElementById('offers-list');
+    if (!list) return;
+
+    // 1. bloc « contrat en cours » : logo + couleur de l'écurie
+    var head = list.firstElementChild;
+    if (head && /Contrat en cours/i.test(head.textContent || '') && !head.getAttribute('data-rjui')) {
+      head.setAttribute('data-rjui', '1');
+      var team = (typeof G !== 'undefined' && G.currentTeam) || '';
+      var col = teamColor(team) || 'var(--teal,#00D4FF)';
+      var weeks = (typeof G !== 'undefined' && typeof G.contractWeeksLeft === 'number') ? G.contractWeeksLeft : null;
+      var logo = '';
+      try { if (typeof getTeamLogo === 'function') logo = getTeamLogo(team) || ''; } catch (e) {}
+      var urgence = (weeks !== null && weeks <= 12) ? '#EF4444' : (weeks !== null && weeks <= 32) ? '#F59E0B' : col;
+      var reste = (weeks === null) ? '—' :
+        (weeks >= 48 ? Math.floor(weeks / 48) + ' saison' + (weeks >= 96 ? 's' : '') :
+         weeks >= 20 ? Math.round(weeks / 4) + ' mois' : weeks + ' sem.');
+
+      head.setAttribute('style',
+        'position:relative;margin:0 0 14px;padding:14px;border-radius:var(--r,10px);overflow:hidden;' +
+        'background:linear-gradient(135deg,' + rgba(teamColor(team), .16) + ' 0%,var(--bg2) 55%,var(--bg) 100%);' +
+        'border:1px solid ' + rgba(teamColor(team), .45) + ';border-left:3px solid ' + col + ';');
+      head.innerHTML =
+        '<div style="display:flex;align-items:center;gap:12px">' +
+          '<div style="flex-shrink:0;width:46px;height:46px;border-radius:10px;overflow:hidden;background:var(--bg3);' +
+          'display:flex;align-items:center;justify-content:center">' + (logo || '') + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
+            'letter-spacing:.14em;text-transform:uppercase">Contrat en cours</div>' +
+            '<div style="font-size:15px;font-weight:800;color:var(--white,#fff);margin-top:2px;' +
+            'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + team + '</div>' +
+            '<div style="font-size:11px;color:var(--text2);margin-top:1px">' + ((typeof G !== 'undefined' && G.cat) || '') + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0">' +
+            '<div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:' + urgence + ';line-height:1">' + reste + '</div>' +
+            '<div style="font-size:9px;color:var(--dim,#6b6b78);letter-spacing:.10em;text-transform:uppercase;margin-top:3px">restants</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // 2. cartes d'offre : couleur d'écurie + boutons
+    var cards = list.querySelectorAll('.offer-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      if (card.getAttribute('data-rjui')) { cleanMoney(card); continue; }
+      card.setAttribute('data-rjui', '1');
+
+      var t = '';
+      var prof = card.querySelector('[onclick*="showTeamProfileModal"]');
+      if (prof) {
+        var m = (prof.getAttribute('onclick') || '').match(/showTeamProfileModal\('([^']+)'/);
+        if (m) t = m[1];
+      }
+      var c = teamColor(t);
+      if (c) {
+        card.style.borderColor = rgba(c, .45);
+        card.style.borderLeft = '3px solid ' + c;
+        card.style.background = 'linear-gradient(135deg,' + rgba(c, .10) + ' 0%,var(--bg2) 60%,var(--bg) 100%)';
+        // valeurs des conditions à la couleur de l'écurie
+        card.querySelectorAll('div').forEach(function (d) {
+          if (d.children.length) return;
+          var txt = (d.textContent || '').trim();
+          if (/€|Gratuit/.test(txt)) { d.style.color = c; d.style.fontWeight = '800'; }
+        });
+      }
+
+      // boutons : bases de flex explicites (la classe .btn impose width:100%)
+      var sign = card.querySelector('[onclick^="signContract"]');
+      var neg = card.querySelector('[onclick^="openNeg"]');
+      var ref = card.querySelector('[onclick^="refuseOffer"]');
+      if (sign) { sign.style.flex = '1 1 auto'; sign.style.width = 'auto'; sign.style.minWidth = '104px'; }
+      if (neg) { neg.style.flex = '1 1 auto'; neg.style.width = 'auto'; neg.style.minWidth = '104px'; }
+      if (ref) { ref.style.flex = '0 0 46px'; ref.style.width = '46px'; ref.style.minWidth = '46px'; ref.style.padding = '0'; }
+      if (sign && c) { sign.style.background = c; sign.style.borderColor = c; sign.style.color = '#fff'; }
+
+      cleanMoney(card);
+    }
+    cleanMoney(list);
+  }
+
+  /* ============================================== B. ÉCRAN NÉGOCIATION */
+
+  // Rubriques : on regroupe les 24 options par intention.
+  var GROUPES = [
+    { id: 'fin', titre: 'Finances', ids: ['cut_cost_10', 'cut_cost_25', 'cut_cost_50', 'up_salary_10', 'up_salary_25', 'up_salary_50'] },
+    { id: 'pri', titre: 'Primes', ids: ['up_bonus_win', 'up_bonus_podium', 'bonus_champ_driver', 'bonus_champ_constructor', 'bonus_fastest_lap', 'bonus_top3_season'] },
+    { id: 'dur', titre: 'Durée et sécurité', ids: ['duration_extend', 'duration_shorten', 'clause_preseason', 'clause_performance', 'clause_no_dump', 'ask_release'] },
+    { id: 'sta', titre: 'Statut dans l\'équipe', ids: ['ask_veto', 'clause_media_cap'] },
+    { id: 'pre', titre: 'Coups de pression', ids: ['use_other_offer', 'bring_sponsor', 'walk_away_bluff'] }
+  ];
+
+  function actionId(el) {
+    var m = (el.getAttribute('onclick') || '').match(/negDoAction\('([^']+)'\)/);
+    return m ? m[1] : null;
+  }
+
+  function offerNow() {
+    try {
+      var idx = (typeof NEG_IDX !== 'undefined') ? NEG_IDX : -1;
+      if (idx < 0 || !G.offers || !G.offers[idx]) return null;
+      var o = G.offers[idx];
+      return { salary: o.salary || 0, bonusWin: o.bonusWin || 0, bonusPodium: o.bonusPodium || 0,
+               duration: o.duration || o.dur || 1, cost: o.cost || 0 };
+    } catch (e) { return null; }
+  }
+
+  // Progression = concessions RÉELLEMENT obtenues (actions réussies).
+  // NEG_STATE.history journalise chaque tentative avec son succès : c'est la
+  // mesure fiable de « la négociation avance dans le bon sens ».
+  var CONCESSIONS_ACCORD = 5;   // nb de succès pour que les mains se rejoignent
+  function progres() {
+    try {
+      if (typeof NEG_STATE === 'undefined' || !NEG_STATE || !NEG_STATE.history) return 0;
+      var ok = 0;
+      NEG_STATE.history.forEach(function (h) { if (h && h.success) ok++; });
+      return Math.max(0, Math.min(1, ok / CONCESSIONS_ACCORD));
+    } catch (e) { return 0; }
+  }
+
+  function patience() {
+    try {
+      if (typeof NEG_STATE !== 'undefined' && NEG_STATE && typeof NEG_STATE.patience === 'number') {
+        var init = (typeof NEG_STATE.initialPatience === 'number' && NEG_STATE.initialPatience > 0) ? NEG_STATE.initialPatience : 100;
+        return Math.max(0, Math.min(1, NEG_STATE.patience / init));
+      }
+    } catch (e) {}
+    return 1;
+  }
+
+  /* Deux mains qui se rapprochent : l'écart traduit les concessions
+   * obtenues, la couleur la marge de patience de l'écurie. */
+  function handshakeSVG(prog, pat) {
+    var col = pat > 0.6 ? '#34D399' : pat > 0.3 ? '#F59E0B' : '#EF4444';
+    var gap = Math.round((1 - prog) * 46);           // 46px d'écart au départ, 0 à l'accord
+    var joint = prog >= 0.92;
+    var etat = joint ? 'Accord à portée' : prog > 0.55 ? 'Ça se rapproche' : prog > 0.2 ? 'Discussions engagées' : 'Premiers échanges';
+    var tension = pat > 0.6 ? 'Écurie sereine' : pat > 0.3 ? 'Écurie qui se crispe' : 'Écurie à bout';
+
+    // main gauche et main droite (silhouettes simples), décalées selon l'écart
+    function main(dir) {
+      var x = dir < 0 ? -gap / 2 : gap / 2;
+      var s = dir < 0 ? 1 : -1;
+      return '<g transform="translate(' + x + ',0) scale(' + s + ',1)">' +
+        '<path d="M-34 4 h16 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-16 z" fill="' + rgba(col, .30) + '" stroke="' + col + '" stroke-width="1.6"/>' +
+        '<path d="M-13 0 h9 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-9 a4 4 0 0 1 -4 -4 v-16 a4 4 0 0 1 4 -4 z" fill="' + rgba(col, .22) + '" stroke="' + col + '" stroke-width="1.8"/>' +
+        '<path d="M-13 8 h11 M-13 14 h11" stroke="' + rgba(col, .55) + '" stroke-width="1.2"/>' +
+        '</g>';
+    }
+
+    return '' +
+      '<div style="padding:14px 12px 12px;border-radius:var(--r,10px);border:1px solid ' + rgba(col, .35) + ';' +
+      'background:linear-gradient(160deg,' + rgba(col, .10) + ' 0%,var(--bg2) 60%,var(--bg) 100%)">' +
+        '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
+        'letter-spacing:.14em;text-transform:uppercase;text-align:center">Où en est la négociation</div>' +
+        '<svg viewBox="-60 0 120 28" width="100%" height="66" style="display:block;margin:6px 0 2px">' +
+          main(-1) + main(1) +
+          (joint ? '<circle cx="0" cy="12" r="13" fill="none" stroke="' + col + '" stroke-width="1.2" opacity=".55"/>' : '') +
+        '</svg>' +
+        '<div style="text-align:center;font-family:var(--font-display);font-size:13px;font-weight:900;color:' + col + ';' +
+        'letter-spacing:.04em">' + etat + '</div>' +
+        '<div style="text-align:center;font-size:11px;color:var(--text2);margin-top:3px">' + tension + '</div>' +
+      '</div>';
+  }
+
+  function enhanceNeg() {
+    var scr = document.getElementById('S-neg');
+    if (!scr) return;
+
+    // 7. les boutons de décision ne doivent plus passer sous la barre du bas
+    var sc = scr.querySelector('.scroll');
+    if (sc) sc.style.paddingBottom = '110px';
+
+    // 5. patience → poignée de main
+    var sum = document.getElementById('neg-summary');
+    var bar = document.getElementById('neg-round-bar');
+    if (bar) {
+      var prog = progres(), pat = patience();
+      bar.innerHTML = handshakeSVG(prog, pat);
+      // on retire l'ancien affichage « Patience de l'écurie xx/100 »
+      if (sum) {
+        sum.querySelectorAll('div').forEach(function (d) {
+          if (d.children.length) return;
+          if (/Patience de l'?équipe|Patience de l'?écurie|\/\s*100/i.test(d.textContent || '')) {
+            var p = d.parentElement;
+            if (p && p !== sum && p.children.length <= 3) p.style.display = 'none';
+            else d.style.display = 'none';
+          }
+        });
+      }
+    }
+
+    // 6. regroupement des options en rubriques dépliables
+    var opts = document.getElementById('neg-options');
+    if (opts && !opts.getAttribute('data-rjui')) {
+      var items = Array.prototype.slice.call(opts.querySelectorAll('[onclick*="negDoAction"]'));
+      if (items.length > 6) {
+        opts.setAttribute('data-rjui', '1');
+        var reste = [], parGroupe = {};
+        items.forEach(function (el) {
+          var id = actionId(el);
+          var trouve = null;
+          GROUPES.forEach(function (g) { if (g.ids.indexOf(id) >= 0) trouve = g.id; });
+          if (id === 'sign_now') { reste.push(el); return; }
+          if (!trouve) { reste.push(el); return; }
+          (parGroupe[trouve] = parGroupe[trouve] || []).push(el);
+        });
+
+        // On conserve TOUT élément interactif qui n'est PAS une option
+        // (« Quitter sans signer », aide…), où qu'il soit dans l'arbre :
+        // il sera réinséré sous les rubriques.
+        var autres = Array.prototype.slice.call(opts.querySelectorAll('[onclick]'))
+          .filter(function (n) { return !/negDoAction/.test(n.getAttribute('onclick') || ''); });
+
+        var host = document.createElement('div');
+        GROUPES.forEach(function (g) {
+          var lot = parGroupe[g.id];
+          if (!lot || !lot.length) return;
+          var sec = document.createElement('div');
+          sec.style.cssText = 'margin-bottom:8px;border:1px solid var(--border-hi);border-radius:10px;overflow:hidden;background:var(--bg2)';
+          var head = document.createElement('button');
+          head.type = 'button';
+          head.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;' +
+            'padding:12px 13px;background:transparent;border:0;cursor:pointer;touch-action:manipulation;' +
+            'font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.08em;' +
+            'text-transform:uppercase;color:var(--text);text-align:left';
+          head.innerHTML = '<span>' + g.titre + '</span><span style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:10px;color:var(--dim,#6b6b78)">' + lot.length + '</span>' +
+            '<span data-caret style="font-size:13px;color:var(--text3);transition:transform .15s">▾</span></span>';
+          var body = document.createElement('div');
+          body.style.cssText = 'display:none;padding:0 10px 10px';
+          lot.forEach(function (el) { body.appendChild(el); });
+          head.addEventListener('click', function () {
+            var ouvert = body.style.display !== 'none';
+            // une seule rubrique ouverte à la fois
+            host.querySelectorAll('[data-body]').forEach(function (b) { b.style.display = 'none'; });
+            host.querySelectorAll('[data-caret]').forEach(function (c) { c.style.transform = ''; });
+            if (!ouvert) {
+              body.style.display = 'block';
+              var car = head.querySelector('[data-caret]');
+              if (car) car.style.transform = 'rotate(180deg)';
+            }
+          });
+          body.setAttribute('data-body', '1');
+          sec.appendChild(head); sec.appendChild(body);
+          host.appendChild(sec);
+        });
+        reste.forEach(function (el) { host.appendChild(el); });
+        opts.innerHTML = '';
+        opts.appendChild(host);
+        autres.forEach(function (n) { opts.appendChild(n); });
+      }
+    }
+
+    cleanMoney(scr);
+  }
+
+  /* ------------------------------------------------------------- montage */
+  function wrap(name, after) {
+    if (typeof window[name] !== 'function' || window[name]._rjui) return false;
+    var orig = window[name];
+    var fn = function () {
+      var r = orig.apply(this, arguments);
+      try { setTimeout(after, 0); } catch (e) {}
+      return r;
+    };
+    fn._rjui = true;
+    wrapped[name] = orig;
+    window[name] = fn;
+    return true;
+  }
+
+  /* Le « e » monétaire traîne dans toute l'application : on balaie l'écran
+   * actif à chaque changement de contenu. La substitution ne touche que les
+   * suites « chiffres + e », jamais un mot. */
+  var sweepTimer = null;
+  function sweepAll() {
+    if (sweepTimer) return;
+    sweepTimer = setTimeout(function () {
+      sweepTimer = null;
+      try {
+        var scr = document.querySelector('.scr.on');
+        if (scr) cleanMoney(scr);
+      } catch (e) {}
+    }, 120);
+  }
+  var sweepObs = new MutationObserver(sweepAll);
+
+  var tries = 0;
+  function boot() {
+    var a = wrap('renderOffers', enhanceOffers);
+    var b = wrap('renderNegScreen', enhanceNeg);
+    // instantané de l'offre à l'entrée en négociation (base des concessions)
+    if (typeof window.negEnter === 'function' && !window.negEnter._rjui) {
+      var orig = window.negEnter;
+      var fn = function () {
+        var r = orig.apply(this, arguments);
+        try { negSnapshot = offerNow(); setTimeout(enhanceNeg, 0); } catch (e) {}
+        return r;
+      };
+      fn._rjui = true;
+      wrapped.negEnter = orig;
+      window.negEnter = fn;
+    }
+    if (a && b) {
+      if (document.body) {
+        sweepAll();
+        sweepObs.observe(document.body, { childList: true, subtree: true, characterData: true });
+      }
+      console.log('[11-neg-patch/UI] refonte contrats & négociation active (euros harmonisés)');
+      return;
+    }
+    if (tries++ < 80) setTimeout(boot, 80);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window._rjContractsUIUninstall = function () {
+    sweepObs.disconnect();
+    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    console.log('[11-neg-patch/UI] désinstallé (rechargez la page)');
+  };
+})();
