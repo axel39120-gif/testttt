@@ -113,43 +113,226 @@
     host.parentNode.insertBefore(btn, host.nextSibling);
   }
 
-  // carte dans les Paramètres
+  /* ------------------------------------------------------------------
+   * PARAMÈTRES — refonte du réglage d'écran et retrait du mode clair
+   *
+   * Avant : une section « Apparence » proposant un thème clair jamais
+   * abouti, une section « Affichage » avec deux curseurs bruts, et la carte
+   * ajoutée par ce module — soit deux endroits pour régler la même chose.
+   *
+   * Après : un bloc unique, avec un aperçu du téléphone aux proportions
+   * réelles, des incréments au pas des molettes, trois formats prêts à
+   * l'emploi et la détection automatique.
+   * ---------------------------------------------------------------- */
+
+  function forcerThemeSombre() {
+    try {
+      if (typeof SETTINGS !== "undefined" && SETTINGS && SETTINGS.theme === "light") {
+        SETTINGS.theme = "dark";
+        if (typeof saveSettings === "function") saveSettings();
+      }
+      var root = document.documentElement;
+      if (root) root.classList.remove("theme-light");
+    } catch (e) {}
+  }
+
+  // Retire la section « Apparence » (titre + choix de thème).
+  function retirerApparence(host) {
+    var enfants = Array.prototype.slice.call(host.children);
+    for (var i = 0; i < enfants.length; i++) {
+      var el = enfants[i];
+      if (el.querySelector && el.querySelector('[onclick*="theme"]')) {
+        var titre = enfants[i - 1];
+        if (titre && /apparence/i.test(titre.textContent || "")) titre.style.display = "none";
+        el.style.display = "none";
+        return;
+      }
+    }
+  }
+
+  function ligneReglage(label, valeur, unite, moins, plus) {
+    return '' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;' +
+      'padding:9px 0;border-top:1px solid rgba(255,255,255,.05)">' +
+        '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--dim,#6b6b78);' +
+        'letter-spacing:.12em;text-transform:uppercase">' + label + '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<button type="button" data-act="' + moins + '" style="' + styleStepper() + '">−</button>' +
+          '<div style="min-width:64px;text-align:center;font-family:var(--font-display);font-size:15px;' +
+          'font-weight:900;color:var(--white,#fff)">' + valeur + '<span style="font-size:9px;color:var(--dim,#6b6b78);' +
+          'margin-left:3px">' + unite + '</span></div>' +
+          '<button type="button" data-act="' + plus + '" style="' + styleStepper() + '">+</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function styleStepper() {
+    return "width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.05);" +
+           "border:1px solid var(--border-hi);color:var(--text);font-size:17px;line-height:1;" +
+           "cursor:pointer;touch-action:manipulation;-webkit-appearance:none;appearance:none;" +
+           "display:flex;align-items:center;justify-content:center;font-weight:700;";
+  }
+
+  function stylePreset(actif) {
+    return "flex:1;padding:9px 4px;border-radius:9px;cursor:pointer;touch-action:manipulation;" +
+           "-webkit-appearance:none;appearance:none;font-family:var(--font-display);font-size:9.5px;" +
+           "font-weight:800;letter-spacing:.06em;text-transform:uppercase;" +
+           (actif
+             ? "background:rgba(0,212,255,.14);border:1.5px solid var(--teal,#00D4FF);color:var(--teal,#00D4FF);"
+             : "background:rgba(255,255,255,.04);border:1.5px solid var(--border-hi);color:var(--text2);");
+  }
+
+  // Aperçu : une silhouette de téléphone aux proportions réglées.
+  function apercuHTML(w, h) {
+    var maxH = 104;
+    var ratio = w / h;
+    var ph = maxH, pw = Math.round(maxH * ratio);
+    var vp = viewport();
+    var deborde = (w > vp.w + 1);
+    var col = deborde ? "#F59E0B" : "var(--teal,#00D4FF)";
+    return '' +
+      '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px">' +
+        '<div style="width:' + pw + 'px;height:' + ph + 'px;border-radius:9px;border:1.5px solid ' + col + ';' +
+        'background:linear-gradient(180deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%);' +
+        'padding:5px 4px;display:flex;flex-direction:column;gap:3px;box-sizing:border-box">' +
+          '<div style="height:7px;border-radius:2px;background:' + col + '55"></div>' +
+          '<div style="flex:1;border-radius:3px;background:rgba(255,255,255,.05)"></div>' +
+          '<div style="height:9px;border-radius:2px;background:rgba(255,255,255,.10)"></div>' +
+        '</div>' +
+        '<div style="font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.1em;' +
+        'text-transform:uppercase;color:' + (deborde ? "#F59E0B" : "var(--dim,#6b6b78)") + '">' +
+        (deborde ? "dépasse l'écran" : "aperçu") + '</div>' +
+      '</div>';
+  }
+
+  var PRESETS = [
+    { id: "compact", nom: "Compact", w: 360, h: 760 },
+    { id: "standard", nom: "Standard", w: 400, h: 860 },
+    { id: "large", nom: "Large", w: 440, h: 940 }
+  ];
+
+  function blocHTML() {
+    var b = bounds();
+    var w = (SETTINGS && SETTINGS.appWidth) || b.width.default;
+    var h = (SETTINGS && SETTINGS.appHeight) || b.height.default;
+    var vp = viewport();
+    var auto = !!(SETTINGS && SETTINGS.appAutoSize);
+
+    var presets = PRESETS.map(function (p) {
+      var actif = (Math.abs(p.w - w) <= 10 && Math.abs(p.h - h) <= 20);
+      return '<button type="button" data-act="preset:' + p.id + '" style="' + stylePreset(actif) + '">' + p.nom + '</button>';
+    }).join("");
+
+    return '' +
+      '<div id="rj60-bloc" style="margin:10px 14px;padding:14px;border-radius:var(--r,10px);' +
+      'background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 100%);border:1px solid var(--border-hi)">' +
+
+        '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
+        'letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Zone de jeu</div>' +
+
+        '<div style="display:flex;align-items:center;gap:14px">' +
+          apercuHTML(w, h) +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:11.5px;color:var(--text2);line-height:1.45;margin-bottom:2px">' +
+            'Écran détecté <strong style="color:var(--text)">' + vp.w + ' × ' + vp.h + '</strong></div>' +
+            ligneReglage("Largeur", w, "px", "w-", "w+") +
+            ligneReglage("Hauteur", h, "px", "h-", "h+") +
+          '</div>' +
+        '</div>' +
+
+        '<div style="display:flex;gap:6px;margin-top:12px">' + presets + '</div>' +
+
+        '<button type="button" data-act="auto" style="width:100%;margin-top:8px;padding:12px;border-radius:10px;' +
+        'cursor:pointer;touch-action:manipulation;-webkit-appearance:none;appearance:none;' +
+        'background:rgba(0,212,255,.10);border:2px solid var(--teal,#00D4FF);color:var(--teal,#00D4FF);' +
+        'font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.08em;' +
+        'text-transform:uppercase">Ajuster à mon écran</button>' +
+
+        '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px;' +
+        'color:var(--text2);cursor:pointer">' +
+          '<input type="checkbox" data-act="autotoggle"' + (auto ? " checked" : "") + '>' +
+          'Réajuster automatiquement (rotation, changement d\'écran)' +
+        '</label>' +
+      '</div>';
+  }
+
+  function appliquer(w, h) {
+    var b = bounds();
+    if (typeof SETTINGS === "undefined" || !SETTINGS) return;
+    SETTINGS.appWidth = Math.max(b.width.min, Math.min(b.width.max, w));
+    SETTINGS.appHeight = Math.max(b.height.min, Math.min(b.height.max, h));
+    try { if (typeof saveSettings === "function") saveSettings(); } catch (e) {}
+    try { if (typeof applyAppSize === "function") applyAppSize(); } catch (e) {}
+    majBloc();
+  }
+
+  function majBloc() {
+    var anc = document.getElementById("rj60-bloc");
+    if (!anc || !anc.parentNode) return;
+    var tmp = document.createElement("div");
+    tmp.innerHTML = blocHTML();
+    var neuf = tmp.firstChild;
+    anc.parentNode.replaceChild(neuf, anc);
+    brancher(neuf);
+  }
+
+  function brancher(bloc) {
+    if (!bloc) return;
+    var b = bounds();
+    bloc.addEventListener("click", function (ev) {
+      var el = ev.target;
+      while (el && el !== bloc && !el.getAttribute("data-act")) el = el.parentElement;
+      if (!el || el === bloc) return;
+      var act = el.getAttribute("data-act");
+      var w = (SETTINGS && SETTINGS.appWidth) || b.width.default;
+      var h = (SETTINGS && SETTINGS.appHeight) || b.height.default;
+      if (act === "w-") appliquer(w - b.width.step, h);
+      else if (act === "w+") appliquer(w + b.width.step, h);
+      else if (act === "h-") appliquer(w, h - b.height.step);
+      else if (act === "h+") appliquer(w, h + b.height.step);
+      else if (act === "auto") { applyDetected(true); majBloc(); }
+      else if (act === "autotoggle") {
+        SETTINGS.appAutoSize = !!el.checked;
+        try { if (typeof saveSettings === "function") saveSettings(); } catch (e) {}
+        if (el.checked) { applyDetected(true); majBloc(); }
+      } else if (act.indexOf("preset:") === 0) {
+        var id = act.split(":")[1];
+        for (var i = 0; i < PRESETS.length; i++) {
+          if (PRESETS[i].id === id) { appliquer(PRESETS[i].w, PRESETS[i].h); break; }
+        }
+      }
+    });
+  }
+
   function injectSettingsCard() {
     var host = document.getElementById("settings-container");
-    if (!host || document.getElementById("rj60-settings-card")) return;
-    var card = document.createElement("div");
-    card.id = "rj60-settings-card";
-    card.style.cssText =
-      "margin:10px 14px;padding:14px;border-radius:var(--r,10px);" +
-      "background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 100%);" +
-      "border:1px solid var(--border-hi);";
-    var vp = viewport(), d = detect();
-    card.innerHTML =
-      '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
-      'letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px">Taille d\'écran</div>' +
-      '<div style="font-size:12px;color:var(--text2);line-height:1.5">Écran détecté : <strong style="color:var(--text)">' +
-      vp.w + ' × ' + vp.h + '</strong> · zone conseillée : <strong style="color:var(--text)">' +
-      d.width + ' × ' + d.height + '</strong></div>';
-    var btn = makeButton("Ajuster automatiquement", function () {
-      var r = applyDetected(true);
-      if (r) feedback(btn, r);
-    });
-    card.appendChild(btn);
-    var lbl = document.createElement("label");
-    lbl.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text2);cursor:pointer";
-    var cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = !!(typeof SETTINGS !== "undefined" && SETTINGS && SETTINGS.appAutoSize);
-    cb.addEventListener("change", function () {
-      if (typeof SETTINGS === "undefined" || !SETTINGS) return;
-      SETTINGS.appAutoSize = !!cb.checked;
-      try { if (typeof saveSettings === "function") saveSettings(); } catch (e) {}
-      if (cb.checked) applyDetected(true);
-    });
-    lbl.appendChild(cb);
-    lbl.appendChild(document.createTextNode("Garder l'ajustement automatique (rotation, changement d'écran)"));
-    card.appendChild(lbl);
-    host.insertBefore(card, host.firstChild);
+    if (!host || document.getElementById("rj60-bloc")) return;
+
+    forcerThemeSombre();
+    retirerApparence(host);
+
+    // La section « Affichage » d'origine (deux curseurs) est remplacée.
+    var cible = null, titre = null;
+    var enfants = Array.prototype.slice.call(host.children);
+    for (var i = 0; i < enfants.length; i++) {
+      if (enfants[i].querySelector && enfants[i].querySelector('input[type="range"]')) {
+        cible = enfants[i];
+        if (enfants[i - 1] && /affichage/i.test(enfants[i - 1].textContent || "")) titre = enfants[i - 1];
+        break;
+      }
+    }
+
+    var tmp = document.createElement("div");
+    tmp.innerHTML = blocHTML();
+    var bloc = tmp.firstChild;
+
+    if (cible) {
+      if (titre) titre.style.display = "none";
+      cible.parentNode.replaceChild(bloc, cible);
+    } else {
+      host.insertBefore(bloc, host.firstChild);
+    }
+    brancher(bloc);
   }
 
   /* --------------------------------------- 3. suivi rotation / redimension */
