@@ -408,6 +408,7 @@
     Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
     console.log("[63-team-identity] désinstallé");
   };
+  window._rj63Apply = appliquerTout;   // utilisé après restauration d'une sauvegarde
   window._rj63Logos = function () { return IDS.slice(); };
   window._rj63GenLogo = genLogo;
 })();
