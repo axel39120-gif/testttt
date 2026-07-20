@@ -1127,16 +1127,21 @@
     var sc = scr.querySelector('.scroll');
     if (sc) sc.style.paddingBottom = '110px';
 
-    // projection de performance, en tête d'écran
+    // Niveau de l'écurie : rangé avec les conditions du contrat, en bas du bloc.
     try {
       var idxOffre = (typeof NEG_IDX !== 'undefined') ? NEG_IDX : -1;
       var equipe = (idxOffre >= 0 && G.offers && G.offers[idxOffre]) ? G.offers[idxOffre].team : null;
       var hote = document.getElementById('neg-summary');
-      if (equipe && hote && !document.getElementById('rj-neg-projection')) {
-        var d = document.createElement('div');
-        d.id = 'rj-neg-projection';
-        d.innerHTML = blocProjection(equipe);
-        if (hote.parentNode) hote.parentNode.insertBefore(d, hote);
+      if (equipe && hote && !hote.querySelector('#rj-neg-projection')) {
+        var html = blocProjection(equipe);
+        if (html) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = html;
+          // on vise la carte des conditions plutôt que le conteneur nu
+          var carte = hote.lastElementChild && hote.lastElementChild.children.length
+            ? hote.lastElementChild : hote;
+          carte.appendChild(tmp.firstChild);
+        }
       }
     } catch (e) {}
 
@@ -1300,25 +1305,23 @@
     var col = p.median <= Math.ceil(p.total * 0.3) ? "#34D399"
             : p.median <= Math.ceil(p.total * 0.6) ? "#F59E0B" : "#EF4444";
     var fourchette = (p.bas === p.haut) ? (p.bas + "ᵉ") : (p.bas + "ᵉ à " + p.haut + "ᵉ");
-    return '' +
-      '<div style="margin-bottom:10px;padding:12px;border-radius:var(--r,10px);' +
-      'background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 100%);border:1px solid var(--border-hi)">' +
-        '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
-        'letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Ce que vaut l\'écurie</div>' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
-          '<div><div style="font-size:11px;color:var(--text3)">Cette saison</div>' +
-          '<div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:var(--white,#fff)">' +
-          p.rangActuel + 'ᵉ<span style="font-size:11px;color:var(--text3);font-weight:600"> sur ' + p.total + '</span></div>' +
-          '<div style="font-size:10px;color:var(--text3);margin-top:1px">note ' + p.note + '</div></div>' +
-          '<div style="width:1px;align-self:stretch;background:var(--border)"></div>' +
-          '<div style="text-align:right"><div style="font-size:11px;color:var(--text3)">La saison prochaine</div>' +
-          '<div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:' + col + '">' + fourchette + '</div>' +
-          '<div style="font-size:10px;color:var(--text3);margin-top:1px">estimation</div></div>' +
-        '</div>' +
-        (p.reglement
-          ? '<div style="margin-top:9px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:#F59E0B;line-height:1.4">'
-            + 'Un changement de réglementation est possible : la hiérarchie peut être entièrement rebattue.</div>'
-          : '') +
+    // Présentation alignée sur les lignes du contrat (apport, salaire, durée…),
+    // en bas du bloc et séparée par un filet.
+    function ligne(libelle, valeur, couleur) {
+      return '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:3px 0">' +
+        '<span style="font-size:11px;color:var(--text3)">' + libelle + '</span>' +
+        '<span style="font-family:var(--font-display);font-size:12.5px;font-weight:800;color:' +
+        (couleur || "var(--text)") + '">' + valeur + '</span></div>';
+    }
+    return '<div id="rj-neg-projection" style="margin-top:10px;padding-top:9px;border-top:1px solid var(--border-hi)">' +
+      '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
+      'letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px">Niveau de l\'écurie</div>' +
+      ligne("Classement cette saison", p.rangActuel + "ᵉ sur " + p.total + " · note " + p.note) +
+      ligne("Estimation saison prochaine", fourchette, col) +
+      (p.reglement
+        ? '<div style="font-size:10.5px;color:#F59E0B;line-height:1.4;margin-top:5px">' +
+          'Changement de réglementation possible : la hiérarchie peut être rebattue.</div>'
+        : '') +
       '</div>';
   }
 
@@ -1337,6 +1340,11 @@
         // badge de coût : uniquement un nombre, éventuellement signé
         if (els[j].children.length === 0 && /^[−+-]?\d{1,3}$/.test(t)) {
           els[j].style.display = "none";
+        }
+        // la bande de couleur annonçait elle aussi la difficulté : on la
+        // rend neutre pour ne plus dévoiler l'effet à l'avance
+        if (els[j].className && String(els[j].className).indexOf("neg-action-stripe") >= 0) {
+          els[j].style.background = "var(--border-hi)";
         }
       }
     }
