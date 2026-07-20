@@ -205,6 +205,138 @@
     }
   };
 
+
+  /* ------------------------------------------------- emblèmes purs -----
+   * Beaucoup de marques automobiles se passent d'initiales : un losange,
+   * des chevrons, un anneau suffisent à identifier la marque. Cette
+   * seconde famille suit ce principe — formes symétriques, jeux de plein
+   * et de vide, dégradés discrets pour donner du relief. Aucune n'imite
+   * une marque existante : ce sont des compositions inventées.
+   * ------------------------------------------------------------------ */
+
+  var _gradN = 0;
+  function grad(C, L) {
+    var id = "rjg" + (++_gradN);
+    return {
+      id: id,
+      def: '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
+           '<stop offset="0%" stop-color="' + L + '"/><stop offset="100%" stop-color="' + C + '"/>' +
+           '</linearGradient></defs>'
+    };
+  }
+
+  var EMBLEMES = {
+    losange_creux: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<path d="M20 3 L35 20 L20 37 L5 20z" fill="none" stroke="url(#' + g.id + ')" stroke-width="3"/>' +
+        '<path d="M20 11 L28 20 L20 29 L12 20z" fill="url(#' + g.id + ')"/>';
+    },
+    losange_barre: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<path d="M20 4 L34 20 L20 36 L6 20z" fill="' + D + '" stroke="' + C + '" stroke-width="2"/>' +
+        '<path d="M8 20 h24" stroke="url(#' + g.id + ')" stroke-width="3.4"/>' +
+        '<path d="M20 8 v24" stroke="' + C + '" stroke-width="1.4" opacity=".5"/>';
+    },
+    triple_chevron: function (C, D, L) {
+      return '<path d="M9 15 L20 6 L31 15 L20 11z" fill="' + L + '"/>' +
+             '<path d="M9 24 L20 15 L31 24 L20 20z" fill="' + C + '"/>' +
+             '<path d="M9 33 L20 24 L31 33 L20 29z" fill="' + D + '" stroke="' + C + '" stroke-width=".8"/>';
+    },
+    chevrons_inverses: function (C, D, L) {
+      return '<path d="M8 12 L20 22 L32 12 L32 18 L20 28 L8 18z" fill="' + C + '"/>' +
+             '<path d="M8 24 L20 34 L32 24 L32 28 L20 38 L8 28z" fill="' + L + '" opacity=".55"/>';
+    },
+    anneaux_lies: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<circle cx="15" cy="20" r="10" fill="none" stroke="url(#' + g.id + ')" stroke-width="2.8"/>' +
+        '<circle cx="25" cy="20" r="10" fill="none" stroke="' + C + '" stroke-width="2.8" opacity=".75"/>';
+    },
+    orbite: function (C, D, L) {
+      return '<ellipse cx="20" cy="20" rx="16" ry="7" fill="none" stroke="' + C + '" stroke-width="2.2" transform="rotate(-28 20 20)"/>' +
+             '<ellipse cx="20" cy="20" rx="16" ry="7" fill="none" stroke="' + L + '" stroke-width="2.2" opacity=".6" transform="rotate(28 20 20)"/>' +
+             '<circle cx="20" cy="20" r="4.4" fill="' + C + '"/>';
+    },
+    aile_abstraite: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<path d="M4 24 C12 14 24 12 36 14 C28 20 18 24 4 24z" fill="url(#' + g.id + ')"/>' +
+        '<path d="M8 30 C16 22 26 20 34 21 C27 26 19 30 8 30z" fill="' + C + '" opacity=".5"/>';
+    },
+    fleche_orbitale: function (C, D, L) {
+      return '<circle cx="20" cy="20" r="15" fill="none" stroke="' + C + '" stroke-width="2.2" opacity=".55"/>' +
+             '<path d="M20 6 L28 20 L20 16 L12 20z" fill="' + C + '"/>' +
+             '<path d="M20 34 L12 20 L20 24 L28 20z" fill="' + L + '" opacity=".8"/>';
+    },
+    triangles_croises: function (C, D, L) {
+      return '<path d="M20 5 L34 29 H6z" fill="none" stroke="' + C + '" stroke-width="2.4"/>' +
+             '<path d="M20 35 L6 11 h28z" fill="none" stroke="' + L + '" stroke-width="2.4" opacity=".7"/>' +
+             '<circle cx="20" cy="20" r="3.4" fill="' + C + '"/>';
+    },
+    noeud_hexa: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<path d="M20 4 L33 12 v16 L20 36 L7 28 V12z" fill="none" stroke="url(#' + g.id + ')" stroke-width="2.6"/>' +
+        '<path d="M20 12 L27 16 v8 L20 28 L13 24 v-8z" fill="' + C + '" opacity=".55"/>' +
+        '<path d="M13 16 L27 24 M27 16 L13 24" stroke="' + C + '" stroke-width="1.4" opacity=".45"/>';
+    },
+    arcs_concentriques: function (C, D, L) {
+      return '<path d="M8 26 A14 14 0 0 1 32 26" fill="none" stroke="' + C + '" stroke-width="3"/>' +
+             '<path d="M12 28 A10 10 0 0 1 28 28" fill="none" stroke="' + L + '" stroke-width="2.6" opacity=".8"/>' +
+             '<path d="M16 30 A6 6 0 0 1 24 30" fill="none" stroke="' + C + '" stroke-width="2.2" opacity=".6"/>';
+    },
+    vortex: function (C, D, L) {
+      return '<path d="M20 6 C30 8 34 18 30 26 C27 32 19 34 14 30 C10 27 10 21 14 19 C18 17 22 20 21 24" ' +
+             'fill="none" stroke="' + C + '" stroke-width="2.8" stroke-linecap="round"/>' +
+             '<circle cx="20" cy="26" r="2.6" fill="' + L + '"/>';
+    },
+    lances: function (C, D, L) {
+      return '<path d="M12 6 L28 34" stroke="' + C + '" stroke-width="3" stroke-linecap="round"/>' +
+             '<path d="M28 6 L12 34" stroke="' + L + '" stroke-width="3" stroke-linecap="round" opacity=".75"/>' +
+             '<circle cx="20" cy="20" r="7" fill="#0d0d12" stroke="' + C + '" stroke-width="2"/>';
+    },
+    cocarde: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<circle cx="20" cy="20" r="15" fill="' + D + '" stroke="' + C + '" stroke-width="1.6"/>' +
+        '<path d="M5 20 a15 15 0 0 1 30 0z" fill="url(#' + g.id + ')"/>' +
+        '<circle cx="20" cy="20" r="5" fill="#0d0d12" stroke="' + C + '" stroke-width="1.6"/>';
+    },
+    sommets: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<path d="M4 32 L14 14 L20 24 L26 10 L36 32z" fill="url(#' + g.id + ')"/>' +
+        '<path d="M14 14 L18 21 h-8z" fill="#0d0d12" opacity=".6"/>';
+    },
+    carres_entrelaces: function (C, D, L) {
+      return '<rect x="8" y="8" width="16" height="16" fill="none" stroke="' + C + '" stroke-width="2.6"/>' +
+             '<rect x="16" y="16" width="16" height="16" fill="none" stroke="' + L + '" stroke-width="2.6" opacity=".8"/>' +
+             '<rect x="16" y="16" width="8" height="8" fill="' + C + '" opacity=".55"/>';
+    },
+    goutte_double: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<path d="M20 4 C26 13 30 18 30 23 a10 10 0 0 1-20 0 c0-5 4-10 10-19z" fill="url(#' + g.id + ')"/>' +
+        '<path d="M20 15 C23 20 25 22 25 24 a5 5 0 0 1-10 0 c0-2 2-4 5-9z" fill="#0d0d12" opacity=".55"/>';
+    },
+    horizon: function (C, D, L) {
+      var g = grad(C, L);
+      return g.def +
+        '<circle cx="20" cy="20" r="15" fill="none" stroke="' + C + '" stroke-width="2.2"/>' +
+        '<path d="M6 22 a14 14 0 0 0 28 0z" fill="url(#' + g.id + ')" opacity=".85"/>' +
+        '<path d="M6 22 h28" stroke="' + L + '" stroke-width="1.8"/>';
+    }
+  };
+
+  // Les emblèmes ne reçoivent pas de monogramme : signature à 3 arguments.
+  Object.keys(EMBLEMES).forEach(function (k) {
+    var f = EMBLEMES[k];
+    MODELES[k] = function (C, D, L) { return f(C, D, L); };
+  });
+  var IDS_EMBLEMES = Object.keys(EMBLEMES);
+
   var IDS = Object.keys(MODELES);
 
   function genLogo(id, couleur, taille, nom) {
@@ -313,14 +445,25 @@
     window._rjTeamCloseLogos();
     var st = styleDe(team) || {};
     var C = st.color || "#FF1801";
-    var choix = IDS.map(function (id) {
-      var actif = (id === st.logo);
-      return '<button type="button" onclick="_rjTeamSetLogo(\'' + id + '\')" style="' +
-        'padding:6px;border-radius:10px;cursor:pointer;line-height:0;' +
-        'background:' + (actif ? "rgba(255,255,255,.07)" : "transparent") + ';' +
-        'border:' + (actif ? "2px solid " + C : "1px solid var(--border)") + ';">' +
-        genLogo(id, C, 46, team) + '</button>';
-    }).join("");
+    function vignettes(liste) {
+      return liste.map(function (id) {
+        var actif = (id === st.logo);
+        return '<button type="button" onclick="_rjTeamSetLogo(\'' + id + '\')" style="' +
+          'padding:6px;border-radius:10px;cursor:pointer;line-height:0;' +
+          'background:' + (actif ? "rgba(255,255,255,.07)" : "transparent") + ';' +
+          'border:' + (actif ? "2px solid " + C : "1px solid var(--border)") + ';">' +
+          genLogo(id, C, 46, team) + '</button>';
+      }).join("");
+    }
+    var blasons = IDS.filter(function (id) { return IDS_EMBLEMES.indexOf(id) < 0; });
+    var titre = function (t) {
+      return '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
+             'letter-spacing:.14em;text-transform:uppercase;margin:12px 0 7px">' + t + '</div>';
+    };
+    var choix = titre("Emblèmes") +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(IDS_EMBLEMES) + '</div>' +
+      titre("Blasons à monogramme") +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(blasons) + '</div>';
 
     var ov = document.createElement("div");
     ov.id = "rj-logo-modal";
@@ -335,9 +478,9 @@
           '<button type="button" onclick="_rjTeamCloseLogos()" style="background:none;border:none;' +
           'color:var(--text3);font-size:20px;cursor:pointer;line-height:1">×</button>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + choix + '</div>' +
+        choix +
         '<div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.45">' +
-        'Les ' + IDS.length + ' modèles reprennent la couleur principale de l\'écurie.</div>' +
+        'Les ' + IDS.length + ' modèles se teintent à la couleur de l\'écurie. Les emblèmes se passent d\'initiales.</div>' +
       '</div>';
     ov.addEventListener("click", function (e) { if (e.target === ov) window._rjTeamCloseLogos(); });
     document.body.appendChild(ov);
