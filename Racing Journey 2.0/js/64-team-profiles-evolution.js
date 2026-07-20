@@ -175,7 +175,12 @@
    * les modules ajoutent (couleurs et logos d'écurie, profils techniques,
    * journal anti-répétition de la messagerie) était perdu au rechargement.
    * On complète donc l'écriture et la lecture de la sauvegarde. */
-  var CHAMPS_SUP = ["_rjTeamStyle", "_rjProfiles", "_rjProfilesSaison", "_rjMailLog"];
+  var CHAMPS_SUP = ["_rjTeamStyle", "_rjProfiles", "_rjProfilesSaison", "_rjMailLog", "_rjSocial"];
+  // Les autres modules peuvent déclarer leurs propres champs à sauvegarder.
+  window._rj64Champs = function (nom) {
+    if (nom && CHAMPS_SUP.indexOf(nom) < 0) CHAMPS_SUP.push(nom);
+    return CHAMPS_SUP.slice();
+  };
 
   function cleSlot(slot) {
     try {
