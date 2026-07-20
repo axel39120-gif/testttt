@@ -1011,6 +1011,7 @@
   // mesure fiable de « la négociation avance dans le bon sens ».
   var CONCESSIONS_ACCORD = 5;   // nb de succès pour que les mains se rejoignent
   function progres() {
+    if (typeof accordForce === "number") return accordForce;
     try {
       if (typeof NEG_STATE === 'undefined' || !NEG_STATE || !NEG_STATE.history) return 0;
       var ok = 0;
@@ -1126,6 +1127,21 @@
     var sc = scr.querySelector('.scroll');
     if (sc) sc.style.paddingBottom = '110px';
 
+    // projection de performance, en tête d'écran
+    try {
+      var idxOffre = (typeof NEG_IDX !== 'undefined') ? NEG_IDX : -1;
+      var equipe = (idxOffre >= 0 && G.offers && G.offers[idxOffre]) ? G.offers[idxOffre].team : null;
+      var hote = document.getElementById('neg-summary');
+      if (equipe && hote && !document.getElementById('rj-neg-projection')) {
+        var d = document.createElement('div');
+        d.id = 'rj-neg-projection';
+        d.innerHTML = blocProjection(equipe);
+        if (hote.parentNode) hote.parentNode.insertBefore(d, hote);
+      }
+    } catch (e) {}
+
+    try { masquerCouts(scr); } catch (e) {}
+
     // 5. patience → poignée de main
     var sum = document.getElementById('neg-summary');
     var bar = document.getElementById('neg-round-bar');
@@ -1210,7 +1226,165 @@
     cleanMoney(scr);
   }
 
+
+  /* ============================================================ SECTION E
+   * Négociation : projection de performance, badges de coût retirés,
+   * poignée de main conclue à la signature.
+   * ================================================================== */
+
+  /* --- 1. Projection : où l'écurie devrait se situer la saison prochaine ---
+   * On rejoue la formule d'évolution du moteur (pression à la baisse au-dessus
+   * de 85, coup de pouce sous 70, aléa de ±8, plus le risque de changement de
+   * règlement) sur 400 tirages, et on en tire une fourchette de classement.
+   * Volontairement imprécis : c'est un ordre d'idée, pas une prédiction. */
+  function projectionEcurie(team) {
+    try {
+      if (!team || typeof TEAMS_BY_CAT === "undefined") return null;
+      var cat = (typeof G !== "undefined" && G.cat) || "";
+      var liste = TEAMS_BY_CAT[cat];
+      if (!liste || liste.indexOf(team) < 0) return null;
+      var saison = (G.saison || 1);
+      // Les notes de la saison sont créées à la demande : on passe par
+      // getTeamRatings() plutôt que de lire la table directement.
+      var notes = null;
+      try {
+        if (typeof TEAM_RATINGS !== "undefined") notes = TEAM_RATINGS[cat + "_" + saison];
+        if (!notes && typeof getTeamRatings === "function") notes = getTeamRatings();
+        if (!notes && typeof initTeamRatings === "function") {
+          initTeamRatings(cat, saison);
+          notes = TEAM_RATINGS[cat + "_" + saison];
+        }
+      } catch (e) {}
+      if (!notes) return null;
+
+      // classement actuel
+      var actuel = liste.slice().sort(function (a, b) { return (notes[b] || 0) - (notes[a] || 0); });
+      var rangActuel = actuel.indexOf(team) + 1;
+
+      // risque de changement de règlement pour la saison suivante
+      var risqueReglement = 0;
+      try {
+        if (typeof REGULATION_YEAR !== "undefined" && (saison + 1) - REGULATION_YEAR >= 5) risqueReglement = 0.25;
+      } catch (e) {}
+
+      var TIRAGES = 400, rangs = [];
+      for (var k = 0; k < TIRAGES; k++) {
+        var reset = Math.random() < risqueReglement;
+        var futur = {};
+        liste.forEach(function (t) {
+          var n = notes[t] || 70;
+          if (reset) {
+            futur[t] = Math.min(98, Math.max(60, 60 + 38 * Math.random() + (n >= 85 ? 4 : 0)));
+          } else {
+            var a = n > 85 ? -1 : n < 70 ? 1 : 0;
+            var o = 14 * (Math.random() - 0.5) + a;
+            o = Math.max(-8, Math.min(8, o));
+            futur[t] = Math.min(98, Math.max(58, n + o));
+          }
+        });
+        var ordre = liste.slice().sort(function (a, b) { return futur[b] - futur[a]; });
+        rangs.push(ordre.indexOf(team) + 1);
+      }
+      rangs.sort(function (a, b) { return a - b; });
+      var q = function (p) { return rangs[Math.min(rangs.length - 1, Math.floor(rangs.length * p))]; };
+      return {
+        rangActuel: rangActuel, total: liste.length, note: Math.round(notes[team] || 0),
+        bas: q(0.2), haut: q(0.8), median: q(0.5), reglement: risqueReglement > 0
+      };
+    } catch (e) { return null; }
+  }
+
+  function blocProjection(team) {
+    var p = projectionEcurie(team);
+    if (!p) return "";
+    var col = p.median <= Math.ceil(p.total * 0.3) ? "#34D399"
+            : p.median <= Math.ceil(p.total * 0.6) ? "#F59E0B" : "#EF4444";
+    var fourchette = (p.bas === p.haut) ? (p.bas + "ᵉ") : (p.bas + "ᵉ à " + p.haut + "ᵉ");
+    return '' +
+      '<div style="margin-bottom:10px;padding:12px;border-radius:var(--r,10px);' +
+      'background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 100%);border:1px solid var(--border-hi)">' +
+        '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
+        'letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Ce que vaut l\'écurie</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
+          '<div><div style="font-size:11px;color:var(--text3)">Cette saison</div>' +
+          '<div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:var(--white,#fff)">' +
+          p.rangActuel + 'ᵉ<span style="font-size:11px;color:var(--text3);font-weight:600"> sur ' + p.total + '</span></div>' +
+          '<div style="font-size:10px;color:var(--text3);margin-top:1px">note ' + p.note + '</div></div>' +
+          '<div style="width:1px;align-self:stretch;background:var(--border)"></div>' +
+          '<div style="text-align:right"><div style="font-size:11px;color:var(--text3)">La saison prochaine</div>' +
+          '<div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:' + col + '">' + fourchette + '</div>' +
+          '<div style="font-size:10px;color:var(--text3);margin-top:1px">estimation</div></div>' +
+        '</div>' +
+        (p.reglement
+          ? '<div style="margin-top:9px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:#F59E0B;line-height:1.4">'
+            + 'Un changement de réglementation est possible : la hiérarchie peut être entièrement rebattue.</div>'
+          : '') +
+      '</div>';
+  }
+
+  /* --- 2. Retrait des badges de coût sur les options --------------------- */
+  function masquerCouts(scr) {
+    var opts = scr.querySelector("#neg-options");
+    if (!opts) return;
+    var boutons = opts.querySelectorAll('[onclick*="negDoAction"]');
+    for (var i = 0; i < boutons.length; i++) {
+      var b = boutons[i];
+      if (b.getAttribute("data-rj-cout")) continue;
+      b.setAttribute("data-rj-cout", "1");
+      var els = b.querySelectorAll("div,span");
+      for (var j = 0; j < els.length; j++) {
+        var t = (els[j].textContent || "").trim();
+        // badge de coût : uniquement un nombre, éventuellement signé
+        if (els[j].children.length === 0 && /^[−+-]?\d{1,3}$/.test(t)) {
+          els[j].style.display = "none";
+        }
+      }
+    }
+  }
+
+  /* --- 3. Poignée de main conclue à la signature ------------------------- */
+  var accordForce = null;   // null = progression normale, sinon valeur 0..1
+
+  function animerAccord(fin) {
+    var debut = progres();
+    var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    var duree = 620;
+    function frame() {
+      var t = ((window.performance && performance.now) ? performance.now() : Date.now()) - t0;
+      var k = Math.max(0, Math.min(1, t / duree));
+      // départ rapide puis ralentissement, comme une main qui se pose
+      var e = 1 - Math.pow(1 - k, 3);
+      accordForce = debut + (1 - debut) * e;
+      try { enhanceNeg(); } catch (err) {}
+      if (k < 1) requestAnimationFrame(frame);
+      else if (typeof fin === "function") fin();
+    }
+    requestAnimationFrame(frame);
+  }
+
   /* ------------------------------------------------------------- montage */
+  // La signature déclenche d'abord la poignée de main, puis l'action réelle.
+  function wrapSignature() {
+    if (typeof window.negDoAction !== 'function' || window.negDoAction._rjSign) return false;
+    var orig = window.negDoAction;
+    var fn = function (action) {
+      if (action === 'sign_now' && accordForce === null) {
+        var args = arguments, self = this;
+        animerAccord(function () {
+          // on laisse les mains jointes : accordForce n'est PAS remis à zéro
+          // ici, il le sera à la prochaine ouverture d'une négociation.
+          setTimeout(function () { orig.apply(self, args); }, 300);
+        });
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+    fn._rjSign = true;
+    wrapped.negDoAction = orig;
+    window.negDoAction = fn;
+    return true;
+  }
+
   function wrap(name, after) {
     if (typeof window[name] !== 'function' || window[name]._rjui) return false;
     var orig = window[name];
@@ -1245,10 +1419,12 @@
   function boot() {
     var a = wrap('renderOffers', enhanceOffers);
     var b = wrap('renderNegScreen', enhanceNeg);
+    wrapSignature();
     // instantané de l'offre à l'entrée en négociation (base des concessions)
     if (typeof window.negEnter === 'function' && !window.negEnter._rjui) {
       var orig = window.negEnter;
       var fn = function () {
+        accordForce = null;                     // nouvelle négociation : on repart à zéro
         var r = orig.apply(this, arguments);
         try { negSnapshot = offerNow(); setTimeout(enhanceNeg, 0); } catch (e) {}
         return r;
