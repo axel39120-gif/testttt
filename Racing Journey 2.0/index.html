@@ -88,88 +88,104 @@ window.addEventListener('error', function (e) {
   try {
     var c = e && e.target;
     if (c && c.tagName === 'SCRIPT' && c.src) {
-      window.__rjEchecs.push(String(c.src).split('/').pop());
+      var f = String(c.src).split('/').pop();
+      window.__rjEchecs.push(f);
+      console.error('[CHARGEMENT ÉCHOUÉ] ' + f);
     }
   } catch (err) {}
 }, true);
+/* Erreurs d'exécution : un module peut arriver mais planter. */
+window.__rjPlantages = [];
+window.addEventListener('error', function (e) {
+  try {
+    if (e && e.filename && /\/js\//.test(e.filename)) {
+      var f = String(e.filename).split('/').pop();
+      var l = f + ' ligne ' + e.lineno + ' : ' + (e.message || '');
+      if (window.__rjPlantages.indexOf(l) < 0) {
+        window.__rjPlantages.push(l);
+        console.error('[MODULE EN ERREUR] ' + l);
+      }
+    }
+  } catch (err) {}
+});
 </script>
-<script src="js/01-icons.js?v57"></script>
-<script src="js/02-ui-settings.js?v57"></script>
-<script src="js/03-data-agent.js?v57"></script>
-<script src="js/04-race-engine.js?v57"></script>
-<script src="js/04b-driver-state.js?v57" defer></script>
-<script src="js/04c-tyre-model.js?v57" defer></script>
-<script src="js/04d-lap-builder.js?v57" defer></script>
-<script src="js/04e-driver-ai.js?v57" defer></script>
-<script src="js/04f-track-life.js?v57" defer></script>
-<script src="js/04g-radio-emergent.js?v57" defer></script>
-<script src="js/04h-graphics-overlay.js?v57" defer></script>
-<script src="js/04i-category-tuning.js?v57" defer></script>
-<script src="js/04j-race-finalization-fix.js?v57" defer></script>
-<script src="js/04k-realism-overhaul.js?v57" defer></script>
-<script src="js/04l-engine-fixes.js?v57" defer></script>
-<script src="js/04m-safety-car.js?v57" defer></script>
-<script src="js/04n-rival-form.js?v57" defer></script>
-<script src="js/04o-driver-pool.js?v57" defer></script>
-<script src="js/04p-race-strategy.js?v57" defer></script>
-<script src="js/04q-polish-rebalance.js?v57" defer></script>
-<script src="js/04r-skill-rebalance.js?v57" defer></script>
-<script src="js/10-finance.js?v57" defer></script>
-<script src="js/11-neg-patch.js?v57" defer></script>
-<script src="js/05-progression.js?v57"></script>
-<script src="js/06-screens.js?v57"></script>
-<script src="js/07-user-fixes.js?v57"></script>
-<script src="js/08-radio-commentary.js?v57"></script>
-<script src="js/09-race-header.js?v57"></script>
-<script src="js/30-essais-consolidated.js?v57"></script>
-<script src="js/14-team-dynamics.js?v57"></script>
-<script src="js/15-rival-strategy.js?v57"></script>
-<script src="js/18-weekend-formats.js?v57"></script>
-<script src="js/20-weekend-races.js?v57"></script>
-<script src="js/24-weekend-calendar.js?v57"></script>
-<script src="js/29-media-consolidated.js?v57"></script>
-<script src="js/27-events-overhaul.js?v57" defer></script>
-<script src="js/28-polish-consolidated.js?v57" defer></script>
-<script src="js/31-auto-pit.js?v57" defer></script>
-<script src="js/32-story-arcs.js?v57" defer></script>
-<script src="js/33-pitwall-telemetry.js?v57" defer></script>
-<script src="js/34-progression-depth.js?v57" defer></script>
-<script src="js/35-wec-identity.js?v57" defer></script>
-<script src="js/36-indycar-identity.js?v57" defer></script>
-<script src="js/37-superformula-identity.js?v57" defer></script>
-<script src="js/38-training-rework.js?v57" defer></script>
-<script src="js/39-lifestyle-effects.js?v57" defer></script>
-<script src="js/40-setup-icons.js?v57" defer></script>
-<script src="js/41-header-safearea-fix.js?v57" defer></script>
-<script src="js/42-weekend-entry-fixes.js?v57" defer></script>
-<script src="js/43-realism-tuning.js?v57" defer></script>
-<script src="js/44-tyre-visuals.js?v57" defer></script>
-<script src="js/46-fp-qualif-shortcut.js?v57" defer></script>
-<script src="js/47-event-odds.js?v57" defer></script>
-<script src="js/49-race-speed.js?v57" defer></script>
-<script src="js/50-strategy-tap-fix.js?v57" defer></script>
-<script src="js/51-test-save-seed.js?v57" defer></script>
-<script src="js/52-circuits-realism.js?v57" defer></script>
-<script src="js/53-result-screen-fix.js?v57" defer></script>
-<script src="js/54-post-race-lock.js?v57" defer></script>
-<script src="js/55-race-balance.js?v57" defer></script>
-<script src="js/56-race-ux-tuning.js?v57"></script>
-<script src="js/57-emoji-to-icons.js?v57"></script>
-<script src="js/58-toast-scope.js?v57"></script>
-<script src="js/59-events-page-design.js?v57"></script>
-<script src="js/60-auto-screen-fit.js?v57" defer></script>
-<script src="js/61-more-drawer-fit.js?v57" defer></script>
-<script src="js/62-mail-overhaul.js?v57" defer></script>
-<script src="js/63-team-identity.js?v57" defer></script>
-<script src="js/64-team-profiles-evolution.js?v57" defer></script>
-<script src="js/65-manual.js?v57" defer></script>
-<script src="js/66-social.js?v57" defer></script>
-<script src="js/67-safearea-fix.js?v57" defer></script>
+<script src="js/01-icons.js?v59"></script>
+<script src="js/02-ui-settings.js?v59"></script>
+<script src="js/03-data-agent.js?v59"></script>
+<script src="js/04-race-engine.js?v59"></script>
+<script src="js/04b-driver-state.js?v59" defer></script>
+<script src="js/04c-tyre-model.js?v59" defer></script>
+<script src="js/04d-lap-builder.js?v59" defer></script>
+<script src="js/04e-driver-ai.js?v59" defer></script>
+<script src="js/04f-track-life.js?v59" defer></script>
+<script src="js/04g-radio-emergent.js?v59" defer></script>
+<script src="js/04h-graphics-overlay.js?v59" defer></script>
+<script src="js/04i-category-tuning.js?v59" defer></script>
+<script src="js/04j-race-finalization-fix.js?v59" defer></script>
+<script src="js/04k-realism-overhaul.js?v59" defer></script>
+<script src="js/04l-engine-fixes.js?v59" defer></script>
+<script src="js/04m-safety-car.js?v59" defer></script>
+<script src="js/04n-rival-form.js?v59" defer></script>
+<script src="js/04o-driver-pool.js?v59" defer></script>
+<script src="js/04p-race-strategy.js?v59" defer></script>
+<script src="js/04q-polish-rebalance.js?v59" defer></script>
+<script src="js/04r-skill-rebalance.js?v59" defer></script>
+<script src="js/10-finance.js?v59" defer></script>
+<script src="js/11-neg-patch.js?v59" defer></script>
+<script src="js/05-progression.js?v59"></script>
+<script src="js/06-screens.js?v59"></script>
+<script src="js/07-user-fixes.js?v59"></script>
+<script src="js/08-radio-commentary.js?v59"></script>
+<script src="js/09-race-header.js?v59"></script>
+<script src="js/30-essais-consolidated.js?v59"></script>
+<script src="js/14-team-dynamics.js?v59"></script>
+<script src="js/15-rival-strategy.js?v59"></script>
+<script src="js/18-weekend-formats.js?v59"></script>
+<script src="js/20-weekend-races.js?v59"></script>
+<script src="js/24-weekend-calendar.js?v59"></script>
+<script src="js/29-media-consolidated.js?v59"></script>
+<script src="js/27-events-overhaul.js?v59" defer></script>
+<script src="js/28-polish-consolidated.js?v59" defer></script>
+<script src="js/31-auto-pit.js?v59" defer></script>
+<script src="js/32-story-arcs.js?v59" defer></script>
+<script src="js/33-pitwall-telemetry.js?v59" defer></script>
+<script src="js/34-progression-depth.js?v59" defer></script>
+<script src="js/35-wec-identity.js?v59" defer></script>
+<script src="js/36-indycar-identity.js?v59" defer></script>
+<script src="js/37-superformula-identity.js?v59" defer></script>
+<script src="js/38-training-rework.js?v59" defer></script>
+<script src="js/39-lifestyle-effects.js?v59" defer></script>
+<script src="js/40-setup-icons.js?v59" defer></script>
+<script src="js/41-header-safearea-fix.js?v59" defer></script>
+<script src="js/42-weekend-entry-fixes.js?v59" defer></script>
+<script src="js/43-realism-tuning.js?v59" defer></script>
+<script src="js/44-tyre-visuals.js?v59" defer></script>
+<script src="js/46-fp-qualif-shortcut.js?v59" defer></script>
+<script src="js/47-event-odds.js?v59" defer></script>
+<script src="js/49-race-speed.js?v59" defer></script>
+<script src="js/50-strategy-tap-fix.js?v59" defer></script>
+<script src="js/51-test-save-seed.js?v59" defer></script>
+<script src="js/52-circuits-realism.js?v59" defer></script>
+<script src="js/53-result-screen-fix.js?v59" defer></script>
+<script src="js/54-post-race-lock.js?v59" defer></script>
+<script src="js/55-race-balance.js?v59" defer></script>
+<script src="js/56-race-ux-tuning.js?v59"></script>
+<script src="js/57-emoji-to-icons.js?v59"></script>
+<script src="js/58-toast-scope.js?v59"></script>
+<script src="js/59-events-page-design.js?v59"></script>
+<script src="js/60-auto-screen-fit.js?v59" defer></script>
+<script src="js/61-more-drawer-fit.js?v59" defer></script>
+<script src="js/62-mail-overhaul.js?v59" defer></script>
+<script src="js/63-team-identity.js?v59" defer></script>
+<script src="js/64-team-profiles-evolution.js?v59" defer></script>
+<script src="js/65-manual.js?v59" defer></script>
+<script src="js/66-social.js?v59" defer></script>
+<script src="js/67-safearea-fix.js?v59" defer></script>
 
 <script>
 /* ---- REPÈRE DE VERSION & AUTO-DIAGNOSTIC (inline : toujours à jour avec index.html) ---- */
 (function(){
-  var BUILD = "v57";
+  var BUILD = "v59";
   window.RJ_BUILD = BUILD;
   // modules dont on veut vérifier l'activation réelle (marqueur exposé -> fonction)
   var ATTENDUS = [
@@ -282,8 +298,26 @@ window.addEventListener('error', function (e) {
       alert(detail);
     };
     document.body.appendChild(badge);
-    (ok ? console.log : console.warn)("[BUILD " + BUILD + "] " +
-      (ok ? "tous les correctifs actifs" : "manquants : " + absents.map(function(m){return m[0];}).join(", ")));
+    if (ok) {
+      console.log("[BUILD " + BUILD + "] tous les correctifs actifs");
+    } else {
+      var ech = window.__rjEchecs || [], pl = window.__rjPlantages || [];
+      var tags = document.querySelectorAll('script[src*="js/"]').length;
+      console.warn("[BUILD " + BUILD + "] manquants : " + absents.map(function(m){return m[0];}).join(", "));
+      console.warn("[BUILD " + BUILD + "] scripts déclarés : " + tags +
+                   " | échecs de chargement : " + ech.length +
+                   " | modules en erreur : " + pl.length);
+      if (ech.length) console.warn("[BUILD " + BUILD + "] FICHIERS NON CHARGÉS : " + ech.join(", "));
+      if (pl.length) console.warn("[BUILD " + BUILD + "] ERREURS D'EXÉCUTION : " + pl.join(" || "));
+      if (!ech.length && !pl.length) {
+        // Les fichiers arrivent et ne plantent pas : on regarde si le contenu
+        // servi correspond bien à la version attendue.
+        try {
+          var t = document.querySelector('script[src*="62-mail-overhaul"]');
+          console.warn("[BUILD " + BUILD + "] aucun échec détecté — URL témoin : " + (t ? t.src : "(balise absente)"));
+        } catch (e) {}
+      }
+    }
   }
   if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", function(){ setTimeout(verifier, 1200); });
   else setTimeout(verifier, 1200);
