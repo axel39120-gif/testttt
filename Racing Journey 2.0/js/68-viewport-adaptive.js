@@ -171,46 +171,62 @@
     } catch (e) { return null; }
   }
 
-  // Certaines configurations (PWA installée sur iOS) renvoient une fenêtre
-  // qui EXCLUT DÉJÀ l'encoche, tout en continuant à renvoyer un inset non
-  // nul. Appliquer l'inset une seconde fois crée un vide de la hauteur de
-  // l'îlot dynamique — c'est le défaut que corrigeait le module 67.
+  // NEUTRALISATION DÉSACTIVÉE PAR DÉFAUT — voir l'analyse ci-dessous.
   //
-  // MAIS l'inverse est bien pire : neutraliser à tort fait passer l'en-tête
-  // SOUS l'objectif. Deux verrous ont donc été ajoutés :
-  //   - la neutralisation n'est envisagée QU'EN PWA INSTALLÉE. Dans un
-  //     navigateur, la fenêtre est réduite par la barre d'adresse, ce qui
-  //     satisfait la comparaison de hauteurs par accident et déclenchait
-  //     un faux positif ;
-  //   - un forçage manuel (SETTINGS.safeTopForce) court-circuite tout, pour
-  //     le cas où un appareil rapporterait des mesures incohérentes.
+  // Le module 67 avait mesuré, sur iPhone 16 Pro Max : fenêtre 894, écran
+  // 956, encoche 62, et .screens déjà décalé de 62. Il en avait conclu que
+  // la fenêtre excluait l'îlot et que la marge était comptée deux fois.
+  // La conclusion était fausse : le décalage de 62 ne venait pas de la
+  // fenêtre mais de l'entretoise .sb elle-même, qui faisait exactement son
+  // travail. Le vrai doublon était ailleurs — le correctif manuscrit de
+  // styles.css qui rajoute la marge au .hdr de quatre écrans nommés, en
+  // plus de l'entretoise. Ce doublon-là est supprimé depuis la v62.
+  //
+  // Conséquence du diagnostic erroné : --safe-top était mis à zéro, donc
+  // l'entretoise s'effondrait et l'en-tête passait sous l'objectif sur les
+  // 51 autres écrans. C'est le défaut constaté en PWA.
+  //
+  // La marge haute est donc appliquée telle que l'appareil la rapporte.
+  // Le chemin de neutralisation reste disponible via SETTINGS.safeTopAuto,
+  // au cas où un appareil justifierait de le rétablir.
   function insetsEffectifs(brut, vp) {
     var force = forcageHaut();
     if (force !== null) {
       etat.hautNeutralise = (force === 0);
       etat.decision = "forcé à " + force + "px";
+      etat.standalone = estStandalone();
       return { haut: force, droite: brut.droite, bas: brut.bas, gauche: brut.gauche };
+    }
+
+    var standalone = estStandalone();
+    etat.standalone = standalone;
+
+    var heuristique = false;
+    try { heuristique = !!(typeof SETTINGS !== "undefined" && SETTINGS && SETTINGS.safeTopAuto); }
+    catch (e) {}
+
+    if (!heuristique) {
+      etat.hautNeutralise = false;
+      etat.basNeutralise = false;
+      etat.decision = "marges appliquées telles que rapportées" +
+                      (standalone ? " (PWA)" : " (navigateur)");
+      return { haut: brut.haut, droite: brut.droite, bas: brut.bas, gauche: brut.gauche };
     }
 
     var sh = 0;
     try { sh = (window.screen && window.screen.height) || 0; } catch (e) {}
     var vh = vp.h;
-    var standalone = estStandalone();
-
     var hautDejaExclu = standalone && (sh > 0 && brut.haut > 0 && vh <= sh - brut.haut + 2);
     var basDejaExclu  = standalone && (sh > 0 && brut.bas  > 0 && vh <= sh - brut.haut - brut.bas + 2);
 
-    etat.standalone = standalone;
     etat.hautNeutralise = hautDejaExclu;
     etat.basNeutralise  = basDejaExclu;
-    etat.decision = !standalone
-      ? "navigateur — marges conservées"
-      : (hautDejaExclu ? "PWA — fenêtre excluant déjà l'encoche, marge haute neutralisée"
-                       : "PWA — marge haute conservée");
+    etat.decision = "heuristique réactivée — haut " +
+                    (hautDejaExclu ? "neutralisé" : "conservé");
 
     return {
       haut:   hautDejaExclu ? 0 : brut.haut,
-      droite: brut.droite,          // paysage : l'encoche chevauche toujours
+      droite: brut.droite,
       bas:    basDejaExclu ? 0 : brut.bas,
       gauche: brut.gauche
     };
@@ -338,6 +354,7 @@
       etat.auto = modeAuto();
 
       publierInsets(eff);
+      verifierEntretoise(eff);
       publierProfil(profil(vp), vp);
       appliquerZone(vp, eff);
       appliquerEchelle(vp, eff);
@@ -475,7 +492,8 @@
       "#S-lifestyle > .hdr, #S-achievements > .hdr, #S-settings > .hdr, #S-save > .hdr",
       "{padding-top:10px !important}",
       /* la barre basse est en position:fixed : on rend sa réserve réelle */
-      ".screens{padding-bottom:calc(56px + var(--sa-bottom,0px)) !important}"
+      ".screens{padding-bottom:calc(56px + var(--sa-bottom,0px)) !important;",
+      "padding-top:var(--rj-fallback-top,0px)}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -495,6 +513,7 @@
       "appliqué ........ haut " + e.haut + " · bas " + e.bas,
       "décision ........ " + etat.decision,
       "entretoise .sb .. " + (sb ? Math.round(sb.getBoundingClientRect().height) + "px" : "absente"),
+      "repli .screens .. " + (etat.fallback || 0) + "px",
       "forçage ......... " + (forcageHaut() === null ? "aucun (auto)" : forcageHaut() + "px")
     ];
     console.log(lignes.join("\n"));
@@ -511,6 +530,41 @@
     passe("forçage");
     return window._rj68Marges();
   };
+
+  // Filet de sécurité : on ne se contente pas de POSER --safe-top, on
+  // vérifie que l'entretoise .sb l'a réellement matérialisée. Si elle reste
+  // écrasée (règle concurrente, display:none, flex qui la comprime), on
+  // reporte la marge sur .screens. Sans cette vérification, une marge
+  // correctement calculée peut rester sans effet visible — c'est
+  // précisément le genre de panne qu'on ne reproduit pas en développement.
+  function verifierEntretoise(eff) {
+    try {
+      var r = document.documentElement;
+      if (!r) return;
+      var attendu = eff.haut || 0;
+      if (attendu <= 2) {
+        r.style.setProperty("--rj-fallback-top", "0px");
+        etat.entretoise = null;
+        return;
+      }
+      var sb = document.querySelector(".sb");
+      var rendu = sb ? Math.round(sb.getBoundingClientRect().height) : 0;
+      etat.entretoise = rendu;
+      var manque = attendu - rendu;
+      if (manque > 2) {
+        r.style.setProperty("--rj-fallback-top", manque + "px");
+        etat.fallback = manque;
+        if (!etat.fallbackSignale) {
+          etat.fallbackSignale = true;
+          console.log(TAG + " entretoise .sb à " + rendu + "px au lieu de " + attendu +
+                      " — compensation de " + manque + "px reportée sur .screens");
+        }
+      } else {
+        r.style.setProperty("--rj-fallback-top", "0px");
+        etat.fallback = 0;
+      }
+    } catch (e) {}
+  }
 
   var minuteur = null;
   function differer(raison) {
@@ -711,7 +765,7 @@
     var r = document.documentElement;
     if (r) {
       ["--sa-top", "--sa-right", "--sa-bottom", "--sa-left",
-       "--safe-top", "--safe-bot", "--rj-vw", "--rj-vh"].forEach(function (v) {
+       "--safe-top", "--safe-bot", "--rj-vw", "--rj-vh", "--rj-fallback-top"].forEach(function (v) {
         r.style.removeProperty(v);
       });
       r.removeAttribute("data-rj-device");
