@@ -381,7 +381,9 @@
       "text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid " + OR + ";",
       "color:" + OR + ";background:rgba(233,185,73,.08)}",
       ".rj70-vide{font-size:12.5px;color:var(--text3);padding:10px 0}",
-      ".rj70-btns{margin-top:16px;display:flex;flex-direction:column;gap:8px}",
+      ".rj70-ver{text-align:center;font-size:9.5px;color:var(--text4,#404048);letter-spacing:.1em;",
+      "text-transform:uppercase;margin-top:14px}",
+      ".rj70-btns{margin-top:10px;display:flex;flex-direction:column;gap:8px}",
       ".rj70-btn{width:100%;padding:13px;border-radius:11px;font-family:var(--font-display);font-size:12px;",
       "font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;",
       "-webkit-appearance:none;appearance:none}",
@@ -515,6 +517,10 @@
       }).join("");
       h += pliant("Saisons précédentes", p.saisons.length - 1 + " saisons", hist, false);
     }
+
+    // Repère de version : permet de vérifier d'un coup d'œil quelle mise en
+    // page est réellement servie, sans dépendre du cache du navigateur.
+    h += '<div class="rj70-ver">bilan v2 · cartes dépliantes</div>';
 
     h += '<div class="rj70-btns">' +
       '<button class="rj70-btn p" type="button" onclick="_rj70Transferts()">Période des transferts →</button>' +
