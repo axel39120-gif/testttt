@@ -77,6 +77,8 @@
     insetsEffectifs: null,
     hautNeutralise: false,
     basNeutralise: false,
+    standalone: false,
+    decision: null,
     zone: null,
     echelle: 1,
     auto: null,
@@ -152,20 +154,59 @@
     };
   }
 
+  function estStandalone() {
+    try {
+      if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+      if (window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches) return true;
+      if (navigator && navigator.standalone) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function forcageHaut() {
+    try {
+      if (typeof SETTINGS === "undefined" || !SETTINGS) return null;
+      var v = SETTINGS.safeTopForce;
+      return (typeof v === "number" && isFinite(v)) ? v : null;
+    } catch (e) { return null; }
+  }
+
   // Certaines configurations (PWA installée sur iOS) renvoient une fenêtre
   // qui EXCLUT DÉJÀ l'encoche, tout en continuant à renvoyer un inset non
   // nul. Appliquer l'inset une seconde fois crée un vide de la hauteur de
-  // l'îlot dynamique. On compare donc fenêtre et écran physique.
+  // l'îlot dynamique — c'est le défaut que corrigeait le module 67.
+  //
+  // MAIS l'inverse est bien pire : neutraliser à tort fait passer l'en-tête
+  // SOUS l'objectif. Deux verrous ont donc été ajoutés :
+  //   - la neutralisation n'est envisagée QU'EN PWA INSTALLÉE. Dans un
+  //     navigateur, la fenêtre est réduite par la barre d'adresse, ce qui
+  //     satisfait la comparaison de hauteurs par accident et déclenchait
+  //     un faux positif ;
+  //   - un forçage manuel (SETTINGS.safeTopForce) court-circuite tout, pour
+  //     le cas où un appareil rapporterait des mesures incohérentes.
   function insetsEffectifs(brut, vp) {
+    var force = forcageHaut();
+    if (force !== null) {
+      etat.hautNeutralise = (force === 0);
+      etat.decision = "forcé à " + force + "px";
+      return { haut: force, droite: brut.droite, bas: brut.bas, gauche: brut.gauche };
+    }
+
     var sh = 0;
     try { sh = (window.screen && window.screen.height) || 0; } catch (e) {}
     var vh = vp.h;
+    var standalone = estStandalone();
 
-    var hautDejaExclu = (sh > 0 && brut.haut > 0 && vh <= sh - brut.haut + 2);
-    var basDejaExclu  = (sh > 0 && brut.bas  > 0 && vh <= sh - brut.haut - brut.bas + 2);
+    var hautDejaExclu = standalone && (sh > 0 && brut.haut > 0 && vh <= sh - brut.haut + 2);
+    var basDejaExclu  = standalone && (sh > 0 && brut.bas  > 0 && vh <= sh - brut.haut - brut.bas + 2);
 
+    etat.standalone = standalone;
     etat.hautNeutralise = hautDejaExclu;
     etat.basNeutralise  = basDejaExclu;
+    etat.decision = !standalone
+      ? "navigateur — marges conservées"
+      : (hautDejaExclu ? "PWA — fenêtre excluant déjà l'encoche, marge haute neutralisée"
+                       : "PWA — marge haute conservée");
 
     return {
       haut:   hautDejaExclu ? 0 : brut.haut,
@@ -407,6 +448,70 @@
     return etat.echelle;
   };
 
+  /* ------------------------------------------------------------------ */
+  /* Correctifs de mise en page liés aux marges                          */
+  /*                                                                     */
+  /* La marge HAUTE est appliquée globalement par l'entretoise <div       */
+  /* class="sb"> placée en tête de #app, dont la hauteur vaut             */
+  /* var(--safe-top). Le mécanisme est bon : il suffit que --safe-top     */
+  /* soit juste, ce dont ce module se charge.                            */
+  /*                                                                     */
+  /* Deux endroits le contredisaient :                                   */
+  /*  - un correctif manuscrit dans styles.css rajoute la marge haute au  */
+  /*    .hdr de quatre écrans nommés (lifestyle, achievements, settings,  */
+  /*    save). Avec l'entretoise déjà en place, ces quatre écrans         */
+  /*    comptaient la marge DEUX FOIS ;                                  */
+  /*  - un <style> en ligne dans index.html fixe .screens à              */
+  /*    padding-bottom:56px, valeur en dur qui ignore l'indicateur        */
+  /*    d'accueil : sur les iPhone récents, le bas du contenu passait     */
+  /*    sous la barre de navigation.                                     */
+  /* ------------------------------------------------------------------ */
+  function injecterCorrectifs() {
+    if (document.getElementById("rj68-css")) return;
+    var st = document.createElement("style");
+    st.id = "rj68-css";
+    st.textContent = [
+      /* l'entretoise reste la seule source de la marge haute */
+      "#S-lifestyle > .hdr, #S-achievements > .hdr, #S-settings > .hdr, #S-save > .hdr",
+      "{padding-top:10px !important}",
+      /* la barre basse est en position:fixed : on rend sa réserve réelle */
+      ".screens{padding-bottom:calc(56px + var(--sa-bottom,0px)) !important}"
+    ].join("");
+    document.head.appendChild(st);
+  }
+
+  /* Diagnostic lisible, à lancer depuis la console de l'appareil. */
+  window._rj68Marges = function () {
+    var vp = etat.viewport || mesurerViewport();
+    var b = etat.insetsBruts || {}, e = etat.insetsEffectifs || {};
+    var sb = document.querySelector(".sb");
+    var lignes = [
+      "── marges de sécurité ──",
+      "appareil ........ " + etat.device + " / " + etat.orient,
+      "fenêtre ......... " + vp.w + " × " + vp.h,
+      "écran physique .. " + ((window.screen && window.screen.height) || "?"),
+      "PWA installée ... " + (etat.standalone ? "oui" : "non"),
+      "env() brut ...... haut " + b.haut + " · bas " + b.bas + " · gauche " + b.gauche + " · droite " + b.droite,
+      "appliqué ........ haut " + e.haut + " · bas " + e.bas,
+      "décision ........ " + etat.decision,
+      "entretoise .sb .. " + (sb ? Math.round(sb.getBoundingClientRect().height) + "px" : "absente"),
+      "forçage ......... " + (forcageHaut() === null ? "aucun (auto)" : forcageHaut() + "px")
+    ];
+    console.log(lignes.join("\n"));
+    return lignes.join("\n");
+  };
+
+  // _rj68ForcerHaut(59) impose la marge ; _rj68ForcerHaut(null) rend la main
+  // à la détection automatique. La valeur est enregistrée avec les réglages.
+  window._rj68ForcerHaut = function (px) {
+    if (typeof SETTINGS === "undefined" || !SETTINGS) return null;
+    if (px === null || typeof px === "undefined") delete SETTINGS.safeTopForce;
+    else SETTINGS.safeTopForce = Math.max(0, Math.round(px));
+    try { if (typeof saveSettings === "function") saveSettings(); } catch (e) {}
+    passe("forçage");
+    return window._rj68Marges();
+  };
+
   var minuteur = null;
   function differer(raison) {
     if (minuteur) clearTimeout(minuteur);
@@ -527,6 +632,7 @@
     }
 
     neutraliser();
+    injecterCorrectifs();
     interceptApplyAppSize();
     passe("boot");
 
@@ -570,6 +676,7 @@
                 " · écran " + vp.w + " × " + vp.h +
                 " · zone " + (z.w || "?") + " × " + (z.h || "?") +
                 " · marges " + JSON.stringify(etat.insetsEffectifs) +
+                " · " + etat.decision +
                 (etat.neutralises.length ? " · remplace " + etat.neutralises.join(", ") : ""));
   }
 
@@ -612,6 +719,8 @@
     }
     var s = document.getElementById("rj68-sonde");
     if (s && s.parentNode) s.parentNode.removeChild(s);
+    var cssEl = document.getElementById("rj68-css");
+    if (cssEl && cssEl.parentNode) cssEl.parentNode.removeChild(cssEl);
     var appEl = document.getElementById("app");
     if (appEl) {
       ["zoom", "width", "height", "max-width", "max-height"].forEach(function (k) {
