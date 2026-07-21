@@ -327,16 +327,45 @@
     st.id = "rj70-css";
     st.textContent = [
       ".rj70{padding:14px 14px 22px}",
-      ".rj70-hero{text-align:center;padding:14px 10px 16px;border-radius:14px;",
-      "background:var(--bg2);border:1px solid var(--border-hi);margin-bottom:14px}",
+      ".rj70-hero{text-align:center;padding:22px 14px 20px;border-radius:16px;",
+      "background:var(--bg2);border:1px solid var(--border-hi);margin-bottom:10px}",
+      ".rj70-an{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.16em;",
+      "text-transform:uppercase;color:var(--text3);margin-bottom:8px}",
+      ".rj70-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}",
+      ".rj70-st{background:var(--bg2);border-radius:11px;padding:11px 4px;text-align:center}",
+      ".rj70-stv{font-family:var(--font-display);font-size:19px;font-weight:900;color:#fff;line-height:1}",
+      ".rj70-stl{font-size:9.5px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}",
+      ".rj70-pl{border:1px solid var(--border);border-radius:12px;margin-bottom:7px;overflow:hidden;",
+      "background:var(--bg2)}",
+      ".rj70-pl[open]{border-color:var(--border-hi)}",
+      ".rj70-sm{list-style:none;display:flex;align-items:center;gap:9px;padding:13px 13px;cursor:pointer;",
+      "-webkit-tap-highlight-color:transparent}",
+      ".rj70-sm::-webkit-details-marker{display:none}",
+      ".rj70-smt{font-family:var(--font-display);font-size:12px;font-weight:800;color:#fff;",
+      "letter-spacing:.03em;flex:1}",
+      ".rj70-smr{font-size:11px;color:var(--text3)}",
+      ".rj70-chev{width:8px;height:8px;border-right:1.5px solid var(--text3);flex-shrink:0;",
+      "border-bottom:1.5px solid var(--text3);transform:rotate(45deg) translateY(-2px);transition:transform .2s}",
+      ".rj70-pl[open] .rj70-chev{transform:rotate(225deg) translateY(-2px)}",
+      ".rj70-plc{padding:0 13px 12px}",
+      ".rj70-kv>div{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;",
+      "border-top:1px solid var(--border);font-size:12.5px}",
+      ".rj70-kv span{color:var(--text3)}",
+      ".rj70-kv b{color:#fff;font-family:var(--font-display);font-weight:800}",
+      ".rj70-hl{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-size:12.5px}",
+      ".rj70-hl span{color:var(--text3);font-family:var(--font-display);font-weight:800;flex:0 0 42px}",
+      ".rj70-hl b{color:var(--text);font-weight:600;flex:1}",
+      ".rj70-hl em{font-style:normal;color:" + OR + ";font-family:var(--font-display);font-weight:800;font-size:11.5px}",
+      ".rj70-note{font-size:11px;color:var(--text3);line-height:1.45;margin-top:8px;",
+      "padding-top:8px;border-top:1px solid var(--border)}",
       ".rj70-hero.titre{border-color:" + OR + ";background:rgba(233,185,73,.07)}",
       ".rj70-couronne{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.18em;",
       "text-transform:uppercase;color:" + OR + ";margin-bottom:6px}",
-      ".rj70-h1{font-family:var(--font-display);font-size:23px;font-weight:900;color:#fff;line-height:1.15}",
-      ".rj70-h2{font-size:12.5px;color:var(--text2);margin-top:5px}",
+      ".rj70-h1{font-family:var(--font-display);font-size:32px;font-weight:900;color:#fff;line-height:1.05;letter-spacing:-.01em}",
+      ".rj70-h2{font-size:13px;color:var(--text2);margin-top:7px}",
       ".rj70-sec{font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--dim,#6b6b78);",
       "letter-spacing:.14em;text-transform:uppercase;margin:18px 0 8px}",
-      ".rj70-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border)}",
+      ".rj70-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)}",
       ".rj70-cat{flex:0 0 104px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;",
       "color:var(--text3);font-family:var(--font-display);line-height:1.25}",
       ".rj70-who{flex:1;min-width:0}",
@@ -347,12 +376,12 @@
       ".rj70-card{border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px;background:var(--bg2)}",
       ".rj70-mv{font-size:12.5px;color:var(--text);line-height:1.5;padding:7px 0;border-top:1px solid var(--border)}",
       ".rj70-mv b{color:" + OR + "}",
-      ".rj70-pal{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}",
+      ".rj70-pal{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}",
       ".rj70-badge{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.06em;",
       "text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid " + OR + ";",
       "color:" + OR + ";background:rgba(233,185,73,.08)}",
       ".rj70-vide{font-size:12.5px;color:var(--text3);padding:10px 0}",
-      ".rj70-btns{margin-top:20px;display:flex;flex-direction:column;gap:8px}",
+      ".rj70-btns{margin-top:16px;display:flex;flex-direction:column;gap:8px}",
       ".rj70-btn{width:100%;padding:13px;border-radius:11px;font-family:var(--font-display);font-size:12px;",
       "font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;",
       "-webkit-appearance:none;appearance:none}",
@@ -377,6 +406,38 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  // Bilan chiffré de la saison du joueur, reconstruit depuis ses courses.
+  function chiffres() {
+    var r = { courses: 0, victoires: 0, podiums: 0, points: 0, abandons: 0, top10: 0, meilleure: null };
+    try {
+      var l = G.races || [];
+      for (var i = 0; i < l.length; i++) {
+        var c = l[i]; if (!c) continue;
+        r.courses++;
+        r.points += (c.pts || 0);
+        if (c.dnf || c.pos == null) { r.abandons++; continue; }
+        if (c.pos === 1) r.victoires++;
+        if (c.pos <= 3) r.podiums++;
+        if (c.pos <= 10) r.top10++;
+        if (r.meilleure === null || c.pos < r.meilleure) r.meilleure = c.pos;
+      }
+    } catch (e) {}
+    return r;
+  }
+
+  function stat(valeur, libelle, or) {
+    return '<div class="rj70-st"><div class="rj70-stv"' + (or ? ' style="color:' + OR + '"' : '') + '>' +
+           ech(valeur) + '</div><div class="rj70-stl">' + ech(libelle) + '</div></div>';
+  }
+
+  function pliant(titre, resume, contenu, ouvert) {
+    return '<details class="rj70-pl"' + (ouvert ? ' open' : '') + '>' +
+      '<summary class="rj70-sm"><span class="rj70-smt">' + ech(titre) + '</span>' +
+      '<span class="rj70-smr">' + ech(resume) + '</span>' +
+      '<span class="rj70-chev" aria-hidden="true"></span></summary>' +
+      '<div class="rj70-plc">' + contenu + '</div></details>';
+  }
+
   function rendre() {
     var scr = document.getElementById("S-season-end");
     if (!scr) return false;
@@ -384,65 +445,85 @@
     var bilan = couronner();
     if (!bilan) return false;
     var p = P();
-
     var j = bilan.joueur;
+    var n = chiffres();
+
     var h = '<div class="rj70">';
 
+    /* ---- 1. Ce qui compte : la saison du joueur, toujours visible ---- */
     h += '<div class="rj70-hero' + (j.titre ? " titre" : "") + '">' +
-      (j.titre ? '<div class="rj70-couronne">Champion ' + ech(bilan.annee) + '</div>' : '') +
-      '<div class="rj70-h1">' + (j.titre ? "Titre remporté" : "Saison " + bilan.saison + " terminée") + '</div>' +
-      '<div class="rj70-h2">' + ech(j.cat || "") +
-      (j.pos ? " · P" + j.pos : "") + " · " + (j.points || 0) + ' pts</div></div>';
+      '<div class="rj70-an">' + ech(bilan.annee) + ' · ' + ech(j.cat || "") + '</div>' +
+      '<div class="rj70-h1">' + (j.titre ? "Champion" : (j.pos ? "P" + j.pos : "Saison terminée")) + '</div>' +
+      (j.titre ? '<div class="rj70-h2">Titre remporté en ' + ech(j.cat || "") + '</div>'
+               : '<div class="rj70-h2">' + (j.pos ? j.pos + "ᵉ du championnat" : "Bilan de la saison " + bilan.saison) + '</div>') +
+      '</div>';
 
-    // Palmarès du joueur
-    h += '<div class="rj70-sec">Ton palmarès</div>';
+    h += '<div class="rj70-stats">' +
+      stat(n.points, "points", true) +
+      stat(n.victoires, n.victoires > 1 ? "victoires" : "victoire") +
+      stat(n.podiums, "podiums") +
+      stat(n.courses, "courses") +
+      '</div>';
+
+    /* ---- 2. Palmarès : court, toujours visible ---- */
     if (p.joueur.titres.length) {
-      h += '<div class="rj70-pal">' + p.joueur.titres.map(function (t) {
+      h += '<div class="rj70-pal">' + p.joueur.titres.slice(-6).map(function (t) {
         return '<span class="rj70-badge">' + ech(t.cat) + " " + ech(t.annee) + '</span>';
       }).join("") + '</div>';
-    } else {
-      h += '<div class="rj70-vide">Aucun titre pour l\'instant.</div>';
     }
 
-    // Champions de chaque catégorie
-    h += '<div class="rj70-sec">Champions ' + ech(bilan.annee) + '</div>';
-    var lignes = "";
+    /* ---- 3. Le reste, replié ---- */
+    var detail = '<div class="rj70-kv">' +
+      '<div><span>Meilleur résultat</span><b>' + (n.meilleure ? "P" + n.meilleure : "—") + '</b></div>' +
+      '<div><span>Arrivées dans les points</span><b>' + n.top10 + '</b></div>' +
+      '<div><span>Abandons</span><b>' + n.abandons + '</b></div>' +
+      '<div><span>Écurie</span><b>' + ech((function () { try { return G.currentTeam || "Indépendant"; } catch (e) { return "—"; } })()) + '</b></div>' +
+      '</div>';
+    h += pliant("Ma saison en détail", n.courses + " courses", detail, false);
+
+    var autres = "";
     for (var i = 0; i < CATS.length; i++) {
       var c = bilan.categories[CATS[i]];
-      if (!c) continue;
-      lignes += '<div class="rj70-row' + (c.pilote.estJoueur ? " rj70-moi" : "") + '">' +
+      if (!c || CATS[i] === j.cat) continue;
+      autres += '<div class="rj70-row">' +
         '<div class="rj70-cat">' + ech(CATS[i]) + '</div>' +
         '<div class="rj70-who"><div class="rj70-p">' + ech(c.pilote.nom) + '</div>' +
-        '<div class="rj70-t">' + ech(c.ecurie ? c.ecurie.nom : c.pilote.team) + '</div></div>' +
-        '<div class="rj70-pts">' + (c.pilote.points || 0) + '</div></div>';
+        '<div class="rj70-t">' + ech(c.ecurie ? c.ecurie.nom : c.pilote.team) + '</div></div></div>';
     }
-    h += lignes || '<div class="rj70-vide">Vivier indisponible — championnats parallèles non calculés.</div>';
+    var mienne = bilan.categories[j.cat];
+    if (mienne) {
+      autres = '<div class="rj70-row rj70-moi">' +
+        '<div class="rj70-cat">' + ech(j.cat) + '</div>' +
+        '<div class="rj70-who"><div class="rj70-p">' + ech(mienne.pilote.nom) + '</div>' +
+        '<div class="rj70-t">' + ech(mienne.ecurie ? mienne.ecurie.nom : mienne.pilote.team) + '</div></div></div>' + autres;
+    }
+    h += pliant("Champions " + bilan.annee, Object.keys(bilan.categories).length + " catégories",
+                autres || '<div class="rj70-vide">Vivier indisponible.</div>', false);
 
-    // Règles de titre et mouvements attendus
-    h += '<div class="rj70-sec">Mouvements attendus</div><div class="rj70-card">';
-    if (bilan.mouvements.length) {
-      h += bilan.mouvements.map(function (m) {
-        return '<div class="rj70-mv">' + (m.estJoueur ? "<b>" + ech(m.texte) + "</b>" : ech(m.texte)) + '</div>';
+    var mv = bilan.mouvements.length
+      ? bilan.mouvements.map(function (m) {
+          return '<div class="rj70-mv">' + (m.estJoueur ? "<b>" + ech(m.texte) + "</b>" : ech(m.texte)) + '</div>';
+        }).join("") + '<div class="rj70-note">Un champion d\'une catégorie de formation ne peut plus y courir la saison suivante.</div>'
+      : '<div class="rj70-vide">Aucun changement imposé par les règles de titre.</div>';
+    h += pliant("Mouvements", bilan.mouvements.length ? bilan.mouvements.length + " changements" : "aucun", mv, false);
+
+    if (p.saisons.length > 1) {
+      var hist = p.saisons.slice(0, -1).reverse().slice(0, 8).map(function (b) {
+        var mien = b.categories && b.categories[b.joueur.cat];
+        var champ = (mien && mien.pilote.estJoueur) ? "Titre" : (b.joueur.pos ? "P" + b.joueur.pos : "—");
+        return '<div class="rj70-hl"><span>' + ech(b.annee) + '</span><b>' + ech(b.joueur.cat || "") + '</b><em>' + ech(champ) + '</em></div>';
       }).join("");
-    } else {
-      h += '<div class="rj70-vide">Aucun changement imposé par les règles de titre cette saison.</div>';
+      h += pliant("Saisons précédentes", p.saisons.length - 1 + " saisons", hist, false);
     }
-    h += '<div class="rj70-mv" style="color:var(--text3)">Un champion d\'une catégorie de formation ne peut plus y courir la saison suivante.</div>';
-    h += '</div>';
 
     h += '<div class="rj70-btns">' +
       '<button class="rj70-btn p" type="button" onclick="_rj70Transferts()">Période des transferts →</button>' +
       '<button class="rj70-btn s" type="button" onclick="_rj70Accueil()">Retour accueil</button>' +
       '</div></div>';
 
-    // On ne VIDE PAS le conteneur : showSeasonEnd et startNextSeason écrivent
-    // encore dans se-hero, se-stats, se-champ-table et se-trust-summary. Les
-    // supprimer provoquait un « Cannot set properties of null » au passage à
-    // la saison suivante. On masque donc les blocs d'origine et on insère le
-    // nôtre à côté.
     var corps = scr.querySelector(".scroll") || scr;
-    var mien = corps.querySelector(".rj70");
-    if (mien && mien.parentNode) mien.parentNode.removeChild(mien);
+    var mien2 = corps.querySelector(".rj70");
+    if (mien2 && mien2.parentNode) mien2.parentNode.removeChild(mien2);
     var enfants = corps.children;
     for (var ci = 0; ci < enfants.length; ci++) {
       var el = enfants[ci];
