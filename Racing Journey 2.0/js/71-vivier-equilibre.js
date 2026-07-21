@@ -167,10 +167,18 @@
       if (!d || estJoueur(d) || !d.retired) return;
       var age = (typeof d.age === "number") ? d.age : 99;
       if (age >= RETRAITE_AGE_MIN) return;
+      // Un jeune trop âgé pour sa catégorie doit MONTER, pas rester : c'est
+      // le cas du karting, qu'on quitte par le haut. Ne tenter la descente
+      // que si la promotion n'est pas envisageable. Sans ça, un pilote de 18
+      // ans en Karting Junior était dé-retraité par cette règle puis remis à
+      // la retraite par la suivante, à chaque saison.
       var dest = d.cat;
       if (!ageOk(dest, age)) {
+        var haut = catDessus(d.cat);
         var bas = catDessous(d.cat);
-        if (bas && ageOk(bas, age)) dest = bas;
+        if (haut && ageOk(haut, age)) dest = haut;
+        else if (bas && ageOk(bas, age)) dest = bas;
+        else if (haut) dest = haut;
       }
       // un champion banni ne redescend jamais dans sa catégorie interdite
       if (d._rjBanni && d._rjBanni.indexOf(dest) >= 0) {

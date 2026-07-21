@@ -722,7 +722,16 @@
         
         // Retraite : modulée par âge et résultats (sauf KJ/KS)
         if (cat !== "Karting Junior" && cat !== "Karting Senior") {
-          var retireChance = MOVEMENT_PROBS.retireBase;
+          // CORRECTIF — retireBase (5 %) s'appliquait à TOUT pilote de toute
+          // catégorie non-karting, quel que soit son âge : un pilote de F4 de
+          // 16 ans avait 5 % de raccrocher chaque saison. Sur quinze saisons
+          // mesurées, le vivier passait de 205 pilotes actifs à 23 et la
+          // grille de F1 tombait à zéro dès la saison 11. On ne prend pas sa
+          // retraite à 16 ans : on descend d'un cran, ce que gère la logique
+          // de descente juste en dessous. La base ne s'applique donc qu'à
+          // partir d'un âge où raccrocher a un sens, et monte avec l'âge.
+          var retireChance = (d.age >= 26) ? MOVEMENT_PROBS.retireBase : 0;
+          if (d.age > 30) retireChance += (d.age - 30) * 0.02;
           if (d.age > 35) retireChance += (d.age - 35) * 0.05;  // +5% par an au-delà de 35
           if (d.age > 38) retireChance += 0.15;
           if (rank === n - 1 && d.age > 28) retireChance += 0.10;  // lanterne âgée
