@@ -23,7 +23,7 @@
 
   // Marqueur de version de la sauvegarde de test : permet de remplacer une
   // ancienne sauvegarde de test (karting) par la variante F1.
-  var TEST_SAVE_VARIANT = "f1-fin-saison-2";
+  var TEST_SAVE_VARIANT = "f1-fin-saison-3";
 
   /* Transpose l'instantané en pilote de Formule 1 avec une offre en attente. */
   function toF1(save) {
@@ -99,15 +99,19 @@
    * abandons, podiums et victoires répartis.
    * ---------------------------------------------------------------- */
   function toFinDeSaison(save) {
-    var MANCHES = 24;
+    // 18 manches : c'est ce que produit buildCalendar() pour la Formule 1.
+    // Une valeur inventée plus grande laissait l'accueil sur « Prochaine
+    // course Manche 18 » avec 24 résultats enregistrés — championnat
+    // incohérent et saison qui n'avait pas l'air terminée.
+    var MANCHES = 18;
     var PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-    var circuits = ["Bahrein", "Djeddah", "Melbourne", "Suzuka", "Shanghai", "Miami",
-                    "Imola", "Monaco", "Montreal", "Barcelone", "Spielberg", "Silverstone",
-                    "Budapest", "Spa", "Zandvoort", "Monza", "Bakou", "Singapour",
-                    "Austin", "Mexico", "Interlagos", "Las Vegas", "Losail", "Abou Dabi"];
+    var circuits = ["Bahrein", "Djeddah", "Melbourne", "Suzuka", "Miami",
+                    "Imola", "Monaco", "Montreal", "Barcelone", "Spielberg",
+                    "Silverstone", "Budapest", "Spa", "Monza", "Singapour",
+                    "Austin", "Interlagos", "Abou Dabi"];
     // Suite de résultats fixée : la saison doit être reproductible d'un test
     // à l'autre, sinon le bilan change à chaque rechargement.
-    var POS = [2, 1, 3, 1, 4, 2, 1, 5, 2, 1, 3, 2, 1, 6, 2, 1, 4, 3, 1, 2, 0, 1, 3, 2];
+    var POS = [2, 1, 3, 1, 4, 2, 1, 5, 2, 1, 3, 2, 1, 6, 0, 1, 2, 1];
 
     save.races = [];
     var total = 0, victoires = 0, podiums = 0, abandons = 0;

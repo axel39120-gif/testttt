@@ -429,8 +429,26 @@
       '<button class="rj70-btn s" type="button" onclick="_rj70Accueil()">Retour accueil</button>' +
       '</div></div>';
 
+    // On ne VIDE PAS le conteneur : showSeasonEnd et startNextSeason écrivent
+    // encore dans se-hero, se-stats, se-champ-table et se-trust-summary. Les
+    // supprimer provoquait un « Cannot set properties of null » au passage à
+    // la saison suivante. On masque donc les blocs d'origine et on insère le
+    // nôtre à côté.
     var corps = scr.querySelector(".scroll") || scr;
-    corps.innerHTML = h;
+    var mien = corps.querySelector(".rj70");
+    if (mien && mien.parentNode) mien.parentNode.removeChild(mien);
+    var enfants = corps.children;
+    for (var ci = 0; ci < enfants.length; ci++) {
+      var el = enfants[ci];
+      if (el.classList && el.classList.contains("rj70")) continue;
+      if (!el.hasAttribute("data-rj70-hidden")) {
+        el.setAttribute("data-rj70-hidden", el.style.display || "");
+        el.style.display = "none";
+      }
+    }
+    var boite = document.createElement("div");
+    boite.innerHTML = h;
+    corps.appendChild(boite.firstChild);
 
     var sub = document.getElementById("se-sub");
     if (sub) sub.textContent = "Saison " + bilan.saison + " · " + bilan.annee;
@@ -451,16 +469,68 @@
   window._rj70Regles = faireRespecterLesRegles;
 
   /* ------------------------------------------------ bouton de l'accueil --- */
+  // Une saison est à débriefer si toutes les manches du calendrier sont
+  // courues ET qu'elle n'a pas encore été couronnée. On ne se fie plus au
+  // seul drapeau G.seasonOver : au chargement d'une sauvegarde faite en fin
+  // de saison, il revient à faux et le bilan devenait inaccessible.
+  // Une fois la saison inscrite au palmarès, la condition retombe d'elle-même,
+  // donc le bouton doré ne peut pas rester allumé indéfiniment.
+  function calendrierTermine() {
+    try {
+      var cal = (typeof CAL_RACES !== "undefined" && CAL_RACES) ? CAL_RACES : G.calRaces;
+      if (cal && cal.length) {
+        for (var i = 0; i < cal.length; i++) if (cal[i] && !cal[i].done) return false;
+        return true;
+      }
+      if (G.races && G.races.length && G.calRaces && G.calRaces.length) {
+        return G.races.length >= G.calRaces.length;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function saisonADebriefer() {
-    try { return !!G.seasonOver; } catch (e) { return false; }
+    try {
+      if (dejaCouronnee(saisonCourante())) return false;
+      if (G.seasonOver) return true;
+      return calendrierTermine();
+    } catch (e) { return false; }
   }
 
   function majBouton() {
     try {
       var el = document.querySelector(".apex-hero-race");
       if (!el) return;
-      if (saisonADebriefer()) el.classList.add("rj70-or");
+      var actif = saisonADebriefer();
+      if (actif) el.classList.add("rj70-or");
       else el.classList.remove("rj70-or");
+
+      // Le libellé de l'accueil continuait d'annoncer « Prochaine course
+      // Manche 18 » alors que la saison était terminée et que le bouton
+      // menait au bilan. On le remplace, et on restaure l'original dès que
+      // la saison est débriefée.
+      var tag = document.getElementById("h-race-tag");
+      var sub = document.getElementById("h-race-s");
+      if (actif) {
+        if (tag && !tag.hasAttribute("data-rj70-orig")) {
+          tag.setAttribute("data-rj70-orig", tag.innerHTML);
+          tag.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:' + OR +
+                          ';border-radius:50%"></span> Saison terminée <span>Bilan disponible</span>';
+        }
+        if (sub && !sub.hasAttribute("data-rj70-orig")) {
+          sub.setAttribute("data-rj70-orig", sub.textContent);
+          sub.textContent = "Bilan de saison";
+        }
+      } else {
+        if (tag && tag.hasAttribute("data-rj70-orig")) {
+          tag.innerHTML = tag.getAttribute("data-rj70-orig");
+          tag.removeAttribute("data-rj70-orig");
+        }
+        if (sub && sub.hasAttribute("data-rj70-orig")) {
+          sub.textContent = sub.getAttribute("data-rj70-orig");
+          sub.removeAttribute("data-rj70-orig");
+        }
+      }
     } catch (e) {}
   }
 
