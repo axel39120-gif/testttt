@@ -401,7 +401,6 @@ html, body {
 }
 
 /* === HOME NO-SCROLL ADAPTIVE PACK (centered) === */
-#S-home > 
 #S-home > .scroll > #home-events-zone {
   flex-shrink: 0;
   margin: 0 !important;
