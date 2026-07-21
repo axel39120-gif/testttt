@@ -359,6 +359,12 @@
       ".rj70-btn.p{background:" + OR + ";border:0;color:#171410}",
       ".rj70-btn.s{background:transparent;border:1px solid var(--border-hi);color:var(--text2)}",
       /* bouton doré de l'accueil */
+      /* Bouton « Continuer » du menu du bas — c'est CELUI-CI que le joueur
+         voit et utilise. La couleur vient de .ni-cta-icon et .ni-cta-ring,
+         pas du bouton lui-même. */
+      "#ni-cta-continue.rj70-or .ni-cta-icon{background:linear-gradient(135deg," + OR + " 0%,#C9962F 100%);",
+      "box-shadow:0 8px 24px rgba(233,185,73,.5),0 0 0 1px rgba(255,255,255,.10) inset,0 -2px 4px rgba(0,0,0,.3) inset}",
+      "#ni-cta-continue.rj70-or .ni-cta-ring{background:radial-gradient(circle,rgba(233,185,73,.42) 0%,transparent 65%)}",
       ".apex-hero-race.rj70-or{border-color:" + OR + "66}",
       ".apex-hero-race.rj70-or::before{background:linear-gradient(90deg,transparent 0%," + OR + " 30%," + OR + " 70%,transparent 100%)}",
       ".apex-hero-race.rj70-or::after{background:radial-gradient(circle,rgba(233,185,73,.30) 0%,transparent 70%)}"
@@ -505,31 +511,31 @@
       if (actif) el.classList.add("rj70-or");
       else el.classList.remove("rj70-or");
 
+      // Le bouton effectivement utilisé par le joueur est celui du menu du
+      // bas. La carte d'accueil ne suffisait pas.
+      var cta = document.getElementById("ni-cta-continue");
+      if (cta) {
+        if (actif) cta.classList.add("rj70-or");
+        else cta.classList.remove("rj70-or");
+      }
+
       // Le libellé de l'accueil continuait d'annoncer « Prochaine course
       // Manche 18 » alors que la saison était terminée et que le bouton
       // menait au bilan. On le remplace, et on restaure l'original dès que
       // la saison est débriefée.
-      var tag = document.getElementById("h-race-tag");
+      // ATTENTION : #h-race-tag CONTIENT #h-race-s. Réécrire son innerHTML
+      // supprimait #h-race-s du document, et updateUI() plantait ensuite sur
+      // « Cannot set properties of null » — ce qui bloquait startNextSeason,
+      // donc le bouton « Continuer » de la période des transferts. On ne
+      // touche donc plus qu'au texte de #h-race-s et à la pastille.
       var sub = document.getElementById("h-race-s");
+      var tag = document.getElementById("h-race-tag");
+      var pastille = tag ? tag.querySelector("span:not(#h-race-s)") : null;
       if (actif) {
-        if (tag && !tag.hasAttribute("data-rj70-orig")) {
-          tag.setAttribute("data-rj70-orig", tag.innerHTML);
-          tag.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:' + OR +
-                          ';border-radius:50%"></span> Saison terminée <span>Bilan disponible</span>';
-        }
-        if (sub && !sub.hasAttribute("data-rj70-orig")) {
-          sub.setAttribute("data-rj70-orig", sub.textContent);
-          sub.textContent = "Bilan de saison";
-        }
-      } else {
-        if (tag && tag.hasAttribute("data-rj70-orig")) {
-          tag.innerHTML = tag.getAttribute("data-rj70-orig");
-          tag.removeAttribute("data-rj70-orig");
-        }
-        if (sub && sub.hasAttribute("data-rj70-orig")) {
-          sub.textContent = sub.getAttribute("data-rj70-orig");
-          sub.removeAttribute("data-rj70-orig");
-        }
+        if (sub && sub.textContent !== "Bilan de saison") sub.textContent = "Bilan de saison";
+        if (pastille) pastille.style.background = OR;
+      } else if (pastille) {
+        pastille.style.background = "";
       }
     } catch (e) {}
   }
@@ -631,6 +637,8 @@
     if (st && st.parentNode) st.parentNode.removeChild(st);
     var el = document.querySelector(".apex-hero-race");
     if (el) el.classList.remove("rj70-or");
+    var cta = document.getElementById("ni-cta-continue");
+    if (cta) cta.classList.remove("rj70-or");
     etat.installe = false;
     console.log(TAG + " désinstallé");
   };
