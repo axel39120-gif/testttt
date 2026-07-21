@@ -23,7 +23,7 @@
 
   // Marqueur de version de la sauvegarde de test : permet de remplacer une
   // ancienne sauvegarde de test (karting) par la variante F1.
-  var TEST_SAVE_VARIANT = "f1-nego-1";
+  var TEST_SAVE_VARIANT = "f1-fin-saison-2";
 
   /* Transpose l'instantané en pilote de Formule 1 avec une offre en attente. */
   function toF1(save) {
@@ -88,10 +88,97 @@
     return save;
   }
 
+  /* ------------------------------------------------------------------
+   * FIN DE SAISON — la sauvegarde de test est placée juste AVANT l'écran
+   * de bilan : toutes les manches sont courues, seasonOver est vrai, et
+   * le bouton d'avancement de l'accueil est donc doré. Un appui dessus
+   * ouvre directement la rétrospective du module 70.
+   *
+   * Le calendrier est rejoué de façon plausible plutôt qu'inventé au
+   * hasard : 24 manches, une saison de titre disputée jusqu'au bout, avec
+   * abandons, podiums et victoires répartis.
+   * ---------------------------------------------------------------- */
+  function toFinDeSaison(save) {
+    var MANCHES = 24;
+    var PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+    var circuits = ["Bahrein", "Djeddah", "Melbourne", "Suzuka", "Shanghai", "Miami",
+                    "Imola", "Monaco", "Montreal", "Barcelone", "Spielberg", "Silverstone",
+                    "Budapest", "Spa", "Zandvoort", "Monza", "Bakou", "Singapour",
+                    "Austin", "Mexico", "Interlagos", "Las Vegas", "Losail", "Abou Dabi"];
+    // Suite de résultats fixée : la saison doit être reproductible d'un test
+    // à l'autre, sinon le bilan change à chaque rechargement.
+    var POS = [2, 1, 3, 1, 4, 2, 1, 5, 2, 1, 3, 2, 1, 6, 2, 1, 4, 3, 1, 2, 0, 1, 3, 2];
+
+    save.races = [];
+    var total = 0, victoires = 0, podiums = 0, abandons = 0;
+    for (var i = 0; i < MANCHES; i++) {
+      var pos = POS[i];
+      var dnf = (pos === 0);
+      var pts = (!dnf && pos <= 10) ? PTS[pos - 1] : 0;
+      total += pts;
+      if (pos === 1) victoires++;
+      if (!dnf && pos <= 3) podiums++;
+      if (dnf) abandons++;
+      save.races.push({
+        manche: i + 1, circuit: circuits[i], name: circuits[i],
+        pos: dnf ? null : pos, dnf: dnf, pts: pts,
+        quali: dnf ? 8 : Math.max(1, pos - 1), saison: save.saison
+      });
+    }
+
+    save.calRaces = [];
+    for (var k = 0; k < MANCHES; k++) {
+      save.calRaces.push({ done: true, result: { pos: POS[k] || null, pts: 0 } });
+    }
+
+    save.champPts = total;
+    save.seasonOver = true;
+    save.semaine = 48;
+    save.totalLaps = 57;
+
+    // Les rivaux doivent rester derrière : le titre se joue sur cette saison.
+    if (save.rivals && save.rivals.length) {
+      for (var r = 0; r < save.rivals.length; r++) {
+        save.rivals[r].pts = Math.max(0, Math.round(total * (0.92 - r * 0.06)));
+      }
+    }
+
+    save.careerRecords = save.careerRecords || {};
+    save.careerRecords.seasonWins = victoires;
+    save.careerRecords.seasonPodiums = podiums;
+    save.careerRecords.seasonDnf = abandons;
+
+    // Contrat encore courant : la période des transferts reste intéressante.
+    save.contractWeeksLeft = 2;
+
+    // TRANSFERT DÉJÀ SIGNÉ pour la saison suivante. La structure reprend
+    // exactement celle écrite par l'écran de négociation :
+    //   {team, cat, salary, bonus, podiumBonus, dur, role}
+    // Le pilote quitte donc Williams pour Ferrari, avec un rôle de numéro 1 —
+    // de quoi voir le changement d'écurie, la nouvelle livrée et l'évolution
+    // du salaire au passage à la saison suivante.
+    save.pendingTransfer = {
+      team: "Ferrari",
+      cat: "Formule 1",
+      salary: 320000,        // mensuel, cohérent avec un baquet de tête
+      bonus: 400000,         // prime de victoire
+      podiumBonus: 150000,
+      dur: 3,
+      role: "num1"
+    };
+
+    // L'offre concurrente d'Aston Martin n'a plus lieu d'être une fois le
+    // transfert signé : on la retire pour que l'écran des contrats soit
+    // cohérent avec le transfert en attente.
+    save.offers = [];
+
+    return save;
+  }
+
   /* Instantané effectivement écrit : karting transposé en F1. */
   function buildSaveRaw() {
     try {
-      return JSON.stringify(toF1(JSON.parse(TEST_SAVE_RAW)));
+      return JSON.stringify(toFinDeSaison(toF1(JSON.parse(TEST_SAVE_RAW))));
     } catch (e) {
       console.warn("[51-test-save-seed] transposition F1 impossible :", e);
       return TEST_SAVE_RAW;
