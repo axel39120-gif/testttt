@@ -23,7 +23,7 @@
 
   // Marqueur de version de la sauvegarde de test : permet de remplacer une
   // ancienne sauvegarde de test (karting) par la variante F1.
-  var TEST_SAVE_VARIANT = "f1-fin-saison-3";
+  var TEST_SAVE_VARIANT = "f1-fin-saison-4";
 
   /* Transpose l'instantané en pilote de Formule 1 avec une offre en attente. */
   function toF1(save) {
@@ -161,6 +161,24 @@
     // Le pilote quitte donc Williams pour Ferrari, avec un rôle de numéro 1 —
     // de quoi voir le changement d'écurie, la nouvelle livrée et l'évolution
     // du salaire au passage à la saison suivante.
+    // PALIERS DE RÉPUTATION DÉJÀ ATTEINTS — verrou pré-rempli.
+    // recomputeGlobalRep() n'envoie un message de palier que si
+    // G._repAxeMilestones ne contient pas encore la clé « axe_seuil ». Ce
+    // verrou EST bien sauvegardé par le jeu (champ repAxeMilestones), mais
+    // la sauvegarde de test le laissait vide alors qu'elle attribue déjà une
+    // réputation élevée sur les quatre axes. Résultat : au premier calcul,
+    // tous les paliers 25/50/75 se déclenchaient d'un coup — sept messages
+    // d'affilée dans la messagerie. On les marque donc comme déjà franchis.
+    save.repAxeMilestones = {};
+    ["recruteurs", "paddock", "medias", "public"].forEach(function (axe) {
+      var val = (save.rep && typeof save.rep[axe] === "number") ? save.rep[axe] : 0;
+      [25, 50, 75].forEach(function (seuil) {
+        if (val >= seuil) {
+          save.repAxeMilestones[axe + "_" + seuil] = { saison: save.saison, week: 1 };
+        }
+      });
+    });
+
     save.pendingTransfer = {
       team: "Ferrari",
       cat: "Formule 1",
