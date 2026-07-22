@@ -66,7 +66,22 @@
       "color:var(--text3) !important;margin-bottom:6px !important}",
 
       ".mc .mc-v{font-size:21px !important;font-weight:900 !important;",
-      "letter-spacing:-.01em !important;line-height:1.05 !important}"
+      "letter-spacing:-.01em !important;line-height:1.05 !important}",
+
+      /* --- SECONDE FAMILLE : .f1-metric --- */
+      /* Même signature visuelle que .mc (dégradé + bordure claire + liseré
+         rouge en haut) mais classe distincte, utilisée sur d'autres écrans.
+         Elle portait en plus des variantes de couleur du liseré supérieur
+         (-gold, -green, -blue) : on les transpose sur le bord gauche pour
+         que l'accent conserve son sens sans réintroduire le trait du haut. */
+      ".f1-metric{background:var(--bg2) !important;",
+      "border:1px solid var(--border) !important;",
+      "border-left:3px solid " + CYAN + " !important;",
+      "border-radius:12px !important;padding:11px 13px !important}",
+      ".f1-metric-gold{border-left-color:var(--gold,#E9B949) !important;border-top-color:var(--border) !important}",
+      ".f1-metric-green{border-left-color:var(--green,#22C55E) !important;border-top-color:var(--border) !important}",
+      ".f1-metric-blue{border-left-color:var(--blue,#60A5FA) !important;border-top-color:var(--border) !important}",
+      ".f1-metric.rj73-neg{border-left-color:" + AMBRE + " !important}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -78,9 +93,9 @@
     if (enEcriture) return;
     enEcriture = true;
     try {
-      var cartes = document.querySelectorAll(".mc");
+      var cartes = document.querySelectorAll(".mc, .f1-metric");
       for (var i = 0; i < cartes.length; i++) {
-        var v = cartes[i].querySelector(".mc-v");
+        var v = cartes[i].querySelector(".mc-v, .f1-metric-val, .f1-metric-v");
         var t = v ? (v.textContent || "").trim() : "";
         var neg = /^[-−]/.test(t);
         if (neg) cartes[i].classList.add("rj73-neg");
@@ -119,7 +134,7 @@
     if (st && st.parentNode) st.parentNode.removeChild(st);
     try { if (observer) observer.disconnect(); } catch (e) {}
     if (minuteur) clearTimeout(minuteur);
-    var c = document.querySelectorAll(".mc.rj73-neg");
+    var c = document.querySelectorAll(".rj73-neg");
     for (var i = 0; i < c.length; i++) c[i].classList.remove("rj73-neg");
     console.log(TAG + " désinstallé");
   };
