@@ -1398,6 +1398,13 @@
     var orig = window[name];
     var fn = function () {
       var r = orig.apply(this, arguments);
+      // Nettoyage monétaire immédiat, avant tout rendu : l'embellissement
+      // plus lourd (logos, couleurs) peut rester différé, il ne provoque
+      // pas de scintillement de texte.
+      try {
+        var scr = document.querySelector('.scr.on');
+        if (scr) cleanMoney(scr);
+      } catch (e) {}
       try { setTimeout(after, 0); } catch (e) {}
       return r;
     };
@@ -1410,16 +1417,30 @@
   /* Le « e » monétaire traîne dans toute l'application : on balaie l'écran
    * actif à chaque changement de contenu. La substitution ne touche que les
    * suites « chiffres + e », jamais un mot. */
-  var sweepTimer = null;
+  // CORRECTIF D'AFFICHAGE — le balayage était différé de 120 ms. Le
+  // navigateur peignait donc d'abord « 180 000 e /mois », puis la
+  // correction arrivait : d'où le « e » qui devenait « € » et le « /mois »
+  // qui disparaissait sous les yeux du joueur, à chaque changement d'écran.
+  //
+  // La callback d'un MutationObserver s'exécute en microtâche, c'est-à-dire
+  // APRÈS la mutation mais AVANT le rendu suivant. En balayant de façon
+  // synchrone à cet instant, la correction est appliquée avant que quoi que
+  // ce soit ne soit affiché : plus aucun scintillement.
+  //
+  // Le verrou de réentrance évite que nos propres écritures ne relancent le
+  // balayage en boucle — la deuxième passe ne trouverait rien à corriger,
+  // mais autant ne pas la déclencher.
+  var sweepEnCours = false;
   function sweepAll() {
-    if (sweepTimer) return;
-    sweepTimer = setTimeout(function () {
-      sweepTimer = null;
-      try {
-        var scr = document.querySelector('.scr.on');
-        if (scr) cleanMoney(scr);
-      } catch (e) {}
-    }, 120);
+    if (sweepEnCours) return;
+    sweepEnCours = true;
+    try {
+      var scr = document.querySelector('.scr.on');
+      if (scr) cleanMoney(scr);
+    } catch (e) {
+    } finally {
+      sweepEnCours = false;
+    }
   }
   var sweepObs = new MutationObserver(sweepAll);
 
