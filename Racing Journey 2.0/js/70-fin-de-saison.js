@@ -553,7 +553,8 @@
     try { navTo("S-transfer", "ni-home"); } catch (e) {}
   };
   window._rj70Accueil = function () {
-    try { G.seasonOver = false; } catch (e) {}
+    // On ne touche plus à G.seasonOver : le bilan doit rester accessible
+    // tant que la saison suivante n'a pas démarré.
     majBouton();
     try { navTo("S-home", "ni-home"); } catch (e) {}
   };
@@ -584,7 +585,18 @@
 
   function saisonADebriefer() {
     try {
-      if (dejaCouronnee(saisonCourante())) return false;
+      // CORRECTIF — on testait ici « saison déjà couronnée ». Or couronner()
+      // s'exécute dès le PREMIER affichage du bilan : dès qu'on ouvrait
+      // l'écran puis qu'on revenait en arrière, la condition retombait, le
+      // bouton repassait au rouge et l'accès au bilan était définitivement
+      // perdu — le clic retombait sur le comportement d'origine, qui n'a
+      // rien à faire quand la saison est finie.
+      //
+      // Le bon critère est le calendrier seul. Il se réinitialise tout seul
+      // au démarrage de la saison suivante, puisque les manches repassent
+      // à « non courues » : le bouton ne peut donc pas rester doré
+      // indéfiniment, et le bilan reste consultable autant de fois qu'on
+      // veut tant qu'on n'a pas lancé la saison suivante.
       if (G.seasonOver) return true;
       return calendrierTermine();
     } catch (e) { return false; }
