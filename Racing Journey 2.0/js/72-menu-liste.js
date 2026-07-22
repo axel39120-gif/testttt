@@ -1,16 +1,15 @@
 /* =====================================================================
  * 72-menu-accueil.js — MENU PRINCIPAL ET BANDEAU DE SAISON
  *
- * 1. LES ICÔNES DESSINÉES DISPARAISSENT, la grille reste. Neuf entrées en
+ * 1. LA GRILLE ET SES ICÔNES SONT CONSERVÉES, les pictogrammes simplement
+ *    réduits de 44 à 32 px. Neuf entrées en
  *    trois groupes de trois se saisissent d'un seul regard et créent une
  *    mémoire spatiale — au bout de quelques parties, on ne lit plus
  *    « Sponsors », on va au milieu à droite. Une liste de neuf lignes
  *    détruit ce repère et occupe environ 420 px contre 250 pour la
  *    grille, sur un canevas qui doit déjà loger l'en-tête et la carte de
- *    course. Les pictogrammes, eux, étaient génériques : ils occupaient
- *    de la place pendant que l'œil allait lire le texte de toute façon.
- *    Ils sont remplacés par une pastille de couleur unie, qui conserve le
- *    repère chromatique sans le bruit visuel du dessin.
+ *    course. Les icônes gardent leur cadre coloré et leur teinte de
+ *    section : le repère visuel est préservé, la tuile respire davantage.
  *
  * 2. BANDEAU DE SAISON RETIRÉ — « Saison 1 · Karting Junior · P1 · 0 pts ·
  *    Début ». L'information figure déjà dans l'en-tête de l'accueil et
@@ -39,16 +38,17 @@
          qu'une liste de neuf lignes détruit tout en occupant 420 px au
          lieu de 250. Seules les icônes dessinées disparaissent. --- */
 
-      /* Le dessin s'en va, le cadre coloré reste : c'est lui qui porte le
-         repère visuel, en pastille unie plus discrète que le pictogramme. */
-      "#S-home > .scroll > .apex-actions-grid .apex-action-icon svg{display:none !important}",
-      "#S-home > .scroll > .apex-actions-grid .apex-action-icon{width:10px !important;",
-      "height:10px !important;border-radius:50% !important;margin-bottom:9px !important;",
-      "background:var(--accent,var(--red)) !important;border:0 !important;",
-      "box-shadow:0 0 10px var(--accent-bg,rgba(255,24,1,.4)) !important}",
+      /* Les pictogrammes sont CONSERVÉS, simplement réduits : ils gardent
+         leur cadre coloré et leur teinte de section, mais passent de 44 à
+         32 px, et le dessin de 22 à 16 px. La tuile respire, le repère
+         visuel reste. */
+      "#S-home > .scroll > .apex-actions-grid .apex-action-icon{width:32px !important;",
+      "height:32px !important;border-radius:10px !important;margin-bottom:7px !important}",
+      "#S-home > .scroll > .apex-actions-grid .apex-action-icon svg{width:16px !important;",
+      "height:16px !important}",
 
       /* le libellé reprend la place libérée */
-      "#S-home > .scroll > .apex-actions-grid .apex-action-title{font-size:12.5px !important;",
+      "#S-home > .scroll > .apex-actions-grid .apex-action-title{font-size:12px !important;",
       "font-weight:600 !important;line-height:1.25 !important;letter-spacing:0 !important}",
 
       /* fond légèrement alterné, une tuile sur deux, pour aérer la grille */
@@ -70,7 +70,7 @@
   function boot() {
     if (!document.head) { setTimeout(boot, 60); return; }
     css();
-    console.log(TAG + " actif — grille sans pictogrammes, pastilles de couleur, bandeau de saison masqué");
+    console.log(TAG + " actif — grille compacte, icônes réduites, bandeau de saison masqué");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
