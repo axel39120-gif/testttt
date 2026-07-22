@@ -434,6 +434,14 @@
     rafraichirFiche();
   };
 
+  window._rjTeamResetLogo = function () {
+    var team = (typeof GE_SELECTED_TEAM !== "undefined") ? GE_SELECTED_TEAM : null;
+    if (!team) return;
+    definir(team, (styleDe(team) || {}).color, null);
+    window._rjTeamCloseLogos();
+    rafraichirFiche();
+  };
+
   window._rjTeamCloseLogos = function () {
     var m = document.getElementById("rj-logo-modal");
     if (m && m.parentNode) m.parentNode.removeChild(m);
@@ -460,14 +468,29 @@
       return '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
              'letter-spacing:.14em;text-transform:uppercase;margin:12px 0 7px">' + t + '</div>';
     };
-    var choix = titre("Emblèmes") +
+    // Retour possible au blason d'origine : sans cette entrée, une
+    // personnalisation était définitive et le joueur ne pouvait plus
+    // revenir en arrière.
+    var perso = !!(styleDe(team) || {}).logo;
+    var choix = titre("Blason d'origine") +
+      '<button type="button" onclick="_rjTeamResetLogo()" style="width:100%;display:flex;' +
+      'align-items:center;gap:10px;padding:9px 11px;border-radius:10px;cursor:pointer;' +
+      'background:' + (perso ? "transparent" : "rgba(255,255,255,.07)") + ';' +
+      'border:' + (perso ? "1px solid var(--border)" : "2px solid " + C) + '">' +
+      ((typeof TEAM_LOGOS !== "undefined" && TEAM_LOGOS[team]) ? TEAM_LOGOS[team] : "") +
+      '<span style="font-size:12px;color:var(--text2)">Rétablir le blason d\'origine</span></button>' +
+      titre("Emblèmes") +
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(IDS_EMBLEMES) + '</div>' +
       titre("Blasons à monogramme") +
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(blasons) + '</div>';
 
     var ov = document.createElement("div");
     ov.id = "rj-logo-modal";
-    ov.style.cssText = "position:fixed;inset:0;z-index:999;display:flex;align-items:center;" +
+    // CORRECTIF — z-index 999 alors que la fenêtre de l'éditeur de jeu
+    // (#game-editor-modal) est à 9990 : le sélecteur s'ouvrait bien, mais
+    // DERRIÈRE elle. D'où l'impression qu'il fallait fermer l'éditeur pour
+    // le faire apparaître, alors qu'on ne faisait que le dégager.
+    ov.style.cssText = "position:fixed;inset:0;z-index:9999;display:flex;align-items:center;" +
       "justify-content:center;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);padding:16px";
     ov.innerHTML =
       '<div style="width:100%;max-width:340px;max-height:78vh;overflow:auto;border-radius:var(--r,12px);' +
