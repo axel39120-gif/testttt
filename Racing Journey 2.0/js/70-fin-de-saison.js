@@ -185,6 +185,24 @@
   }
 
   /* ------------------------------------------------- couronnement --- */
+  function chiffres() {
+    var r = { courses: 0, victoires: 0, podiums: 0, points: 0, abandons: 0, top10: 0, meilleure: null };
+    try {
+      var l = G.races || [];
+      for (var i = 0; i < l.length; i++) {
+        var c = l[i]; if (!c) continue;
+        r.courses++;
+        r.points += (c.pts || 0);
+        if (c.dnf || c.pos == null) { r.abandons++; continue; }
+        if (c.pos === 1) r.victoires++;
+        if (c.pos <= 3) r.podiums++;
+        if (c.pos <= 10) r.top10++;
+        if (r.meilleure === null || c.pos < r.meilleure) r.meilleure = c.pos;
+      }
+    } catch (e) {}
+    return r;
+  }
+
   function dejaCouronnee(saison) {
     var p = P(); if (!p) return false;
     for (var i = 0; i < p.saisons.length; i++) if (p.saisons[i].saison === saison) return true;
@@ -280,6 +298,28 @@
                  (vers ? " et doit monter en " + vers + "." : " et quitte la catégorie.")
         });
       }
+    }
+
+    // CUMUL DE CARRIERE — startNextSeason vide G.races a chaque changement
+    // de saison. Les victoires, podiums et departs etaient donc perdus, et
+    // le calcul des points de partie du module 74, qui lisait G.races, ne
+    // voyait que la saison en cours. On totalise ici, au moment ou la
+    // saison est couronnee, dans un champ persistant.
+    if (!p.carriere) {
+      p.carriere = { victoires: 0, podiums: 0, departs: 0, abandons: 0, pointsChamp: 0, meilleure: null };
+    }
+    var n = chiffres();
+    bilan.chiffres = {
+      courses: n.courses, victoires: n.victoires, podiums: n.podiums,
+      abandons: n.abandons, points: n.points, meilleure: n.meilleure
+    };
+    p.carriere.victoires += n.victoires;
+    p.carriere.podiums += n.podiums;
+    p.carriere.departs += n.courses;
+    p.carriere.abandons += n.abandons;
+    p.carriere.pointsChamp += n.points;
+    if (n.meilleure !== null && (p.carriere.meilleure === null || n.meilleure < p.carriere.meilleure)) {
+      p.carriere.meilleure = n.meilleure;
     }
 
     p.saisons.push(bilan);
@@ -409,24 +449,6 @@
   }
 
   // Bilan chiffré de la saison du joueur, reconstruit depuis ses courses.
-  function chiffres() {
-    var r = { courses: 0, victoires: 0, podiums: 0, points: 0, abandons: 0, top10: 0, meilleure: null };
-    try {
-      var l = G.races || [];
-      for (var i = 0; i < l.length; i++) {
-        var c = l[i]; if (!c) continue;
-        r.courses++;
-        r.points += (c.pts || 0);
-        if (c.dnf || c.pos == null) { r.abandons++; continue; }
-        if (c.pos === 1) r.victoires++;
-        if (c.pos <= 3) r.podiums++;
-        if (c.pos <= 10) r.top10++;
-        if (r.meilleure === null || c.pos < r.meilleure) r.meilleure = c.pos;
-      }
-    } catch (e) {}
-    return r;
-  }
-
   function stat(valeur, libelle, or) {
     return '<div class="rj70-st"><div class="rj70-stv"' + (or ? ' style="color:' + OR + '"' : '') + '>' +
            ech(valeur) + '</div><div class="rj70-stl">' + ech(libelle) + '</div></div>';

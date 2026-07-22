@@ -109,16 +109,50 @@
   // Le détail est renvoyé ligne par ligne : un score sans sa décomposition
   // n'apprend rien au joueur sur ce qui a compté.
   function calculer() {
-    var l = courses(), t = palmares();
-    var victoires = 0, podiums = 0, departs = 0, abandons = 0, points = 0, meilleure = null;
-    for (var i = 0; i < l.length; i++) {
-      var c = l[i];
-      departs++;
-      points += (c.pts || 0);
-      if (c.dnf || c.pos == null) { abandons++; continue; }
-      if (c.pos === 1) victoires++;
-      if (c.pos <= 3) podiums++;
-      if (meilleure === null || c.pos < meilleure) meilleure = c.pos;
+    var t = palmares();
+
+    // CORRECTIF — on lisait G.races en croyant y trouver l'historique de
+    // carriere. Or startNextSeason vide ce tableau a chaque changement de
+    // saison : le score ne comptait donc que la saison en cours, et une
+    // longue carriere etait massivement sous-evaluee.
+    //
+    // Le cumul persistant vit desormais dans _rjPalmares.carriere, aliment�
+    // par le module 70 au moment du couronnement. On y ajoute la saison en
+    // cours UNIQUEMENT si elle n'a pas encore ete couronnee, sans quoi elle
+    // serait comptee deux fois.
+    var cum = { victoires: 0, podiums: 0, departs: 0, abandons: 0, pointsChamp: 0, meilleure: null };
+    try {
+      var pc = G._rjPalmares && G._rjPalmares.carriere;
+      if (pc) {
+        cum.victoires = pc.victoires || 0; cum.podiums = pc.podiums || 0;
+        cum.departs = pc.departs || 0; cum.abandons = pc.abandons || 0;
+        cum.pointsChamp = pc.pointsChamp || 0;
+        cum.meilleure = (typeof pc.meilleure === "number") ? pc.meilleure : null;
+      }
+    } catch (e) {}
+
+    var saisonDejaComptee = false;
+    try {
+      var sa = G._rjPalmares && G._rjPalmares.saisons;
+      if (sa) {
+        for (var q = 0; q < sa.length; q++) if (sa[q].saison === (G.saison || 1)) saisonDejaComptee = true;
+      }
+    } catch (e) {}
+
+    var victoires = cum.victoires, podiums = cum.podiums, departs = cum.departs;
+    var abandons = cum.abandons, points = cum.pointsChamp, meilleure = cum.meilleure;
+
+    if (!saisonDejaComptee) {
+      var l = courses();
+      for (var i = 0; i < l.length; i++) {
+        var c = l[i];
+        departs++;
+        points += (c.pts || 0);
+        if (c.dnf || c.pos == null) { abandons++; continue; }
+        if (c.pos === 1) victoires++;
+        if (c.pos <= 3) podiums++;
+        if (meilleure === null || c.pos < meilleure) meilleure = c.pos;
+      }
     }
 
     var ptsTitres = 0, parCat = {};
