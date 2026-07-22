@@ -1,33 +1,32 @@
 /* =====================================================================
- * 72-menu-liste.js — MENU PRINCIPAL EN LISTE (Carrière / Business / Vie)
+ * 72-menu-accueil.js — MENU PRINCIPAL ET BANDEAU DE SAISON
  *
- * Le menu de l'accueil était une grille de trois colonnes de tuiles
- * carrées, chacune portant une icône colorée au-dessus de son libellé.
- * Il devient une liste verticale : plus d'icônes, un bouton pleine largeur
- * par entrée, empilés de haut en bas, avec un fond légèrement plus clair
- * une ligne sur deux pour guider la lecture.
+ * 1. LES ICÔNES DESSINÉES DISPARAISSENT, la grille reste. Neuf entrées en
+ *    trois groupes de trois se saisissent d'un seul regard et créent une
+ *    mémoire spatiale — au bout de quelques parties, on ne lit plus
+ *    « Sponsors », on va au milieu à droite. Une liste de neuf lignes
+ *    détruit ce repère et occupe environ 420 px contre 250 pour la
+ *    grille, sur un canevas qui doit déjà loger l'en-tête et la carte de
+ *    course. Les pictogrammes, eux, étaient génériques : ils occupaient
+ *    de la place pendant que l'œil allait lire le texte de toute façon.
+ *    Ils sont remplacés par une pastille de couleur unie, qui conserve le
+ *    repère chromatique sans le bruit visuel du dessin.
  *
- * MÉTHODE — feuille de styles injectée, aucune modification du HTML.
- * Les 20 tuiles gardent leur balisage, leurs identifiants (ico-tile-*,
- * h-pilot-badge…) et leurs gestionnaires onclick. Les modules qui
- * peignent les icônes à l'exécution continuent de travailler dans le
- * vide sans rien casser : leur conteneur est simplement masqué.
+ * 2. BANDEAU DE SAISON RETIRÉ — « Saison 1 · Karting Junior · P1 · 0 pts ·
+ *    Début ». L'information figure déjà dans l'en-tête de l'accueil et
+ *    dans l'écran Championnat. Il est masqué plutôt que désactivé :
+ *    _renderSeasonBanner() continue d'écrire dans #rj-season-banner sans
+ *    lever d'erreur, contrairement à une suppression du nœud.
  *
- * Le rayage se fait en :nth-child, calculé par section — chaque
- * .apex-actions-grid recommence à zéro, donc l'alternance est correcte
- * dans Carrière, dans Business et dans Vie indépendamment.
+ * MÉTHODE — feuille de styles injectée, aucune modification du HTML. Les
+ * tuiles gardent leur balisage, leurs identifiants et leurs onclick.
  *
- * Les pastilles de notification (.apex-action-badge) sont conservées et
- * repositionnées à droite : les masquer ferait disparaître un signal
- * utile.
- *
- * Réversible : window._rj72Uninstall() retire la feuille et le menu
- * reprend sa forme d'origine, sans rechargement.
+ * Réversible : window._rj72Uninstall().
  * =================================================================== */
 (function () {
   "use strict";
 
-  var TAG = "[72-menu-liste]";
+  var TAG = "[72-menu-accueil]";
   var ID = "rj72-css";
 
   function css() {
@@ -35,49 +34,35 @@
     var st = document.createElement("style");
     st.id = ID;
     st.textContent = [
-      /* la grille devient une pile */
-      "#S-home > .scroll > .apex-actions-grid{display:flex !important;flex-direction:column !important;",
-      "gap:0 !important;padding:4px 12px 2px !important;align-items:stretch !important;",
-      "grid-template-columns:none !important;flex:0 0 auto !important}",
+      /* --- 1. La grille est CONSERVÉE : neuf entrées en trois groupes de
+         trois se saisissent d'un regard et créent un repère spatial, ce
+         qu'une liste de neuf lignes détruit tout en occupant 420 px au
+         lieu de 250. Seules les icônes dessinées disparaissent. --- */
 
-      /* chaque tuile devient une ligne pleine largeur */
-      "#S-home > .scroll > .apex-actions-grid > .apex-action-tile{min-height:0 !important;width:100% !important;",
-      "box-sizing:border-box !important;",
-      "padding:13px 14px !important;border-radius:0 !important;border:0 !important;",
-      "border-bottom:1px solid var(--border) !important;background:transparent !important;",
-      "flex-direction:row !important;align-items:center !important;",
-      "justify-content:flex-start !important;text-align:left !important;",
-      "transition:background .14s ease !important}",
+      /* Le dessin s'en va, le cadre coloré reste : c'est lui qui porte le
+         repère visuel, en pastille unie plus discrète que le pictogramme. */
+      "#S-home > .scroll > .apex-actions-grid .apex-action-icon svg{display:none !important}",
+      "#S-home > .scroll > .apex-actions-grid .apex-action-icon{width:10px !important;",
+      "height:10px !important;border-radius:50% !important;margin-bottom:9px !important;",
+      "background:var(--accent,var(--red)) !important;border:0 !important;",
+      "box-shadow:0 0 10px var(--accent-bg,rgba(255,24,1,.4)) !important}",
 
-      /* fond alterné, une ligne sur deux */
+      /* le libellé reprend la place libérée */
+      "#S-home > .scroll > .apex-actions-grid .apex-action-title{font-size:12.5px !important;",
+      "font-weight:600 !important;line-height:1.25 !important;letter-spacing:0 !important}",
+
+      /* fond légèrement alterné, une tuile sur deux, pour aérer la grille */
       "#S-home > .scroll > .apex-actions-grid > .apex-action-tile:nth-child(odd){",
-      "background:rgba(255,255,255,.035) !important}",
+      "background:rgba(255,255,255,.045) !important}",
 
-      /* première et dernière : coins arrondis pour délimiter le bloc */
-      "#S-home > .scroll > .apex-actions-grid > .apex-action-tile:first-child{",
-      "border-top-left-radius:11px !important;border-top-right-radius:11px !important}",
-      "#S-home > .scroll > .apex-actions-grid > .apex-action-tile:last-child{",
-      "border-bottom-left-radius:11px !important;border-bottom-right-radius:11px !important;",
-      "border-bottom:0 !important}",
+      /* la pastille de notification garde sa place en haut à droite */
+      "#S-home > .scroll > .apex-actions-grid .apex-action-badge{z-index:2}",
 
-      "#S-home > .scroll > .apex-actions-grid > .apex-action-tile:active{",
-      "background:rgba(255,255,255,.075) !important;transform:none !important}",
-
-      /* plus d'icônes */
-      "#S-home > .scroll > .apex-actions-grid .apex-action-icon{display:none !important}",
-
-      /* le libellé porte seul la ligne */
-      "#S-home > .scroll > .apex-actions-grid .apex-action-title{margin:0 !important;text-align:left !important;",
-      "font-size:14px !important;font-weight:600 !important;line-height:1.3 !important;",
-      "color:var(--text) !important;flex:1 !important;white-space:normal !important}",
-
-      /* chevron discret, purement décoratif */
-      "#S-home > .scroll > .apex-actions-grid > .apex-action-tile::after{content:'\\203A';margin-left:10px;",
-      "color:var(--text3);font-size:17px;line-height:1;flex-shrink:0;opacity:.65}",
-
-      /* pastille de notification ramenée à droite, avant le chevron */
-      "#S-home > .scroll > .apex-actions-grid .apex-action-badge{position:static !important;margin-left:8px !important;",
-      "flex-shrink:0 !important}"
+      /* --- 2. Bandeau « Saison 1 · Karting Junior / P1 / 0 pts / Début » :
+         retiré. L'information est déjà donnée par l'en-tête de l'accueil et
+         par l'écran Championnat. On le masque plutôt que d'empêcher son
+         rendu : _renderSeasonBanner() continue d'écrire dedans sans erreur. */
+      "#rj-season-banner{display:none !important}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -85,7 +70,7 @@
   function boot() {
     if (!document.head) { setTimeout(boot, 60); return; }
     css();
-    console.log(TAG + " actif — menu en liste, sans icônes, fond alterné");
+    console.log(TAG + " actif — grille sans pictogrammes, pastilles de couleur, bandeau de saison masqué");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
@@ -93,6 +78,6 @@
   window._rj72Uninstall = function () {
     var st = document.getElementById(ID);
     if (st && st.parentNode) st.parentNode.removeChild(st);
-    console.log(TAG + " désinstallé — menu d'origine restauré");
+    console.log(TAG + " désinstallé — icônes et bandeau de saison restaurés");
   };
 })();
