@@ -48,40 +48,40 @@
     var st = document.createElement("style");
     st.id = ID;
     st.textContent = [
-      /* la grille respire un peu plus */
-      ".mg{gap:7px !important;padding:10px 14px 5px !important}",
+      /* --- Style repris À L'IDENTIQUE des cartes de l'onglet Activités →
+         Entraînement (.rjf-card, module 38) :
+             border-radius: 11px
+             background: linear-gradient(180deg, var(--bg3), var(--bg2))
+             border: 1px solid var(--border)
+             padding: 12px 13px 13px 16px
+         Dégradé vertical discret, bordure neutre sur les quatre côtés,
+         aucun liseré coloré, et un retrait à gauche légèrement plus
+         généreux qui donne son assise à la carte. --- */
 
-      /* fond plat, bordure neutre, accent déplacé à gauche */
-      ".mc{background:var(--bg2) !important;",
+      ".mg{gap:11px !important;padding:11px 14px 5px !important}",
+
+      ".mc, .f1-metric{",
+      "border-radius:11px !important;",
+      "background:linear-gradient(180deg,var(--bg3),var(--bg2)) !important;",
       "border:1px solid var(--border) !important;",
-      "border-left:3px solid " + CYAN + " !important;",
-      "border-radius:12px !important;",
-      "padding:11px 13px !important;",
-      "transition:border-color .15s ease,background .15s ease !important}",
+      "padding:12px 13px 13px 16px !important;",
+      "position:relative !important;overflow:hidden !important}",
 
-      /* dépense : l'accent passe en ambre */
-      ".mc.rj73-neg{border-left-color:" + AMBRE + " !important}",
+      /* les variantes colorées de .f1-metric ne teintent plus le bord :
+         elles n'ont plus lieu d'être dans un style sans accent */
+      ".f1-metric-gold, .f1-metric-green, .f1-metric-blue{",
+      "border-color:var(--border) !important}",
 
-      ".mc .mc-l{font-size:9.5px !important;letter-spacing:.11em !important;",
-      "color:var(--text3) !important;margin-bottom:6px !important}",
+      /* libellé calé sur .rjf-kicker, valeur sur .rjf-name en plus grand */
+      ".mc .mc-l{font-size:9.5px !important;font-weight:700 !important;",
+      "letter-spacing:.2em !important;text-transform:uppercase !important;",
+      "color:var(--muted) !important;margin:0 0 9px !important}",
 
       ".mc .mc-v{font-size:21px !important;font-weight:900 !important;",
-      "letter-spacing:-.01em !important;line-height:1.05 !important}",
+      "letter-spacing:.02em !important;line-height:1.05 !important}",
 
-      /* --- SECONDE FAMILLE : .f1-metric --- */
-      /* Même signature visuelle que .mc (dégradé + bordure claire + liseré
-         rouge en haut) mais classe distincte, utilisée sur d'autres écrans.
-         Elle portait en plus des variantes de couleur du liseré supérieur
-         (-gold, -green, -blue) : on les transpose sur le bord gauche pour
-         que l'accent conserve son sens sans réintroduire le trait du haut. */
-      ".f1-metric{background:var(--bg2) !important;",
-      "border:1px solid var(--border) !important;",
-      "border-left:3px solid " + CYAN + " !important;",
-      "border-radius:12px !important;padding:11px 13px !important}",
-      ".f1-metric-gold{border-left-color:var(--gold,#E9B949) !important;border-top-color:var(--border) !important}",
-      ".f1-metric-green{border-left-color:var(--green,#22C55E) !important;border-top-color:var(--border) !important}",
-      ".f1-metric-blue{border-left-color:var(--blue,#60A5FA) !important;border-top-color:var(--border) !important}",
-      ".f1-metric.rj73-neg{border-left-color:" + AMBRE + " !important}"
+      /* une dépense reste identifiable, par la couleur du nombre seul */
+      ".mc.rj73-neg .mc-v, .f1-metric.rj73-neg .mc-v{color:" + AMBRE + " !important}"
     ].join("");
     document.head.appendChild(st);
   }
