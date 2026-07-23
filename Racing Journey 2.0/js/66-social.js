@@ -255,7 +255,14 @@
       if (pos === 1) txtRival = "Bravo à @" + pseudo() + ", rien à dire cette fois. On remet ça à la prochaine.";
       else if (pos && pos <= 5) txtRival = "Belle bagarre en piste aujourd'hui. C'est comme ça qu'on aime courir.";
       else txtRival = "On avait le rythme, il manquait la fenêtre. Prochaine manche, on revient.";
-      items.push({ nom: rv, h: handleDe(rv), v: rnd() > 0.6, txt: txtRival, type: "rival" });
+      var eqRival = "";
+      try {
+        var lr = G.rivals || [];
+        for (var q = 0; q < lr.length; q++) {
+          if (lr[q] && (lr[q].name === rv || lr[q].nom === rv)) { eqRival = lr[q].team || ""; break; }
+        }
+      } catch (e) {}
+      items.push({ nom: rv, h: handleDe(rv), v: rnd() > 0.6, txt: txtRival, type: "rival", team: eqRival });
     }
 
     try {
@@ -567,8 +574,9 @@
       ".rj66-stat{display:flex;align-items:baseline;gap:4px}",
       ".rj66-stat b{font-family:var(--font-display);font-size:14.5px;font-weight:900;color:#fff}",
       ".rj66-stat span{font-size:11.5px;color:var(--text3)}",
-      ".rj66-sep{height:1px;background:var(--border);margin:2px 0 14px}",
-      ".rj66-comp{padding:0 0 14px}",
+      ".rj66-sep{height:1px;background:var(--border);margin:0 0 16px}",
+      ".rj66-comp{padding:13px;margin-bottom:4px;border-radius:12px;",
+      "background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--border)}",
       ".rj66-ta{width:100%;box-sizing:border-box;background:transparent;border:0;color:var(--text);",
       "font-size:15px;line-height:1.5;resize:none;outline:none;font-family:inherit;min-height:66px}",
       ".rj66-ta::placeholder{color:var(--text3)}",
@@ -585,8 +593,14 @@
       "background:transparent;color:var(--text2);font-size:11.5px;cursor:pointer;white-space:nowrap;",
       "-webkit-appearance:none;appearance:none}",
       ".rj66-titre{font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--dim,#6b6b78);",
-      "letter-spacing:.14em;text-transform:uppercase;margin:4px 0 8px}",
-      ".rj66-tw{display:flex;gap:11px;padding:12px 0;border-top:1px solid var(--border)}",
+      "letter-spacing:.14em;text-transform:uppercase;margin:18px 0 10px;padding-top:14px;",
+      "border-top:1px solid var(--border)}",
+      ".rj66-tw{display:flex;gap:11px;padding:13px;margin-bottom:8px;border-radius:12px;",
+      "background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--border)}",
+      ".rj66-tw.moi{border-color:rgba(255,255,255,.16)}",
+      ".rj66-logo{background:#0d0d12;border:1px solid var(--border-hi);overflow:hidden;padding:2px}",
+      ".rj66-logo svg{width:100%;height:100%;display:block}",
+      ".rj66-logo-s{opacity:.85}",
       ".rj66-tav{width:38px;height:38px;border-radius:50%;flex-shrink:0;background-size:cover;",
       "background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;",
       "font-weight:800;color:#fff;font-family:var(--font-display)}",
@@ -600,8 +614,9 @@
       ".rj66-act i{font-style:normal;opacity:.75}",
       ".rj66-gain{margin-left:auto;font-weight:700}",
       ".rj66-bad{color:#EF4444}",
-      ".rj66-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}",
-      ".rj66-cell{position:relative;aspect-ratio:1/1;background:var(--bg2);overflow:hidden;border-radius:2px}",
+      ".rj66-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}",
+      ".rj66-cell{position:relative;aspect-ratio:1/1;background:var(--bg2);overflow:hidden;",
+      "border-radius:8px;border:1px solid var(--border)}",
       ".rj66-cell img{width:100%;height:100%;object-fit:cover;display:block}",
       ".rj66-cell svg{width:100%;height:100%;display:block}",
       ".rj66-cell .lk{position:absolute;left:5px;bottom:4px;font-size:10px;color:#fff;",
@@ -774,7 +789,8 @@
       return {
         nom: nomAffiche(), h: pseudo(), v: certifie("x"), moi: true, type: "moi",
         txt: p.txt, likes: p.likes, rt: p.rt, rep: p.rep || 0,
-        gain: p.gain, badBuzz: p.badBuzz, sem: p.sem, hDep: 0
+        gain: p.gain, badBuzz: p.badBuzz, sem: p.sem, hDep: 0,
+        team: (function () { try { return G.currentTeam || ""; } catch (e) { return ""; } })()
       };
     });
     var tout = moi.concat(genererFil());
@@ -785,13 +801,22 @@
     if (!tout.length) return '<div class="rj66-vide">Le fil est encore vide. Publie un premier message.</div>';
 
     return tout.map(function (t) {
-      var av = t.moi
-        ? avatarBloc("rj66-tav")
-        : '<div class="rj66-tav" style="background:' +
-          (t.type === "media" ? "#2b3440" : t.type === "team" ? couleurEquipe() + "33" : "#2a2a38") +
-          '">' + ech(String(t.nom).charAt(0).toUpperCase()) + '</div>';
+      // Les écuries affichent leur blason plutôt qu'une initiale : le fil
+      // devient identifiable d'un coup d'œil.
+      var av;
+      if (t.moi) {
+        av = avatarBloc("rj66-tav");
+      } else if (t.type === "team" && typeof getTeamLogo === "function") {
+        av = '<div class="rj66-tav rj66-logo">' + getTeamLogo(t.nom) + '</div>';
+      } else if (t.type === "rival" && t.team && typeof getTeamLogo === "function") {
+        av = '<div class="rj66-tav rj66-logo rj66-logo-s">' + getTeamLogo(t.team) + '</div>';
+      } else {
+        av = '<div class="rj66-tav" style="background:' +
+             (t.type === "media" ? "#2b3440" : "#2a2a38") + '">' +
+             ech(String(t.nom).charAt(0).toUpperCase()) + '</div>';
+      }
       var quand = t.moi ? "" : " · il y a " + t.hDep + " h";
-      return '<div class="rj66-tw">' + av + '<div class="rj66-tc">' +
+      return '<div class="rj66-tw' + (t.moi ? ' moi' : '') + '">' + av + '<div class="rj66-tc">' +
         '<div class="rj66-tt"><b>' + ech(t.nom) + '</b>' + (t.v ? badge("x") : "") +
         '<span>@' + ech(t.h) + ech(quand) + '</span></div>' +
         '<div class="rj66-txt">' + ech(t.txt) + '</div>' +
