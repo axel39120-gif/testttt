@@ -85,10 +85,48 @@
   }
   window._rj72Pastille = pastilleEvenements;
 
+  /* ------------------------------------------------------------------
+   * Confirmation de suppression d'une sauvegarde : clic fantôme.
+   *
+   * Symptôme : le premier appui sur la croix fait apparaître la bannière
+   * « Supprimer cette sauvegarde ? » qui se referme aussitôt ; il faut
+   * appuyer une seconde fois pour qu'elle reste.
+   *
+   * Le code d'origine appelle pourtant bien stopPropagation, et le défaut
+   * ne se reproduit ni au clic ni au tactile émulé sous Chromium : il est
+   * propre à WebKit. Sur iOS, un appui produit touchstart, touchend, puis
+   * un click différé d'environ 300 ms. La bannière étant insérée entre les
+   * deux, ce click résiduel atterrit sur les boutons qui viennent
+   * d'apparaître — « Annuler » referme donc ce que l'appui venait d'ouvrir.
+   *
+   * Remède : pendant 450 ms après l'ouverture, les boutons de la bannière
+   * n'acceptent aucun clic. Un appui volontaire ne peut pas être aussi
+   * rapide ; seul le clic fantôme tombe dans cette fenêtre. Même principe
+   * que l'anti-rebond du module 50 sur l'écran stratégie.
+   * ---------------------------------------------------------------- */
+  var ouvertureConfirm = 0;
+
+  function antiClicFantome(ev) {
+    try {
+      var slots = document.getElementById("save-slots");
+      if (!slots || !slots.contains(ev.target)) return;
+      var t = (ev.target.textContent || "").trim();
+      if (t === "\u00d7") { ouvertureConfirm = Date.now(); return; }
+      if (t === "Annuler" || t === "Supprimer") {
+        if (ouvertureConfirm && (Date.now() - ouvertureConfirm) < 450) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }
+      }
+    } catch (e) {}
+  }
+
   function boot() {
     if (!document.head) { setTimeout(boot, 60); return; }
     css();
     pastilleEvenements();
+    try { document.addEventListener("click", antiClicFantome, true); } catch (e) {}
     try {
       if (typeof MutationObserver === "function") {
         var t = null;
@@ -105,6 +143,7 @@
   else boot();
 
   window._rj72Uninstall = function () {
+    try { document.removeEventListener("click", antiClicFantome, true); } catch (e) {}
     var st = document.getElementById(ID);
     if (st && st.parentNode) st.parentNode.removeChild(st);
     console.log(TAG + " désinstallé — bandeau de saison restauré");
