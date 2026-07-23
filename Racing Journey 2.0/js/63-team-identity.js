@@ -447,6 +447,9 @@
     if (m && m.parentNode) m.parentNode.removeChild(m);
   };
 
+  // L'éditeur est monté à la volée : on repasse à chaque ouverture.
+  window._rj63Tabs = function () { cssOnglets(); };
+
   window._rjTeamOpenLogos = function () {
     var team = (typeof GE_SELECTED_TEAM !== "undefined") ? GE_SELECTED_TEAM : null;
     if (!team) return;
@@ -558,9 +561,57 @@
   }
 
   var essais = 0;
+    /* ------------------------------------------------------------------
+   * Barre d'onglets de l'éditeur : plus de défilement horizontal.
+   *
+   * Les cinq onglets (Pilote, Rivaux, Écuries, Staff, Agents) étaient
+   * posés en flex avec min-width:90px sur un conteneur en overflow-x:auto.
+   * Cinq × 90 px = 450 px minimum pour un écran de 390 : la barre glissait
+   * donc de gauche à droite, et les derniers onglets restaient hors champ
+   * tant qu'on n'avait pas pensé à faire défiler.
+   *
+   * On supprime la largeur minimale et on resserre le rembourrage : les
+   * cinq tiennent alors dans la largeur, et le défilement est désactivé.
+   * ---------------------------------------------------------------- */
+  function cssOnglets() {
+    if (document.getElementById("rj63-tabs-css")) return;
+    var st = document.createElement("style");
+    st.id = "rj63-tabs-css";
+    st.textContent = [
+      "#game-editor-modal .ge-tab{min-width:0 !important;padding:12px 2px !important;",
+      "font-size:9.5px !important;letter-spacing:.02em !important;flex:1 1 0 !important}",
+      "#game-editor-modal .ge-tab + .ge-tab{margin-left:0 !important}",
+      /* le conteneur direct des onglets ne défile plus */
+      "#game-editor-modal .ge-tab:first-child{margin-left:0}"
+    ].join("");
+    document.head.appendChild(st);
+
+    // Le conteneur porte son overflow en style inline : on le neutralise
+    // sur l'élément lui-même, une feuille ne pourrait pas le battre.
+    try {
+      var t = document.querySelector("#game-editor-modal .ge-tab");
+      var bar = t && t.parentElement;
+      if (bar && bar.style) {
+        bar.style.overflowX = "hidden";
+        bar.style.setProperty("overflow-x", "hidden", "important");
+      }
+    } catch (e) {}
+  }
+
   function boot() {
     try {
       if (installer()) { etat.installe = true;
+        cssOnglets();
+        // L'éditeur est monté à la volée : la barre d'onglets n'existe pas
+        // forcément au démarrage. On repasse quand elle apparaît.
+        try {
+          if (typeof MutationObserver === "function") {
+            var obs = new MutationObserver(function () {
+              if (document.querySelector("#game-editor-modal .ge-tab")) cssOnglets();
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+          }
+        } catch (e) {}
         console.log("[63-team-identity] actif — couleur d'écurie et " + IDS.length + " blasons générés");
         return;
       }
