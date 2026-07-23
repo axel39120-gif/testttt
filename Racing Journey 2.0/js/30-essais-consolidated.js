@@ -205,8 +205,13 @@
     // terminé] → modal ingénieur → reprise timer + re-render.
     // ------------------------------------------------------------------------
 
-    var WARMUP_MS = 2400;   // durée visuelle du tour de chauffe
-    var CHRONO_MS = 4600;   // durée visuelle du tour chrono
+    // Rythme des essais libres accéléré d'environ 22 %. Les valeurs
+    // d'origine étaient 2400 / 4600 / 2800 / 5000. La colorisation des
+    // secteurs est calculée en fraction de FLYLAP_MS
+    // (FLYLAP_MS * (idx+1) / 3 * 0.92) : elle suit donc proportionnellement
+    // et reste dans la fenêtre du tour chronométré, sans recalibrage.
+    var WARMUP_MS = 1900;   // durée visuelle du tour de chauffe
+    var CHRONO_MS = 3600;   // durée visuelle du tour chrono
 
     window.doPracticeTest = function () {
       var pr = (typeof RACE_STATE !== "undefined") ? RACE_STATE.practice : null;
@@ -776,8 +781,8 @@
 
     // Animation d'un tour (ms réelles). Le chrono de séance continue de couler
     // pendant ces animations.
-    var OUTLAP_MS = 2800;   // tour de sortie (warm-up)
-    var FLYLAP_MS = 5000;   // tour lancé
+    var OUTLAP_MS = 2200;   // tour de sortie (warm-up)
+    var FLYLAP_MS = 3900;   // tour lancé
 
     // Usure de base par tour lancé (%) avant modulateurs.
     var BASE_WEAR = 6.2;
