@@ -611,7 +611,8 @@
       ".rj66-txt{font-size:13.5px;color:var(--text);line-height:1.5;margin-top:3px;",
       "white-space:pre-wrap;word-wrap:break-word}",
       ".rj66-act{display:flex;gap:18px;margin-top:8px;font-size:11.5px;color:var(--text3);align-items:center}",
-      ".rj66-act i{font-style:normal;opacity:.75}",
+      ".rj66-act span{display:inline-flex;align-items:center;gap:5px}",
+      ".rj66-act svg{opacity:.8;flex-shrink:0}",
       ".rj66-gain{margin-left:auto;font-weight:700}",
       ".rj66-bad{color:#EF4444}",
       ".rj66-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}",
@@ -783,6 +784,24 @@
       '</div></div>';
   }
 
+  /* Les compteurs utilisaient des entités typographiques (&#8617; &#8635;
+     &#9829;). Selon la police servie et les modules de substitution
+     d'emoji, ces caractères peuvent ne pas être rendus : il ne restait
+     alors que les nombres. On passe à des tracés SVG, insensibles à la
+     police comme aux filtres. */
+  var ICO = {
+    rep: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" ' +
+         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+         '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.1A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>',
+    rt:  '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" ' +
+         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+         '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>' +
+         '<polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+    like:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" ' +
+         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+         '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>'
+  };
+
   function filX() {
     var s = S();
     var moi = s.x.posts.slice(0, 12).map(function (p) {
@@ -821,9 +840,9 @@
         '<span>@' + ech(t.h) + ech(quand) + '</span></div>' +
         '<div class="rj66-txt">' + ech(t.txt) + '</div>' +
         '<div class="rj66-act">' +
-          '<span><i>&#8617;</i> ' + fmt(t.rep) + '</span>' +
-          '<span><i>&#8635;</i> ' + fmt(t.rt) + '</span>' +
-          '<span><i>&#9829;</i> ' + fmt(t.likes) + '</span>' +
+          '<span>' + ICO.rep + fmt(t.rep) + '</span>' +
+          '<span>' + ICO.rt + fmt(t.rt) + '</span>' +
+          '<span>' + ICO.like + fmt(t.likes) + '</span>' +
           (t.moi ? '<span class="rj66-gain' + (t.badBuzz ? " rj66-bad" : "") + '">' +
                    (t.gain >= 0 ? "+" : "") + fmt(t.gain) + '</span>' : "") +
         '</div></div></div>';
