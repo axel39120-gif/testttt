@@ -43,14 +43,62 @@
          dans l'en-tête de l'accueil et dans l'écran Championnat.
          Il est masqué et non supprimé : _renderSeasonBanner() continue
          d'écrire dans #rj-season-banner sans lever d'erreur. */
-      "#rj-season-banner{display:none !important}"
+      "#rj-season-banner{display:none !important}",
+
+      /* --- FUSION DE LA VIE AU PADDOCK -----------------------------
+         La zone d'événements de l'accueil (#home-events-zone) et
+         l'onglet « Événements » de Réseaux & Messages affichent le MÊME
+         tableau REP_EVENTS_PENDING : renderHomeEvents remplit la
+         première, renderRepEvents la seconde. C'était donc un doublon,
+         et un doublon amputé — la zone d'accueil était en plus réservée
+         à la Formule 2 et à la Formule 1, alors que l'onglet, lui, n'a
+         aucune restriction de catégorie.
+         La zone d'accueil disparaît ; l'onglet devient le seul endroit.
+         ------------------------------------------------------------- */
+      "#home-events-zone{display:none !important}"
     ].join("");
     document.head.appendChild(st);
   }
 
+  /* Une pastille sur la tuile « Réseaux » remplace la visibilité que
+     donnait la zone d'accueil : sans elle, un événement en attente
+     passerait totalement inaperçu. Le badge réutilise le mécanisme
+     existant (.apex-action-badge), déjà en place sur Pilote, Contrats
+     et Sponsors. */
+  function pastilleEvenements() {
+    try {
+      var tuile = document.querySelector(".apex-action-tile[onclick*='S-media'] .apex-action-icon");
+      if (!tuile) return;
+      var b = document.getElementById("rj72-evt-badge");
+      var n = 0;
+      try { n = (typeof REP_EVENTS_PENDING !== "undefined" && REP_EVENTS_PENDING) ? REP_EVENTS_PENDING.length : 0; } catch (e) {}
+      if (!n) { if (b) b.style.display = "none"; return; }
+      if (!b) {
+        b = document.createElement("span");
+        b.id = "rj72-evt-badge";
+        b.className = "apex-action-badge";
+        tuile.appendChild(b);
+      }
+      b.textContent = n;
+      b.style.display = "flex";
+    } catch (e) {}
+  }
+  window._rj72Pastille = pastilleEvenements;
+
   function boot() {
     if (!document.head) { setTimeout(boot, 60); return; }
     css();
+    pastilleEvenements();
+    try {
+      if (typeof MutationObserver === "function") {
+        var t = null;
+        var obs = new MutationObserver(function () {
+          if (t) clearTimeout(t);
+          t = setTimeout(pastilleEvenements, 120);
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+      }
+    } catch (e) {}
     console.log(TAG + " actif — menu principal d'origine, bandeau de saison masqué");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
