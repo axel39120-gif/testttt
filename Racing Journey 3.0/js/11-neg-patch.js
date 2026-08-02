@@ -890,7 +890,14 @@
     nodes.forEach(function (t) {
       var v = t.nodeValue;
       if (!v || !/\d/.test(v)) return;
-      var out = v.replace(/(\d(?:[\s\u00A0]?\d{3})*)\s*e\b/g, '$1 €');   // 180 000 e -> 180 000 €
+      // CORRECTIF — l'espace était facultatif (\s*) : « 3e » (position au
+      // championnat, case #h-pts du header) devenait « 3 € ». Le module 78
+      // réécrivait alors « 3 € » en « 3e » via son propre MutationObserver,
+      // ce qui relançait ce balayage : ping-pong infini en microtâches, le
+      // thread principal bloqué à 100 % dès l'entrée en jeu (chargement de
+      // sauvegarde ou création de carrière). L'espace est désormais exigé :
+      // les montants (« 180 000 e ») restent traités, les ordinaux non.
+      var out = v.replace(/(\d(?:[\s\u00A0]?\d{3})*)[\s\u00A0]+e\b/g, '$1 €');   // 180 000 e -> 180 000 €
       out = out.replace(/€\s*\/\s*mois/g, '€');                          // €/mois -> €
       if (/€/.test(out)) out = out.replace(/\+\s*(?=\d)/g, '');          // + devant un montant
       if (out !== v) t.nodeValue = out;
@@ -1430,15 +1437,43 @@
   // Le verrou de réentrance évite que nos propres écritures ne relancent le
   // balayage en boucle — la deuxième passe ne trouverait rien à corriger,
   // mais autant ne pas la déclencher.
+  //
+  // DURCISSEMENT — le verrou synchrone ne protégeait que de la réentrance
+  // directe : une autre extension qui réécrit ce que nous venons d'écrire
+  // relançait le balayage indéfiniment (cf. module 78, bloc 13). Deux
+  // garde-fous s'ajoutent donc :
+  //   1. takeRecords() vide la file de l'observateur avant de relâcher le
+  //      verrou : nos propres écritures ne se rappellent plus elles-mêmes.
+  //   2. un disjoncteur : au-delà de SWEEP_MAX balayages dans une fenêtre
+  //      d'une seconde, l'observateur se met en veille 2 s et le signale en
+  //      console. Le jeu reste jouable au lieu de figer le navigateur.
   var sweepEnCours = false;
+  var sweepCompteur = 0, sweepFenetre = 0, sweepEnVeille = false;
+  var SWEEP_MAX = 400;
   function sweepAll() {
-    if (sweepEnCours) return;
+    if (sweepEnCours || sweepEnVeille) return;
+
+    var now = Date.now();
+    if (now - sweepFenetre > 1000) { sweepFenetre = now; sweepCompteur = 0; }
+    if (++sweepCompteur > SWEEP_MAX) {
+      sweepEnVeille = true;
+      console.warn('[11-neg-patch/UI] balayage monétaire suspendu 2 s ' +
+                   '(cadence anormale : ' + sweepCompteur + ' passes/s, ' +
+                   'boucle de mutations probable).');
+      setTimeout(function () {
+        sweepEnVeille = false; sweepCompteur = 0; sweepFenetre = Date.now();
+        try { sweepObs.takeRecords(); } catch (e) {}
+      }, 2000);
+      return;
+    }
+
     sweepEnCours = true;
     try {
       var scr = document.querySelector('.scr.on');
       if (scr) cleanMoney(scr);
     } catch (e) {
     } finally {
+      try { sweepObs.takeRecords(); } catch (e) {}
       sweepEnCours = false;
     }
   }

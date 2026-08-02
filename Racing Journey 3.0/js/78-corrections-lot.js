@@ -194,30 +194,22 @@
    * cleanMoney (11-neg-patch) applique la règle
    *     /(\d(?:[\s\u00A0]?\d{3})*)\s*e\b/g  →  "$1 €"
    * destinée à « 180 000 e » → « 180 000 € ». Comme l'espace est
-   * facultatif (\s*), « 3e » devient « 3 € ». On rend l'espace
-   * obligatoire : les montants restent traités, les ordinaux non.
+   * facultatif (\s*), « 3e » devient « 3 € ».
+   *
+   * CORRECTIF DÉFINITIF — ce bloc installait un second MutationObserver sur
+   * #h-pts qui réécrivait « 3 € » en « 3e ». Cette réécriture était elle-même
+   * une mutation, qui réveillait l'observateur du module 11, qui réappliquait
+   * « 3 € », qui réveillait celui-ci… : ping-pong infini en microtâches, avec
+   * le thread principal bloqué à 100 % dès l'entrée en jeu — impossible de
+   * charger une sauvegarde ni de créer une carrière depuis l'écran d'accueil
+   * (reproduit en navigateur : loadSave ne rendait jamais la main).
+   *
+   * La cause est traitée à la source dans 11-neg-patch.js : l'espace est
+   * désormais obligatoire dans la regex, les ordinaux ne sont plus touchés.
+   * L'observateur correctif n'a plus lieu d'être et n'est plus installé.
    * ================================================================== */
   function installEuro() {
-    try {
-      if (typeof window._rj11CleanMoney === "function") return;
-    } catch (e) {}
-    // La fonction est privée au module 11 : on corrige le résultat après coup.
-    var cible = document.getElementById("h-pts");
-    if (!cible) return;
-    var obs = null;
-    try {
-      obs = new MutationObserver(function () {
-        try {
-          var t = cible.textContent || "";
-          if (/^\s*\d+\s*€\s*$/.test(t)) {
-            cible.textContent = t.replace(/\s*€\s*$/, "e").trim();
-          }
-        } catch (e) {}
-      });
-      obs.observe(cible, { childList: true, characterData: true, subtree: true });
-      wrapped._obsEuro = obs;
-      note("13-euro");
-    } catch (e) {}
+    /* volontairement vide — voir la note ci-dessus */
   }
 
   /* ================================================================== *
