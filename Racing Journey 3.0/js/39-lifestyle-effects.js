@@ -106,6 +106,119 @@
     if (host.firstChild) host.insertBefore(div, host.firstChild); else host.appendChild(div);
   }
   var _origRL = null;
+
+  /* ================================================================== *
+   * CTA DES ACTIVITÉS ALIGNÉS SUR CEUX DE LA BOUTIQUE
+   *
+   * Onglet « Shopping » : chaque article se termine par une ligne
+   *   [ prix en gros à gauche ][ bouton ACHETER à droite ]
+   * Onglet « Activités » : le bouton FAIRE était simplement posé sous les
+   * badges, collé à gauche, et le coût restait noyé dans un badge rouge.
+   * On reconstruit la même ligne de pied de carte : le coût passe en gros
+   * à gauche, le CTA (bouton FAIRE, « Déjà fait cette semaine » ou
+   * « Budget insuffisant ») s'aligne à droite.
+   *
+   * Retouche DOM après coup : 05-progression n'est pas modifié.
+   * ================================================================== */
+  function activiteParNom(nom) {
+    var L = window.LS_ACTIVITIES;
+    if (!L || !L.length || !nom) return null;
+    nom = nom.trim();
+    for (var i = 0; i < L.length; i++) {
+      if (L[i] && L[i].name && L[i].name.trim() === nom) return L[i];
+    }
+    return null;
+  }
+
+  /* coût lu dans le catalogue ; repli sur le badge rouge si absent */
+  function coutActivite(carte, corps) {
+    var titre = corps.firstElementChild;
+    var act = activiteParNom(titre ? titre.textContent : "");
+    if (act && typeof act.cost === "number") return act.cost;
+    var bs = corps.querySelectorAll(".badge");
+    for (var i = 0; i < bs.length; i++) {
+      var t = (bs[i].textContent || "").trim();
+      if (/^Gratuit$/i.test(t)) return 0;
+      var m = t.match(/^-\s*([\d\s\u00A0]+)\s*(?:€|e)$/);
+      if (m) return parseInt(m[1].replace(/[\s\u00A0]/g, ""), 10) || 0;
+    }
+    return null;
+  }
+
+  /* retire le badge de coût : le montant est désormais affiché en gros */
+  function retirerBadgeCout(corps) {
+    var bs = corps.querySelectorAll(".badge");
+    for (var i = 0; i < bs.length; i++) {
+      var t = (bs[i].textContent || "").trim();
+      if (/^Gratuit$/i.test(t) || /^-\s*[\d\s\u00A0]+\s*(?:€|e)$/.test(t)) {
+        if (bs[i].parentNode) bs[i].parentNode.removeChild(bs[i]);
+        return;
+      }
+    }
+  }
+
+  function harmoniserCTAActivites() {
+    var liste = document.getElementById("ls-activities-list");
+    if (!liste) return;
+    var cartes = liste.querySelectorAll(".act-card");
+    for (var i = 0; i < cartes.length; i++) {
+      var carte = cartes[i];
+      if (carte.getAttribute("data-rj39-cta") === "1") continue;
+
+      var corps = carte.querySelector('div[style*="flex:1"]');
+      if (!corps) continue;
+      var action = corps.lastElementChild;          // bouton FAIRE ou libellé d'état
+      if (!action) continue;
+
+      var cout = coutActivite(carte, corps);
+      retirerBadgeCout(corps);
+
+      var G = G_();
+      var budgetOk = !G || typeof G.budget !== "number" || cout === null || G.budget >= cout;
+      var libelle, couleur;
+      if (cout === null)      { libelle = "";        couleur = "var(--white)"; }
+      else if (cout <= 0)     { libelle = "GRATUIT"; couleur = "var(--teal)"; }
+      else                    { libelle = cout.toLocaleString("fr-FR") + " €";
+                                couleur = budgetOk ? "var(--white)" : "var(--red3)"; }
+
+      // la ligne de badges portait la marge basse : la ligne de pied la reprend
+      var badges = corps.querySelector('div[style*="flex-wrap:wrap"]');
+      if (badges) badges.style.marginBottom = "0";
+
+      var ligne = document.createElement("div");
+      ligne.setAttribute("data-rj39-cta", "1");
+      ligne.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px";
+
+      var prix = document.createElement("span");
+      prix.style.cssText = "font-family:var(--font-display);font-size:17px;font-weight:900;" +
+                           "letter-spacing:.02em;flex-shrink:0;color:" + couleur;
+      prix.textContent = libelle;
+      ligne.appendChild(prix);
+
+      corps.removeChild(action);
+      action.style.flexShrink = "0";
+      action.style.textAlign = "right";
+      ligne.appendChild(action);
+
+      corps.appendChild(ligne);
+      carte.setAttribute("data-rj39-cta", "1");
+    }
+  }
+
+  var _origRLA = null;
+  function wrapRenderLsActivities() {
+    if (typeof window.renderLsActivities !== "function") return false;
+    if (window.renderLsActivities._rjLife) return true;
+    _origRLA = window.renderLsActivities;
+    window.renderLsActivities = function () {
+      var r = _origRLA.apply(this, arguments);
+      try { harmoniserCTAActivites(); } catch (e) {}
+      return r;
+    };
+    window.renderLsActivities._rjLife = true;
+    return true;
+  }
+
   function wrapRenderLifestyle() {
     if (typeof window.renderLifestyle !== "function") return false;
     if (window.renderLifestyle._rjLife) return true;
@@ -113,6 +226,7 @@
     window.renderLifestyle = function () {
       var r = _origRL.apply(this, arguments);
       try { injectEffect(); } catch (e) {}
+      try { harmoniserCTAActivites(); } catch (e) {}
       return r;
     };
     window.renderLifestyle._rjLife = true;
@@ -125,8 +239,8 @@
     try { injectCSS(); } catch (e) {}
     var tries = 0;
     (function boot() {
-      var a = registerHook(), b = wrapRenderLifestyle();
-      if (a && b) return;
+      var a = registerHook(), b = wrapRenderLifestyle(), c = wrapRenderLsActivities();
+      if (a && b && c) return;
       if (tries++ < 50 && typeof setTimeout === "function") setTimeout(boot, 150);
     })();
     window._rjLife = {
@@ -135,6 +249,7 @@
     };
     window._rjLifeUninstall = function () {
       if (_origRL) window.renderLifestyle = _origRL;
+      if (_origRLA) window.renderLsActivities = _origRLA;
       if (window.WEEKLY_TICK_HOOKS) {
         for (var i = window.WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--)
           if (window.WEEKLY_TICK_HOOKS[i] && window.WEEKLY_TICK_HOOKS[i].id === "lifestyleEffects") window.WEEKLY_TICK_HOOKS.splice(i, 1);
