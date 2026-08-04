@@ -251,6 +251,53 @@
     }
   }
 
+  /* ===================================================================
+   * REMISE À ZÉRO DES SECTEURS ENTRE LES SESSIONS
+   *
+   * renderQualiSession vide bestTime, lastTime, laps et improved à chaque
+   * nouvelle session — mais laisse intacts bestSectors (record personnel),
+   * QUALI_STATE.bestSectors (record de session) et lastSectorFlags.
+   *
+   * Conséquence : le premier tour de Q2 était comparé aux secteurs de Q1.
+   * Comme un premier tour est presque toujours plus lent que le meilleur de
+   * la session précédente, les trois secteurs s'affichaient en jaune. Or par
+   * convention, sur un chrono qui repart de zéro, le premier tour est
+   * nécessairement une amélioration : vert au minimum, violet s'il devient
+   * la référence.
+   *
+   * On vide donc les références au début de chaque session. renderQualiSession
+   * n'est appelée qu'à l'ouverture d'une session (init, advanceQuali,
+   * watchNextQuali), jamais en cours de séance : aucun record en cours ne
+   * peut être effacé par erreur.
+   * =================================================================== */
+
+  var _dernierePhase = null;
+
+  function clePhase() {
+    var G = window.G, st = window.QUALI_STATE;
+    var courses = 0, circuit = "";
+    try { courses = (G && G.races) ? G.races.length : 0; } catch (e) {}
+    try { circuit = (window.RACE_STATE && window.RACE_STATE.circuit) || ""; } catch (e) {}
+    return courses + "|" + circuit + "|" + ((st && st.session) || 0);
+  }
+
+  function reinitialiserSecteurs() {
+    var st = window.QUALI_STATE;
+    if (!st) return;
+    try {
+      var pilotes = st.drivers || [];
+      for (var i = 0; i < pilotes.length; i++) {
+        var d = pilotes[i];
+        if (!d) continue;
+        d.bestSectors = [null, null, null];
+        d.lastSectors = null;
+        d.lastSectorFlags = null;
+      }
+      st.bestSectors = [null, null, null];
+      st.bestSectorsHolder = [null, null, null];
+    } catch (e) { console.warn("[46-qualif] remise à zéro des secteurs :", e && e.message); }
+  }
+
   var _origRender = null, _origPick = null;
 
   function installBoutonTiming() {
@@ -271,6 +318,10 @@
     if (window.renderQualiSession._rj46) return true;
     _origRender = window.renderQualiSession;
     window.renderQualiSession = function () {
+      try {
+        var cle = clePhase();
+        if (cle !== _dernierePhase) { reinitialiserSecteurs(); _dernierePhase = cle; }
+      } catch (e) {}
       var r = _origRender.apply(this, arguments);
       try { habillerEnTete(); } catch (e) { console.warn("[46-qualif] en-tête :", e && e.message); }
       return r;
