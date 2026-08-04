@@ -11,6 +11,12 @@
  * ajouté que si tous les paramètres sont ✓ (et au moins un paramètre).
  * N'altère rien d'autre ; les boutons existants restent.
  *
+ * SECOND VOLET — NOMENCLATURE DES SESSIONS DE QUALIF (voir plus bas)
+ * L'en-tête du classement annonçait « Q1 — Élimination (0 pilote éliminé) »
+ * dans toutes les catégories, y compris celles qui ne disputent qu'une
+ * séance unique sans aucune élimination (karting, F4, F3, F2, WEC…).
+ * On rétablit un intitulé fidèle au format réel de chaque catégorie.
+ *
  * Réversible : window._rjFpQualifShortcutUninstall().
  * =================================================================== */
 (function () {
@@ -82,15 +88,214 @@
     }
   });
 
+
+  /* ===================================================================
+   * NOMENCLATURE DES SESSIONS DE QUALIFICATION
+   *
+   * Le moteur connaît déjà le format de chaque catégorie
+   * (_qualiFormatForCat : maxSessions, singleSession, durée), mais l'en-tête
+   * du classement était écrit pour la seule Formule 1 : il annonçait une
+   * élimination même là où personne n'est éliminé.
+   *
+   * On réécrit donc titre, badge et ligne de détail après le rendu, sans
+   * toucher au fichier cœur ni à la logique de qualification elle-même.
+   * =================================================================== */
+
+  /* Intitulé de la séance unique, catégorie par catégorie. */
+  var SEANCE_UNIQUE = {
+    "Karting Junior":   { titre: "Qualification",            detail: "Séance unique — le meilleur tour fixe la grille" },
+    "Karting Senior":   { titre: "Qualification",            detail: "Séance unique — le meilleur tour fixe la grille" },
+    "Formule 4":        { titre: "Qualification",            detail: "Séance unique — le meilleur tour fixe la grille" },
+    "Formula Regional": { titre: "Qualification",            detail: "Séance unique — le meilleur tour fixe la grille" },
+    "Formule 3":        { titre: "Qualification",            detail: "Séance unique — le meilleur tour fixe la grille" },
+    "Formule 2":        { titre: "Qualification",            detail: "Séance unique — le meilleur tour fixe la grille" },
+    "Endurance WEC":    { titre: "Hyperpole",                detail: "Séance unique — une voiture par équipage" },
+    "IndyCar":          { titre: "Qualification",            detail: "Tours lancés en solo — un pilote à la fois" }
+  };
+
+  /* Intitulés des formats à élimination, par catégorie et par session. */
+  var MULTI = {
+    "Formule 1": {
+      badge: function (n) { return "Q" + n; },
+      titre: function (n, elim, restants) {
+        if (n >= 3) return "Q3 — Bataille pour la pole";
+        return "Q" + n + " — Élimination";
+      },
+      detail: function (n, elim, restants) {
+        if (n >= 3) return restants + " pilotes en piste pour la pole";
+        return elim > 0
+          ? "Les " + elim + " derniers sont éliminés"
+          : restants + " pilotes en piste";
+      }
+    },
+    "Super Formula": {
+      badge: function (n) { return "Q" + n; },
+      titre: function (n) { return n >= 3 ? "Q3 — Bataille pour la pole" : "Q" + n + " — Élimination"; },
+      detail: function (n, elim, restants) {
+        return n >= 3 ? restants + " pilotes pour la pole"
+                      : (elim > 0 ? "Les " + elim + " derniers sont éliminés" : restants + " pilotes en piste");
+      }
+    },
+    "IndyCar": {
+      badge: function (n) { return n >= 3 ? "FAST 6" : (n === 2 ? "FAST 12" : "SEG. 1"); },
+      titre: function (n) {
+        if (n >= 3) return "Fast Six — Bataille pour la pole";
+        if (n === 2) return "Fast Twelve";
+        return "Segment 1 — Élimination";
+      },
+      detail: function (n, elim, restants) {
+        if (n >= 3) return "Les six plus rapides se disputent la pole";
+        if (n === 2) return "Les six meilleurs passent en Fast Six";
+        return elim > 0 ? "Les " + elim + " derniers sont éliminés" : restants + " pilotes en piste";
+      }
+    }
+  };
+
+  function formatCat(cat) {
+    try {
+      if (typeof window._qualiFormatForCat === "function") return window._qualiFormatForCat(cat);
+    } catch (e) {}
+    return { maxSessions: 1, singleSession: true, duration: {} };
+  }
+
+  function intitule() {
+    var G = window.G;
+    var cat = (G && G.cat) || "Formule 1";
+    var st = window.QUALI_STATE;
+    if (!st) return null;
+
+    var n = st.session || 1;
+    var restants = (st.survived && st.survived.length) || 0;
+    var fmt = formatCat(cat);
+    var elim = 0;
+    try {
+      if (!fmt.singleSession && n < (fmt.maxSessions || 1) && typeof window.getQualiElimCount === "function") {
+        elim = window.getQualiElimCount(n) || 0;
+      }
+    } catch (e) {}
+
+    /* Séance unique : aucune élimination à annoncer. */
+    if (fmt.singleSession || (fmt.maxSessions || 1) <= 1) {
+      var u = SEANCE_UNIQUE[cat] || { titre: "Qualification", detail: "Séance unique — le meilleur tour fixe la grille" };
+      return { titre: u.titre, detail: u.detail, badge: "QUALIF", restants: restants };
+    }
+
+    var m = MULTI[cat] || MULTI["Formule 1"];
+    return {
+      titre: m.titre(n, elim, restants),
+      detail: m.detail(n, elim, restants),
+      badge: m.badge(n),
+      restants: restants
+    };
+  }
+
+  function habillerEnTete() {
+    var host = document.getElementById("quali-session-header");
+    if (!host) return;
+    var info = intitule();
+    if (!info) return;
+
+    var G = window.G;
+    var st = window.QUALI_STATE;
+    var n = (st && st.session) || 1;
+
+    var circuit = "";
+    try { circuit = (window.RACE_STATE && window.RACE_STATE.circuit) || (G && G.cat) || ""; } catch (e) {}
+    var minutes = "";
+    try {
+      var d = formatCat(G && G.cat).duration || {};
+      var v = d[n] || (window.QUALI_DURATION && window.QUALI_DURATION[n]);
+      if (v) minutes = v + " minutes";
+    } catch (e) {}
+
+    var bouts = [info.restants + " pilotes"];
+    if (circuit) bouts.push(circuit);
+    if (minutes) bouts.push(minutes);
+
+    var couleurs = { 1: "var(--blue)", 2: "var(--amber)", 3: "#F59E0B" };
+    var coul = (info.badge === "QUALIF") ? "var(--blue)" : (couleurs[n] || "var(--blue)");
+    var classeBadge = (info.badge === "QUALIF") ? "b-blue"
+                    : (n >= 3 ? "b-gold" : (n === 2 ? "b-amber" : "b-blue"));
+
+    /* On regénère l'en-tête entier : le retoucher nœud par nœud dépendait
+       d'une structure interne qui n'a pas à être un contrat. */
+    host.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px">' +
+        '<div>' +
+          '<div style="font-size:16px;font-weight:800;color:' + coul + '">' + info.titre + '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:1px">' + bouts.join(" \u00b7 ") + '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:2px;opacity:.85">' + info.detail + '</div>' +
+        '</div>' +
+        '<span class="badge ' + classeBadge + '">' + info.badge + '</span>' +
+      '</div>';
+
+    /* Le compteur du bandeau annonçait « Q1 » même sans session multiple. */
+    var compteur = document.getElementById("rj-quali-counter");
+    if (compteur) compteur.textContent = (info.badge === "QUALIF") ? "" : info.badge;
+
+    habillerBouton(info);
+  }
+
+  /* « Lancer Q1 » n'a pas de sens là où il n'y a pas de Q2. */
+  function habillerBouton(info) {
+    if (!info || info.badge !== "QUALIF") return;
+    var zone = document.getElementById("quali-btn-zone");
+    if (!zone) return;
+    var boutons = zone.querySelectorAll("button");
+    for (var i = 0; i < boutons.length; i++) {
+      var b = boutons[i];
+      var t = (b.textContent || "");
+      if (/Lancer\s*Q\d/i.test(t)) {
+        b.innerHTML = b.innerHTML.replace(/Lancer\s*Q\d/i, "Lancer la qualification");
+      }
+    }
+  }
+
+  var _origRender = null, _origPick = null;
+
+  function installBoutonTiming() {
+    if (typeof window._qualiPickTiming !== "function") return false;
+    if (window._qualiPickTiming._rj46) return true;
+    _origPick = window._qualiPickTiming;
+    window._qualiPickTiming = function () {
+      var r = _origPick.apply(this, arguments);
+      try { habillerBouton(intitule()); } catch (e) {}
+      return r;
+    };
+    window._qualiPickTiming._rj46 = true;
+    return true;
+  }
+
+  function installNomenclature() {
+    if (typeof window.renderQualiSession !== "function") return false;
+    if (window.renderQualiSession._rj46) return true;
+    _origRender = window.renderQualiSession;
+    window.renderQualiSession = function () {
+      var r = _origRender.apply(this, arguments);
+      try { habillerEnTete(); } catch (e) { console.warn("[46-qualif] en-tête :", e && e.message); }
+      return r;
+    };
+    window.renderQualiSession._rj46 = true;
+    return true;
+  }
+
   function start() {
     if (!document.body) { setTimeout(start, 100); return; }
     obs.observe(document.body, { childList: true, subtree: true });
+    var essais = 0;
+    (function bootQ() {
+      installBoutonTiming();
+      if (installNomenclature()) return;
+      if (essais++ < 60) setTimeout(bootQ, 150);
+    })();
     var ex = document.getElementById("fpl-debrief");
     if (ex) enhance(ex);
     console.log("[46-fp-qualif-shortcut] actif");
   }
 
   window._rjFpQualifShortcutUninstall = function () {
+    if (_origRender) window.renderQualiSession = _origRender;
+    if (_origPick) window._qualiPickTiming = _origPick;
     obs.disconnect();
     var b = document.getElementById(BTN_ID);
     if (b && b.parentNode) b.parentNode.removeChild(b);
