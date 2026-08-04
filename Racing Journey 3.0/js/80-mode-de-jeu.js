@@ -150,7 +150,18 @@
       ".rj80-banner button{background:none;border:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;opacity:.75;padding:0}",
       /* nom de l'étape courante */
       ".rj80-stepname{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}",
-      "#cre-next.rj80-off{opacity:.4;cursor:not-allowed;filter:grayscale(.5)}"
+      "#cre-next.rj80-off{opacity:.4;cursor:not-allowed;filter:grayscale(.5)}",
+      /* grille des écuries de cœur */
+      ".rj80-fav-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}",
+      ".rj80-fav-opt{display:flex;align-items:center;gap:8px;padding:8px 9px;background:var(--bg3);border:1.5px solid var(--line);" +
+        "border-radius:9px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s,background .15s}",
+      ".rj80-fav-opt:hover{border-color:var(--border-hi)}",
+      ".rj80-fav-opt.on{border-color:" + CYAN + ";background:rgba(0,212,255,.10)}",
+      ".rj80-fav-opt .rj80-fav-logo{display:inline-flex;width:22px;height:22px;border-radius:4px;overflow:hidden;flex-shrink:0}",
+      ".rj80-fav-opt .rj80-fav-nom{font-size:11.5px;font-weight:600;color:var(--text);line-height:1.25;font-family:var(--font-body)}",
+      ".rj80-fav-opt.on .rj80-fav-nom{color:var(--white)}",
+      ".rj80-fav-none{grid-column:1 / -1;justify-content:center;font-size:11.5px;color:var(--muted)}",
+      ".rj80-fav-nologo{display:inline-block;width:22px;height:22px;border-radius:4px;background:var(--line)}"
     ].join("");
     var st = document.createElement("style");
     st.id = CSS_ID; st.textContent = css;
@@ -596,19 +607,42 @@
         ';letter-spacing:.08em;text-transform:uppercase">Écurie de cœur</div>' +
       '<div style="font-size:11px;color:var(--text2);margin:3px 0 9px;line-height:1.45">' +
         'L\'écurie de Formule 1 que ton pilote rêve de rejoindre. Facultatif.</div>' +
-      '<select id="rj80-fav-sel" class="inp" style="width:100%">' +
-        '<option value="">Aucune préférence</option>' +
-        liste.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + '</option>'; }).join("") +
-      '</select>';
+      '<div id="rj80-fav-grid" class="rj80-fav-grid"></div>';
     hote.appendChild(bloc);
-    var sel = document.getElementById("rj80-fav-sel");
-    if (sel) sel.addEventListener("change", function () { choixEcurie = sel.value || null; });
+    hote.querySelector("#rj80-fav-grid").addEventListener("click", function (ev) {
+      var opt = ev.target.closest ? ev.target.closest(".rj80-fav-opt") : null;
+      if (!opt) return;
+      var team = opt.getAttribute("data-team") || null;
+      choixEcurie = (choixEcurie === team) ? null : team;   // re-cliquer retire le choix
+      majSelectEcurie();
+    });
     majSelectEcurie();
   }
 
+  /* Un <select> natif n'accepte pas de logo : on rend une grille de vignettes
+     avec l'écusson de chaque écurie, comme partout ailleurs dans le jeu. */
+  function logoEcurie(team) {
+    try {
+      var svg = window.TEAM_LOGOS && window.TEAM_LOGOS[team];
+      if (!svg) return '<span class="rj80-fav-nologo"></span>';
+      return svg.replace('width="40" height="40"', 'width="22" height="22"');
+    } catch (e) { return '<span class="rj80-fav-nologo"></span>'; }
+  }
+
   function majSelectEcurie() {
-    var sel = document.getElementById("rj80-fav-sel");
-    if (sel) sel.value = choixEcurie || "";
+    var grille = document.getElementById("rj80-fav-grid");
+    if (!grille) return;
+    var liste = ecuriesF1();
+    var h = '<button type="button" class="rj80-fav-opt rj80-fav-none' +
+            (choixEcurie ? "" : " on") + '" data-team="">Aucune préférence</button>';
+    liste.forEach(function (t) {
+      h += '<button type="button" class="rj80-fav-opt' + (choixEcurie === t ? " on" : "") +
+           '" data-team="' + esc(t) + '">' +
+             '<span class="rj80-fav-logo">' + logoEcurie(t) + '</span>' +
+             '<span class="rj80-fav-nom">' + esc(t) + '</span>' +
+           '</button>';
+    });
+    grille.innerHTML = h;
   }
 
   /* Applique la remise de réputation sur l'entrée du catalogue, de façon
