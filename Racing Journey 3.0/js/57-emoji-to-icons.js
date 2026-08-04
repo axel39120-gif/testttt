@@ -189,9 +189,107 @@
     }
   }
 
+
+  /* ===================================================================
+   * SECOND VOLET — AUCUNE ICÔNE DANS LES BOUTONS D'ACTION
+   *
+   * Un bouton d'action se lit à son libellé : « Acheter », « Faire »,
+   * « Continuer ». L'icône qui l'accompagnait n'ajoutait rien et alourdissait
+   * la lecture sur mobile. On les retire donc de tous les boutons porteurs
+   * d'un texte, partout dans le jeu — y compris les contenus générés à la
+   * volée, puisque ce nettoyage passe par le même observateur que ci-dessus.
+   *
+   * Deux garde-fous :
+   *   - un bouton SANS texte garde son icône : c'est elle qui porte le sens
+   *     (retour, fermeture, lecture…). Le vider le rendrait inutilisable.
+   *   - la navigation principale et les onglets sont épargnés : ce sont des
+   *     repères de navigation, pas des boutons d'action.
+   * =================================================================== */
+
+  /* Passe à false pour rendre leurs pictogrammes aux tuiles du menu
+     d'accueil (Pilote, Entraînement, Contrats…) : elles sont à la frontière
+     entre le bouton d'action et le repère de navigation. */
+  var TUILES_AUSSI = true;
+
+  var BTN_SEL = 'button,[role="button"],[class*="btn"],[class*="Btn"]' +
+                (TUILES_AUSSI ? ',.apex-action-tile' : '');
+  /* Épargnés : la navigation et les onglets (repères, pas actions), et les
+     sélecteurs de nationalité, où le drapeau EST l'information — le retirer
+     transformerait une grille de pays en liste de mots. */
+  var EXCLUS = ".nav,.navbar,.tabs,.tab,.apex-nav,.apex-tabbar,.ni,#main-nav,#nav,.seg,.segmented," +
+               ".nat-opt,.continent-opt,#nat-grid,#continent-grid,#selected-nat-badge,.flag,.team-logo";
+  var EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{1F000}-\u{1F2FF}]/gu;
+
+  function estExclu(el) {
+    try { return !!(el.closest && el.closest(EXCLUS)); } catch (e) { return false; }
+  }
+
+  function texteUtile(el) {
+    var t = (el.textContent || "").replace(EMOJI_RE, "").replace(/\s+/g, " ").trim();
+    return t.length >= 2 ? t : "";
+  }
+
+  function nettoyerBouton(el) {
+    if (!el || el.nodeType !== 1) return;
+    if (estExclu(el)) return;
+    if (!texteUtile(el)) return;                 // icône seule : on n'y touche pas
+
+    var change = false;
+
+    /* images et pictogrammes vectoriels */
+    var visuels = el.querySelectorAll("svg,img");
+    for (var i = 0; i < visuels.length; i++) {
+      var v = visuels[i];
+      if (v.parentNode) { v.parentNode.removeChild(v); change = true; }
+    }
+
+    /* conteneurs d'icônes devenus vides (y compris ceux posés plus haut) */
+    var vides = el.querySelectorAll("span,i,div");
+    for (var j = 0; j < vides.length; j++) {
+      var w = vides[j];
+      if (w.children.length === 0 && !(w.textContent || "").trim() && w.parentNode) {
+        w.parentNode.removeChild(w); change = true;
+      }
+    }
+
+    /* emojis restés dans le texte */
+    var walker;
+    try {
+      walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    } catch (e) { walker = null; }
+    if (walker) {
+      var n, cibles = [];
+      while ((n = walker.nextNode())) cibles.push(n);
+      for (var k = 0; k < cibles.length; k++) {
+        var tn = cibles[k];
+        if (!tn.nodeValue || !EMOJI_RE.test(tn.nodeValue)) { EMOJI_RE.lastIndex = 0; continue; }
+        EMOJI_RE.lastIndex = 0;
+        var propre = tn.nodeValue.replace(EMOJI_RE, "").replace(/\s{2,}/g, " ");
+        if (propre !== tn.nodeValue) { tn.nodeValue = propre; change = true; }
+      }
+    }
+
+    if (change) {
+      /* un libellé qui commençait par une icône garde souvent une espace */
+      try { el.innerHTML = el.innerHTML.replace(/^(\s|&nbsp;)+/, ""); } catch (e) {}
+    }
+  }
+
+  function nettoyerBoutons(racine) {
+    if (!racine) return;
+    try {
+      if (racine.nodeType === 1 && racine.matches && racine.matches(BTN_SEL)) nettoyerBouton(racine);
+      if (racine.querySelectorAll) {
+        var l = racine.querySelectorAll(BTN_SEL);
+        for (var i = 0; i < l.length; i++) nettoyerBouton(l[i]);
+      }
+    } catch (e) {}
+  }
+
   var pending = false;
   function schedule(node) {
     processNode(node);
+    nettoyerBoutons(node);
     if (pending) return;
     pending = true;
     setTimeout(function () { pending = false; }, 60);
@@ -207,6 +305,23 @@
     }
   });
 
+  /* L'observateur ne rattrape pas tout : certaines tuiles sont réinjectées
+     par d'autres modules après coup, hors du flux de mutations que nous
+     voyons. Un balayage déterministe après chaque rendu d'écran ferme le
+     trou, sans observateur supplémentaire ni risque de boucle. */
+  var _wraps = [];
+  function wrapRendu(nom) {
+    if (typeof window[nom] !== "function" || window[nom]._rj57btn) return;
+    var orig = window[nom];
+    window[nom] = function () {
+      var r = orig.apply(this, arguments);
+      try { nettoyerBoutons(document.body); } catch (e) {}
+      return r;
+    };
+    window[nom]._rj57btn = true;
+    _wraps.push({ nom: nom, orig: orig });
+  }
+
   var tries = 0;
   function start() {
     if (!document.body || typeof renderIcon !== "function") {
@@ -214,12 +329,15 @@
       return;
     }
     processNode(document.body);
+    nettoyerBoutons(document.body);
+    ["refreshScreen", "navTo", "updateUI", "renderHome"].forEach(wrapRendu);
     obs.observe(document.body, { childList: true, subtree: true });
-    console.log("[57-emoji-to-icons] actif — emojis remplacés par les icônes du jeu");
+    console.log("[57-emoji-to-icons] actif — emojis en icônes, boutons d'action sans pictogramme");
   }
 
   window._rj57Uninstall = function () {
     obs.disconnect();
+    _wraps.forEach(function (w) { try { window[w.nom] = w.orig; } catch (e) {} });
     console.log("[57-emoji-to-icons] désinstallé (rechargez la page)");
   };
 

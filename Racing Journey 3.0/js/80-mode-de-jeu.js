@@ -221,6 +221,7 @@
 
   function ouvrirEcranMode() {
     if (!creerEcran()) return false;
+    photographierSaisie();
     var G = G_();
     choixTemporaire = (G && G._gameMode) || "normal";
     rendreListe();
@@ -232,6 +233,90 @@
   function retourSplash() {
     if (fn("go")) window.go("S-splash");
     else if (fn("navTo")) window.navTo("S-splash", null);
+  }
+
+  /* ==================================================================
+   * 2 bis. CONSERVATION DE LA SAISIE
+   *
+   * goCreate() remet le formulaire à zéro : sans précaution, un aller-retour
+   * par l'écran des modes effaçait le nom, la nationalité, le style déjà
+   * choisis. On photographie donc l'état avant de sortir, et on le rejoue au
+   * retour — y compris l'étape en cours.
+   * ================================================================== */
+
+  var _saisie = null;
+
+  function champ(id) {
+    var el = document.getElementById(id);
+    return el ? el.value : null;
+  }
+
+  function photographierSaisie() {
+    var scr = document.getElementById("S-create");
+    if (!scr || !scr.classList.contains("on")) return;   // pas en cours de création
+    _saisie = {
+      fn: champ("p-fn"), ln: champ("p-ln"), ville: champ("p-birthcity"),
+      num: champ("p-num"),
+      jour: champ("p-dob-day"), mois: champ("p-dob-month"), annee: champ("p-dob-year"),
+      debut: champ("p-startyear"),
+      nat: window.selNatVal || null,
+      continent: window._selectedContinent || null,
+      style: window.selStyleVal || null,
+      trait: window.selTraitVal || null,
+      favTeam: choixEcurie,
+      step: (typeof window.creStep === "number") ? window.creStep : 1
+    };
+  }
+
+  function poser(id, v) {
+    if (v == null || v === "") return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.value = v;
+    try { el.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+    try { el.dispatchEvent(new Event("change", { bubbles: true })); } catch (e) {}
+  }
+
+  function restaurerSaisie() {
+    if (!_saisie) return;
+    var s = _saisie;
+    try {
+      poser("p-fn", s.fn); poser("p-ln", s.ln); poser("p-birthcity", s.ville);
+      poser("p-num", s.num);
+      poser("p-dob-day", s.jour); poser("p-dob-month", s.mois); poser("p-dob-year", s.annee);
+      poser("p-startyear", s.debut);
+
+      /* La nationalité se rejoue par les fonctions du jeu : la grille des
+         pays et le badge de sélection doivent se reconstruire comme si le
+         joueur venait de cliquer. */
+      if (s.continent && fn("selContinent")) {
+        window.selContinent(s.continent);
+        if (s.nat) {
+          var btn = document.querySelector('#nat-grid .nat-opt[data-code="' + s.nat + '"]');
+          if (btn && fn("selNat")) window.selNat(btn, s.nat);
+          else window.selNatVal = s.nat;
+        }
+      }
+
+      if (s.style && fn("selStyle")) {
+        var bs = document.querySelector('#style-grid .trait-opt[onclick*="\'' + s.style + '\'"]');
+        if (bs) window.selStyle(bs, s.style); else window.selStyleVal = s.style;
+      }
+      if (s.trait && fn("selTrait")) {
+        var bt = document.querySelector('#trait-list .trait-opt[onclick*="\'' + s.trait + '\'"]');
+        if (bt) window.selTrait(bt, s.trait); else window.selTraitVal = s.trait;
+      }
+      if (s.favTeam) choixEcurie = s.favTeam;
+
+      /* On rend la main là où le joueur s'était arrêté. */
+      if (s.step && s.step > 1 && fn("updateCreUI")) {
+        window.creStep = s.step;
+        window.updateCreUI();
+      }
+    } catch (e) {
+      console.warn(TAG, "restauration de la saisie :", e && e.message);
+    }
+    _saisie = null;
   }
 
   /* Le mode est retenu, on entre dans la création proprement dite. */
@@ -256,7 +341,12 @@
       else window.SANDBOX_ACTIVE = attendu;
     } catch (e) {}
 
-    setTimeout(function () { habillerCreation(); }, 60);
+    setTimeout(function () {
+      habillerCreation();
+      restaurerSaisie();
+      habillerCreation();
+      majBoutonContinuer();
+    }, 60);
   }
 
   /* ==================================================================
@@ -285,6 +375,9 @@
        le choix se fait désormais en tête de parcours. */
     var inline = document.getElementById("sb-inline-card");
     if (inline) inline.style.display = "none";
+
+    /* l'emplacement libéré accueille l'écurie de cœur */
+    try { injecterChoixEcurie(); } catch (e) {}
 
     /* 2. rappel du mode retenu, cliquable pour revenir en arrière */
     var m = modeCourant();
@@ -462,6 +555,214 @@
     else host.appendChild(div);
   }
 
+
+  /* ==================================================================
+   * 3 bis. ÉCURIE DE CŒUR
+   *
+   * Le pilote désigne l'écurie de Formule 1 qu'il rêve de rejoindre. Deux
+   * conséquences, volontairement discrètes :
+   *   - un très léger avantage pour y entrer un jour : le seuil de
+   *     réputation exigé par cette écurie baisse de quelques points, et une
+   *     petite chance hebdomadaire de proposition spontanée s'ouvre une fois
+   *     le joueur arrivé dans la catégorie ;
+   *   - le jour où il signe enfin, un bond de moral temporaire, avec la
+   *     réaction presse qui va avec.
+   * ================================================================== */
+
+  var choixEcurie = null;              // pendant la création
+  var BONUS_REP = 5;                   // points de réputation en moins pour l'écurie de cœur
+
+  function ecuriesF1() {
+    try {
+      var t = window.TEAM_OFFERS && window.TEAM_OFFERS["Formule 1"];
+      if (!t) return [];
+      return t.map(function (x) { return x.team; }).sort();
+    } catch (e) { return []; }
+  }
+
+  function injecterChoixEcurie() {
+    var hote = document.getElementById("cs1");
+    if (!hote) return;
+    if (document.getElementById("rj80-fav")) { majSelectEcurie(); return; }
+    var liste = ecuriesF1();
+    if (!liste.length) return;
+
+    var bloc = document.createElement("div");
+    bloc.id = "rj80-fav";
+    bloc.style.cssText = "margin-top:14px;padding:13px 14px;background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,212,255,.02));" +
+      "border:1px solid rgba(0,212,255,.3);border-radius:12px";
+    bloc.innerHTML =
+      '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + CYAN +
+        ';letter-spacing:.08em;text-transform:uppercase">Écurie de cœur</div>' +
+      '<div style="font-size:11px;color:var(--text2);margin:3px 0 9px;line-height:1.45">' +
+        'L\'écurie de Formule 1 que ton pilote rêve de rejoindre. Facultatif.</div>' +
+      '<select id="rj80-fav-sel" class="inp" style="width:100%">' +
+        '<option value="">Aucune préférence</option>' +
+        liste.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + '</option>'; }).join("") +
+      '</select>';
+    hote.appendChild(bloc);
+    var sel = document.getElementById("rj80-fav-sel");
+    if (sel) sel.addEventListener("change", function () { choixEcurie = sel.value || null; });
+    majSelectEcurie();
+  }
+
+  function majSelectEcurie() {
+    var sel = document.getElementById("rj80-fav-sel");
+    if (sel) sel.value = choixEcurie || "";
+  }
+
+  /* Applique la remise de réputation sur l'entrée du catalogue, de façon
+     idempotente : la valeur d'origine est conservée à part. */
+  function appliquerBonusReputation() {
+    var G = G_(); if (!G) return;
+    try {
+      var table = window.TEAM_OFFERS && window.TEAM_OFFERS["Formule 1"];
+      if (!table) return;
+      table.forEach(function (t) {
+        if (typeof t._repReqBase !== "number") t._repReqBase = t.repReq || 0;
+        var cible = (G._favTeam && t.team === G._favTeam);
+        t.repReq = cible ? Math.max(0, t._repReqBase - BONUS_REP) : t._repReqBase;
+      });
+    } catch (e) { console.warn(TAG, "bonus écurie de cœur :", e && e.message); }
+  }
+
+  /* Petite chance hebdomadaire que l'écurie de cœur se manifeste, une fois
+     le joueur dans la catégorie et suffisamment réputé. */
+  function tenterOffreEcurieDeCoeur() {
+    var G = G_(); if (!G || !G._favTeam) return;
+    if (G.cat !== "Formule 1") return;
+    if (G.currentTeam === G._favTeam) return;
+    if (G.pendingTransfer) return;
+    if ((G.offers || []).some(function (o) { return o && o.team === G._favTeam; })) return;
+
+    var base = null;
+    try {
+      base = (window.TEAM_OFFERS["Formule 1"] || []).find(function (t) { return t.team === G._favTeam; });
+    } catch (e) {}
+    if (!base) return;
+    if ((G.reputation || 0) < (base.repReq || 0)) return;
+
+    /* 2,5 % par semaine, doublé en fin de saison : de l'ordre d'une
+       proposition par saison et demie quand le niveau est atteint. */
+    var p = (G.semaine >= 34) ? 0.05 : 0.025;
+    if (Math.random() >= p) return;
+
+    var offre = null;
+    if (fn("buildOffer")) {
+      try {
+        offre = window.buildOffer({
+          team: base.team, cat: "Formule 1", cost: base.cost, salary: base.salary,
+          bonusWin: base.bonusWin, bonusPodium: base.bonusPodium,
+          duration: 2, expire: 6, role: "num2"
+        });
+      } catch (e) {}
+    }
+    if (!offre) return;
+    G.offers = G.offers || [];
+    G.offers.push(offre);
+
+    if (fn("pushMail")) {
+      try {
+        window.pushMail({
+          from: "Ton agent", role: "agent",
+          subject: base.team + " s'intéresse à toi",
+          body: "Je sais ce que cette écurie représente pour toi. Ils ont appelé.\n\n" +
+                "L'offre est dans tes contrats. Prends le temps de la lire — mais pas trop.",
+          actions: [{ label: "Voir l'offre", kind: "dismiss", responseBody: "J'arrive." }]
+        });
+      } catch (e) {}
+    }
+    var dot = document.getElementById("ni-more-dot");
+    if (dot) dot.style.display = "block";
+  }
+
+  /* Le jour où il signe enfin. */
+  function verifierArriveeEcurieDeCoeur() {
+    var G = G_(); if (!G || !G._favTeam) return;
+    if (G.currentTeam !== G._favTeam) return;
+    if (G._favTeamAtteinte) return;
+    G._favTeamAtteinte = { saison: G.saison, semaine: G.semaine };
+
+    if (fn("changeMental")) {
+      try { window.changeMental(18, "Tu pilotes enfin pour " + G._favTeam); } catch (e) {}
+    }
+    if (typeof G.happiness === "number") G.happiness = Math.min(100, G.happiness + 15);
+    /* Élan temporaire : quelques semaines portées par l'enthousiasme. */
+    G._favTeamBoost = { semainesRestantes: 6 };
+
+    if (fn("pushMail")) {
+      try {
+        window.pushMail({
+          from: "Ton agent", role: "agent",
+          subject: "Tu y es",
+          body: "Tu te souviens du gamin qui avait écrit " + G._favTeam + " sur son casque ?\n\n" +
+                "Il signe aujourd'hui. Profite de ce moment, il n'arrive qu'une fois.",
+          actions: [{ label: "Merci", kind: "dismiss", responseBody: "Je n'y crois pas encore." }]
+        });
+      } catch (e) {}
+    }
+    if (fn("_addFeedPost") && window.SOCIAL_PRESS_ACCOUNTS) {
+      try {
+        var acc = window.SOCIAL_PRESS_ACCOUNTS[Math.floor(Math.random() * window.SOCIAL_PRESS_ACCOUNTS.length)];
+        window._addFeedPost({
+          type: "press", author: acc.name, handle: acc.handle, color: acc.color,
+          body: "Un rêve de gosse qui se réalise : " + (G.pilot ? (G.pilot.prenom + " " + G.pilot.nom) : "le pilote") +
+                " rejoint " + G._favTeam + ", l'écurie qu'il citait déjà dans ses premières interviews."
+        });
+      } catch (e) {}
+    }
+  }
+
+  /* L'élan retombe progressivement. */
+  function decompterBoost() {
+    var G = G_(); if (!G || !G._favTeamBoost) return;
+    G._favTeamBoost.semainesRestantes--;
+    if (G._favTeamBoost.semainesRestantes > 0) {
+      if (fn("changeMental")) { try { window.changeMental(2, "Élan des débuts chez " + G._favTeam); } catch (e) {} }
+    } else {
+      G._favTeamBoost = null;
+    }
+  }
+
+  function hookHebdo() {
+    try {
+      appliquerBonusReputation();
+      verifierArriveeEcurieDeCoeur();
+      decompterBoost();
+      tenterOffreEcurieDeCoeur();
+    } catch (e) { console.warn(TAG, "hook hebdo :", e && e.message); }
+  }
+
+  function enregistrerHook() {
+    if (!window.WEEKLY_TICK_HOOKS || !window.WEEKLY_TICK_HOOKS.push) return false;
+    if (window.WEEKLY_TICK_HOOKS.some(function (h) { return h && h.id === "favoriteTeam"; })) return true;
+    window.WEEKLY_TICK_HOOKS.push({ id: "favoriteTeam", run: hookHebdo });
+    return true;
+  }
+
+  /* Le choix est scellé au lancement de la carrière. */
+  var _origLaunch = null;
+  function installLancement() {
+    if (!fn("launchGame") || window.launchGame._rj80) return false;
+    _origLaunch = window.launchGame;
+    window.launchGame = function () {
+      var r = _origLaunch.apply(this, arguments);
+      try {
+        var G = G_();
+        if (G) {
+          G._favTeam = choixEcurie || null;
+          G._favTeamAtteinte = null;
+          G._favTeamBoost = null;
+          appliquerBonusReputation();
+          verifierArriveeEcurieDeCoeur();   // cas du bac à sable démarrant chez elle
+        }
+      } catch (e) {}
+      return r;
+    };
+    window.launchGame._rj80 = true;
+    return true;
+  }
+
   /* ==================================================================
    * 4. PERSISTANCE DU MODE
    * ================================================================== */
@@ -487,7 +788,13 @@
           var brut = localStorage.getItem(k);
           if (brut) {
             var obj = JSON.parse(brut);
-            obj.rj80 = { v: 1, mode: G._gameMode || "normal" };
+            obj.rj80 = {
+              v: 2,
+              mode: G._gameMode || "normal",
+              favTeam: G._favTeam || null,
+              favAtteinte: G._favTeamAtteinte || null,
+              favBoost: G._favTeamBoost || null
+            };
             localStorage.setItem(k, JSON.stringify(obj));
           }
         } catch (e) { console.warn(TAG, "sauvegarde du mode :", e && e.message); }
@@ -504,7 +811,12 @@
           var G = G_(); if (!G) return r;
           var brut = localStorage.getItem(cleSlot(slot));
           var obj = brut ? JSON.parse(brut) : null;
-          G._gameMode = (obj && obj.rj80 && obj.rj80.mode) || "normal";
+          var b = obj && obj.rj80;
+          G._gameMode = (b && b.mode) || "normal";
+          G._favTeam = (b && b.favTeam) || null;
+          G._favTeamAtteinte = (b && b.favAtteinte) || null;
+          G._favTeamBoost = (b && b.favBoost) || null;
+          appliquerBonusReputation();
         } catch (e) { console.warn(TAG, "lecture du mode :", e && e.message); }
         return r;
       };
@@ -525,6 +837,8 @@
       var a = installParcours();
       installFocusManquant();
       installPersistance();
+      installLancement();
+      enregistrerHook();
       if (a && fn("goCreate")) {
         creerEcran();
         console.log(TAG, "actif — " + MODES.length + " mode(s) de jeu");
@@ -545,7 +859,10 @@
       modes: function () { return MODES.slice(); },
       ouvrir: ouvrirEcranMode,
       courant: modeCourant,
-      etapes: ETAPES
+      etapes: ETAPES,
+      ecurieCoeur: function () { var G = G_(); return G ? G._favTeam : null; },
+      testerOffreCoeur: tenterOffreEcurieDeCoeur,
+      testerArrivee: verifierArriveeEcurieDeCoeur
     };
 
     window._rj80Uninstall = function () {
@@ -554,9 +871,17 @@
         if (_origUpdate) window.updateCreUI = _origUpdate;
         if (_origRecap) window.buildRecap = _origRecap;
         if (_origNext) window.creNext = _origNext;
+        if (_origLaunch) window.launchGame = _origLaunch;
+        if (window.WEEKLY_TICK_HOOKS) {
+          for (var i = window.WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--) {
+            if (window.WEEKLY_TICK_HOOKS[i] && window.WEEKLY_TICK_HOOKS[i].id === "favoriteTeam") {
+              window.WEEKLY_TICK_HOOKS.splice(i, 1);
+            }
+          }
+        }
         if (_origSave) window.saveGame = _origSave;
         if (_origLoad) window.loadSave = _origLoad;
-        ["S-mode", CSS_ID, "rj80-banner", "rj80-stepname", "rj80-recap"].forEach(function (id) {
+        ["S-mode", CSS_ID, "rj80-banner", "rj80-stepname", "rj80-recap", "rj80-fav"].forEach(function (id) {
           var el = document.getElementById(id);
           if (el && el.parentNode) el.parentNode.removeChild(el);
         });
