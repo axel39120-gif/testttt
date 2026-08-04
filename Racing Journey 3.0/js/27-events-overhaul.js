@@ -126,6 +126,8 @@
               { text: "Continuer à pousser",
                 mods: { player: 0.015 }, difficulty: 0.62, actionType: "gestion",
                 successMod: 0.015, brilliantMod: 0.03, rateMinMod: -0.03, rateMajMod: -0.09,
+                paceModOnBrillant: { deltaSec: -0.35, laps: 6, reason: "La voiture tient — tu gardes le rythme plein" },
+                paceModOnSucces: { deltaSec: -0.15, laps: 5, reason: "Alerte contenue, rythme préservé" },
                 dnfOnMaj: true, dnfMsg: "La mécanique lâche \u2014 abandon.",
                 note: "Tu gardes le rythme, mais risque de casse" }
             ]
@@ -151,7 +153,8 @@
               { text: "Plonger dans la mêlée pour gagner des places",
                 mods: { player: 0.04 }, difficulty: 0.6, actionType: "attaque",
                 successMod: 0.04, brilliantMod: 0.07, rateMinMod: -0.025, rateMajMod: -0.06,
-                posGainOnBrillant: 2, posLossOnRateMaj: 1,
+                intent: "explicite",
+                posGainOnBrillant: 3, posGainOnSucces: 1, posLossOnRateMaj: 2,
                 note: "Gros gain possible, gros risque de contact" },
               { text: "Rester propre et garder ta trajectoire",
                 mods: { player: 0.005 }, difficulty: 0.15, actionType: "gestion",
@@ -319,7 +322,11 @@
                 text: "Plonger à l'intérieur — tout pour la place",
                 mods: { player: 0.05 }, difficulty: 0.68, actionType: "attaque",
                 successMod: 0.05, brilliantMod: 0.09, rateMinMod: -0.03, rateMajMod: -0.08,
-                posGainOnBrillant: 1,
+                /* intent neutralisé : voir la note « double système de position »
+                   en tête de fichier. Les places sont pilotées explicitement,
+                   sinon le gain était annulé par le swap d'intention du moteur. */
+                intent: "explicite",
+                posGainOnBrillant: 2, posGainOnSucces: 1,
                 posLossOnRateMaj: 1,
                 paceModOnRateMaj: { deltaSec: 1.2, laps: 5, reason: "Aileron touché — la voiture ne tourne plus" },
                 tyreDamageOnRateMaj: { laps: 4, severity: "minor" },
@@ -378,7 +385,15 @@
                 text: "Fermer la porte au dernier moment",
                 mods: { player: 0.035 }, difficulty: 0.6, actionType: "defense",
                 successMod: 0.035, brilliantMod: 0.06, rateMinMod: -0.02, rateMajMod: -0.06,
+                /* Défense agressive : elle tient la porte fermée même sur un
+                   geste imparfait — on ne perd la place que sur un gros raté,
+                   là où la défense propre cède dès le raté mineur. Le prix à
+                   payer est le risque de pénalité ci-dessous. Intent neutralisé
+                   pour piloter la position explicitement (le swap d'intention
+                   du moteur faisait perdre la place dans les deux cas). */
+                intent: "explicite",
                 posLossOnRateMaj: 1,
+                paceModOnBrillant: { deltaSec: -0.3, laps: 4, reason: "Défense parfaite — il abandonne l'attaque et décroche" },
                 chance: { fail: 0.14, failMod: -0.04, penalty: 5, msg: "Manœuvre limite à la défense — 5s de pénalité" },
                 note: "Défense agressive — risque de pénalité"
               },
@@ -656,7 +671,8 @@
                 text: "Attaque totale — sans aucune retenue",
                 mods: { player: 0.07 }, difficulty: 0.72, actionType: "attaque",
                 successMod: 0.07, brilliantMod: 0.1, rateMinMod: -0.035, rateMajMod: -0.09,
-                posGainOnBrillant: 1, posLossOnRateMaj: 1,
+                intent: "explicite",
+                posGainOnBrillant: 2, posGainOnSucces: 1, posLossOnRateMaj: 1,
                 dnfOnMaj: true, dnfMsg: "Tu as tout tenté au dernier tour — contact, tête-à-queue. Abandon dans la dernière ligne droite.",
                 note: "Tout ou rien — podium ou DNF"
               },
@@ -731,6 +747,67 @@
     return Math.random() < 0.20;
   }
 
+
+  // ---------------------------------------------------------------------------
+  // POIDS DE LA DIFFICULTÉ DANS LE TIRAGE DES ISSUES
+  //
+  // Mesuré sur 30 000 tirages : entre le choix le plus sûr (difficulté 0.12) et
+  // le va-tout (0.68), le gros raté ne passait que de 4,4 % à 8,8 % et la
+  // réussite de 64,6 % à 52 %. Autrement dit, le choix du joueur pesait moins
+  // que la météo. Pire, la formule d'origine faisait DÉCROÎTRE l'exécution
+  // brillante avec la difficulté : tenter un geste dur rendait l'exploit moins
+  // probable qu'un geste facile, ce qui est contre-intuitif et rendait les
+  // options audacieuses statistiquement dominées.
+  //
+  // Nouvelle règle : la difficulté augmente à la fois le potentiel d'exploit ET
+  // le risque de catastrophe — mais l'exploit n'est accessible qu'à un pilote
+  // qui a le niveau pour le geste (facteur d'aptitude). Un débutant qui tente le
+  // va-tout ne devient pas brillant, il se crashe.
+  //
+  // La forme du calcul, les bornes et le champ _meta restent identiques : 47
+  // (affichage des pourcentages) et 04 (tirage) continuent de fonctionner tels
+  // quels.
+  // ---------------------------------------------------------------------------
+  function installRiskCurve() {
+    if (typeof window._computeChoiceOutcomes !== "function") return false;
+    if (window._computeChoiceOutcomes._rj27risk) return true;
+    var orig = window._computeChoiceOutcomes;
+
+    window._computeChoiceOutcomes = function (e, t, actionCtx) {
+      var base;
+      try { base = orig.apply(this, arguments); } catch (err) { return orig.apply(this, arguments); }
+      try {
+        var meta = base && base._meta;
+        if (!meta || typeof meta.totalDelta !== "number") return base;
+
+        var d = meta.totalDelta;                 // aptitude + contexte, borné -25..+30
+        var diff = (typeof e === "number") ? Math.max(0, Math.min(1, e)) : 0.3;
+        var apt = Math.max(0, Math.min(1, (d + 25) / 55));   // 0 = dépassé, 1 = maîtrise totale
+
+        // L'exploit croît avec la difficulté, mais seulement pour qui sait faire.
+        var brillant = Math.max(1.5, 4 + 24 * diff * apt + 1.5 * d);
+        var succes   = Math.max(8,  46 - 16 * diff + 0.4 * d);
+        var neutre   = Math.max(5,  18 + 4  * diff - 0.2 * d);
+        var rateMin  = Math.max(3,  12 + 14 * diff - 0.6 * d);
+        var rateMaj  = Math.max(0.5, 4 + 14 * diff - 0.5 * d);
+
+        var sum = brillant + succes + neutre + rateMin + rateMaj;
+        return {
+          brillant: brillant / sum,
+          succes:   succes / sum,
+          neutre:   neutre / sum,
+          rateMin:  rateMin / sum,
+          rateMaj:  rateMaj / sum,
+          _meta: meta
+        };
+      } catch (err) {
+        return base;
+      }
+    };
+    window._computeChoiceOutcomes._rj27risk = true;
+    return true;
+  }
+
   // ---------------------------------------------------------------------------
   // INSTALLATION (bootstrap/retry)
   // ---------------------------------------------------------------------------
@@ -749,6 +826,9 @@
       window._rjOriginalChoiceEvents = window.CHOICE_RACE_EVENTS;
     }
     window.CHOICE_RACE_EVENTS = buildEvents();
+
+    // 1 bis) Courbe de risque : la difficulté du choix doit peser réellement
+    installRiskCurve();
 
     // 2) Enveloppe de la porte par tour → plafond strict + espacement
     var _origTry = window.tryTriggerChoiceRaceEvent;
