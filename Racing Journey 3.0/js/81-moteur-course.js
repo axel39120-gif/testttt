@@ -126,6 +126,11 @@
     var bypass = lr._bypassPositionCap;
     if (bypass) lr._bypassPositionCap = false;
 
+    /* Dernier tour : le bridage doit disparaître. Sinon le classement
+       affiché à l'arrivée reste figé à mi-chemin de l'ordre réel, et il
+       diverge du résultat calculé par le moteur au moment du drapeau. */
+    if (lr.total && lr.cur >= lr.total - 1) bypass = true;
+
     for (var j = 0; j < vivants.length; j++) {
       var d = vivants[j];
       var precedente = d.pos || d._rangCible;
