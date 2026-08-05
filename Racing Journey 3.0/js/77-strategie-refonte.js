@@ -293,6 +293,9 @@
     if (typeof window.confirmStrategy !== "function" || window.confirmStrategy._rj77) return;
     var o = window.confirmStrategy;
     var f = function () {
+      /* 04p refuse le départ tant que SON modèle n'est pas validé : on le
+         renseigne avec les choix faits ici, sinon son modal s'ouvre. */
+      try { synchroniser04p(true); } catch (e) { console.warn(TAG, "sync 04p :", e && e.message); }
       var r = o.apply(this, arguments);
       try {
         var w = (typeof RACE_WEEKEND_STATE !== "undefined") ? RACE_WEEKEND_STATE : null;
@@ -317,6 +320,88 @@
     window.confirmStrategy = f;
   }
 
+
+  /* ==================================================================
+   * PONT VERS LE MODÈLE DE 04p — et suppression de l'écran parasite
+   *
+   * Trois modules se disputaient cet écran :
+   *   · 04p tient un modèle propre (G._raceStrategy) et un modal complet ;
+   *   · le bloc 23 de 28-polish redirigeait l'écran natif vers ce modal ;
+   *   · ce module-ci refond l'écran natif, et gagne par ordre de chargement.
+   *
+   * Résultat observé : l'écran refondu s'affichait, puis 04p — dont le modèle
+   * n'était jamais validé — ouvrait son modal par-dessus au moment du départ
+   * (« [04p] Stratégie pas validée, ouverture modal »). D'où cet écran sans
+   * en-tête, hors charte, aux réglages déjà figés et sans effet.
+   *
+   * On tranche : UN SEUL écran, celui-ci. Mais le modèle de 04p reste
+   * alimenté, car il pilote de vraies mécaniques (usure tour par tour,
+   * construction de l'état voiture, pastille pneu du classement). On lui
+   * recopie donc les choix du joueur et on le marque validé.
+   * ================================================================== */
+
+  var STYLE_04P = { attack: "attack", manage: "manage", defend: "defend", gamble: "attack" };
+
+  function modeleCoeur() {
+    try { return (typeof G !== "undefined" && G && G.raceStrategy) ? G.raceStrategy : null; }
+    catch (e) { return null; }
+  }
+
+  function synchroniser04p(valider) {
+    if (typeof G === "undefined" || !G) return;
+    var src = modeleCoeur();
+    var s = G._raceStrategy;
+    if (!s) {
+      s = G._raceStrategy = {
+        startCompound: "medium", plannedStops: 1, style: "manage",
+        midRaceStyleChange: false, eventTriggered: false, committed: false
+      };
+    }
+    if (src) {
+      if (src.tyreCompound) s.startCompound = src.tyreCompound;
+      if (typeof src.plannedStops === "number") s.plannedStops = src.plannedStops;
+      var p = src.preset;
+      if (p && STYLE_04P[p]) s.style = STYLE_04P[p];
+    }
+    if (!s.startCompound) s.startCompound = "medium";
+    if (typeof s.plannedStops !== "number") s.plannedStops = 1;
+    if (valider) { s.committed = true; s.eventTriggered = false; }
+  }
+
+  /* Le modal de 04p ne doit plus jamais s'ouvrir : s'il est sollicité, on
+     synchronise et on renvoie sur l'onglet stratégie, qui est le bon écran. */
+  function neutraliserModal04p() {
+    var ui = window._RJ_STRAT_UI;
+    if (!ui || typeof ui.openStrategyModal !== "function" || ui.openStrategyModal._rj77) return;
+    var orig = ui.openStrategyModal;
+    var f = function () {
+      try {
+        synchroniser04p(false);
+        if (typeof rtab === "function") rtab("strat", true);
+        if (typeof window.renderStrategyScreen === "function") window.renderStrategyScreen();
+        console.log(TAG, "modal 04p intercepté — l'onglet Stratégie fait foi");
+      } catch (e) { return orig.apply(this, arguments); }
+    };
+    f._rj77 = true;
+    wrapped._RJ_STRAT_UI_open = orig;
+    ui.openStrategyModal = f;
+
+    /* Un modal déjà ouvert est refermé. */
+    try {
+      var m = document.getElementById("rj-strategy-modal");
+      if (m) { m.style.display = "none"; document.body.style.overflow = ""; }
+    } catch (e) {}
+  }
+
+  /* Le bloc 23 de 28-polish réessaie son installation pendant vingt secondes
+     et enveloppe tout renderStrategyScreen qui ne porte pas sa marque. On
+     pose donc sa marque sur le nôtre : il nous laissera tranquilles. */
+  function protegerDeLaRedirection() {
+    if (typeof window.renderStrategyScreen === "function") {
+      window.renderStrategyScreen._rjDedup = true;
+    }
+  }
+
   /* ---------------------------------------------------------- montage --- */
   function installer() {
     if (typeof window.renderStrategyScreen !== "function") return false;
@@ -328,10 +413,15 @@
         if (!hote) return;
         if (!racine || racine.parentNode !== hote) construire(hote);
         else rafraichir();
+        synchroniser04p(false);
+        neutraliserModal04p();
+        protegerDeLaRedirection();
       } catch (e) { console.warn(TAG, e); }
     };
     fn._rj77 = true;
     window.renderStrategyScreen = fn;
+    protegerDeLaRedirection();
+    neutraliserModal04p();
     return true;
   }
 
@@ -373,6 +463,12 @@
     if (h) construire(h);
   };
   window._rj77Uninstall = function () {
+    try {
+      if (wrapped._RJ_STRAT_UI_open && window._RJ_STRAT_UI) {
+        window._RJ_STRAT_UI.openStrategyModal = wrapped._RJ_STRAT_UI_open;
+        delete wrapped._RJ_STRAT_UI_open;
+      }
+    } catch (e) {}
     Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
     var st = document.getElementById("rj77-css");
     if (st && st.parentNode) st.parentNode.removeChild(st);
