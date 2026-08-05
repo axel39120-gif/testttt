@@ -153,11 +153,22 @@
    * 2. RYTHME DE DÉPART COHÉRENT AVEC LA GRILLE
    * ================================================================== */
 
+  /* Certaines disciplines font courir plusieurs classes sur la même piste :
+     en endurance, un plateau LMP2/GT3 roule volontairement sous le rythme de
+     la classe reine, et le résultat du joueur est sa position DANS SA CLASSE.
+     Ces voitures de trafic (_mc) doivent donc rester où le module 35 les a
+     placées — les mêler au reste ferait remonter des GT3 devant des Hypercar
+     et fausserait le classement de classe. */
+  function estTrafic(d) {
+    return !!(d && (d._mc || (d.cls && d.cls !== "Hypercar" && !d.isPlayer && d.gridPos === 99)));
+  }
+
   function recalibrerSurLaGrille() {
     var lr = LR();
     if (!lr || !lr.drivers || lr.drivers.length < 3) return;
 
-    var pilotes = lr.drivers.slice();
+    var pilotes = lr.drivers.filter(function (d) { return !estTrafic(d); });
+    if (pilotes.length < 3) return;
     var n = pilotes.length;
 
     /* Rang au mérite, tel que le moteur l'a calculé. */
@@ -223,6 +234,18 @@
     var scores = ordreFinal.map(function (d) { return d.score || 0; });
     var haut = Math.max.apply(null, scores);
     var bas = Math.min.apply(null, scores);
+
+    /* On ne descend jamais sous le plateau de trafic : sa hiérarchie est
+       posée par la discipline, pas par nous. */
+    try {
+      var lr = LR();
+      var trafic = (lr && lr.drivers) ? lr.drivers.filter(estTrafic) : [];
+      if (trafic.length) {
+        var plafondTrafic = Math.max.apply(null, trafic.map(function (d) { return d.score || 0; }));
+        if (bas < plafondTrafic + 0.03) bas = plafondTrafic + 0.03;
+        if (haut <= bas) return;
+      }
+    } catch (e) {}
     var amplitude = haut - bas;
     if (amplitude <= 0.02) return;          // échelle déjà plate : on ne touche à rien
 
