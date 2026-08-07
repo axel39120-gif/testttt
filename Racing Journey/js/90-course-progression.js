@@ -44,12 +44,30 @@
         "color:var(--white);line-height:1}",
       "#rj90-progression .tour .sur{font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--muted)}",
       "#rj90-progression .tour .lbl{margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--font-body)}",
-      "#rj90-barre{height:6px;background:var(--line);border-radius:3px;overflow:hidden}",
-      "#rj90-barre>span{display:block;height:100%;background:linear-gradient(90deg,var(--red),#FF6B4A);" +
-        "transition:width .35s ease}",
+      "#rj90-barre{position:relative;height:10px;background:rgba(255,255,255,.06);border-radius:6px;" +
+        "overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}",
+      "#rj90-barre>span{display:block;height:100%;border-radius:6px;position:relative;" +
+        "background:linear-gradient(90deg,#FF1801 0%,#FF6B4A 55%,#FFB199 100%);" +
+        "box-shadow:0 0 12px rgba(255,24,1,.45);transition:width .4s cubic-bezier(.4,0,.2,1)}",
+      /* Un reflet mobile signale que la course avance, même quand la barre
+         progresse trop lentement pour se voir bouger. */
+      "#rj90-barre>span:after{content:'';position:absolute;inset:0;border-radius:6px;" +
+        "background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);" +
+        "animation:rj90-reflet 2.2s ease-in-out infinite}",
+      "@keyframes rj90-reflet{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}",
+      "#rj90-progression.finie #rj90-barre>span:after{animation:none;opacity:0}",
+      "#rj90-jalons{display:flex;justify-content:space-between;margin-top:6px;font-size:9.5px;" +
+        "font-family:var(--font-display);font-weight:700;letter-spacing:.1em;color:var(--text3)}",
       "#rj90-progression .etat{margin-top:12px;font-size:12.5px;color:var(--soft);line-height:1.5;" +
         "font-family:var(--font-body);min-height:19px}",
       "#rj90-progression.finie .tour .n{color:var(--green)}",
+      /* Une seule barre : celle de l'en-tête faisait doublon avec la
+         progression, dans une taille où elle n'apprenait rien. */
+      "#race-bar,#race-bar~*{display:none !important}",
+      "#live-race-header .pbo{display:none !important}",
+      /* Les indicateurs de gomme n'ont plus d'objet depuis que les pneus
+         sont sortis de la simulation. */
+      "#quali-tyre-widget,#rj-tyre-anim,#tyre-mode-container,.rjdc-tdot,.tyrecell{display:none !important}",
       "#rj90-progression.finie #rj90-barre>span{background:var(--green)}"
     ].join("");
     var st = document.createElement("style");
@@ -75,6 +93,7 @@
         '<span class="sur" id="rj90-total">/ 0</span>' +
         '<span class="lbl" id="rj90-lbl">tours</span></div>' +
       '<div id="rj90-barre"><span style="width:0%"></span></div>' +
+      '<div id="rj90-jalons"><span>DÉPART</span><span>MI-COURSE</span><span>ARRIVÉE</span></div>' +
       '<div class="etat" id="rj90-etat"></div>';
     var entete = document.getElementById("live-race-header");
     if (entete && entete.nextSibling) ecran.insertBefore(b, entete.nextSibling);
@@ -177,6 +196,70 @@
   }
 
   /* ==================================================================
+   * Le classement final raconte la course
+   *
+   * Chaque ligne portait une pastille de gomme — sans objet depuis que les
+   * pneus sont sortis de la simulation — et rien qui dise ce que le pilote
+   * a accompli. On remplace donc la pastille par les places gagnées ou
+   * perdues depuis la grille : c'est là qu'est l'histoire de la course.
+   * ================================================================== */
+
+  function deltasDepuisLaGrille() {
+    var lr = LR();
+    var table = {};
+    if (!lr || !lr.drivers) return table;
+    for (var i = 0; i < lr.drivers.length; i++) {
+      var d = lr.drivers[i];
+      if (!d || typeof d.pos !== "number") continue;
+      if (d.dnf) { table[d.pos] = { texte: "ABANDON", couleur: "var(--muted)" }; continue; }
+      var depart = d.gridPos || d.startPos || 0;
+      if (!depart) { table[d.pos] = { texte: "\u2014", couleur: "var(--text3)" }; continue; }
+      var delta = depart - d.pos;
+      if (delta > 0) table[d.pos] = { texte: "\u25B2 " + delta, couleur: "var(--green)" };
+      else if (delta < 0) table[d.pos] = { texte: "\u25BC " + (-delta), couleur: "var(--red)" };
+      else table[d.pos] = { texte: "\u2014", couleur: "var(--text3)" };
+    }
+    return table;
+  }
+
+  function habillerClassementFinal() {
+    var res = document.getElementById("res-content");
+    if (!res) return;
+    var deltas = deltasDepuisLaGrille();
+    if (!Object.keys(deltas).length) return;
+
+    var lignes = res.querySelectorAll("div");
+    for (var i = 0; i < lignes.length; i++) {
+      var l = lignes[i];
+      if (l.getAttribute("data-rj90") === "1") continue;
+      var enfants = l.children;
+      if (enfants.length < 3 || enfants.length > 5) continue;
+
+      var pos = parseInt((enfants[0].textContent || "").trim(), 10);
+      if (!(pos >= 1)) continue;
+      var dernier = enfants[enfants.length - 1];
+      if (!/pts|\u2014/.test(dernier.textContent || "")) continue;
+
+      /* La pastille de gomme est l'avant-dernière colonne : une seule
+         lettre parmi les composés. */
+      for (var k = 1; k < enfants.length - 1; k++) {
+        var t = (enfants[k].textContent || "").trim();
+        if (/^[SMHIW]$/.test(t)) { enfants[k].style.display = "none"; }
+      }
+
+      var info = deltas[pos];
+      if (info) {
+        var badge = document.createElement("span");
+        badge.style.cssText = "width:58px;text-align:right;font-size:11.5px;font-weight:700;" +
+          "flex-shrink:0;color:" + info.couleur;
+        badge.textContent = info.texte;
+        l.insertBefore(badge, dernier);
+      }
+      l.setAttribute("data-rj90", "1");
+    }
+  }
+
+  /* ==================================================================
    * Branchements
    * ================================================================== */
 
@@ -216,9 +299,28 @@
       _orig.showResult = window.showResult;
       window.showResult = function () {
         try { revelerClassement(); majProgression(); } catch (e) {}
-        return _orig.showResult.apply(this, arguments);
+        var r = _orig.showResult.apply(this, arguments);
+        try { setTimeout(habillerClassementFinal, 60); } catch (e) {}
+        return r;
       };
       window.showResult._rj90 = true;
+    }
+
+    if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
+    if (!window.RJ_SCREEN_HOOKS.some(function (h) { return h && h.id === "90-classement"; })) {
+      window.RJ_SCREEN_HOOKS.push({
+        id: "90-classement", ecran: "S-race",
+        apres: function () { setTimeout(habillerClassementFinal, 80); }
+      });
+    }
+    if (fn("rtab") && !window.rtab._rj90) {
+      _orig.rtab = window.rtab;
+      window.rtab = function (nom) {
+        var r = _orig.rtab.apply(this, arguments);
+        if (nom === "res") { try { setTimeout(habillerClassementFinal, 80); } catch (e) {} }
+        return r;
+      };
+      window.rtab._rj90 = true;
     }
 
     return !!(window.showResult && window.showResult._rj90);

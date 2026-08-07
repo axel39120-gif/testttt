@@ -586,14 +586,22 @@
       var lignes = res.querySelectorAll("div");
       var trouve = false, leaderScore = null;
 
-      // Écarts : on les prend dans LIVE_RACE, seule source fiable.
-      var gaps = {};
+      /* Places gagnées ou perdues depuis la grille de départ. C'est ce qui
+         raconte la course : un écart au leader en secondes ne dit rien du
+         travail accompli par un pilote parti dixième et arrivé quatrième. */
+      var gaps = {}, couleurs = {};
       try {
         var ds = (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE.drivers) ? LIVE_RACE.drivers : [];
         for (var k = 0; k < ds.length; k++) {
-          if (ds[k] && typeof ds[k].pos === "number") {
-            gaps[ds[k].pos] = ds[k].dnf ? "DNF" : (ds[k].pos === 1 ? "\u2014" : "+" + (Number(ds[k].gap) || 0).toFixed(1) + "s");
-          }
+          var d = ds[k];
+          if (!d || typeof d.pos !== "number") continue;
+          if (d.dnf) { gaps[d.pos] = "ABANDON"; couleurs[d.pos] = "var(--muted)"; continue; }
+          var depart = d.gridPos || d.startPos || null;
+          if (!depart) { gaps[d.pos] = "\u2014"; couleurs[d.pos] = "var(--text3)"; continue; }
+          var delta = depart - d.pos;
+          if (delta > 0) { gaps[d.pos] = "\u25B2 " + delta; couleurs[d.pos] = "var(--green)"; }
+          else if (delta < 0) { gaps[d.pos] = "\u25BC " + (-delta); couleurs[d.pos] = "var(--red)"; }
+          else { gaps[d.pos] = "\u2014"; couleurs[d.pos] = "var(--text3)"; }
         }
       } catch (e) {}
       if (!Object.keys(gaps).length) return;
@@ -613,8 +621,19 @@
         pts.style.minWidth = "52px";
         pts.style.flexShrink = "0";
 
+        /* La pastille de gomme n'a plus d'objet : les pneus ont été retirés
+           de la simulation. On la retire de la ligne. */
+        try {
+          var enfants = sp[1] ? sp[1].querySelectorAll("span") : [];
+          for (var g = 0; g < enfants.length; g++) {
+            var t = (enfants[g].textContent || "").trim();
+            if (/^[SMHIW]$/.test(t)) { enfants[g].style.display = "none"; }
+          }
+        } catch (e) {}
+
         var gap = document.createElement("span");
-        gap.style.cssText = "width:56px;text-align:right;font-size:11px;color:var(--text3);flex-shrink:0;padding-left:8px";
+        gap.style.cssText = "width:62px;text-align:right;font-size:11.5px;font-weight:700;" +
+          "flex-shrink:0;padding-left:8px;color:" + (couleurs[pos] || "var(--text3)");
         gap.textContent = gaps[pos] || "\u2014";
         l.appendChild(gap);
         trouve = true;
