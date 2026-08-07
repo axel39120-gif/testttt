@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Racing Journey — diagnostic de déploiement</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; padding:16px 14px 40px; background:#0d0d12; color:#e8e8ee;
+         font:14px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:#8b8b99; font-size:12.5px; margin-bottom:18px; }
+  .bloc { border:1px solid #2a2a35; border-radius:10px; padding:12px 13px; margin-bottom:11px; background:#15151c; }
+  .bloc h2 { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#8b8b99; margin:0 0 9px; }
+  .l { display:flex; gap:9px; align-items:flex-start; padding:4px 0; font-size:13px; }
+  .l b { flex-shrink:0; width:16px; }
+  .ok { color:#34D399; } .ko { color:#FF6B5B; } .att { color:#F59E0B; }
+  .det { color:#8b8b99; font-size:12px; word-break:break-all; }
+  .verdict { border-radius:10px; padding:14px; margin-bottom:14px; font-size:14px; line-height:1.55; }
+  .v-ok { background:rgba(52,211,153,.12); border:1px solid #34D399; }
+  .v-ko { background:rgba(255,24,1,.12); border:1px solid #FF1801; }
+  .v-att { background:rgba(245,158,11,.12); border:1px solid #F59E0B; }
+  ul { margin:8px 0 0 18px; padding:0; }
+  code { background:#22222c; padding:1px 5px; border-radius:4px; font-size:12px; }
+</style>
+</head>
+<body>
+
+<h1>Diagnostic de déploiement</h1>
+<div class="sub">Cette page vérifie que tous les fichiers du jeu sont bien en ligne.
+Elle ne modifie rien. Ouvre-la à la même adresse que le jeu.</div>
+
+<div id="verdict"></div>
+<div id="resultats"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var resultats = document.getElementById("resultats");
+  var verdict = document.getElementById("verdict");
+
+  function bloc(titre) {
+    var d = document.createElement("div");
+    d.className = "bloc";
+    d.innerHTML = '<h2>' + titre + '</h2>';
+    resultats.appendChild(d);
+    return d;
+  }
+  function ligne(parent, etat, texte, detail) {
+    var cls = etat === true ? "ok" : (etat === false ? "ko" : "att");
+    var sym = etat === true ? "\u2713" : (etat === false ? "\u2717" : "!");
+    var d = document.createElement("div");
+    d.className = "l";
+    d.innerHTML = '<b class="' + cls + '">' + sym + '</b><div>' + texte +
+                  (detail ? '<div class="det">' + detail + '</div>' : '') + '</div>';
+    parent.appendChild(d);
+  }
+
+  function tester(url) {
+    return fetch(url + "?diag=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return { url: url, ok: r.ok, statut: r.status }; })
+      .catch(function (e) { return { url: url, ok: false, statut: 0, erreur: String(e).slice(0, 60) }; });
+  }
+
+  var bBase = bloc("Fichiers de base");
+  var bIndex = bloc("Version détectée");
+  var bScripts = bloc("Modules du jeu");
+
+  var etat = { build: null, scriptsAttendus: 0, scriptsAbsents: [], baseAbsents: [] };
+
+  /* 1. fichiers de base ------------------------------------------------- */
+  var base = ["index.html", "styles.css", "manifest.json", "service-worker.js"];
+
+  Promise.all(base.map(tester)).then(function (res) {
+    res.forEach(function (r) {
+      ligne(bBase, r.ok, r.url, r.ok ? "" : "HTTP " + (r.statut || "injoignable"));
+      if (!r.ok) etat.baseAbsents.push(r.url);
+    });
+
+    /* 2. lire index.html pour en extraire la version et la liste des scripts */
+    return fetch("index.html?diag=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); });
+  }).then(function (html) {
+
+    var mBuild = html.match(/var BUILD = "(v\d+)"/);
+    etat.build = mBuild ? mBuild[1] : null;
+    ligne(bIndex, !!etat.build, etat.build ? "Version du fichier en ligne : " + etat.build
+                                          : "Version introuvable dans index.html");
+
+    var scripts = [];
+    var re = /<script src="(js\/[^"?]+)\?([^"]*)"/g, m;
+    while ((m = re.exec(html))) scripts.push({ chemin: m[1], version: m[2] });
+    etat.scriptsAttendus = scripts.length;
+    ligne(bIndex, scripts.length > 0, scripts.length + " modules attendus par cette page");
+
+    if (!scripts.length) {
+      ligne(bScripts, false, "Aucun script listé : index.html est peut-être incomplet.");
+      return [];
+    }
+    return Promise.all(scripts.map(function (s) { return tester(s.chemin); }));
+  }).then(function (res) {
+
+    var manquants = res.filter(function (r) { return !r.ok; });
+    etat.scriptsAbsents = manquants.map(function (r) { return r.url; });
+
+    if (!manquants.length) {
+      ligne(bScripts, true, "Les " + res.length + " modules sont en ligne");
+    } else {
+      ligne(bScripts, false, manquants.length + " module(s) introuvable(s) sur " + res.length);
+      manquants.slice(0, 25).forEach(function (r) {
+        ligne(bScripts, false, r.url, "HTTP " + (r.statut || "injoignable"));
+      });
+      if (manquants.length > 25) ligne(bScripts, null, "… et " + (manquants.length - 25) + " autres");
+    }
+    conclure();
+  }).catch(function (e) {
+    ligne(bScripts, false, "Le diagnostic s'est interrompu", String(e).slice(0, 120));
+    conclure();
+  });
+
+  /* 3. verdict ---------------------------------------------------------- */
+  function conclure() {
+    var d = document.createElement("div");
+
+    if (etat.baseAbsents.length) {
+      d.className = "verdict v-ko";
+      d.innerHTML = "<b>Des fichiers de base manquent.</b> Le jeu ne peut pas démarrer." +
+        "<ul><li>Vérifie que <code>" + etat.baseAbsents.join("</code>, <code>") +
+        "</code> sont bien à la racine du site, au même niveau que cette page.</li></ul>";
+    } else if (etat.scriptsAbsents.length) {
+      d.className = "verdict v-ko";
+      d.innerHTML = "<b>" + etat.scriptsAbsents.length + " module(s) réclamé(s) par index.html sont absents du serveur.</b>" +
+        " C'est la cause : le jeu s'arrête au chargement." +
+        "<ul>" +
+        "<li>Si les noms manquants ressemblent à d'anciens modules (par exemple <code>30-essais-consolidated.js</code>)," +
+        " alors c'est <b>index.html</b> qui n'a pas été remplacé : le serveur a le nouveau dossier <code>js/</code>" +
+        " mais l'ancienne page.</li>" +
+        "<li>Si ce sont des noms récents (<code>18-weekend.js</code>, <code>53-affichage.js</code>…)," +
+        " alors c'est le dossier <code>js/</code> qui n'a pas été poussé en entier.</li>" +
+        "</ul>";
+    } else {
+      d.className = "verdict v-ok";
+      d.innerHTML = "<b>Tous les fichiers sont en ligne" +
+        (etat.build ? " (version " + etat.build + ")" : "") + ".</b>" +
+        " Le problème ne vient pas du déploiement." +
+        "<ul><li>Recharge le jeu et regarde le badge en bas à gauche : s'il n'affiche pas la même version" +
+        " que ci-dessus, c'est le cache du navigateur ou le service worker.</li></ul>";
+    }
+    verdict.appendChild(d);
+  }
+})();
+</script>
+
+</body>
+</html>
