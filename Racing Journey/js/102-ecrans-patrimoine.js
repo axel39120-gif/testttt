@@ -308,11 +308,21 @@
    * devient « Image », puisqu'elle réunit désormais le profil public, les
    * réseaux, la presse et l'agent.
    * ================================================================== */
+  /* Un coffre-fort : porte, charnières, cadran et poignée. Aucune autre
+     tuile n'utilise cette forme, et elle dit à la fois l'argent et ce
+     qu'on met de côté pour plus tard — ce que sont les projets.
+     Tracé au trait, comme les huit autres icônes de l'accueil. */
   var ICONE_PATRIMOINE =
     '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" ' +
     'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/>' +
-    '<path d="M10 21v-6h4v6"/></svg>';
+    /* Les quatre repères du cadran et la porte intérieure surchargeaient
+       le tracé : à vingt pixels, tout se refermait en une tache. On garde
+       le corps, le cadran, la poignée et les pieds. */
+    '<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/>' +
+    '<circle cx="10" cy="12" r="3.6"/>' +
+    '<path d="M10 9.6v4.8M7.6 12h4.8"/>' +
+    '<path d="M17.5 9.5v5"/>' +
+    '<path d="M5.5 19.5v2M18.5 19.5v2"/></svg>';
 
   function remanierAccueil() {
     var home = document.getElementById("S-home");
@@ -335,9 +345,14 @@
         if (ico) {
           var badge = ico.querySelector(".apex-action-badge");
           ico.innerHTML = (badge ? badge.outerHTML : "") + ICONE_PATRIMOINE;
-          ico.style.setProperty("--accent", "#4ADE80");
-          ico.style.setProperty("--accent-bg", "rgba(74,222,128,.12)");
-          ico.style.setProperty("--accent-border", "rgba(74,222,128,.32)");
+          /* Le vert tranchait avec les huit autres tuiles, toutes au rouge
+             de la charte. Rien ne justifiait de distinguer celle-ci. */
+          ico.style.setProperty("--accent", "#FF1801");
+          ico.style.setProperty("--accent-bg", "rgba(255,24,1,.12)");
+          ico.style.setProperty("--accent-border", "rgba(255,24,1,.32)");
+          /* L'ancien identifiant ferait réinjecter l'icône de l'agent au
+             prochain passage du module de pictogrammes. */
+          if (ico.id === "ico-tile-agent") ico.id = "ico-tile-patrimoine";
         }
       }
     });
