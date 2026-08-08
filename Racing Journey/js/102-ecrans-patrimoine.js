@@ -111,6 +111,7 @@
       try {
         if (typeof window.renderFinancePage === "function") window.renderFinancePage();
       } catch (e) { console.warn(TAG, "comptes :", e && e.message); }
+      extraireInvestissements();
       return;
     }
     if (cle === "projets") {
@@ -130,10 +131,38 @@
       return;
     }
     if (cle === "invest") {
+      /* Le catalogue d'investissements est produit par la page de comptes,
+         à la suite du bilan. On le rend d'abord, puis on détache la partie
+         « Investissements » vers son propre onglet : sans cela il restait
+         vide, et les comptes mêlaient toujours bilan et boutique. */
       try {
-        if (typeof window.renderInvestPage === "function") window.renderInvestPage();
+        if (typeof window.renderFinancePage === "function") window.renderFinancePage();
       } catch (e) {}
+      extraireInvestissements();
     }
+  }
+
+  /* Repère le titre « Investissements » dans la page de comptes et déplace
+     ce bloc, ainsi que tout ce qui le suit, vers l'onglet dédié. */
+  function extraireInvestissements() {
+    var comptes = document.getElementById("pat-comptes");
+    var cible = document.getElementById("pat-invest");
+    if (!comptes || !cible) return;
+
+    var racine = comptes.firstElementChild || comptes;
+    var enfants = [].slice.call(racine.children);
+    var depart = -1;
+    for (var i = 0; i < enfants.length; i++) {
+      var t = (enfants[i].textContent || "").trim().slice(0, 40);
+      if (/^investissements/i.test(t)) { depart = i; break; }
+    }
+    if (depart < 0) return;
+
+    cible.innerHTML = "";
+    var boite = document.createElement("div");
+    boite.style.cssText = "padding:14px 16px";
+    for (var k = depart; k < enfants.length; k++) boite.appendChild(enfants[k]);
+    cible.appendChild(boite);
   }
 
   /* ==================================================================
@@ -165,6 +194,10 @@
         cible.id = "pat-comptes";
         if (ancien && idAncien) ancien.id = idAncien;
       }
+      /* La page est redessinée après chaque achat : sans cette extraction,
+         le catalogue d'investissements revenait se coller sous les comptes
+         dès qu'on investissait. */
+      try { extraireInvestissements(); } catch (e) {}
       return r;
     };
     window.renderFinancePage._rj102 = true;
@@ -217,25 +250,26 @@
     return true;
   }
 
-  /* L'écran de l'agent est conservé tel quel : on déplace son contenu dans
-     l'onglet à l'ouverture, et on le rend à son écran ensuite. Rien n'est
-     dupliqué, donc rien ne peut diverger. */
-  function montrerAgent(actif) {
+  /* Le contenu de l'écran de l'agent est déplacé UNE FOIS pour toutes dans
+     son onglet. Le va-et-vient initial — sortir le contenu à l'ouverture,
+     le rendre à la fermeture — laissait parfois le bloc au niveau du
+     conteneur parent, si bien que deux exemplaires s'affichaient l'un sous
+     l'autre. L'écran d'origine n'étant plus atteignable depuis l'accueil,
+     rien ne justifiait cette gymnastique. */
+  function installerContenuAgent() {
     var source = document.getElementById("S-agent");
     var hote = document.getElementById("mt-agent");
-    if (!source || !hote) return;
-    var contenu = source.querySelector(".scroll");
-    if (!contenu) return;
+    if (!source || !hote) return false;
+    var contenu = source.querySelector(".scroll") || document.getElementById("agent-content");
+    if (!contenu) return true;                 // déjà déplacé
+    if (contenu.parentNode !== hote) hote.appendChild(contenu);
+    return true;
+  }
 
-    if (actif) {
-      if (contenu.parentNode !== hote) {
-        hote._rj102Retour = contenu.parentNode;
-        hote.appendChild(contenu);
-      }
-      try { if (typeof window.renderAgentScreen === "function") window.renderAgentScreen(); } catch (e) {}
-    } else if (hote._rj102Retour && contenu.parentNode === hote) {
-      hote._rj102Retour.appendChild(contenu);
-    }
+  function montrerAgent(actif) {
+    if (!actif) return;
+    installerContenuAgent();
+    try { if (typeof window.renderAgentScreen === "function") window.renderAgentScreen(); } catch (e) {}
   }
 
   function brancherOngletAgent() {
@@ -337,6 +371,7 @@
     deplacerFinances();
     retirerOngletFinances();
     ajouterOngletAgent();
+    installerContenuAgent();
     brancherOngletAgent();
     brancherNav();
 
