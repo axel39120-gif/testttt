@@ -165,14 +165,28 @@
     var sais = saisonsJouees(), saisF1 = saisonsEnF1();
     var rep = reputationTotale(), pat = patrimoine();
 
+    /* « 7 × 120 » n'apprenait rien à qui ne devinait pas que le second
+       nombre est la valeur unitaire. On l'écrit maintenant en toutes
+       lettres : « 7 victoires, 120 pts l'unité ». */
+    function ligneDet(n, mot, mots, valeur) {
+      return n + " " + (n > 1 ? mots : mot) + ", " + valeur + " pts l'unité";
+    }
+
     var lignes = [
       { lbl: "Titres", det: t.length + (t.length > 1 ? " titres" : " titre"), pts: ptsTitres },
-      { lbl: "Victoires", det: victoires + " × " + PTS_VICTOIRE, pts: victoires * PTS_VICTOIRE },
-      { lbl: "Podiums", det: podiums + " × " + PTS_PODIUM, pts: podiums * PTS_PODIUM },
-      { lbl: "Départs", det: departs + " × " + PTS_DEPART, pts: departs * PTS_DEPART },
-      { lbl: "Saisons", det: sais + " × " + PTS_SAISON, pts: sais * PTS_SAISON },
-      { lbl: "Saisons en F1", det: saisF1 + " × " + PTS_SAISON_F1, pts: saisF1 * PTS_SAISON_F1 },
-      { lbl: "Réputation", det: rep + " × " + PTS_REP, pts: rep * PTS_REP },
+      { lbl: "Victoires", det: ligneDet(victoires, "victoire", "victoires", PTS_VICTOIRE),
+        pts: victoires * PTS_VICTOIRE },
+      { lbl: "Podiums", det: ligneDet(podiums, "podium", "podiums", PTS_PODIUM),
+        pts: podiums * PTS_PODIUM },
+      { lbl: "Départs", det: ligneDet(departs, "départ", "départs", PTS_DEPART),
+        pts: departs * PTS_DEPART },
+      { lbl: "Saisons", det: ligneDet(sais, "saison", "saisons", PTS_SAISON),
+        pts: sais * PTS_SAISON },
+      { lbl: "Saisons en F1", det: ligneDet(saisF1, "saison", "saisons", PTS_SAISON_F1),
+        pts: saisF1 * PTS_SAISON_F1 },
+      /* Il s'agit de la réputation cumulée sur toute la carrière, non de la
+         note sur cent affichée ailleurs : on le précise. */
+      { lbl: "Réputation", det: rep + " cumulée, " + PTS_REP + " pts l'unité", pts: rep * PTS_REP },
       { lbl: "Patrimoine", det: nb(pat) + " €", pts: Math.floor(pat / PATRIMOINE_PAR_POINT) }
     ];
 
