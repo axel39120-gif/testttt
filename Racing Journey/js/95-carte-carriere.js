@@ -99,12 +99,64 @@
    * championnat, titre constructeur. On l'enrichit seulement de l'année
    * civile, dérivée de l'année de début du pilote.
    * ---------------------------------------------------------------- */
+  /* La saison en cours ne figure pas dans CAREER_HISTORY : cette liste
+     n'est alimentée qu'au passage par l'écran de fin de saison. Une
+     carrière close en cours d'année — ou dès la première — n'avait donc
+     aucun historique à montrer, et la section restait invisible. On la
+     reconstitue depuis les courses disputées. */
+  function saisonEnCours() {
+    var G = G_();
+    if (!G) return null;
+    var courses = [];
+    try { courses = G.races || []; } catch (e) {}
+    if (!courses.length) return null;
+
+    var v = 0, p = 0, pol = 0, dnf = 0, pts = 0;
+    courses.forEach(function (c) {
+      if (!c) return;
+      pts += (c.pts || 0);
+      if (c.dnf || c.pos == null || c.pos === 0) { dnf++; return; }
+      if (c.pos === 1) v++;
+      if (c.pos <= 3) p++;
+      if (c.quali === 1 || c.pole === true || c.startPos === 1) pol++;
+    });
+
+    /* Place au championnat : le joueur parmi ses rivaux. */
+    var place = null;
+    try {
+      var table = [{ pts: G.champPts || 0, moi: true }];
+      (G.rivals || []).forEach(function (r) { table.push({ pts: r.pts || 0, moi: false }); });
+      table.sort(function (a, b) { return b.pts - a.pts; });
+      for (var i = 0; i < table.length; i++) if (table[i].moi) { place = i + 1; break; }
+    } catch (e) {}
+
+    return {
+      saison: G.saison || 1,
+      cat: G.cat || "",
+      team: G._seasonTeam || G.currentTeam || "Indépendant",
+      races: courses.length,
+      wins: v, pods: p, poles: pol, dnfs: dnf,
+      pts: G.champPts || 0,
+      pos: place,
+      constrChamp: null
+    };
+  }
+
   function historique() {
     var G = G_();
     var brut = [];
     try {
       if (typeof window.CAREER_HISTORY !== "undefined" && window.CAREER_HISTORY) {
         brut = window.CAREER_HISTORY.slice();
+      }
+    } catch (e) {}
+
+    /* On ajoute la saison en cours si elle n'a pas encore été enregistrée. */
+    try {
+      var enCours = saisonEnCours();
+      if (enCours) {
+        var deja = brut.some(function (h) { return h && h.saison === enCours.saison; });
+        if (!deja) brut.push(enCours);
       }
     } catch (e) {}
 
