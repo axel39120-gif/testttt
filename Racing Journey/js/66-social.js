@@ -627,8 +627,11 @@
       "border-radius:8px;border:1px solid var(--border)}",
       ".rj66-cell img{width:100%;height:100%;object-fit:cover;display:block}",
       ".rj66-cell svg{width:100%;height:100%;display:block}",
-      ".rj66-cell .lk{position:absolute;left:5px;bottom:4px;font-size:10px;color:#fff;",
-      "text-shadow:0 1px 3px rgba(0,0,0,.8);font-weight:700}",
+      ".rj66-cact{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:14px 6px 5px;",
+      "font-size:10px;color:#fff;background:linear-gradient(to top,rgba(0,0,0,.72),transparent);",
+      "pointer-events:none}",
+      ".rj66-cact span{display:inline-flex;align-items:center;gap:3px;text-shadow:0 1px 3px rgba(0,0,0,.6)}",
+      ".rj66-cact svg{width:11px;height:11px;opacity:.95;flex-shrink:0}",
       ".rj66-vide{padding:22px 10px;text-align:center;font-size:12.5px;color:var(--text3)}",
       ".rj66-apercu{position:relative;border-radius:12px;overflow:hidden;background:var(--bg2);margin-bottom:9px}",
       ".rj66-apercu img{width:100%;display:block;max-height:280px;object-fit:cover}",
@@ -929,8 +932,15 @@
             ? '<svg viewBox="0 0 120 120">' + SCENES[p.scene].dessin(couleurEquipe()) + '</svg>'
             : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;' +
               'font-size:10px;color:var(--text3);text-align:center;padding:4px">image retirée</div>');
+      /* Mêmes pictogrammes que le fil X : un cœur pour les mentions
+         « j'aime », une bulle pour les commentaires. La vignette n'affichait
+         qu'un cœur en caractère typographique, et les commentaires
+         n'apparaissaient nulle part alors qu'ils sont comptés. */
       return '<div class="rj66-cell" onclick="_rj66Post(' + i + ')">' + media +
-             '<span class="lk">&#9829; ' + fmt(p.likes) + '</span></div>';
+             '<div class="rj66-cact">' +
+               '<span>' + ICO.like + fmt(p.likes) + '</span>' +
+               '<span>' + ICO.rep + fmt(p.comm || 0) + '</span>' +
+             '</div></div>';
     }).join("") + '</div>';
   }
 
