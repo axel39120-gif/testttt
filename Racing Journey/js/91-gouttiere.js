@@ -83,6 +83,31 @@
 
          Les colonnes de grille (.mc) sont exclues : leur asymétrie
          apparente vient de ce qu'elles sont côte à côte, c'est voulu. */
+      /* --- menus de l'accueil -------------------------------------------
+         Les sections « Carrière », « Business » et « Vie » et leurs grilles
+         de tuiles touchaient les bords de l'écran : une règle
+         « #S-home > .scroll > … » remettait padding et margin à zéro, plus
+         spécifique que la gouttière générale. On la contre en ciblant le
+         même chemin, et en agissant sur le padding — la grille doit garder
+         sa pleine largeur, ses colonnes se calant sur l'espace intérieur.
+         Le padding vertical reste à zéro : la compacité de l'accueil est
+         voulue. */
+      /* Le bandeau de course, le rail de statistiques et la barre de moral
+         restaient à quatorze pixels : une fois les tuiles alignées à seize,
+         le décalage se voyait à l'œil sur toute la hauteur de l'accueil. */
+      "#S-home > .apex-hero-race,#S-home > .apex-mental-row{" +
+        "margin-left:var(--rj-gouttiere) !important;" +
+        "margin-right:var(--rj-gouttiere) !important}",
+      "#S-home > .apex-stats-rail{" +
+        "padding-left:var(--rj-gouttiere) !important;" +
+        "padding-right:var(--rj-gouttiere) !important}",
+
+      "#S-home > .scroll > .apex-sec," +
+      "#S-home > .scroll > .apex-actions-grid{" +
+        "padding-left:var(--rj-gouttiere) !important;" +
+        "padding-right:var(--rj-gouttiere) !important;" +
+        "margin-left:0 !important;margin-right:0 !important}",
+
       ".t-sec,.sec-lbl,.apex-sec," +
       ".scroll > .card,.ls-item,.act-card,.rj83-row,.rj83-fams,.rj83-sub{" +
         "margin-left:var(--rj-gouttiere) !important;margin-right:var(--rj-gouttiere) !important}",
