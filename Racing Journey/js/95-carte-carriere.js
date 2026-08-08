@@ -521,6 +521,7 @@
     finally { window.confirm = confirmOrigine; }
 
     afficherCarte(d);
+    setTimeout(injecterDansEcran74, 200);
   }
 
   function afficherCarte(d) {
@@ -597,6 +598,118 @@
   }
 
   /* ==================================================================
+   * 3 bis. INJECTION DANS L'ÉCRAN DE FIN DE CARRIÈRE
+   *
+   * L'écran du module 74 — « Détail des points », « Carrière en chiffres » —
+   * reste affiché derrière la carte. C'est là que le joueur revient et
+   * s'attarde : le récapitulatif saison par saison doit s'y trouver aussi,
+   * dans le même format dépliable que les sections existantes, et le
+   * téléchargement avec lui.
+   * ================================================================== */
+
+  /* Reprise exacte du format des sections de l'écran 74 : mes classes
+     approchantes laissaient le marqueur natif du navigateur et collaient
+     le résumé au titre. */
+  function sectionPliante(titre, resume, contenu) {
+    return '<details class="rj74-pl"><summary class="rj74-sm">' +
+      '<span class="rj74-smt">' + esc(titre) + '</span>' +
+      '<span class="rj74-smr">' + esc(resume) + '</span>' +
+      '<span class="rj74-chev"></span></summary>' +
+      '<div class="rj74-plc">' + contenu + "</div></details>";
+  }
+
+  function injecterDansEcran74() {
+    var box = document.getElementById("rj74-ecran");
+    if (!box || !box.classList.contains("on")) return;
+    if (box.querySelector("#rj95-saisons")) return;      // déjà posé
+
+    var d = donnees();
+    if (!d || !d.saisonsDetail || !d.saisonsDetail.length) return;
+
+    injecterCSS();
+
+    var lignes = d.saisonsDetail.map(function (s) {
+      var titres = "";
+      if (s.titrePilote) titres += '<span class="rj95-t pil">Champion</span>';
+      if (s.titreConstructeur) titres += '<span class="rj95-t con">Constructeur</span>';
+      return '<div class="rj95-sais">' +
+        '<div class="l1"><span class="an">' + s.annee + '</span>' +
+          '<span class="cat">' + esc(s.cat) + '</span>' +
+          '<span class="eq">' + esc(s.equipe) + '</span>' +
+          (titres ? '<span class="tt">' + titres + '</span>' : '') +
+        '</div>' +
+        '<div class="l2">' +
+          '<span><b>' + s.courses + '</b> courses</span>' +
+          '<span><b>' + s.victoires + '</b> victoires</span>' +
+          '<span><b>' + s.podiums + '</b> podiums</span>' +
+          '<span><b>' + s.poles + '</b> poles</span>' +
+          '<span><b>' + s.abandons + '</b> abandons</span>' +
+        '</div>' +
+        '<div class="cl"><b>' + nb(s.points) + '</b> pts' +
+          (s.place ? '  \u00b7  <b>P' + s.place + '</b> au championnat' : '') + '</div>' +
+      '</div>';
+    }).join("");
+
+    var bloc = document.createElement("div");
+    bloc.id = "rj95-saisons";
+    bloc.innerHTML = sectionPliante(
+      "Détail par saison",
+      d.saisonsDetail.length + " saison" + (d.saisonsDetail.length > 1 ? "s" : ""),
+      lignes
+    );
+
+    /* On le pose juste avant les boutons, à la suite des autres sections. */
+    var btns = box.querySelector(".rj74-btns");
+    if (btns && btns.parentNode) btns.parentNode.insertBefore(bloc, btns);
+    else box.appendChild(bloc);
+
+    /* Boutons de téléchargement, ajoutés à ceux de l'écran. */
+    if (btns && !btns.querySelector("#rj95-dl-carte")) {
+      var bCarte = document.createElement("button");
+      bCarte.type = "button";
+      bCarte.id = "rj95-dl-carte";
+      bCarte.className = "rj74-btn";
+      bCarte.textContent = "Télécharger la carte";
+      bCarte.addEventListener("click", function () { telecharger(dessiner(d), d, ""); });
+
+      var bRecap = document.createElement("button");
+      bRecap.type = "button";
+      bRecap.id = "rj95-dl-recap";
+      bRecap.className = "rj74-btn";
+      bRecap.textContent = "Télécharger le récapitulatif";
+      bRecap.addEventListener("click", function () { telecharger(dessinerRecap(d), d, "-recapitulatif"); });
+
+      btns.insertBefore(bRecap, btns.firstChild);
+      btns.insertBefore(bCarte, btns.firstChild);
+    }
+  }
+
+  function telecharger(canevas, d, suffixe) {
+    try {
+      var a = document.createElement("a");
+      a.href = canevas.toDataURL("image/png");
+      a.download = "racing-journey-" +
+        d.pilote.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") +
+        (suffixe || "") + ".png";
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { console.warn(TAG, "téléchargement :", e && e.message); }
+  }
+
+  /* L'écran peut être ouvert par plusieurs chemins : on surveille son
+     apparition plutôt que de deviner lequel. */
+  function surveillerEcran74() {
+    if (window._rj95Observer) return;
+    try {
+      var obs = new MutationObserver(function () {
+        var box = document.getElementById("rj74-ecran");
+        if (box && box.classList.contains("on")) setTimeout(injecterDansEcran74, 60);
+      });
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+      window._rj95Observer = obs;
+    } catch (e) {}
+  }
+
+  /* ==================================================================
    * 4. INSTALLATION
    * ================================================================== */
 
@@ -620,7 +733,12 @@
   function boot() {
     var essais = 0;
     (function tenter() {
-      if (installer()) { console.log(TAG, "confirmation et carte de carrière actives"); return; }
+      if (installer()) {
+        surveillerEcran74();
+        setTimeout(injecterDansEcran74, 300);
+        console.log(TAG, "confirmation et carte de carrière actives");
+        return;
+      }
       if (essais++ < 80) setTimeout(tenter, 150);
     })();
 
@@ -628,11 +746,14 @@
       apercu: function () { var d = donnees(); return d ? dessiner(d).toDataURL("image/png") : null; },
       recap: function () { var d = donnees(); return d ? dessinerRecap(d).toDataURL("image/png") : null; },
       historique: historique,
+      injecter: injecterDansEcran74,
       donnees: donnees,
       confirmer: demanderConfirmation
     };
     window._rj95Uninstall = function () {
       if (_orig74) window._rj74Terminer = _orig74;
+      if (window._rj95Observer) { window._rj95Observer.disconnect(); delete window._rj95Observer; }
+      var sec = document.getElementById("rj95-saisons"); if (sec) sec.remove();
       fermer();
       var css = document.getElementById(CSS_ID);
       if (css && css.parentNode) css.parentNode.removeChild(css);
