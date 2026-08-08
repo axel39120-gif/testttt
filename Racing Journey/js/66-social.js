@@ -77,10 +77,15 @@
     s[res].nb = (s[res].nb || 0) + 1;
   }
 
+  /* Une seule décimale arrondie sèchement écrivait 1 450 « 1 k » et faisait
+     osciller le même nombre d'abonnés entre « 487,4 k » et « 487 k » selon
+     le formateur employé. La règle commune (module 98) donne deux décimales
+     au plus, sans zéros inutiles, avec la virgule française. */
   function fmt(n) {
+    if (window._rj98) return window._rj98.compact(n, true);
     n = Math.round(n || 0);
-    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(".0", "") + " M";
-    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(".0", "") + " k";
+    if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/0+$/, "").replace(/\.$/, "").replace(".", ",") + "\u00a0M";
+    if (n >= 1e3) return (n / 1e3).toFixed(2).replace(/0+$/, "").replace(/\.$/, "").replace(".", ",") + "\u00a0k";
     return String(n);
   }
 
