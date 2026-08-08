@@ -1278,6 +1278,13 @@
     appliquer(r.effets);
     etat.effets.push({ question: q.texte(etat.ctx, etat.journaliste), ton: r.ton });
     archiverDeclaration(q, r);
+    /* Le journaliste retient le ton employé, et une attaque publique se
+       paie auprès de l'écurie visée (module 101). */
+    try {
+      if (typeof window._rj101SurDeclaration === "function") {
+        window._rj101SurDeclaration(etat.journaliste, r.ton, null);
+      }
+    } catch (e) {}
 
     var a = ATTITUDES[r.ton] || ATTITUDES.mesure;
     var dernier = etat.idx >= etat.questions.length - 1;
