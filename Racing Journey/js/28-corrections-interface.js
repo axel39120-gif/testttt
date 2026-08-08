@@ -750,3 +750,410 @@
     console.log(TAG + " d\u00e9sinstall\u00e9");
   };
 })();
+
+
+/* ==================================================================== *
+ * BIOGRAPHIE ET FACE-À-FACE
+ *
+ * Deux ajouts d'interface regroupés ici plutôt que dans un fichier de
+ * plus : l'écurie de cœur racontée en biographie, et le face-à-face du
+ * championnat présenté en tableau de points manche par manche à la place
+ * d'une courbe.
+ *
+ * On y complète aussi l'historique des rivaux : le moteur y enregistre
+ * déjà position, points et abandon à chaque course, mais pas le nom du
+ * circuit — sans lui, impossible d'aligner leurs résultats sur les
+ * manches du calendrier.
+ * ==================================================================== */
+
+(function () {
+  "use strict";
+
+  var TAG = "[91-bio-h2h]";
+
+  function G_() { return (typeof window.G !== "undefined") ? window.G : null; }
+  function fn(n) { return typeof window[n] === "function"; }
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* ==================================================================
+   * 1. LA CONFIDENCE EN BIOGRAPHIE
+   * ================================================================== */
+
+  /* Plusieurs formulations, tirées au sort une fois pour toutes et retenues
+     dans la sauvegarde : une biographie qui change de phrase à chaque
+     ouverture d'écran ne se lit pas comme une biographie. */
+  var PHRASES_REVE = [
+    "Il a confié lors d'une interview que son écurie de cœur avait toujours été {T}.",
+    "Interrogé sur ses ambitions, il a avoué rêver de piloter un jour pour {T}.",
+    "Il ne s'en cache pas : c'est chez {T} qu'il s'imagine depuis toujours.",
+    "Enfant, c'est le nom de {T} qu'il écrivait sur son casque."
+  ];
+  var PHRASES_ACTUEL = [
+    "Il pilote aujourd'hui pour {T}, l'écurie dont il rêvait enfant.",
+    "Le voilà chez {T} — celle-là même qu'il citait dans ses premières interviews.",
+    "Son rêve de gosse s'est réalisé : il court pour {T}."
+  ];
+  var PHRASES_PASSE = [
+    "Il a réalisé son rêve d'enfance en portant les couleurs de {T}.",
+    "Sa carrière restera marquée par son passage chez {T}, l'écurie qu'il admirait depuis toujours."
+  ];
+
+  function accordFeminin(equipe) {
+    /* « pour Ferrari » convient partout ; on évite simplement l'article. */
+    return equipe;
+  }
+
+  function phraseEcurieDeCoeur() {
+    var G = G_();
+    if (!G || !G._favTeam) return "";
+    var equipe = accordFeminin(G._favTeam);
+
+    var lot, cle;
+    if (G.currentTeam === G._favTeam) { lot = PHRASES_ACTUEL; cle = "actuel"; }
+    else if (G._favTeamAtteinte) { lot = PHRASES_PASSE; cle = "passe"; }
+    else { lot = PHRASES_REVE; cle = "reve"; }
+
+    /* Tirage retenu par situation, pour que la phrase reste stable. */
+    G._favTeamPhrases = G._favTeamPhrases || {};
+    if (typeof G._favTeamPhrases[cle] !== "number") {
+      G._favTeamPhrases[cle] = Math.floor(Math.random() * lot.length);
+    }
+    var modele = lot[G._favTeamPhrases[cle] % lot.length];
+    return modele.replace("{T}", esc(equipe));
+  }
+
+  var _origBio = null;
+
+  function installerBio() {
+    if (!fn("generatePilotBio") || window.generatePilotBio._rj91) return false;
+    _origBio = window.generatePilotBio;
+    window.generatePilotBio = function () {
+      var texte = "";
+      try { texte = _origBio.apply(this, arguments) || ""; } catch (e) { texte = ""; }
+      try {
+        var phrase = phraseEcurieDeCoeur();
+        if (phrase) {
+          texte = texte ? (texte + " " + phrase) : phrase;
+        }
+      } catch (e) { console.warn(TAG, "biographie :", e && e.message); }
+      return texte;
+    };
+    window.generatePilotBio._rj91 = true;
+    return true;
+  }
+
+  /* ==================================================================
+   * 2. LE TABLEAU DES POINTS, MANCHE PAR MANCHE
+   * ================================================================== */
+
+  var CSS_ID = "rj91-css";
+
+  function injecterCSS() {
+    if (document.getElementById(CSS_ID)) return;
+    var css = [
+      "#rj91-points{margin:8px 16px 4px;border:1px solid var(--border);border-radius:12px;overflow:hidden;" +
+        "background:var(--surface2)}",
+      "#rj91-points table{width:100%;border-collapse:collapse;font-family:var(--font-body)}",
+      "#rj91-points th{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.1em;" +
+        "text-transform:uppercase;color:var(--text3);padding:8px 6px;text-align:center;" +
+        "border-bottom:1px solid var(--border);white-space:nowrap}",
+      "#rj91-points th.gp{text-align:left;padding-left:11px}",
+      "#rj91-points td{font-size:12px;padding:7px 6px;text-align:center;color:var(--text2);" +
+        "border-bottom:1px solid rgba(255,255,255,.04)}",
+      "#rj91-points td.gp{text-align:left;padding-left:11px;color:var(--text);font-weight:600;" +
+        "max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      "#rj91-points td.sp{font-size:10.5px;color:var(--text3)}",
+      "#rj91-points td.cum{font-family:var(--font-display);font-weight:800;color:var(--white)}",
+      "#rj91-points tr.tot td{border-top:1px solid var(--border-hi);border-bottom:none;padding-top:9px;" +
+        "font-family:var(--font-display);font-weight:900;color:var(--white);font-size:13px}",
+      "#rj91-points tr:last-child td{border-bottom:none}",
+      "#rj91-points .j{color:#FF6B5B}",
+      "#rj91-points .r{color:#d4a842}",
+      "#rj91-points .vide{color:var(--dim)}",
+      "#rj91-points .note{padding:9px 12px;font-size:10.5px;color:var(--text3);line-height:1.45;" +
+        "border-top:1px solid var(--border);font-family:var(--font-body)}"
+    ].join("");
+    var st = document.createElement("style");
+    st.id = CSS_ID; st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  /* Points de sprint : le moteur les enregistre sous sprintPts quand la
+     manche en comportait un. Absent = pas de sprint ce week-end. */
+  function ptsSprint(course) {
+    if (!course) return null;
+    if (typeof course.sprintPts === "number") return course.sprintPts;
+    return null;
+  }
+
+  function nomMancheDepuis(courseJoueur, index) {
+    if (courseJoueur) return courseJoueur.circuit || courseJoueur.name || ("Manche " + (index + 1));
+    return "Manche " + (index + 1);
+  }
+
+  function ptsCourse(course) {
+    if (!course) return null;
+    return (typeof course.pts === "number") ? course.pts : null;
+  }
+
+  function nomManche(course, index) {
+    if (!course) return "Manche " + (index + 1);
+    return course.circuit || course.name || ("Manche " + (index + 1));
+  }
+
+  /* L'historique d'un rival mêle les courses et les sprints dans une seule
+     liste. On le replie en manches : chaque course principale forme une
+     manche, et le sprint qui la précède immédiatement lui est rattaché. */
+  function replierEnManches(historique) {
+    var manches = [], enAttente = null;
+    for (var i = 0; i < (historique || []).length; i++) {
+      var e = historique[i];
+      if (!e) continue;
+      if (e.sprint) { enAttente = e; continue; }
+      manches.push({
+        manche: (typeof e.manche === "number") ? e.manche : null,
+        circuit: e.circuit || null,
+        pts: (typeof e.pts === "number") ? e.pts : null,
+        dnf: !!e.dnf,
+        sprintPts: enAttente ? (enAttente.pts || 0) : null
+      });
+      enAttente = null;
+    }
+    if (enAttente) {
+      manches.push({ manche: (typeof enAttente.manche === "number") ? enAttente.manche : null,
+                     circuit: enAttente.circuit || null, pts: null, dnf: false, sprintPts: enAttente.pts || 0 });
+    }
+    return manches;
+  }
+
+  /* Les deux historiques ne couvrent pas forcément les mêmes manches : le
+     joueur a pu commencer sa saison avant que le suivi des rivaux ne soit
+     enregistré. Les aligner par simple position dans la liste ferait
+     correspondre Bahreïn à Monza. On les apparie donc par numéro de manche,
+     et à défaut par nom de circuit. */
+  function apparier(coursesJoueur, manchesRival) {
+    var parManche = {}, parCircuit = {};
+    for (var i = 0; i < manchesRival.length; i++) {
+      var m = manchesRival[i];
+      if (m.manche != null) parManche[m.manche] = m;
+      if (m.circuit && !parCircuit[m.circuit]) parCircuit[m.circuit] = m;
+    }
+    return coursesJoueur.map(function (c, idx) {
+      if (!c) return null;
+      if (c.manche != null && parManche[c.manche]) return parManche[c.manche];
+      var nom = c.circuit || c.name;
+      if (nom && parCircuit[nom]) return parCircuit[nom];
+      return null;
+    });
+  }
+
+  function construireTableau(coursesJoueur, coursesRival, nomJ, nomR, totalRivalConnu) {
+    var n = Math.max(coursesJoueur.length, coursesRival.length);
+    if (!n) return "";
+
+    var cumulJ = 0, cumulR = 0, sprintPresent = false;
+    for (var s = 0; s < n; s++) {
+      if (ptsSprint(coursesJoueur[s]) !== null || ptsSprint(coursesRival[s]) !== null) sprintPresent = true;
+    }
+
+    var h = '<div id="rj91-points"><table>';
+    h += '<thead><tr><th class="gp">Grand Prix</th>';
+    h += '<th class="j">' + esc(abrege(nomJ)) + '</th>';
+    if (sprintPresent) h += '<th class="j">Spr.</th>';
+    h += '<th class="j">Cum.</th>';
+    h += '<th class="r">' + esc(abrege(nomR)) + '</th>';
+    if (sprintPresent) h += '<th class="r">Spr.</th>';
+    h += '<th class="r">Cum.</th></tr></thead><tbody>';
+
+    for (var i = 0; i < n; i++) {
+      var cj = coursesJoueur[i], cr = coursesRival[i];
+      var pj = ptsCourse(cj), pr = ptsCourse(cr);
+      var sj = ptsSprint(cj), sr = ptsSprint(cr);
+
+      cumulJ += (pj || 0) + (sj || 0);
+      cumulR += (pr || 0) + (sr || 0);
+
+      h += '<tr>';
+      h += '<td class="gp">' + esc(nomMancheDepuis(cj, i)) + '</td>';
+      h += '<td>' + cellule(pj, cj) + '</td>';
+      if (sprintPresent) h += '<td class="sp">' + (sj === null ? '<span class="vide">·</span>' : sj) + '</td>';
+      h += '<td class="cum">' + cumulJ + '</td>';
+      h += '<td>' + cellule(pr, cr) + '</td>';
+      if (sprintPresent) h += '<td class="sp">' + (sr === null ? '<span class="vide">·</span>' : sr) + '</td>';
+      h += '<td class="cum">' + cumulR + '</td>';
+      h += '</tr>';
+    }
+
+    /* Le jeu ne conserve pas le détail manche par manche des rivaux : leur
+       colonne reste vide. Plutôt que d'afficher un total de zéro contredit
+       par le championnat, on reprend leur total réel et on l'explique. */
+    var detailRivalManquant = (cumulR === 0 && totalRivalConnu > 0);
+    if (detailRivalManquant) cumulR = totalRivalConnu;
+
+    h += '<tr class="tot"><td class="gp">Total</td>';
+    h += '<td colspan="' + (sprintPresent ? 2 : 1) + '"></td><td>' + cumulJ + '</td>';
+    h += '<td colspan="' + (sprintPresent ? 2 : 1) + '"></td><td>' + cumulR + '</td>';
+    h += '</tr>';
+    h += '</tbody></table>';
+    if (detailRivalManquant) {
+      h += '<div class="note">Le détail par manche n\'est pas conservé pour les rivaux : ' +
+           'seul leur total de championnat est connu.</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function cellule(points, course) {
+    if (course && course.dnf) return '<span class="vide">ab.</span>';
+    if (points === null) return '<span class="vide">–</span>';
+    if (points === 0) return '<span class="vide">0</span>';
+    return points;
+  }
+
+  function abrege(nom) {
+    if (!nom) return "—";
+    var bouts = String(nom).trim().split(/\s+/);
+    if (bouts.length === 1) return bouts[0].slice(0, 8);
+    return bouts[bouts.length - 1].slice(0, 9);
+  }
+
+  /* Le rival comparé, tel que l'écran l'a retenu. */
+  function rivalCourant() {
+    var G = G_();
+    if (!G || !G.rivals) return null;
+    var idx = G._h2hIdx;
+    if (typeof idx !== "number" || idx < 0 || idx >= G.rivals.length) return G.rivals[0] || null;
+    return G.rivals[idx];
+  }
+
+  function remplacerGraphique() {
+    var hote = document.getElementById("h2h-content");
+    if (!hote) return;
+    if (hote.querySelector("#rj91-points")) return;
+
+    var G = G_();
+    if (!G) return;
+    var rival = rivalCourant();
+    if (!rival) return;
+
+    injecterCSS();
+
+    var nomJ = (G.pilot && (G.pilot.nom || G.pilot.prenom)) ? (G.pilot.nom || G.pilot.prenom) : "Toi";
+    var courses = G.races || [];
+    var tableau = construireTableau(courses, apparier(courses, replierEnManches(rival.raceHistory)),
+                                    nomJ, rival.name || "Rival", rival.pts || 0);
+    if (!tableau) return;
+
+    /* On repère le bloc du graphique par son intitulé, puis on remplace son
+       contenu — le titre de section reste, seule la courbe cède la place. */
+    var titres = hote.querySelectorAll(".t-sec");
+    var cible = null;
+    for (var i = 0; i < titres.length; i++) {
+      if (/évolution des points/i.test(titres[i].textContent || "")) { cible = titres[i]; break; }
+    }
+    if (!cible) return;
+
+    cible.textContent = "Points par manche";
+    var graphique = cible.nextElementSibling;
+    if (graphique) {
+      graphique.outerHTML = tableau;
+    } else {
+      cible.insertAdjacentHTML("afterend", tableau);
+    }
+  }
+
+  var _origH2H = null;
+
+  function installerH2H() {
+    if (!fn("renderH2H") || window.renderH2H._rj91) return false;
+    _origH2H = window.renderH2H;
+    window.renderH2H = function () {
+      var r = _origH2H.apply(this, arguments);
+      try { remplacerGraphique(); }
+      catch (e) { console.warn(TAG, "tableau des points :", e && e.message); }
+      return r;
+    };
+    window.renderH2H._rj91 = true;
+    return true;
+  }
+
+  /* ==================================================================
+   * 3. LE CIRCUIT DANS L'HISTORIQUE DES RIVAUX
+   *
+   * Le moteur enregistre déjà, à la fin de chaque course, la position, les
+   * points, l'abandon et le fait qu'il s'agissait d'un sprint. Il manquait
+   * le nom du circuit : sans lui, on ne peut pas aligner les résultats des
+   * rivaux sur les manches du calendrier, et le tableau ci-dessus n'aurait
+   * pu comparer que des lignes anonymes.
+   *
+   * On complète donc la dernière entrée de chaque rival juste après la
+   * course. Les saisons déjà jouées ne sont pas rattrapées — l'information
+   * n'a jamais été enregistrée pour elles.
+   * ================================================================== */
+
+  function completerHistoriqueRivaux() {
+    var G = G_();
+    if (!G || !G.rivals) return;
+    var circuit = "";
+    var manche = null;
+    try {
+      circuit = (window.RACE_STATE && RACE_STATE.circuit) || "";
+      manche = (G.races || []).length;
+    } catch (e) {}
+    if (!circuit) return;
+
+    for (var i = 0; i < G.rivals.length; i++) {
+      var r = G.rivals[i];
+      if (!r || !r.raceHistory || !r.raceHistory.length) continue;
+      var derniere = r.raceHistory[r.raceHistory.length - 1];
+      if (derniere && !derniere.circuit) {
+        derniere.circuit = circuit;
+        derniere.manche = manche;
+      }
+    }
+  }
+
+  function installerHistorique() {
+    if (!Array.isArray(window.RACE_POST_HOOKS)) window.RACE_POST_HOOKS = [];
+    if (window.RACE_POST_HOOKS.some(function (h) { return h && h.id === "28-historique-rivaux"; })) return true;
+    window.RACE_POST_HOOKS.push({
+      id: "28-historique-rivaux",
+      run: function () { try { completerHistoriqueRivaux(); } catch (e) {} }
+    });
+    return true;
+  }
+
+  /* ==================================================================
+   * Installation
+   * ================================================================== */
+
+  function boot() {
+    installerHistorique();
+    var essais = 0;
+    (function tenter() {
+      var a = installerBio();
+      var b = installerH2H();
+      if ((a || (window.generatePilotBio && window.generatePilotBio._rj91)) &&
+          (b || (window.renderH2H && window.renderH2H._rj91))) {
+        console.log(TAG, "actif — écurie de cœur en biographie, points par manche en face-à-face");
+        return;
+      }
+      if (essais++ < 80) setTimeout(tenter, 150);
+    })();
+
+    window._rj91 = { phrase: phraseEcurieDeCoeur, tableau: remplacerGraphique };
+    window._rj91Uninstall = function () {
+      if (_origBio) window.generatePilotBio = _origBio;
+      if (_origH2H) window.renderH2H = _origH2H;
+      var css = document.getElementById(CSS_ID);
+      if (css && css.parentNode) css.parentNode.removeChild(css);
+      console.log(TAG, "désinstallé");
+    };
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
