@@ -204,7 +204,10 @@
       var tours = [];
       for (var k = 1; k <= nb; k++) {
         var centre = Math.round(lr.total * (k / (nb + 1)));
-        var tour = centre + Math.round((Math.random() - 0.5) * Math.max(2, lr.total * 0.10));
+        /* Étalement large : avec une fenêtre étroite, tous les rivaux
+           rentraient au même tour et le fil de direct se remplissait de
+           cinq « untel entre aux stands » identiques. */
+        var tour = centre + Math.round((Math.random() - 0.5) * Math.max(4, lr.total * 0.30));
         tour = Math.max(2, Math.min(lr.total - 2, tour));
         tours.push(tour);
       }

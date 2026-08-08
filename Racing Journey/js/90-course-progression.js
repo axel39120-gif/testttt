@@ -136,6 +136,8 @@
     if (barre) barre.style.width = Math.round(part * 100) + "%";
     var etat = document.getElementById("rj90-etat");
 
+    placerRadio();
+
     if (lr.finished) {
       b.classList.add("finie");
       if (etat) etat.textContent = "Drapeau à damier. Voici le classement.";
@@ -159,13 +161,34 @@
      d'arrêt, encarts divers — est masqué, y compris ce que d'autres modules
      injectent après coup. Chasser chaque bloc un par un aurait demandé de
      connaître leurs identifiants, dont plusieurs n'en ont pas. */
-  var VISIBLES = ["live-race-header", "rj90-progression", "race-btn"];
+  var VISIBLES = ["live-race-header", "rj90-progression", "rj-direct-section", "race-btn"];
 
   /* Certains éléments flottent hors de l'écran de course : le bouton
      d'arrêt au stand et son bandeau de stratégie, positionnés dans la page
      et non dans le conteneur. Ils n'ont plus d'objet — les arrêts sont
      automatiques et la stratégie a été retirée du jeu. */
   var FLOTTANTS = ["pit-button-container"];
+
+  /* La radio se lit sous la barre de progression : c'est le seul contenu
+     qui accompagne la course, il doit être là où l'œil se trouve déjà.
+     Le module qui l'alimente la place par défaut au-dessus du classement,
+     qui n'est plus affiché — on la déplace donc.
+     Six messages au plus restent visibles à la fois : au-delà, la liste
+     défile. C'est assez pour suivre, trop peu pour noyer. */
+  var MESSAGES_VISIBLES = 6;
+  var HAUTEUR_MESSAGE = 46;   // hauteur d'une ligne, mesurée à l'écran
+
+  function placerRadio() {
+    var section = document.getElementById("rj-direct-section");
+    var prog = document.getElementById("rj90-progression");
+    if (!section || !prog || !prog.parentNode) return;
+    if (section.previousElementSibling !== prog) {
+      prog.parentNode.insertBefore(section, prog.nextSibling);
+    }
+    section.style.marginTop = "10px";
+    var liste = document.getElementById("rj-direct-list");
+    if (liste) liste.style.maxHeight = (MESSAGES_VISIBLES * HAUTEUR_MESSAGE) + "px";
+  }
 
   function masquerClassement() {
     var ecran = document.getElementById("race-screen");
