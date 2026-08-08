@@ -250,25 +250,32 @@
     return true;
   }
 
-  /* Le contenu de l'écran de l'agent est déplacé UNE FOIS pour toutes dans
-     son onglet. Le va-et-vient initial — sortir le contenu à l'ouverture,
-     le rendre à la fermeture — laissait parfois le bloc au niveau du
-     conteneur parent, si bien que deux exemplaires s'affichaient l'un sous
-     l'autre. L'écran d'origine n'étant plus atteignable depuis l'accueil,
-     rien ne justifiait cette gymnastique. */
-  function installerContenuAgent() {
-    var source = document.getElementById("S-agent");
-    var hote = document.getElementById("mt-agent");
-    if (!source || !hote) return false;
-    var contenu = source.querySelector(".scroll") || document.getElementById("agent-content");
-    if (!contenu) return true;                 // déjà déplacé
-    if (contenu.parentNode !== hote) hote.appendChild(contenu);
+  /* Le contenu de l'agent n'existe qu'en un seul exemplaire : il vit soit
+     dans l'onglet, soit dans son écran d'origine. On le place explicitement
+     selon l'endroit demandé, plutôt que de le déplacer au petit bonheur.
+     Deux versions ont échoué ici : le va-et-vient laissait parfois deux
+     exemplaires visibles, et le déplacement définitif vidait l'écran
+     d'origine — dont la création de pilote se sert pour faire choisir le
+     premier agent, qui se retrouvait devant une page noire. */
+  function placerAgent(ou) {
+    var contenu = document.getElementById("agent-content");
+    if (!contenu) {
+      var src = document.getElementById("S-agent");
+      contenu = src ? src.querySelector(".scroll") : null;
+    }
+    if (!contenu) return false;
+
+    var cible = (ou === "onglet")
+      ? document.getElementById("mt-agent")
+      : document.getElementById("S-agent");
+    if (!cible) return false;
+    if (contenu.parentNode !== cible) cible.appendChild(contenu);
     return true;
   }
 
   function montrerAgent(actif) {
     if (!actif) return;
-    installerContenuAgent();
+    placerAgent("onglet");
     try { if (typeof window.renderAgentScreen === "function") window.renderAgentScreen(); } catch (e) {}
   }
 
@@ -371,6 +378,15 @@
         setTimeout(function () { window.pattab("comptes"); }, 40);
         return r;
       }
+      /* Quelque chose ouvre l'écran de l'agent directement — la création de
+         pilote, notamment, pour le choix du premier agent. On lui rend son
+         contenu avant l'affichage. */
+      if (id === "S-agent") {
+        placerAgent("ecran");
+        var ra = _orig.navTo.apply(this, arguments);
+        try { if (typeof window.renderAgentScreen === "function") window.renderAgentScreen(); } catch (e) {}
+        return ra;
+      }
       return _orig.navTo.apply(this, arguments);
     };
     window.navTo._rj102 = true;
@@ -386,7 +402,6 @@
     deplacerFinances();
     retirerOngletFinances();
     ajouterOngletAgent();
-    installerContenuAgent();
     brancherOngletAgent();
     brancherNav();
 
