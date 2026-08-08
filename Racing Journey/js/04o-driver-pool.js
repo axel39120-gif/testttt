@@ -93,16 +93,12 @@
 
   // Caps de skill par catégorie (réutilisés du module 04k)
   var CAT_SKILL_CAP = {
-    "Karting Junior":   78,
-    "Karting Senior":   82,
-    "Formule 4":        84,
-    "Formula Regional": 86,
-    "Formule 3":        88,
-    "Formule 2":        90,
-    "Formule 1":        94,
-    "Super Formula":    92,
-    "Endurance WEC":    91,
-    "IndyCar":          93
+    // Alignés sur l'échelle de notation (module 92) : sommet de la Formule 1
+    // à 96, catégories inférieures décalées vers le bas.
+    "Karting Junior": 75, "Karting Senior": 79, "Formule 4": 82,
+    "Formula Regional": 85, "Formule 3": 88, "Formule 2": 91,
+    "Super Formula": 93, "Endurance WEC": 92, "IndyCar": 93,
+    "Formule 1": 96
   };
 
   // Âges typiques par cat (min, max raisonnables)
@@ -314,7 +310,7 @@
           team:         null,
           // Archétype et potentiel
           archetype:    _rjPoolPickArchetype(),
-          potential:    Math.min(99, e.sk + 15 + Math.floor(Math.random() * 10)),
+          potential:    (window._rj92 ? window._rj92.potentiel(e.sk) : Math.min(96, e.sk + 10 + Math.floor(Math.random() * 8))),
           // Âge initial (cohérent avec la cat)
           age:          _rjPickAgeForCat(cat),
           // Stats permanentes
@@ -505,7 +501,7 @@
       cat:             cat,
       team:            null,
       archetype:       _rjPoolPickArchetype(),
-      potential:       Math.min(99, baseSkill + 15 + Math.floor(Math.random() * 10)),
+      potential:       (window._rj92 ? window._rj92.potentiel(baseSkill) : Math.min(96, baseSkill + 10 + Math.floor(Math.random() * 8))),
       age:             range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1)),
       baseSkill:       baseSkill,
       baseConsistency: 0.65 + Math.random() * 0.20,
@@ -646,6 +642,58 @@
    *   • Récupère sa position en historique
    * ================================================================= */
 
+  /* Effectif de référence par catégorie. */
+  var QUOTA_PAR_CAT = {
+    "Karting Junior": 30, "Karting Senior": 30, "Formule 4": 28,
+    "Formula Regional": 26, "Formule 3": 28, "Formule 2": 22,
+    "Formule 1": 20, "Super Formula": 20, "Endurance WEC": 28, "IndyCar": 24
+  };
+
+  function _rjRenouvelerGrilles() {
+    if (typeof G === "undefined" || !G || !Array.isArray(G.driverPool)) return 0;
+    var crees = 0;
+    Object.keys(QUOTA_PAR_CAT).forEach(function (cat) {
+      var actifs = G.driverPool.filter(function (d) {
+        return d && d.cat === cat && !d.retired;
+      }).length;
+      var manque = QUOTA_PAR_CAT[cat] - actifs;
+      /* Garde-fou : on ne recrée jamais une grille entière d'un coup, sauf
+         en karting où l'arrivée de jeunes est la norme chaque saison. */
+      var plafond = (cat === "Karting Junior" || cat === "Karting Senior") ? 12 : 6;
+      manque = Math.min(manque, plafond);
+      for (var i = 0; i < manque; i++) {
+        try {
+          var jeune = _rjGenerateRookie(cat);
+          if (jeune) { G.driverPool.push(jeune); crees++; }
+        } catch (e) { break; }
+      }
+    });
+    /* Les retraités s'accumulaient sans limite : mesuré à mille trois cent
+       quatre-vingt-huit entrées après cinquante saisons, pour deux cent
+       cinquante-huit pilotes réellement actifs. Une sauvegarde qui enfle et
+       un traitement de fin de saison de plus en plus lent, sans rien
+       apporter au jeu.
+
+       On ne garde donc que les retraités qui ont laissé une trace : un
+       palmarès, ou une histoire commune avec le joueur. Les plus récents
+       d'abord, dans la limite de cent cinquante. */
+    var retraites = G.driverPool.filter(function (d) { return d && d.retired; });
+    if (retraites.length > 150) {
+      var mérite = function (d) {
+        var t = (d.titles || 0) * 100 + (d.wins || 0) * 10;
+        if (d.history && d.history.length) t += 50;
+        return t + (d.retiredSeason || 0);
+      };
+      retraites.sort(function (a, b) { return mérite(b) - mérite(a); });
+      var aGarder = {};
+      retraites.slice(0, 150).forEach(function (d) { aGarder[d.id] = true; });
+      G.driverPool = G.driverPool.filter(function (d) {
+        return d && (!d.retired || aGarder[d.id]);
+      });
+    }
+    return crees;
+  }
+
   function _rjEvolvePoolAtSeasonEnd() {
     if (typeof G === "undefined" || !G || !G.driverPool) return;
     
@@ -720,7 +768,23 @@
         var shouldDescent = false;
         var shouldRetire = false;
         
-        // Retraite : modulée par âge et résultats (sauf KJ/KS)
+        // KARTING — un pilote qui n'a pas percé arrête. On ne dispute pas le
+        // karting junior à trente ans : faute de sortie par l'âge, le vivier
+        // conservait des « juniors » de soixante ans et ne se renouvelait
+        // plus (mesuré : plus aucun pilote de moins de dix-huit ans après dix
+        // saisons, âge maximum de quatre-vingt-dix ans à la cinquantième).
+        if (cat === "Karting Junior" || cat === "Karting Senior") {
+          var ageLimite = (cat === "Karting Junior") ? 16 : 21;
+          if (d.age > ageLimite) {
+            // Au-delà de la limite, la sortie devient rapidement inévitable :
+            // un quart la première année, puis de plus en plus.
+            var sortie = 0.25 + (d.age - ageLimite) * 0.25;
+            if (d.age > ageLimite + 3) sortie = 1;
+            if (Math.random() < sortie) shouldRetire = true;
+          }
+        }
+
+        // Retraite des monoplaces et catégories majeures
         if (cat !== "Karting Junior" && cat !== "Karting Senior") {
           // CORRECTIF — retireBase (5 %) s'appliquait à TOUT pilote de toute
           // catégorie non-karting, quel que soit son âge : un pilote de F4 de
@@ -735,6 +799,10 @@
           if (d.age > 35) retireChance += (d.age - 35) * 0.05;  // +5% par an au-delà de 35
           if (d.age > 38) retireChance += 0.15;
           if (rank === n - 1 && d.age > 28) retireChance += 0.10;  // lanterne âgée
+          // Plafond dur : personne ne court au-delà de la quarantaine passée,
+          // hormis l'endurance où les carrières se prolongent réellement.
+          var limiteDure = (cat === "Endurance WEC") ? 46 : 41;
+          if (d.age >= limiteDure) retireChance = 1;
           if (Math.random() < retireChance) {
             shouldRetire = true;
           }
@@ -804,6 +872,19 @@
       });
     }
     
+    // 3 bis. RENOUVELLEMENT DES GRILLES
+    //
+    // Les rookies n'étaient générés que pour la catégorie du joueur, au
+    // moment de synchroniser ses rivaux. Toutes les autres se vidaient donc
+    // saison après saison au rythme des retraites : mesuré sur cinquante
+    // saisons, plus un seul pilote en karting, F4, Formule 3, Formule 2 ni
+    // Formule 1 dans le vivier dès la vingt-cinquième.
+    //
+    // On complète désormais chaque catégorie jusqu'à son effectif de
+    // référence. Le bas de la pyramide est alimenté en priorité : c'est de
+    // là que viennent les promotions des saisons suivantes.
+    _rjRenouvelerGrilles();
+
     // 4. Stocke le log de transferts pour la saison entrante
     G._rjTransferLog = G._rjTransferLog || [];
     G._rjTransferLog.push({ saison: newSaison, transfers: transferLog });
