@@ -3188,9 +3188,9 @@ function renderPitWall() {
       var _deltaStr = _isP ? '' : (_delta > 0 ? '+'+_delta : String(_delta));
       var _deltaColor = _delta > 0 ? 'var(--red,#EF4444)' : _delta < 0 ? 'var(--green,#34D399)' : 'var(--text3)';
 
-      html += '<div style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-bottom:1px solid rgba(255,255,255,0.04);'+_bg+'">';
+      html += '<div' + (_isP ? ' data-rj-player="1"' : '') + ' style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-bottom:1px solid rgba(255,255,255,0.04);'+_bg+'">';
       html += '<span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:'+_rankColor+';width:22px;flex-shrink:0">P'+_sRank+'</span>';
-      html += '<span style="font-size:11px;color:'+_nameColor+';flex:1;font-weight:'+(_isP?'700':'400')+'">'+(_isP?'▶ ':'')+s.name+'</span>';
+      html += '<span style="font-size:11px;color:'+_nameColor+';flex:1;font-weight:'+(_isP?'700':'400')+'">'+s.name+'</span>';
       html += '<span style="font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--text2);width:40px;text-align:right">'+s.pts+'</span>';
       if (_deltaStr) html += '<span style="font-family:var(--font-display);font-size:9px;color:'+_deltaColor+';width:32px;text-align:right">'+_deltaStr+'</span>';
       else html += '<span style="width:32px"></span>';
@@ -5813,9 +5813,9 @@ function _buildChampImpactBlock(pos,pts){
       // tiret neutre pour conserver l'alignement des colonnes.
       var deltaStr=isP?"\u2013":(delta>0?"+"+delta:String(delta));
       var deltaCol=isP?"var(--text3)":(delta>0?"#EF4444":"#34D399");
-      html+="<div style='display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;"+bg+"'>";
+      html+="<div"+(isP?" data-rj-player='1'":"")+" style='display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;"+bg+"'>";
       html+="<span style='font-family:var(--font-display);font-size:10px;font-weight:800;color:"+rColor+";width:22px;flex-shrink:0'>P"+sRank+"</span>";
-      html+="<span style='font-size:11px;color:"+(isP?"var(--text)":"var(--text2)")+";flex:1;font-weight:"+(isP?700:400)+"'>"+(isP?"▶ ":"")+s.name+"</span>";
+      html+="<span style='font-size:11px;color:"+(isP?"var(--text)":"var(--text2)")+";flex:1;font-weight:"+(isP?700:400)+"'>"+s.name+"</span>";
       html+="<span style='font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--text2);width:36px;text-align:right'>"+s.pts+"</span>";
       html+="<span style='font-family:var(--font-display);font-size:9px;color:"+deltaCol+";width:30px;text-align:right'>"+deltaStr+"</span>";
       html+="</div>";

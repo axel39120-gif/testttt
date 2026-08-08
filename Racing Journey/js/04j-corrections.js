@@ -1304,7 +1304,14 @@
       var nameSpan = spans[1];
       var nm = nameSpan ? (nameSpan.textContent || '').replace('▶', '').replace('DNF', '').trim() : '';
       if (!nm) continue;
-      var isPlayer = (row.style.cssText.indexOf('232,16,48') >= 0) || (nameSpan && nameSpan.innerHTML.indexOf('▶') >= 0);
+      // Le chevron devant le nom du joueur a été retiré de l'affichage : on
+        // s'appuie d'abord sur le marqueur explicite posé au rendu, puis sur
+        // la teinte de fond, et seulement en dernier recours sur le chevron
+        // (encore présent dans d'autres classements).
+        var isPlayer = (row.getAttribute && row.getAttribute('data-rj-player') === '1')
+          || (row.style.cssText.indexOf('232,16,48') >= 0)
+          || (row.style.cssText.indexOf('200,16,46') >= 0)
+          || (nameSpan && nameSpan.innerHTML.indexOf('▶') >= 0);
       var cell = document.createElement('span');
       cell.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:24px;flex-shrink:0';
       cell.innerHTML = _letter(_raceCompound(nm, isPlayer));
