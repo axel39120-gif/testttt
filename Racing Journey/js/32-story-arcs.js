@@ -606,6 +606,23 @@
     }).join('') : '<div class="rjsa-empty">Tes choix laisseront ici leur trace.</div>';
   }
 
+  /* ------------------------------------------------------------------
+   * API — permet d'afficher les décisions ailleurs que dans l'écran dédié.
+   * L'espace « Vie de paddock » faisait doublon avec l'onglet Événements de
+   * Réseaux : deux endroits pour la même chose, l'un accessible par un mail,
+   * l'autre par une carte d'accueil. Le module 93 s'appuie sur cette API
+   * pour tout regrouper dans l'onglet Événements.
+   * ---------------------------------------------------------------- */
+  window._rj32 = {
+    enAttente: function(){
+      var m = mem(); if (!m) return [];
+      return m.active.filter(function(x){ return x.awaiting; });
+    },
+    carteHTML: arcCardHTML,
+    choisir: function(arcId, idx){ return choose(arcId, idx); },
+    nombre: pendingCount
+  };
+
   function refreshIfOnScreen(){
     var scr = document.getElementById('S-arcs');
     if (scr && scr.classList.contains('on')) renderArcsScreen();
