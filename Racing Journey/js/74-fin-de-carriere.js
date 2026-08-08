@@ -316,7 +316,7 @@
     h += pliant("Carri\u00e8re en chiffres", c.departs + " d\u00e9parts", bilan);
 
     h += '<div class="rj74-btns">' +
-      '<button class="rj74-btn p" type="button" onclick="_rj74Fermer()">Fermer</button>' +
+      '<button class="rj74-btn p" type="button" onclick="_rj74Fermer()">Fin de carri\u00e8re</button>' +
       '</div>';
 
     var box = document.getElementById("rj74-ecran");

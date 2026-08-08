@@ -747,6 +747,10 @@
       recap: function () { var d = donnees(); return d ? dessinerRecap(d).toDataURL("image/png") : null; },
       historique: historique,
       injecter: injecterDansEcran74,
+      /* Exposés pour le module d'archives : il redessine les images à
+         partir de données figées, sans état de jeu. */
+      dessiner: dessiner,
+      dessinerRecap: dessinerRecap,
       donnees: donnees,
       confirmer: demanderConfirmation
     };
