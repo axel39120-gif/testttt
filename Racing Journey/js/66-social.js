@@ -601,6 +601,8 @@
       ".rj66-logo{background:#0d0d12;border:1px solid var(--border-hi);overflow:hidden;padding:2px}",
       ".rj66-logo svg{width:100%;height:100%;display:block}",
       ".rj66-logo-s{opacity:.85}",
+      ".rj66-pilote{background:#0d0d12;border:1px solid var(--border-hi);overflow:hidden;padding:0}",
+      ".rj66-pilote svg{width:100%;height:100%;display:block}",
       ".rj66-tav{width:38px;height:38px;border-radius:50%;flex-shrink:0;background-size:cover;",
       "background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;",
       "font-weight:800;color:#fff;font-family:var(--font-display)}",
@@ -663,6 +665,66 @@
       '<path fill="' + c + '" d="M12 1.5l2.6 2.1 3.3-.3 1 3.2 2.8 1.8-1.3 3.1 1.3 3.1-2.8 1.8-1 3.2-3.3-.3L12 22.5l-2.6-2.1-3.3.3-1-3.2L2.3 15.7l1.3-3.1-1.3-3.1L5.1 7.7l1-3.2 3.3.3z"/>' +
       '<path fill="#fff" d="M10.6 15.4l-3-3 1.3-1.3 1.7 1.7 4.2-4.2 1.3 1.3z"/></svg>';
   }
+
+  /* ------------------------------------------------------------------
+   * Avatar de pilote
+   *
+   * Les rivaux affichaient le blason de leur écurie : deux pilotes de la
+   * même équipe étaient donc impossibles à distinguer dans le fil, et un
+   * compte personnel ressemblait à un compte officiel. On leur dessine un
+   * petit personnage — casque et buste — dont la teinte est dérivée du nom :
+   * toujours la même pour un pilote donné, différente d'un pilote à l'autre.
+   * ---------------------------------------------------------------- */
+  var TEINTES_PILOTE = [
+    "#E11D48", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6",
+    "#EC4899", "#14B8A6", "#F97316", "#6366F1", "#84CC16",
+    "#06B6D4", "#D946EF"
+  ];
+
+  function empreinte(nom) {
+    var t = String(nom || "?");
+    var h = 0;
+    for (var i = 0; i < t.length; i++) h = ((h << 5) - h + t.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
+  function avatarPilote(nom) {
+    var e = empreinte(nom);
+    var casque = TEINTES_PILOTE[e % TEINTES_PILOTE.length];
+    var combi = TEINTES_PILOTE[(e >> 3) % TEINTES_PILOTE.length];
+    var motifType = (e >> 5) % 3;
+
+    /* Le premier essai plaçait un buste flottant sous une tête ronde : dans
+       un cadre circulaire, cela donnait deux ellipses détachées plutôt qu'un
+       personnage. On dessine donc un fond plein, des épaules qui touchent le
+       bas du cadre, et un casque posé dessus. */
+    var motif = "";
+    if (motifType === 0) {
+      motif = '<rect x="9.5" y="7.4" width="13" height="2" fill="#fff" opacity=".9"/>';
+    } else if (motifType === 1) {
+      motif = '<path d="M16 2.7c-2.2 0-4.1.9-5.4 2.4h10.8C20.1 3.6 18.2 2.7 16 2.7z" fill="#fff" opacity=".85"/>';
+    } else {
+      motif = '<path d="M16 3l1.6 3.2 3.6.5-2.6 2.5.6 3.5-3.2-1.7-3.2 1.7.6-3.5-2.6-2.5 3.6-.5z" fill="#fff" opacity=".22"/>';
+    }
+
+    return '<svg viewBox="0 0 32 32" width="100%" height="100%">' +
+      '<rect width="32" height="32" fill="#161a22"/>' +
+      /* épaules : elles partent des bords et remontent vers le cou */
+      '<path d="M0 32c0-6.2 6.6-9.6 16-9.6S32 25.8 32 32z" fill="' + combi + '"/>' +
+      '<path d="M12.8 22.9h6.4l-1.1 4.2h-4.2z" fill="#0d1016" opacity=".35"/>' +
+      /* casque : réduit et remonté, pour que les épaules restent visibles */
+      '<path d="M16 2.2c-4.7 0-7.9 3.3-7.9 7.9 0 3.9 2.3 6.9 5.3 8.1h5.2c3-1.2 5.3-4.2 5.3-8.1 0-4.6-3.2-7.9-7.9-7.9z" fill="' + casque + '"/>' +
+      motif +
+      /* visière : large bande sombre, la signature d'un casque */
+      '<path d="M8.4 11.3c1.8-1.5 4.4-2.3 7.6-2.3s5.8.8 7.6 2.3c-.3 2.6-2 4.6-4.2 5.4h-6.8c-2.2-.8-3.9-2.8-4.2-5.4z" fill="#0b0e14"/>' +
+      '<path d="M10.3 11.5c1.6-1 3.6-1.5 5.7-1.5" stroke="#fff" stroke-width="1" fill="none" opacity=".3" stroke-linecap="round"/>' +
+      /* mentonnière */
+      '<path d="M12.4 17.4h7.2v1.6h-7.2z" fill="' + casque + '" opacity=".95"/>' +
+      '</svg>';
+  }
+
+  /* Exposé pour permettre de vérifier le rendu hors du fil. */
+  window._rj66Avatar = avatarPilote;
 
   function avatarBloc(cls) {
     var url = avatarUrl(), C = couleurEquipe();
@@ -827,8 +889,9 @@
         av = avatarBloc("rj66-tav");
       } else if (t.type === "team" && typeof getTeamLogo === "function") {
         av = '<div class="rj66-tav rj66-logo">' + getTeamLogo(t.nom) + '</div>';
-      } else if (t.type === "rival" && t.team && typeof getTeamLogo === "function") {
-        av = '<div class="rj66-tav rj66-logo rj66-logo-s">' + getTeamLogo(t.team) + '</div>';
+      } else if (t.type === "rival") {
+        /* Un pilote n'est pas son écurie : il a son propre visage. */
+        av = '<div class="rj66-tav rj66-pilote">' + avatarPilote(t.nom) + '</div>';
       } else {
         av = '<div class="rj66-tav" style="background:' +
              (t.type === "media" ? "#2b3440" : "#2a2a38") + '">' +

@@ -698,6 +698,13 @@
   }
   // Affiche le pop-up de la 1re décision non encore présentée, seulement sur l'accueil.
   function maybeShowPopup(){
+    /* Le pop-up « Vie de paddock » s'imposait au retour sur l'accueil, avec
+       ses boutons « Plus tard » et « Traiter maintenant ». Les décisions se
+       traitent désormais dans l'onglet Événements de Réseaux (module 93) :
+       ce rappel modal fait doublon et interrompt le joueur sans nécessité.
+       La notification par mail, elle, subsiste. */
+    if (window._rj93) return;
+
     if (document.getElementById('rjsa-modal-ov')) return;        // déjà ouvert
     var home = document.getElementById('S-home');
     if (!home || !home.classList.contains('on')) return;          // seulement sur l'accueil
