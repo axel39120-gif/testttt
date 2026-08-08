@@ -1545,11 +1545,11 @@
       // Bandeau pneus + relais
       c += '<div style="padding:8px 14px 12px;border-top:1px solid rgba(255,255,255,.05)">';
       c += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">';
-      c += '<span style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">Usure pneus <span style="color:' + col + '">' + esc(compoundProfile(run.compound).label) + '</span></span>';
+      c += '<span style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">Type pneu <span style="color:' + col + '">' + esc(compoundProfile(run.compound).label) + '</span></span>';
       c += '<span id="fpl-wear-lbl" style="font-family:var(--font-display);font-size:11px;font-weight:800;color:#34D399">' + Math.round(run.wear) + '%</span>';
       c += '</div>';
       c += '<div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden"><div id="fpl-wear-bar" style="height:100%;width:' + Math.round(run.wear) + '%;background:#34D399;transition:width .25s ease;border-radius:3px"></div></div>';
-      c += '<div style="margin-top:6px;font-size:10px;color:var(--muted)">Relais : <span id="fpl-runlaps" style="color:var(--white);font-weight:700">' + run.flyingLaps + '</span>' + (run.plan ? ' / ' + run.plan : '') + ' tour' + (run.plan && run.plan > 1 ? 's' : '') + ' · consigne ' + (run.push === "push" ? "Attaque" : run.push === "cool" ? "Conserver" : "Normal") + '</div>';
+      c += '<div style="margin-top:6px;font-size:10px;color:var(--muted)">Relais : <span id="fpl-runlaps" style="color:var(--white);font-weight:700">' + run.flyingLaps + '</span>' + (run.plan ? ' / ' + run.plan : '') + ' tour' + (run.plan && run.plan > 1 ? 's' : '') + '</div>';
       c += '</div></div>';
 
       // Meilleur tour du relais

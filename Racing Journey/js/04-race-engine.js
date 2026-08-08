@@ -5808,22 +5808,22 @@ function _buildChampImpactBlock(pos,pts){
       var bg=isP?"background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.20);":"background:rgba(255,255,255,0.03);border:1px solid transparent;";
       var rColor=sRank===1?"#F59E0B":sRank<=3?"#34D399":isP?champColor:"var(--text3)";
       var delta=s.pts-(G.champPts||0);
-      var deltaStr=isP?"":(delta>0?"+"+delta:String(delta));
-      var deltaCol=delta>0?"#EF4444":"#34D399";
+      // Le joueur recevait une chaîne vide : la colonne d'écart n'était alors
+      // pas rendue et sa colonne de points glissait à sa place. On affiche un
+      // tiret neutre pour conserver l'alignement des colonnes.
+      var deltaStr=isP?"\u2013":(delta>0?"+"+delta:String(delta));
+      var deltaCol=isP?"var(--text3)":(delta>0?"#EF4444":"#34D399");
       html+="<div style='display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;"+bg+"'>";
       html+="<span style='font-family:var(--font-display);font-size:10px;font-weight:800;color:"+rColor+";width:22px;flex-shrink:0'>P"+sRank+"</span>";
       html+="<span style='font-size:11px;color:"+(isP?"var(--text)":"var(--text2)")+";flex:1;font-weight:"+(isP?700:400)+"'>"+(isP?"▶ ":"")+s.name+"</span>";
       html+="<span style='font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--text2);width:36px;text-align:right'>"+s.pts+"</span>";
-      if(deltaStr)html+="<span style='font-family:var(--font-display);font-size:9px;color:"+deltaCol+";width:30px;text-align:right'>"+deltaStr+"</span>";
+      html+="<span style='font-family:var(--font-display);font-size:9px;color:"+deltaCol+";width:30px;text-align:right'>"+deltaStr+"</span>";
       html+="</div>";
     });
     html+="</div>";
-    var ahead=standings[Math.max(0,playerIdx-1)];
-    if(ahead&&!ahead.isPlayer){
-      var gap=ahead.pts-(G.champPts||0);
-      html+="<div style='margin-top:8px;padding:6px 8px;background:rgba(251,191,36,0.06);border-radius:7px;font-size:10px;color:var(--text3)'>🎯 <span style='color:#FBBF24;font-weight:700'>"+gap+" pts</span> de retard sur "+ahead.name+"</div>";
-    }
-    div.innerHTML=html;
+    // Le rappel « x pts de retard sur x » a été retiré : le classement
+      // juste au-dessus donne déjà l'information.
+      div.innerHTML=html;
     return div;
   } catch(e){console.warn("_buildChampImpactBlock:",e);return null;}
 }

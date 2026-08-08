@@ -64,6 +64,7 @@
   // désormais collectées ici même, dans la file unique.
   // ========================================================================
   var RJ_FEED_MAX  = 80;   // plafond mémoire de la file (anti-fuite course longue)
+  var RJ_DIRECT_MAX = 5;   // messages affichés simultanément dans le fil
   var RJ_AMBIENT_GAP = 4;  // tours sans message avant un point de situation
 
   // ========================================================================
@@ -375,11 +376,9 @@
     var count = document.getElementById('rj-direct-count');
     if (!list) return;
 
-    if (count) {
-      count.textContent = feed.length > 0
-        ? (feed.length + (feed.length > 1 ? ' messages' : ' message'))
-        : '';
-    }
+    // Le compteur « x messages » affiché à côté de LIVE n'apportait rien :
+    // les messages sont visibles juste en dessous.
+    if (count) count.textContent = '';
 
     if (feed.length === 0) {
       list.innerHTML = '<div class="rj-direct-empty">En attente d\'événements en piste…</div>';
@@ -391,8 +390,13 @@
     var prevTop = list.scrollTop;
     var wasAtTop = prevTop <= 4;
 
+    // Seuls les cinq derniers messages restent affichés : au-delà, la boîte
+    // radio prenait toute la hauteur de l'écran pendant la course. La file
+    // complète est conservée en mémoire, seul l'affichage est borné.
+    var visibles = feed.slice(-RJ_DIRECT_MAX);
+
     var html = '';
-    feed.forEach(function(item) {
+    visibles.forEach(function(item) {
       var cls = _classify(item);
       var accent = cls.color;
       var accentBg = _hexToRgba(accent, 0.10);
