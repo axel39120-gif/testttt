@@ -164,6 +164,36 @@
     /* Un rival tiré au sort pour les questions qui en ont besoin. */
     c.rivalAuHasard = rivaux.length ? au_hasard(rivaux.slice(0, Math.min(6, rivaux.length))) : null;
 
+    /* --- ÉVÉNEMENTS MARQUANTS ------------------------------------
+       Ce qui vient de changer dans la carrière : arrivée en catégorie,
+       titre fraîchement décroché, transfert signé. Ces situations
+       n'appellent pas les mêmes questions qu'une manche ordinaire. */
+    var hist = [];
+    try { if (typeof CAREER_HISTORY !== "undefined" && CAREER_HISTORY) hist = CAREER_HISTORY; } catch (e) {}
+
+    var precedente = hist.length ? hist[hist.length - 1] : null;
+    c.nouvelleCategorie = !!(precedente && precedente.cat && precedente.cat !== c.cat) && c.courses <= 4;
+    c.categoriePrecedente = precedente ? precedente.cat : null;
+    c.promu = c.nouvelleCategorie;
+
+    /* Titre pilote de la saison passée. */
+    c.championSortant = !!(precedente && precedente.pos === 1);
+    c.titreCat = precedente ? precedente.cat : null;
+    /* Titre constructeur de la saison passée. */
+    c.championConstructeur = !!(precedente && precedente.constrChamp);
+
+    /* Nombre de titres au palmarès. */
+    c.titres = hist.filter(function (h) { return h && h.pos === 1; }).length;
+
+    /* Transfert : écurie différente de la saison précédente. */
+    c.nouvelleEcurie = !!(precedente && precedente.team && precedente.team !== c.equipe &&
+                          c.equipe !== "Indépendant") && c.courses <= 5;
+    c.ecuriePrecedente = precedente ? precedente.team : null;
+
+    /* Début de saison, toutes catégories. */
+    c.debutSaison = c.courses <= 2;
+    c.premiereSaison = hist.length === 0;
+
     c.enF1 = c.cat === "Formule 1";
     c.jeune = c.age <= 20;
     c.veteran = c.age >= 32;
@@ -189,11 +219,11 @@
    * paddock, l'humble rassure l'écurie sans faire les gros titres.
    * ================================================================== */
   var ATTITUDES = {
-    assure:      { lbl: "Assuré",      couleur: "#F59E0B", ico: "▲" },
-    mesure:      { lbl: "Mesuré",      couleur: "#00D4FF", ico: "＝" },
-    provocateur: { lbl: "Provocateur", couleur: "#EF4444", ico: "⚡" },
-    humble:      { lbl: "Humble",      couleur: "#34D399", ico: "○" },
-    evasif:      { lbl: "Évasif",      couleur: "#8b93a7", ico: "…" }
+    assure:      { lbl: "Assuré",      couleur: "#F59E0B" },
+    mesure:      { lbl: "Mesuré",      couleur: "#00D4FF" },
+    provocateur: { lbl: "Provocateur", couleur: "#EF4444" },
+    humble:      { lbl: "Humble",      couleur: "#34D399" },
+    evasif:      { lbl: "Évasif",      couleur: "#8b93a7" }
   };
 
   /* ==================================================================
@@ -812,6 +842,157 @@
           retour: "Peu crédible, note un chroniqueur." }
       ]
     },
+    /* ---------------------------------------------------------------
+     * ÉVÉNEMENTS DE CARRIÈRE
+     * ------------------------------------------------------------- */
+    {
+      id: "nouvelle_categorie", poids: 6,
+      quand: function (c) { return c.nouvelleCategorie; },
+      texte: function (c) {
+        return "Vous débarquez en " + c.cat + " après " + c.categoriePrecedente +
+               ". Qu'est-ce qui vous a le plus surpris ces premiers jours ?";
+      },
+      reponses: [
+        { ton: "humble", texte: "Tout. Le niveau, le rythme, la quantité de travail. J'apprends chaque heure.",
+          effets: { rep: { med: 2, pub: 3, pad: 4, rec: 2 }, confiance: 5 },
+          retour: "Humilité de débutant. Le paddock aime ceux qui écoutent avant de parler." },
+        { ton: "mesure", texte: "L'exigence sur les détails. Ici, un dixième se cherche à dix endroits différents.",
+          effets: { rep: { med: 3, pub: 1, pad: 4, rec: 3 } },
+          retour: "Réponse d'observateur. Les ingénieurs ont apprécié la remarque." },
+        { ton: "assure", texte: "Moins de choses que je ne le craignais. Je me sens à ma place.",
+          effets: { rep: { med: 3, pub: 3, pad: 1, rec: 3 }, mental: 2 },
+          retour: "Assurance affichée dès l'arrivée. Il faudra confirmer." },
+        { ton: "provocateur", texte: "Surpris ? Surtout de voir que certains ici ne roulent pas si vite que ça.",
+          effets: { rep: { med: 5, pub: 4, pad: -4, rec: -2 }, rivalite: 15 },
+          retour: "Entrée fracassante. Plusieurs vétérans ont déjà répondu." },
+        { ton: "evasif", texte: "Rien de particulier. Une voiture reste une voiture.",
+          effets: { rep: { med: -2, pub: -1, pad: 0, rec: 0 } },
+          retour: "Réponse qui a laissé la salle sur sa faim." }
+      ]
+    },
+    {
+      id: "champion_sortant", poids: 6,
+      quand: function (c) { return c.championSortant && c.courses <= 6; },
+      texte: function (c) {
+        return "Champion de " + c.titreCat + " la saison dernière. " +
+               "On aborde une saison différemment quand on porte ce statut ?";
+      },
+      reponses: [
+        { ton: "assure", texte: "On l'aborde en sachant qu'on est capable de le refaire. C'est un avantage.",
+          effets: { rep: { med: 3, pub: 4, pad: 2, rec: 3 }, mental: 3 },
+          retour: "Le champion assume son rang. Bon passage." },
+        { ton: "humble", texte: "Le titre est derrière. Cette saison, je repars à zéro comme tout le monde.",
+          effets: { rep: { med: 2, pub: 3, pad: 4, rec: 2 }, confiance: 5 },
+          retour: "Sagesse remarquée. C'est ce que disent les grands champions." },
+        { ton: "mesure", texte: "Ça change le regard des autres, pas le travail à fournir. Les chronos ne connaissent pas mon palmarès.",
+          effets: { rep: { med: 2, pub: 2, pad: 4, rec: 3 } },
+          retour: "Formule reprise en ouverture de plusieurs articles." },
+        { ton: "provocateur", texte: "Ça change surtout le nombre de gens qui veulent me battre. Qu'ils essaient.",
+          effets: { rep: { med: 5, pub: 4, pad: -2, rec: 1 }, rivalite: 14 },
+          retour: "Le champion lance les hostilités. La saison sera tendue." },
+        { ton: "evasif", texte: "Un titre, c'est du passé. Je ne m'en sers pas.",
+          effets: { rep: { med: -2, pub: -2, pad: 1, rec: 0 } },
+          retour: "Réponse étonnamment froide pour un champion en titre." }
+      ]
+    },
+    {
+      id: "champion_constructeur", poids: 4,
+      quand: function (c) { return c.championConstructeur && !c.championSortant && c.courses <= 6; },
+      texte: function (c) {
+        return "Votre écurie a été sacrée championne constructeurs, mais le titre pilote vous a échappé. " +
+               "Frustration ou fierté ?";
+      },
+      reponses: [
+        { ton: "humble", texte: "Fierté. Ce titre, c'est celui de trois cents personnes, et j'en fais partie.",
+          effets: { rep: { med: 2, pub: 3, pad: 4, rec: 2 }, confiance: 8 },
+          retour: "L'usine entière a apprécié la déclaration." },
+        { ton: "assure", texte: "Les deux. La voiture était championne, à moi de l'être aussi cette année.",
+          effets: { rep: { med: 3, pub: 3, pad: 2, rec: 3 }, mental: 2 },
+          retour: "Ambition claire pour la saison qui s'ouvre." },
+        { ton: "mesure", texte: "Un titre constructeurs, ça veut dire qu'on avait le matériel. Le reste m'appartient.",
+          effets: { rep: { med: 3, pub: 2, pad: 3, rec: 3 } },
+          retour: "Analyse honnête, sans esquive." },
+        { ton: "provocateur", texte: "Fierté pour l'équipe. Frustration de savoir qui a marqué les points de l'autre côté du garage.",
+          effets: { rep: { med: 5, pub: 3, pad: -3, rec: 0 }, confiance: -10, rivalite: 15 },
+          retour: "Attaque à peine voilée. Le garage va être glacial." },
+        { ton: "evasif", texte: "C'est un titre, on le prend.",
+          effets: { rep: { med: -2, pub: -1, pad: 1, rec: 0 } },
+          retour: "Peu enthousiaste pour une saison couronnée." }
+      ]
+    },
+    {
+      id: "transfert_arrivee", poids: 6,
+      quand: function (c) { return c.nouvelleEcurie; },
+      texte: function (c) {
+        return "Nouvelle saison, nouvelle écurie : vous quittez " + c.ecuriePrecedente +
+               " pour " + c.equipe + ". Pourquoi ce choix ?";
+      },
+      reponses: [
+        { ton: "assure", texte: "Parce que c'est ici que je peux gagner. Ça a été aussi simple que ça.",
+          effets: { rep: { med: 3, pub: 3, pad: 2, rec: 3 }, confiance: 6, mental: 2 },
+          retour: "Déclaration d'engagement. La nouvelle équipe apprécie." },
+        { ton: "humble", texte: "On m'a fait confiance quand j'en avais besoin. Je viens rendre la pareille.",
+          effets: { rep: { med: 2, pub: 3, pad: 4, rec: 2 }, confiance: 10 },
+          retour: "Belle entrée en matière. Le team principal a relayé la citation." },
+        { ton: "mesure", texte: "Un projet cohérent, des gens que je respecte, une trajectoire qui monte. Ça se refuse difficilement.",
+          effets: { rep: { med: 2, pub: 1, pad: 4, rec: 3 }, confiance: 5 },
+          retour: "Réponse posée, appréciée des deux côtés du paddock." },
+        { ton: "provocateur", texte: "Disons que là où j'étais, on ne mesurait pas bien ce qu'on avait.",
+          effets: { rep: { med: 5, pub: 4, pad: -3, rec: 0 }, rivalite: 12 },
+          retour: "Tacle à l'ancienne écurie. Elle n'a pas tardé à répondre." },
+        { ton: "evasif", texte: "C'est une opportunité qui s'est présentée. Rien de plus.",
+          effets: { rep: { med: -2, pub: -1, pad: 1, rec: 0 }, confiance: -4 },
+          retour: "Tiédeur remarquée par sa nouvelle direction sportive." }
+      ]
+    },
+    {
+      id: "premiere_saison", poids: 4,
+      quand: function (c) { return c.premiereSaison && c.courses <= 3; },
+      texte: function (c) {
+        return "C'est votre toute première saison en compétition. À quoi rêviez-vous en arrivant ?";
+      },
+      reponses: [
+        { ton: "assure", texte: "À gagner. On ne se lance pas là-dedans pour finir dixième.",
+          effets: { rep: { med: 3, pub: 4, pad: 1, rec: 2 }, mental: 2 },
+          retour: "L'insolence de la jeunesse. Le public adore." },
+        { ton: "humble", texte: "À ne pas décevoir ceux qui ont cru en moi. Le reste viendra.",
+          effets: { rep: { med: 2, pub: 4, pad: 4, rec: 2 } },
+          retour: "Sincérité désarmante. Beau portrait en perspective." },
+        { ton: "mesure", texte: "À apprendre vite. Une première saison, ça se juge sur la progression, pas sur le classement.",
+          effets: { rep: { med: 2, pub: 1, pad: 4, rec: 3 } },
+          retour: "Maturité inattendue pour un débutant." },
+        { ton: "provocateur", texte: "À prouver à ceux qui m'ont dit que je n'y arriverais jamais qu'ils avaient tort.",
+          effets: { rep: { med: 4, pub: 5, pad: 0, rec: 1 }, mental: 2 },
+          retour: "Formule qui a beaucoup circulé. Le public s'attache." },
+        { ton: "evasif", texte: "Je ne rêvais pas particulièrement. J'avance, c'est tout.",
+          effets: { rep: { med: -2, pub: -2, pad: 1, rec: 0 } },
+          retour: "Réponse qui coupe court à un beau sujet." }
+      ]
+    },
+    {
+      id: "palmares", poids: 3,
+      quand: function (c) { return c.titres >= 2; },
+      texte: function (c) {
+        return "Avec " + c.titres + " titres à votre palmarès, qu'est-ce qui vous fait encore lever le matin ?";
+      },
+      reponses: [
+        { ton: "assure", texte: "Le suivant. Il y en a toujours un suivant.",
+          effets: { rep: { med: 3, pub: 4, pad: 2, rec: 3 }, mental: 2 },
+          retour: "Réponse courte et parfaite. Elle fera un titre." },
+        { ton: "humble", texte: "La sensation d'un tour parfait. Ça, aucun trophée ne le remplace.",
+          effets: { rep: { med: 3, pub: 4, pad: 4, rec: 1 } },
+          retour: "Passage très repris. On y a vu un vrai amour du métier." },
+        { ton: "mesure", texte: "Le fait qu'on repart tous à zéro en mars. C'est la beauté de ce sport.",
+          effets: { rep: { med: 2, pub: 2, pad: 3, rec: 2 } },
+          retour: "Sage. Un peu attendu." },
+        { ton: "provocateur", texte: "L'idée que certains pensent encore pouvoir me battre.",
+          effets: { rep: { med: 5, pub: 4, pad: -2, rec: 0 }, rivalite: 16 },
+          retour: "Le paddock a relevé. Plusieurs pilotes ont promis d'essayer." },
+        { ton: "evasif", texte: "L'habitude, je suppose.",
+          effets: { rep: { med: -3, pub: -2, pad: 0, rec: -1 }, mental: -1 },
+          retour: "Réponse blasée. Les commentaires ont été durs." }
+      ]
+    },
     {
       id: "independant", poids: 4,
       quand: function (c) { return c.independant; },
@@ -889,6 +1070,10 @@
       ".rj100-salle::before{content:'';position:absolute;inset:0;pointer-events:none;" +
         "background:radial-gradient(120% 90% at 12% 0%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 62%)}",
       ".rj100-salle > *{position:relative}",
+      /* En bas à droite plutôt qu'en haut : le badge du type de question
+         occupait déjà le coin supérieur et masquait le filigrane. */
+      ".rj100-guil{position:absolute;bottom:-10px;right:6px;width:96px;height:96px;pointer-events:none;" +
+        "fill:#ffffff;opacity:.07;z-index:0}",
 
       /* --- bandeau journaliste ---------------------------------------- */
       ".rj100-jrn{display:flex;align-items:center;gap:11px;margin-bottom:13px}",
@@ -907,7 +1092,7 @@
         "border:1px solid color-mix(in srgb,var(--acc) 40%,transparent);padding:3px 7px;border-radius:4px}",
 
       /* --- question ---------------------------------------------------- */
-      ".rj100-q{position:relative;padding-left:15px;font-size:15.5px;line-height:1.5;color:#fff;font-weight:600}",
+      ".rj100-q{position:relative;z-index:1;padding-left:15px;font-size:15.5px;line-height:1.5;color:#fff;font-weight:600}",
       ".rj100-q::before{content:'';position:absolute;left:0;top:3px;bottom:3px;width:3px;border-radius:2px;background:var(--acc)}",
       ".rj100-prog{display:flex;align-items:center;gap:7px;margin:14px 16px 4px}",
       ".rj100-prog .pt{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.10)}",
@@ -919,11 +1104,10 @@
       ".rj100-lbl{font-family:var(--font-display);font-size:9.5px;font-weight:800;letter-spacing:.16em;" +
         "text-transform:uppercase;color:var(--text3,#6b7280);margin:14px 16px 8px}",
       ".rj100-reps{display:flex;flex-direction:column;gap:8px;padding:0 16px}",
-      ".rj100-rep{display:flex;gap:11px;width:100%;padding:12px 13px;cursor:pointer;text-align:left;" +
+      ".rj100-rep{display:flex;width:100%;padding:12px 14px;cursor:pointer;text-align:left;" +
         "background:var(--bg3,#16161d);border:1px solid rgba(255,255,255,.10);border-left:3px solid var(--t);" +
         "border-radius:11px;font-family:inherit;transition:transform .12s ease,border-color .12s ease}",
       ".rj100-rep:active{transform:scale(.99)}",
-      ".rj100-rep .ic{width:20px;flex-shrink:0;text-align:center;color:var(--t);font-size:12px;padding-top:1px}",
       ".rj100-rep .co{flex:1;min-width:0;display:block}",
       ".rj100-rep .at{display:block;font-family:var(--font-display);font-size:9px;font-weight:800;" +
         "letter-spacing:.12em;text-transform:uppercase;color:var(--t);margin-bottom:5px}",
@@ -974,6 +1158,16 @@
    * 7. RENDU
    * ================================================================== */
   function initiales(j) { return (j.prenom[0] + j.nom[0]).toUpperCase(); }
+
+  /* Guillemet fermant en filigrane : deux blocs à queue descendante, posés
+     en haut à droite de la boîte, très peu opaques. Un SVG plutôt qu'un
+     caractère typographique — le rendu du glyphe « ” » varie trop d'une
+     police à l'autre pour servir d'élément graphique. */
+  var GUILLEMET =
+    '<svg class="rj100-guil" viewBox="0 0 512 512" aria-hidden="true">' +
+      '<path d="M0 64h224v176c0 128-56 200-176 208V344c56-4 80-32 80-104H0z"/>' +
+      '<path d="M288 64h224v176c0 128-56 200-176 208V344c56-4 80-32 80-104H288z"/>' +
+    '</svg>';
 
   function hote() {
     var scr = document.getElementById("S-mediaday");
@@ -1036,6 +1230,7 @@
 
     var html =
       '<div class="rj100-salle">' +
+        GUILLEMET +
         '<div class="rj100-jrn">' +
           '<span class="rj100-ini">' + esc(initiales(j)) + '</span>' +
           '<span class="rj100-qui">' +
@@ -1054,7 +1249,6 @@
     q.reponses.forEach(function (r, i) {
       var a = ATTITUDES[r.ton] || ATTITUDES.mesure;
       html += '<button class="rj100-rep" data-i="' + i + '" style="--t:' + a.couleur + '">' +
-                '<span class="ic">' + a.ico + '</span>' +
                 '<span class="co"><span class="at">' + a.lbl + '</span>' +
                 '<span class="tx">« ' + esc(r.texte) + ' »</span></span>' +
               '</button>';
@@ -1083,6 +1277,7 @@
 
     appliquer(r.effets);
     etat.effets.push({ question: q.texte(etat.ctx, etat.journaliste), ton: r.ton });
+    archiverDeclaration(q, r);
 
     var a = ATTITUDES[r.ton] || ATTITUDES.mesure;
     var dernier = etat.idx >= etat.questions.length - 1;
@@ -1145,6 +1340,146 @@
   }
 
   /* ==================================================================
+   * 8 bis. LE RETENTISSEMENT DANS LA PRESSE
+   *
+   * Une déclaration ne s'arrête pas à la salle de conférence : elle est
+   * reprise, commentée, parfois déformée. Chaque réponse laisse donc une
+   * trace dans l'onglet Médias, avec un titre qui dépend du ton employé
+   * et du journaliste qui a posé la question.
+   * ================================================================== */
+
+  /* Le titre suit l'attitude : un même propos ne fait pas la même une
+     selon qu'il a été livré avec aplomb ou botté en touche. */
+  var TITRES = {
+    assure: [
+      "« {phrase} » : le ton de la confiance",
+      "{pilote} ne s'embarrasse pas de précautions",
+      "Déclaration offensive de {pilote} en conférence"
+    ],
+    mesure: [
+      "{pilote} garde la tête froide devant la presse",
+      "Ni provocation ni esquive : la ligne de {pilote}",
+      "« {phrase} » — la mesure comme méthode"
+    ],
+    provocateur: [
+      "{pilote} allume la mèche : « {phrase} »",
+      "Sortie fracassante de {pilote} en salle de presse",
+      "« {phrase} » : la phrase qui fait déjà réagir"
+    ],
+    humble: [
+      "{pilote} renvoie l'ascenseur à son équipe",
+      "« {phrase} » — l'humilité en réponse",
+      "Le discours rassembleur de {pilote}"
+    ],
+    evasif: [
+      "{pilote} esquive et laisse la salle sur sa faim",
+      "Peu de réponses, beaucoup de questions autour de {pilote}",
+      "Le silence de {pilote} nourrit les spéculations"
+    ]
+  };
+
+  function extrait(texte) {
+    var t = String(texte || "").replace(/^«\s*/, "").replace(/\s*»$/, "");
+    if (t.length <= 52) return t;
+    var coupe = t.slice(0, 52);
+    var esp = coupe.lastIndexOf(" ");
+    return (esp > 25 ? coupe.slice(0, esp) : coupe) + "…";
+  }
+
+  function archiverDeclaration(q, r) {
+    var G = G_();
+    if (!G) return;
+    try {
+      var pilote = "";
+      try {
+        pilote = ((G.pilot.prenom || "") + " " + (G.pilot.nom || "")).trim();
+      } catch (e) { pilote = "Le pilote"; }
+
+      var modeles = TITRES[r.ton] || TITRES.mesure;
+      var modele = au_hasard(modeles);
+      /* Quand le titre reprend déjà la phrase, on ne la répète pas juste
+         en dessous : l'article affichait deux fois la même citation. */
+      var titreCite = modele.indexOf("{phrase}") >= 0;
+      var titre = modele
+        .replace("{pilote}", pilote)
+        .replace("{phrase}", extrait(r.texte));
+
+      var j = etat.journaliste;
+      if (!G._rjDeclarations) G._rjDeclarations = [];
+      G._rjDeclarations.unshift({
+        saison: G.saison || 1,
+        semaine: G.semaine || 0,
+        titre: titre,
+        media: j.media,
+        auteur: j.prenom + " " + j.nom,
+        ton: r.ton,
+        citation: titreCite ? "" : extrait(r.texte),
+        reaction: r.retour,
+        couleur: (ATTITUDES[r.ton] || ATTITUDES.mesure).couleur
+      });
+      /* On garde les douze derniers échos : au-delà, l'actualité a tourné. */
+      if (G._rjDeclarations.length > 12) G._rjDeclarations = G._rjDeclarations.slice(0, 12);
+    } catch (e) { console.warn(TAG, "archivage presse :", e && e.message); }
+  }
+
+  /* --- injection dans l'onglet Médias -------------------------------- */
+  var CSS_PRESSE = "rj100-presse-css";
+
+  function injecterCSSPresse() {
+    if (document.getElementById(CSS_PRESSE)) return;
+    var css = [
+      ".rj100-art{margin:0 16px 8px;padding:12px 13px;border-radius:12px;" +
+        "background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);" +
+        "border-left:3px solid var(--t,#A78BFA)}",
+      ".rj100-art .h{display:flex;align-items:center;gap:7px;margin-bottom:6px}",
+      ".rj100-art .src{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.08em;" +
+        "text-transform:uppercase;color:var(--t,#A78BFA)}",
+      ".rj100-art .sem{margin-left:auto;font-size:9.5px;color:var(--text3,#6b7280)}",
+      ".rj100-art .ti{font-size:13.5px;font-weight:700;color:#fff;line-height:1.4}",
+      ".rj100-art .ci{margin-top:7px;padding-left:9px;border-left:2px solid rgba(255,255,255,.13);" +
+        "font-size:11.5px;color:var(--soft,#aeb6c6);font-style:italic;line-height:1.45}",
+      ".rj100-art .au{margin-top:6px;font-size:10px;color:var(--muted,#8b93a7)}"
+    ].join("\n");
+    var st = document.createElement("style");
+    st.id = CSS_PRESSE; st.textContent = css;
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  function injecterPresse() {
+    var hote = document.getElementById("mt-presse");
+    if (!hote) return;
+    var G = G_();
+    var decls = (G && G._rjDeclarations) || [];
+    var bloc = document.getElementById("rj100-echos");
+    if (!decls.length) { if (bloc) bloc.remove(); return; }
+
+    injecterCSSPresse();
+
+    var h = '<div style="margin:18px 16px 8px;display:flex;align-items:center;gap:8px">' +
+              '<span style="width:3px;height:13px;background:#A78BFA;border-radius:2px"></span>' +
+              '<span style="font-family:var(--font-display);font-size:11px;font-weight:800;' +
+              'letter-spacing:.1em;text-transform:uppercase;color:var(--text2,#c7cddb)">' +
+              'Vos déclarations</span></div>';
+
+    decls.forEach(function (d) {
+      h += '<div class="rj100-art" style="--t:' + d.couleur + '">' +
+             '<div class="h"><span class="src">' + esc(d.media) + '</span>' +
+             '<span class="sem">S' + d.saison + ' · semaine ' + d.semaine + '</span></div>' +
+             '<div class="ti">' + esc(d.titre) + '</div>' +
+             (d.citation ? '<div class="ci">« ' + esc(d.citation) + ' »</div>' : '') +
+             '<div class="au">' + esc(d.auteur) + ' — ' + esc(d.reaction) + '</div>' +
+           '</div>';
+    });
+
+    if (!bloc) {
+      bloc = document.createElement("div");
+      bloc.id = "rj100-echos";
+      hote.insertBefore(bloc, hote.firstChild);
+    }
+    bloc.innerHTML = h;
+  }
+
+  /* ==================================================================
    * 9. FIN DE CONFÉRENCE
    * ================================================================== */
   function terminer() {
@@ -1160,7 +1495,7 @@
     }).join("");
 
     h.innerHTML =
-      '<div class="rj100-salle">' +
+      '<div class="rj100-salle">' + GUILLEMET +
         '<div class="rj100-q">Conférence terminée. Les journalistes rangent leurs micros.</div>' +
       '</div>' +
       '<div class="rj100-lbl">Ce que vous avez dit</div>' +
@@ -1177,6 +1512,9 @@
           navTo("S-home", "ni-home");
         }
       } catch (e) {}
+      /* L'avancée du temps avait été suspendue pour tenir la conférence :
+         on la reprend, ce qui enchaîne sur le week-end de course. */
+      try { if (window._rj99 && window._rj99.reprendre) window._rj99.reprendre(); } catch (e) {}
       try { if (typeof updateUI === "function") updateUI(); } catch (e) {}
     });
   }
@@ -1221,6 +1559,18 @@
        compte la convocation et referme proprement. */
     if (typeof window.endMediaDay === "function") window._rj100FinOrigine = window.endMediaDay;
 
+    /* Les déclarations reparaissent dans l'onglet Médias. On s'accroche à
+       mtab, qui est appelé à chaque changement d'onglet. */
+    if (typeof window.mtab === "function" && !window.mtab._rj100) {
+      _orig.mtab = window.mtab;
+      window.mtab = function (t) {
+        var r = _orig.mtab.apply(this, arguments);
+        if (t === "presse") setTimeout(injecterPresse, 60);
+        return r;
+      };
+      window.mtab._rj100 = true;
+    }
+
     return true;
   }
 
@@ -1237,6 +1587,8 @@
 
     window._rj100 = {
       ouvrir: ouvrir, contexte: contexte, questions: QUESTIONS,
+      presse: injecterPresse,
+      declarations: function () { var G = G_(); return (G && G._rjDeclarations) || []; },
       journalistes: JOURNALISTES,
       eligibles: function () {
         var c = contexte();

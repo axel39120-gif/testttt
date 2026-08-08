@@ -162,26 +162,44 @@
     if (typeof window.advanceToNextMoment === "function" && !window.advanceToNextMoment._rj99) {
       _orig.advanceToNextMoment = window.advanceToNextMoment;
       window.advanceToNextMoment = function () {
-        var r = _orig.advanceToNextMoment.apply(this, arguments);
-        /* Après le déplacement d'écran, pour ne pas être recouvert. */
-        setTimeout(function () {
-          try {
-            /* « Continuer » mène tantôt à l'accueil, tantôt au week-end de
-               course. Les deux conviennent : la conférence de presse a
-               justement lieu le jeudi, avant les essais. On évite en
-               revanche les écrans de bilan et de mercato. */
-            var ici = document.querySelector(".scr.on");
-            var id = ici ? ici.id : "";
-            if (id === "S-home" || id === "S-race") proposer();
-          } catch (e) {}
-        }, 420);
-        return r;
+        /* La décision se prend AVANT de faire avancer le temps. L'ancienne
+           version laissait l'écran de préparation s'afficher une seconde
+           avant d'être recouvert par la conférence — un clignotement
+           désagréable. La conférence a lieu le jeudi, donc AVANT d'entrer
+           dans le week-end : on l'ouvre d'abord, l'avancée reprend après. */
+        var G = G_();
+        try {
+          var ici = document.querySelector(".scr.on");
+          var id = ici ? ici.id : "";
+          if ((id === "S-home" || id === "") && disponible() &&
+              Math.random() <= chance() && typeof window.openMediaDay === "function") {
+            if (G) G._rj99Reprendre = true;
+            window.openMediaDay();
+            return;
+          }
+        } catch (e) {}
+        return _orig.advanceToNextMoment.apply(this, arguments);
       };
       window.advanceToNextMoment._rj99 = true;
     }
 
     return !!(window.mediaDayAvailable && window.mediaDayAvailable._rj99 &&
               window.advanceToNextMoment && window.advanceToNextMoment._rj99);
+  }
+
+  /* Appelée par le module 100 à la sortie de la conférence : si l'avancée
+     du temps a été suspendue pour la tenir, on la reprend maintenant. */
+  function reprendre() {
+    var G = G_();
+    if (!G || !G._rj99Reprendre) return false;
+    delete G._rj99Reprendre;
+    try {
+      if (typeof _orig.advanceToNextMoment === "function") {
+        setTimeout(function () { _orig.advanceToNextMoment(); }, 60);
+        return true;
+      }
+    } catch (e) {}
+    return false;
   }
 
   function boot() {
@@ -198,7 +216,7 @@
 
     window._rj99 = {
       quota: quotaSaison, reste: reste, disponible: disponible,
-      chance: chance, proposer: proposer
+      chance: chance, proposer: proposer, reprendre: reprendre
     };
     window._rj99Uninstall = function () {
       Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
