@@ -168,7 +168,15 @@
   function injecterCSS() {
     if (document.getElementById(CSS_ID)) return;
     var css = [
-      ".rj96-sec{margin-top:22px}",
+      ".rj96-sec{margin-top:18px;padding:0 4px}",
+      ".rj96-entree{display:flex;align-items:center;gap:11px;width:100%;padding:14px 15px;cursor:pointer;" +
+        "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);border-radius:13px;" +
+        "font-family:inherit;text-align:left}",
+      ".rj96-entree .col{flex:1;min-width:0}",
+      ".rj96-entree .t{display:block;font-family:var(--font-display);font-size:11px;font-weight:800;" +
+        "letter-spacing:.12em;text-transform:uppercase;color:var(--text,#e8ebf2)}",
+      ".rj96-entree .s{display:block;font-size:11.5px;color:var(--muted,#8b93a7);margin-top:3px}",
+      ".rj96-entree .c{color:var(--red3,#FF1801);font-size:18px;flex-shrink:0}",
       ".rj96-liste{display:flex;flex-direction:column;gap:8px;margin-top:10px}",
       ".rj96-item{display:flex;align-items:center;gap:11px;width:100%;padding:12px 13px;cursor:pointer;" +
         "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:12px;" +
@@ -204,58 +212,96 @@
     } catch (e) { return ""; }
   }
 
+  /* L'accueil n'affiche qu'un bouton : la liste complète tenait sur toute
+     la hauteur de l'écran et repoussait le reste. Elle s'ouvre désormais
+     dans son propre espace. */
   function injecterAccueil() {
     var splash = document.getElementById("S-splash");
     if (!splash) return;
     injecterCSS();
 
     var liste = lire();
-    var sec = document.getElementById("rj96-sec");
-    if (!liste.length) { if (sec) sec.remove(); return; }
+    var zone = document.getElementById("rj96-sec");
+    if (!liste.length) { if (zone) zone.remove(); return; }
 
-    if (!sec) {
-      sec = document.createElement("div");
-      sec.id = "rj96-sec";
-      sec.className = "apex-splash-resume rj96-sec";
+    if (!zone) {
+      zone = document.createElement("div");
+      zone.id = "rj96-sec";
+      zone.className = "rj96-sec";
       var pied = splash.querySelector(".apex-splash-footer");
-      if (pied && pied.parentNode) pied.parentNode.insertBefore(sec, pied);
-      else splash.querySelector(".splash").appendChild(sec);
+      if (pied && pied.parentNode) pied.parentNode.insertBefore(zone, pied);
+      else splash.querySelector(".splash").appendChild(zone);
     }
 
-    var h = '<div class="apex-splash-section-title">' +
-              '<div class="apex-sec-bar"></div>' +
-              '<div class="apex-sec-name">Historique</div>' +
-              '<div class="apex-sec-line"></div>' +
+    zone.innerHTML =
+      '<button class="rj96-entree" id="rj96-ouvrir" type="button">' +
+        '<span class="col"><span class="t">Historique</span>' +
+        '<span class="s">' + liste.length + " carrière" + (liste.length > 1 ? "s" : "") +
+        " terminée" + (liste.length > 1 ? "s" : "") + '</span></span>' +
+        '<span class="c">\u203A</span></button>';
+
+    if (!zone._rj96) {
+      zone.addEventListener("click", function (ev) {
+        if (ev.target.closest && ev.target.closest("#rj96-ouvrir")) ouvrirListe();
+      });
+      zone._rj96 = true;
+    }
+  }
+
+  /* Espace dédié : la liste des carrières conservées. */
+  function ouvrirListe() {
+    injecterCSS();
+    var liste = lire();
+
+    var h = '<div class="rj96-tete">' +
+              '<button class="rj96-retour" id="rj96-fermer-liste">\u2039</button>' +
+              '<div><div class="rj96-titre">Historique</div>' +
+              '<div class="rj96-stitre">' + liste.length + " carrière" + (liste.length > 1 ? "s" : "") +
+              " conservée" + (liste.length > 1 ? "s" : "") + '</div></div>' +
             '</div><div class="rj96-liste">';
 
-    liste.forEach(function (a) {
-      var sub = a.saisons + " saison" + (a.saisons > 1 ? "s" : "") +
-                (a.titres && a.titres.length ? "  ·  " + a.titres.length + " titre" + (a.titres.length > 1 ? "s" : "") : "") +
-                "  ·  " + dateCourte(a.date);
-      h += '<div class="rj96-item" data-ouvrir="' + a.id + '">' +
-             '<div class="col"><div class="nom">' + esc(a.pilote) + '</div>' +
-             '<div class="sub">' + esc(a.rang) + "  ·  " + esc(sub) + '</div></div>' +
-             '<div class="pts">' + nb(a.total) + '</div>' +
-             '<button class="rj96-fav' + (a.favori ? " on" : "") + '" data-fav="' + a.id +
-               '" title="' + (a.favori ? "Retirer des favoris" : "Garder cette carrière") + '">\u2605</button>' +
-           '</div>';
-    });
-    sec.innerHTML = h + "</div>";
+    if (!liste.length) {
+      h += '<div class="rj96-vide">Aucune carrière terminée pour le moment.</div>';
+    } else {
+      liste.forEach(function (a) {
+        var sub = a.saisons + " saison" + (a.saisons > 1 ? "s" : "") +
+                  (a.titres && a.titres.length ? "  ·  " + a.titres.length + " titre" + (a.titres.length > 1 ? "s" : "") : "") +
+                  "  ·  " + dateCourte(a.date);
+        h += '<div class="rj96-item" data-ouvrir="' + a.id + '">' +
+               '<div class="col"><div class="nom">' + esc(a.pilote) + '</div>' +
+               '<div class="sub">' + esc(a.rang) + "  ·  " + esc(sub) + '</div></div>' +
+               '<div class="pts">' + nb(a.total) + '</div>' +
+               '<button class="rj96-fav' + (a.favori ? " on" : "") + '" data-fav="' + a.id +
+                 '" title="' + (a.favori ? "Retirer des favoris" : "Garder cette carrière") + '">\u2605</button>' +
+             '</div>';
+      });
+    }
+    h += "</div>";
 
-    if (!sec._rj96) {
-      sec.addEventListener("click", function (ev) {
+    var box = document.getElementById("rj96-liste-ecran");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "rj96-liste-ecran";
+      box.className = "rj96-fond";
+      document.body.appendChild(box);
+      box.addEventListener("click", function (ev) {
+        if (ev.target.closest && ev.target.closest("#rj96-fermer-liste")) {
+          box.classList.remove("on"); return;
+        }
         var fav = ev.target.closest ? ev.target.closest("[data-fav]") : null;
         if (fav) {
           ev.stopPropagation();
           basculerFavori(fav.getAttribute("data-fav"));
-          injecterAccueil();
+          ouvrirListe(); injecterAccueil();
           return;
         }
         var item = ev.target.closest ? ev.target.closest("[data-ouvrir]") : null;
         if (item) ouvrirArchive(item.getAttribute("data-ouvrir"));
       });
-      sec._rj96 = true;
     }
+    box.innerHTML = h;
+    box.classList.add("on");
+    box.scrollTop = 0;
   }
 
   /* ------------------------------------------------------------------
@@ -307,34 +353,17 @@
 
     /* Détail par saison */
     if (a.detail && a.detail.length) {
-      var lignes = a.detail.map(function (s) {
-        var titres = "";
-        if (s.titrePilote) titres += '<span class="rj95-t pil">Champion</span>';
-        if (s.titreConstructeur) titres += '<span class="rj95-t con">Constructeur</span>';
-        return '<div class="rj95-sais">' +
-          '<div class="l1"><span class="an">' + s.annee + '</span>' +
-            '<span class="cat">' + esc(s.cat) + '</span>' +
-            '<span class="eq">' + esc(s.equipe) + '</span>' +
-            (titres ? '<span class="tt">' + titres + '</span>' : '') +
-          '</div>' +
-          '<div class="l2">' +
-            '<span><b>' + s.courses + '</b> courses</span>' +
-            '<span><b>' + s.victoires + '</b> victoires</span>' +
-            '<span><b>' + s.podiums + '</b> podiums</span>' +
-            '<span><b>' + s.poles + '</b> poles</span>' +
-            '<span><b>' + s.abandons + '</b> abandons</span>' +
-          '</div>' +
-          '<div class="cl"><b>' + nb(s.points) + '</b> pts' +
-            (s.place ? '  \u00b7  <b>P' + s.place + '</b> au championnat' : '') + '</div>' +
-        '</div>';
-      }).join("");
+      /* Même tableau compact que l'écran de bilan : une saison par ligne. */
+      var lignes = '<div class="rj95-tab">' +
+        (window._rj95 && window._rj95.enTete ? window._rj95.enTete() : "") +
+        a.detail.map(function (s) {
+          return (window._rj95 && window._rj95.ligne) ? window._rj95.ligne(s) : "";
+        }).join("") + '</div>';
       h += pliant("Détail par saison", a.detail.length + " saison" + (a.detail.length > 1 ? "s" : ""), lignes);
     }
 
     h += '<div class="rj74-btns">' +
-      '<button class="rj74-btn" type="button" id="rj96-dl-carte">Télécharger la carte</button>' +
-      (a.detail && a.detail.length
-        ? '<button class="rj74-btn" type="button" id="rj96-dl-recap">Télécharger le récapitulatif</button>' : '') +
+      '<button class="rj74-btn" type="button" id="rj96-dl-carte">Télécharger ma carrière</button>' +
       '<button class="rj74-btn" type="button" id="rj96-favori">' +
         (a.favori ? "Retirer des favoris" : "Garder cette carrière") + '</button>' +
       '<button class="rj74-btn" type="button" id="rj96-suppr">Supprimer</button>' +
@@ -378,10 +407,8 @@
         } catch (e) { console.warn(TAG, "image :", e && e.message); }
       };
     };
-    if (window._rj95 && window._rj95.dessiner) {
-      box.querySelector("#rj96-dl-carte").addEventListener("click", dl("", window._rj95.dessiner));
-      var br = box.querySelector("#rj96-dl-recap");
-      if (br && window._rj95.dessinerRecap) br.addEventListener("click", dl("-recapitulatif", window._rj95.dessinerRecap));
+    if (window._rj95 && window._rj95.dessinerComplet) {
+      box.querySelector("#rj96-dl-carte").addEventListener("click", dl("", window._rj95.dessinerComplet));
     }
   }
 
@@ -434,7 +461,7 @@
     }
 
     window._rj96 = {
-      liste: lire, archiver: archiver, ouvrir: ouvrirArchive,
+      liste: lire, archiver: archiver, ouvrir: ouvrirArchive, ouvrirListe: ouvrirListe,
       favori: basculerFavori, supprimer: supprimer, rafraichir: injecterAccueil,
       cloturer: cloturer
     };
@@ -442,6 +469,7 @@
       if (_origFermer) window._rj74Fermer = _origFermer;
       var s = document.getElementById("rj96-sec"); if (s) s.remove();
       var b = document.getElementById("rj96-ecran"); if (b) b.remove();
+      var bl = document.getElementById("rj96-liste-ecran"); if (bl) bl.remove();
       var c = document.getElementById(CSS_ID); if (c) c.remove();
       console.log(TAG, "désinstallé");
     };

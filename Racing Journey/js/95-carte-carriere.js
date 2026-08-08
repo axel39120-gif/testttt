@@ -388,16 +388,22 @@
         "letter-spacing:.1em;text-transform:uppercase;color:var(--text,#e8ebf2)}",
       ".rj95-detail > summary .c{color:var(--muted,#8b93a7);font-size:16px;transition:transform .2s}",
       ".rj95-detail[open] > summary .c{transform:rotate(90deg)}",
-      ".rj95-sais{border-top:1px solid rgba(255,255,255,.07);padding:11px 14px}",
-      ".rj95-sais .l1{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
-      ".rj95-sais .an{font-family:var(--font-display);font-size:15px;font-weight:900;color:#fff}",
-      ".rj95-sais .cat{font-size:12px;font-weight:600;color:var(--soft,#aeb6c6)}",
-      ".rj95-sais .eq{font-size:11px;color:var(--muted,#8b93a7)}",
-      ".rj95-sais .tt{margin-left:auto;display:flex;gap:4px;align-items:center}",
-      ".rj95-sais .l2{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--muted,#8b93a7)}",
-      ".rj95-sais .l2 b{color:var(--text,#e8ebf2);font-weight:700}",
-      ".rj95-sais .cl{margin-top:5px;font-size:11.5px;color:var(--soft,#aeb6c6)}",
-      ".rj95-sais .cl b{color:#fff}",
+      ".rj95-tab{padding:4px 0 8px}",
+      ".rj95-r{display:flex;align-items:center;gap:0;padding:7px 10px;font-size:11px;" +
+        "border-top:1px solid rgba(255,255,255,.05)}",
+      ".rj95-r .rj95-an{width:34px;flex-shrink:0;font-family:var(--font-display);font-weight:800;color:#fff}",
+      ".rj95-r .rj95-ct{flex:1;min-width:0;color:var(--soft,#aeb6c6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".rj95-r .rj95-ct em{font-style:normal;color:var(--muted,#8b93a7);margin-left:5px;font-size:10px}",
+      ".rj95-r .rj95-ti{width:32px;flex-shrink:0;display:flex;gap:2px;justify-content:center;align-items:center}",
+      ".rj95-r .rj95-ti svg{display:block}",
+      ".rj95-r .rj95-n{width:22px;flex-shrink:0;text-align:center;color:var(--muted,#8b93a7)}",
+      ".rj95-r .rj95-n.rj95-v{color:#F59E0B;font-weight:700}",
+      ".rj95-r .rj95-pt{width:44px;flex-shrink:0;text-align:right;color:#00D4FF;font-weight:700}",
+      ".rj95-r .rj95-pl{width:30px;flex-shrink:0;text-align:right;color:var(--muted,#8b93a7);font-weight:600}",
+      ".rj95-r .rj95-pl.or{color:#F59E0B}",
+      ".rj95-hd{border-top:none;font-family:var(--font-display);font-size:8.5px;font-weight:800;" +
+        "letter-spacing:.05em;text-transform:uppercase;padding-bottom:2px}",
+      ".rj95-hd span{color:var(--text3,#6b7280) !important;font-weight:800 !important}",
       ".rj95-t{font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.09em;" +
         "text-transform:uppercase;padding:2px 6px;border-radius:3px;white-space:nowrap}",
       ".rj95-t.pil{color:#F59E0B;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.4)}",
@@ -458,15 +464,18 @@
 
   /* Image du récapitulatif : le même tableau, en visuel téléchargeable.
      Une ligne par saison, avec les couronnes des titres. */
-  function dessinerRecap(d) {
+  /* Image unique : la carte de synthèse, puis le tableau saison par saison
+     à sa suite. Deux boutons pour deux images obligeaient à enregistrer
+     deux fois pour un seul et même bilan. */
+  function dessinerComplet(d) {
+    var carte = dessiner(d);
     var l = d.saisonsDetail || [];
-    var LIGNE = 108;
-    var haut = 300;
-    var bas = 90;
-    var H = haut + l.length * LIGNE + bas;
+    if (!l.length) return carte;
 
+    var tableau = dessinerRecap(d, true);   // sans en-tête d'identité
     var cv = document.createElement("canvas");
-    cv.width = L; cv.height = Math.max(600, H);
+    cv.width = L;
+    cv.height = carte.height + tableau.height;
     var ctx = cv.getContext("2d");
 
     var fond = ctx.createLinearGradient(0, 0, L, cv.height);
@@ -475,13 +484,44 @@
     ctx.fillStyle = fond;
     ctx.fillRect(0, 0, L, cv.height);
 
+    ctx.drawImage(carte, 0, 0);
+    ctx.drawImage(tableau, 0, carte.height);
+    return cv;
+  }
+
+  function dessinerRecap(d, sansEntete) {
+    var l = d.saisonsDetail || [];
+    var LIGNE = 108;
+    var haut = sansEntete ? 120 : 300;
+    var bas = sansEntete ? 50 : 90;
+    var H = haut + l.length * LIGNE + bas;
+
+    var cv = document.createElement("canvas");
+    cv.width = L; cv.height = Math.max(600, H);
+    var ctx = cv.getContext("2d");
+
+    if (!sansEntete) {
+      var fond = ctx.createLinearGradient(0, 0, L, cv.height);
+      fond.addColorStop(0, "#12121a");
+      fond.addColorStop(1, "#0b0b10");
+      ctx.fillStyle = fond;
+      ctx.fillRect(0, 0, L, cv.height);
+    }
+
     var M = 60;
-    texte(ctx, "RACING JOURNEY", M, 90, { taille: 24, poids: "800", couleur: "#FF1801", espace: 7 });
-    texte(ctx, d.pilote.toUpperCase(), M, 160, { taille: 52, poids: "800", couleur: "#ffffff" });
-    texte(ctx, "Récapitulatif de carrière  ·  " + l.length + " saison" + (l.length > 1 ? "s" : ""),
-      M, 210, { taille: 26, poids: "600", couleur: "#8b93a7" });
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.fillRect(M, 245, L - 2 * M, 2);
+    if (sansEntete) {
+      texte(ctx, "SAISON PAR SAISON", M, 70,
+        { taille: 24, poids: "800", couleur: "#FF1801", espace: 6 });
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillRect(M, 95, L - 2 * M, 2);
+    } else {
+      texte(ctx, "RACING JOURNEY", M, 90, { taille: 24, poids: "800", couleur: "#FF1801", espace: 7 });
+      texte(ctx, d.pilote.toUpperCase(), M, 160, { taille: 52, poids: "800", couleur: "#ffffff" });
+      texte(ctx, "Récapitulatif de carrière  ·  " + l.length + " saison" + (l.length > 1 ? "s" : ""),
+        M, 210, { taille: 26, poids: "600", couleur: "#8b93a7" });
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillRect(M, 245, L - 2 * M, 2);
+    }
 
     var y = haut;
     l.forEach(function (s, i) {
@@ -518,44 +558,63 @@
       y += LIGNE;
     });
 
-    texte(ctx, nb(d.total) + " points de partie  ·  " + d.rang, M, cv.height - 40,
-      { taille: 24, poids: "600", couleur: "#8b93a7" });
+    if (!sansEntete) {
+      texte(ctx, nb(d.total) + " points de partie  ·  " + d.rang, M, cv.height - 40,
+        { taille: 24, poids: "600", couleur: "#8b93a7" });
+    }
     return cv;
   }
 
-  /* Récapitulatif déroulant, une ligne par saison. Les deux couronnes
-     distinguent le titre pilote du titre constructeur. */
+  /* Icônes de titre, en SVG : les émojis sont convertis par le module de
+     pictogrammes, et le trophée y devenait un cercle vide. */
+  var ICONE_PILOTE =
+    '<svg viewBox="0 0 24 24" width="13" height="13" aria-label="Champion pilote">' +
+    '<path fill="#F59E0B" d="M18 4V2H6v2H2v3a5 5 0 0 0 4.6 5A5.5 5.5 0 0 0 11 15.9V18H7v2h10v-2h-4v-2.1' +
+    'A5.5 5.5 0 0 0 17.4 12 5 5 0 0 0 22 7V4zM4 7V6h2v4.8A3 3 0 0 1 4 7m16 0a3 3 0 0 1-2 2.8V6h2z"/></svg>';
+  var ICONE_CONSTRUCTEUR =
+    '<svg viewBox="0 0 24 24" width="13" height="13" aria-label="Champion constructeur">' +
+    '<path fill="#00D4FF" d="M20.8 11.3 19 8.4A2.6 2.6 0 0 0 16.8 7H7.2A2.6 2.6 0 0 0 5 8.4l-1.8 2.9' +
+    'A3 3 0 0 0 2.7 13v3.2c0 .5.4.9.9.9h1.1a2.2 2.2 0 0 0 4.3 0h6a2.2 2.2 0 0 0 4.3 0h1.1c.5 0 .9-.4.9-.9V13' +
+    'a3 3 0 0 0-.5-1.7M6.7 9.4c.1-.2.3-.3.5-.3h9.6c.2 0 .4.1.5.3l1.2 1.9H5.5z"/></svg>';
+
+  function iconesTitres(s) {
+    var h = "";
+    if (s.titrePilote) h += ICONE_PILOTE;
+    if (s.titreConstructeur) h += ICONE_CONSTRUCTEUR;
+    return h;
+  }
+
+  /* Une saison tient sur une seule ligne : c'est un tableau, pas un bloc
+     par année. Les colonnes sont annoncées une fois en tête. */
+  function ligneSaisonHTML(s) {
+    return '<div class="rj95-r">' +
+      '<span class="rj95-an">' + s.annee + '</span>' +
+      '<span class="rj95-ct">' + esc(s.cat) + '<em>' + esc(s.equipe) + '</em></span>' +
+      '<span class="rj95-ti">' + iconesTitres(s) + '</span>' +
+      '<span class="rj95-n">' + s.courses + '</span>' +
+      '<span class="rj95-n rj95-v">' + s.victoires + '</span>' +
+      '<span class="rj95-n">' + s.podiums + '</span>' +
+      '<span class="rj95-n">' + s.poles + '</span>' +
+      '<span class="rj95-n">' + s.abandons + '</span>' +
+      '<span class="rj95-pt">' + nb(s.points) + '</span>' +
+      '<span class="rj95-pl' + (s.place === 1 ? " or" : "") + '">' +
+        (s.place ? "P" + s.place : "\u2013") + '</span>' +
+      '</div>';
+  }
+
+  /* Pas d'en-tête de colonnes : à 430 pixels, les intitulés se collaient
+     les uns aux autres et devenaient illisibles. Les chiffres se lisent
+     d'eux-mêmes — victoires en doré, points en cyan, place à droite. */
+  function enTeteColonnes() { return ""; }
+
   function recapitulatifHTML(d) {
     var l = d.saisonsDetail || [];
     if (!l.length) return "";
-    var h = '<details class="rj95-detail"><summary>' +
+    return '<details class="rj95-detail"><summary>' +
       '<span class="t">Détail par saison (' + l.length + ')</span>' +
-      '<span class="c">\u203A</span></summary>';
-    l.forEach(function (s) {
-      /* Pas d'émoji ici : le module de pictogrammes les convertit en icônes
-         du jeu, et le trophée devenait un cercle vide. Des pastilles
-         textuelles sont plus sûres et plus lisibles en petit. */
-      var titres = "";
-      if (s.titrePilote) titres += '<span class="rj95-t pil">Champion</span>';
-      if (s.titreConstructeur) titres += '<span class="rj95-t con">Constructeur</span>';
-      h += '<div class="rj95-sais">' +
-        '<div class="l1"><span class="an">' + s.annee + '</span>' +
-          '<span class="cat">' + esc(s.cat) + '</span>' +
-          '<span class="eq">' + esc(s.equipe) + '</span>' +
-          (titres ? '<span class="tt">' + titres + '</span>' : '') +
-        '</div>' +
-        '<div class="l2">' +
-          '<span><b>' + s.courses + '</b> courses</span>' +
-          '<span><b>' + s.victoires + '</b> victoires</span>' +
-          '<span><b>' + s.podiums + '</b> podiums</span>' +
-          '<span><b>' + s.poles + '</b> poles</span>' +
-          '<span><b>' + s.abandons + '</b> abandons</span>' +
-        '</div>' +
-        '<div class="cl"><b>' + nb(s.points) + '</b> pts' +
-          (s.place ? '  \u00b7  <b>P' + s.place + '</b> au championnat' : '') + '</div>' +
-      '</div>';
-    });
-    return h + "</details>";
+      '<span class="c">\u203A</span></summary>' +
+      '<div class="rj95-tab">' + enTeteColonnes() +
+      l.map(ligneSaisonHTML).join("") + '</div></details>';
   }
 
   /* --- carte et partage --------------------------------------------- */
@@ -578,7 +637,7 @@
 
   function afficherCarte(d) {
     var cv;
-    try { cv = dessiner(d); }
+    try { cv = dessinerComplet(d); }
     catch (e) { console.warn(TAG, "dessin :", e && e.message); return; }
 
     var url = cv.toDataURL("image/png");
@@ -593,26 +652,11 @@
       '<div class="rj95-actions">' +
         '<button class="rj95-btn rouge" id="rj95-partage">Partager</button>' +
         '<button class="rj95-btn neutre" id="rj95-tel">Enregistrer l\'image</button>' +
-        (d.saisonsDetail && d.saisonsDetail.length
-          ? '<button class="rj95-btn neutre" id="rj95-recap">Télécharger le récapitulatif</button>' : '') +
         '<button class="rj95-btn neutre" id="rj95-fin">Fermer</button>' +
       '</div>', false
     );
 
     f.querySelector("#rj95-fin").addEventListener("click", fermer);
-
-    var boutonRecap = f.querySelector("#rj95-recap");
-    if (boutonRecap) {
-      boutonRecap.addEventListener("click", function () {
-        var cvR;
-        try { cvR = dessinerRecap(d); }
-        catch (e) { console.warn(TAG, "récapitulatif :", e && e.message); return; }
-        var a = document.createElement("a");
-        a.href = cvR.toDataURL("image/png");
-        a.download = nomFichier.replace(/\.png$/, "-recapitulatif.png");
-        document.body.appendChild(a); a.click(); a.remove();
-      });
-    }
 
     f.querySelector("#rj95-tel").addEventListener("click", function () {
       var a = document.createElement("a");
@@ -680,34 +724,14 @@
 
     injecterCSS();
 
-    var lignes = d.saisonsDetail.map(function (s) {
-      var titres = "";
-      if (s.titrePilote) titres += '<span class="rj95-t pil">Champion</span>';
-      if (s.titreConstructeur) titres += '<span class="rj95-t con">Constructeur</span>';
-      return '<div class="rj95-sais">' +
-        '<div class="l1"><span class="an">' + s.annee + '</span>' +
-          '<span class="cat">' + esc(s.cat) + '</span>' +
-          '<span class="eq">' + esc(s.equipe) + '</span>' +
-          (titres ? '<span class="tt">' + titres + '</span>' : '') +
-        '</div>' +
-        '<div class="l2">' +
-          '<span><b>' + s.courses + '</b> courses</span>' +
-          '<span><b>' + s.victoires + '</b> victoires</span>' +
-          '<span><b>' + s.podiums + '</b> podiums</span>' +
-          '<span><b>' + s.poles + '</b> poles</span>' +
-          '<span><b>' + s.abandons + '</b> abandons</span>' +
-        '</div>' +
-        '<div class="cl"><b>' + nb(s.points) + '</b> pts' +
-          (s.place ? '  \u00b7  <b>P' + s.place + '</b> au championnat' : '') + '</div>' +
-      '</div>';
-    }).join("");
+    var lignes = enTeteColonnes() + d.saisonsDetail.map(ligneSaisonHTML).join("");
 
     var bloc = document.createElement("div");
     bloc.id = "rj95-saisons";
     bloc.innerHTML = sectionPliante(
       "Détail par saison",
       d.saisonsDetail.length + " saison" + (d.saisonsDetail.length > 1 ? "s" : ""),
-      lignes
+      '<div class="rj95-tab">' + lignes + '</div>'
     );
 
     /* On le pose juste avant les boutons, à la suite des autres sections. */
@@ -717,21 +741,14 @@
 
     /* Boutons de téléchargement, ajoutés à ceux de l'écran. */
     if (btns && !btns.querySelector("#rj95-dl-carte")) {
+      /* Un seul bouton : le bilan et le détail par saison sur la même
+         image, pour n'avoir qu'un fichier à conserver ou à partager. */
       var bCarte = document.createElement("button");
       bCarte.type = "button";
       bCarte.id = "rj95-dl-carte";
       bCarte.className = "rj74-btn";
-      bCarte.textContent = "Télécharger la carte";
-      bCarte.addEventListener("click", function () { telecharger(dessiner(d), d, ""); });
-
-      var bRecap = document.createElement("button");
-      bRecap.type = "button";
-      bRecap.id = "rj95-dl-recap";
-      bRecap.className = "rj74-btn";
-      bRecap.textContent = "Télécharger le récapitulatif";
-      bRecap.addEventListener("click", function () { telecharger(dessinerRecap(d), d, "-recapitulatif"); });
-
-      btns.insertBefore(bRecap, btns.firstChild);
+      bCarte.textContent = "Télécharger ma carrière";
+      bCarte.addEventListener("click", function () { telecharger(dessinerComplet(d), d, ""); });
       btns.insertBefore(bCarte, btns.firstChild);
     }
   }
@@ -802,7 +819,10 @@
       /* Exposés pour le module d'archives : il redessine les images à
          partir de données figées, sans état de jeu. */
       dessiner: dessiner,
+      ligne: ligneSaisonHTML,
+      enTete: enTeteColonnes,
       dessinerRecap: dessinerRecap,
+      dessinerComplet: dessinerComplet,
       donnees: donnees,
       confirmer: demanderConfirmation
     };
