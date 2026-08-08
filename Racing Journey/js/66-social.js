@@ -232,6 +232,26 @@
       .toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 14) || "compte";
   }
 
+  /* Audience propre à chaque compte du fil, indépendante du joueur.
+     Elle est dérivée du nom, donc constante d'une semaine à l'autre : le
+     même journaliste garde son poids d'une publication à la suivante. */
+  var AUDIENCE_TYPE = {
+    media:  [180000, 900000],    // rédactions nationales et internationales
+    team:   [400000, 2500000],   // comptes officiels d'écurie
+    rival:  [60000,  800000],    // pilotes de la grille
+    fan:    [3000,   45000]      // supporters actifs du paddock
+  };
+
+  function audienceDe(item) {
+    if (!item) return 50000;
+    var plage = AUDIENCE_TYPE[item.type] || [5000, 50000];
+    var r = mulberry(fnv("aud|" + (item.h || item.nom || "?")))();
+    var base = plage[0] + r * (plage[1] - plage[0]);
+    /* Un compte certifié pèse davantage. */
+    if (item.v) base *= 1.4;
+    return Math.round(base);
+  }
+
   function genererFil() {
     var s = S(); if (!s) return [];
     var sem = semaine();
@@ -301,7 +321,13 @@
       var poids = items[k].type === "media" ? 3
                 : items[k].type === "team" ? 2
                 : items[k].type === "rival" ? 2.2 : 0.6;
-      var socle = Math.max(12, (s.x.f || 500) * 0.004) * poids;
+      /* Ces compteurs suivaient les abonnés DU JOUEUR : un média national
+         récoltait dix mentions « j'aime » tant que le pilote était inconnu,
+         et des milliers dès qu'il perçait. Chaque compte a désormais sa
+         propre audience, stable, tirée de son nom — un grand média reste
+         un grand média quel que soit le parcours du joueur. */
+      var audience = audienceDe(items[k]);
+      var socle = Math.max(12, audience * 0.004) * poids;
       items[k].likes = Math.round(socle * (0.7 + rnd() * 0.9));
       items[k].rt = Math.round(items[k].likes * (0.12 + rnd() * 0.22));
       items[k].rep = Math.round(items[k].likes * (0.05 + rnd() * 0.12));
