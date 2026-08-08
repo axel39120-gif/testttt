@@ -593,7 +593,13 @@
   // =========================================================================
 
   window.renderFinancePage = function() {
-    var el = document.getElementById('ct-reseau') || document.getElementById('reseau-content');
+    /* CORRECTIF — la page Finances écrivait dans « ct-reseau », le
+       conteneur de l'onglet Réseau, vestige d'une version où l'onglet
+       portait ce nom. Conséquence : après un passage par Finances, le
+       Réseau affichait définitivement les revenus et les investissements
+       à la place des contacts. Son propre conteneur existe pourtant, créé
+       au moment de l'injection de l'onglet. */
+    var el = document.getElementById('ct-finances');
     if (!el) return;
 
     var html = '<div style="padding:14px 16px">';
@@ -1025,6 +1031,11 @@
           renderFinancePage();
           return;
         }
+        /* L'onglet Finances a été ajouté après coup : la fonction d'origine
+           ne le connaît pas et ne le masque donc jamais. Sans cela, son
+           contenu restait affiché sous les autres onglets. */
+        var fin = document.getElementById('ct-finances');
+        if (fin) fin.style.display = 'none';
         var r = orig.apply(this, arguments);
         return r;
       };
