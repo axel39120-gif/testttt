@@ -86,8 +86,48 @@
       rep: Math.min(100, Math.round((G && typeof G.reputation === "number") ? G.reputation : (c.rep || 0))),
       patrimoine: c.patrimoine || 0,
       equipe: (G && G.currentTeam) || "",
-      nationalite: (G && G.pilot && G.pilot.nat) || ""
+      nationalite: (G && G.pilot && G.pilot.nat) || "",
+      saisonsDetail: historique()
     };
+  }
+
+  /* ------------------------------------------------------------------
+   * Historique saison par saison
+   *
+   * CAREER_HISTORY tient déjà tout ce qu'il faut — catégorie, écurie,
+   * courses, victoires, podiums, poles, abandons, points, place au
+   * championnat, titre constructeur. On l'enrichit seulement de l'année
+   * civile, dérivée de l'année de début du pilote.
+   * ---------------------------------------------------------------- */
+  function historique() {
+    var G = G_();
+    var brut = [];
+    try {
+      if (typeof window.CAREER_HISTORY !== "undefined" && window.CAREER_HISTORY) {
+        brut = window.CAREER_HISTORY.slice();
+      }
+    } catch (e) {}
+
+    var depart = 2024;
+    try { if (G && G.pilot && G.pilot.startYear) depart = G.pilot.startYear; } catch (e) {}
+
+    return brut.map(function (h) {
+      return {
+        saison: h.saison,
+        annee: depart + ((h.saison || 1) - 1),
+        cat: h.cat || "",
+        equipe: h.team || "Indépendant",
+        courses: h.races || 0,
+        victoires: h.wins || 0,
+        podiums: h.pods || 0,
+        poles: h.poles || 0,
+        abandons: h.dnfs || 0,
+        points: h.pts || 0,
+        place: h.pos || null,
+        titrePilote: h.pos === 1,
+        titreConstructeur: !!h.constrChamp
+      };
+    }).sort(function (a, b) { return (a.saison || 0) - (b.saison || 0); });
   }
 
   /* ==================================================================
@@ -286,7 +326,30 @@
         "font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}",
       ".rj95-btn.rouge{background:var(--red,#FF1801);color:#fff}",
       ".rj95-btn.neutre{background:rgba(255,255,255,.06);color:var(--soft,#aeb6c6);border:1px solid rgba(255,255,255,.12)}",
-      ".rj95-apercu{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);display:block;margin-bottom:14px}"
+      ".rj95-apercu{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);display:block;margin-bottom:14px}",
+      /* --- récapitulatif saison par saison, replié par défaut --------- */
+      ".rj95-detail{border:1px solid rgba(255,255,255,.10);border-radius:12px;margin-bottom:14px;overflow:hidden}",
+      ".rj95-detail > summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;align-items:center;gap:9px;" +
+        "background:rgba(255,255,255,.04)}",
+      ".rj95-detail > summary::-webkit-details-marker{display:none}",
+      ".rj95-detail > summary .t{flex:1;font-family:var(--font-display);font-size:11px;font-weight:800;" +
+        "letter-spacing:.1em;text-transform:uppercase;color:var(--text,#e8ebf2)}",
+      ".rj95-detail > summary .c{color:var(--muted,#8b93a7);font-size:16px;transition:transform .2s}",
+      ".rj95-detail[open] > summary .c{transform:rotate(90deg)}",
+      ".rj95-sais{border-top:1px solid rgba(255,255,255,.07);padding:11px 14px}",
+      ".rj95-sais .l1{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
+      ".rj95-sais .an{font-family:var(--font-display);font-size:15px;font-weight:900;color:#fff}",
+      ".rj95-sais .cat{font-size:12px;font-weight:600;color:var(--soft,#aeb6c6)}",
+      ".rj95-sais .eq{font-size:11px;color:var(--muted,#8b93a7)}",
+      ".rj95-sais .tt{margin-left:auto;display:flex;gap:4px;align-items:center}",
+      ".rj95-sais .l2{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--muted,#8b93a7)}",
+      ".rj95-sais .l2 b{color:var(--text,#e8ebf2);font-weight:700}",
+      ".rj95-sais .cl{margin-top:5px;font-size:11.5px;color:var(--soft,#aeb6c6)}",
+      ".rj95-sais .cl b{color:#fff}",
+      ".rj95-t{font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.09em;" +
+        "text-transform:uppercase;padding:2px 6px;border-radius:3px;white-space:nowrap}",
+      ".rj95-t.pil{color:#F59E0B;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.4)}",
+      ".rj95-t.con{color:#00D4FF;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35)}"
     ].join("\n");
     var st = document.createElement("style");
     st.id = CSS_ID; st.textContent = css;
@@ -341,6 +404,108 @@
     });
   }
 
+  /* Image du récapitulatif : le même tableau, en visuel téléchargeable.
+     Une ligne par saison, avec les couronnes des titres. */
+  function dessinerRecap(d) {
+    var l = d.saisonsDetail || [];
+    var LIGNE = 108;
+    var haut = 300;
+    var bas = 90;
+    var H = haut + l.length * LIGNE + bas;
+
+    var cv = document.createElement("canvas");
+    cv.width = L; cv.height = Math.max(600, H);
+    var ctx = cv.getContext("2d");
+
+    var fond = ctx.createLinearGradient(0, 0, L, cv.height);
+    fond.addColorStop(0, "#12121a");
+    fond.addColorStop(1, "#0b0b10");
+    ctx.fillStyle = fond;
+    ctx.fillRect(0, 0, L, cv.height);
+
+    var M = 60;
+    texte(ctx, "RACING JOURNEY", M, 90, { taille: 24, poids: "800", couleur: "#FF1801", espace: 7 });
+    texte(ctx, d.pilote.toUpperCase(), M, 160, { taille: 52, poids: "800", couleur: "#ffffff" });
+    texte(ctx, "Récapitulatif de carrière  ·  " + l.length + " saison" + (l.length > 1 ? "s" : ""),
+      M, 210, { taille: 26, poids: "600", couleur: "#8b93a7" });
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fillRect(M, 245, L - 2 * M, 2);
+
+    var y = haut;
+    l.forEach(function (s, i) {
+      if (i % 2 === 0) {
+        ctx.fillStyle = "rgba(255,255,255,0.025)";
+        ctx.fillRect(M - 14, y - 46, L - 2 * M + 28, LIGNE - 10);
+      }
+      /* Ligne 1 : année, catégorie, écurie, titres */
+      texte(ctx, String(s.annee), M, y, { taille: 34, poids: "800", couleur: "#ffffff" });
+      texte(ctx, s.cat, M + 130, y, { taille: 26, poids: "600", couleur: "#aeb6c6" });
+      texte(ctx, s.equipe, M + 130, y + 32, { taille: 22, couleur: "#8b93a7" });
+
+      var couronnes = "";
+      if (s.titrePilote) couronnes += "\uD83C\uDFC6";
+      if (s.titreConstructeur) couronnes += " \uD83C\uDFED";
+      if (couronnes) texte(ctx, couronnes, L - M, y, { taille: 30, aligne: "right" });
+
+      /* Ligne 2 : chiffres de la saison */
+      var chiffres = s.courses + " courses   ·   " + s.victoires + " V   ·   " +
+                     s.podiums + " P   ·   " + s.poles + " pole" + (s.poles > 1 ? "s" : "") +
+                     "   ·   " + s.abandons + " DNF";
+      texte(ctx, chiffres, M + 130, y + 62, { taille: 21, couleur: "#6b7280" });
+
+      /* À droite : points et place */
+      texte(ctx, nb(s.points) + " pts", L - M, y + 34,
+        { taille: 26, poids: "700", couleur: "#00D4FF", aligne: "right" });
+      if (s.place) {
+        texte(ctx, "P" + s.place, L - M, y + 66,
+          { taille: 22, poids: "600", couleur: s.place === 1 ? "#F59E0B" : "#8b93a7", aligne: "right" });
+      }
+
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.fillRect(M, y + 82, L - 2 * M, 1);
+      y += LIGNE;
+    });
+
+    texte(ctx, nb(d.total) + " points de partie  ·  " + d.rang, M, cv.height - 40,
+      { taille: 24, poids: "600", couleur: "#8b93a7" });
+    return cv;
+  }
+
+  /* Récapitulatif déroulant, une ligne par saison. Les deux couronnes
+     distinguent le titre pilote du titre constructeur. */
+  function recapitulatifHTML(d) {
+    var l = d.saisonsDetail || [];
+    if (!l.length) return "";
+    var h = '<details class="rj95-detail"><summary>' +
+      '<span class="t">Détail par saison (' + l.length + ')</span>' +
+      '<span class="c">\u203A</span></summary>';
+    l.forEach(function (s) {
+      /* Pas d'émoji ici : le module de pictogrammes les convertit en icônes
+         du jeu, et le trophée devenait un cercle vide. Des pastilles
+         textuelles sont plus sûres et plus lisibles en petit. */
+      var titres = "";
+      if (s.titrePilote) titres += '<span class="rj95-t pil">Champion</span>';
+      if (s.titreConstructeur) titres += '<span class="rj95-t con">Constructeur</span>';
+      h += '<div class="rj95-sais">' +
+        '<div class="l1"><span class="an">' + s.annee + '</span>' +
+          '<span class="cat">' + esc(s.cat) + '</span>' +
+          '<span class="eq">' + esc(s.equipe) + '</span>' +
+          (titres ? '<span class="tt">' + titres + '</span>' : '') +
+        '</div>' +
+        '<div class="l2">' +
+          '<span><b>' + s.courses + '</b> courses</span>' +
+          '<span><b>' + s.victoires + '</b> victoires</span>' +
+          '<span><b>' + s.podiums + '</b> podiums</span>' +
+          '<span><b>' + s.poles + '</b> poles</span>' +
+          '<span><b>' + s.abandons + '</b> abandons</span>' +
+        '</div>' +
+        '<div class="cl"><b>' + nb(s.points) + '</b> pts' +
+          (s.place ? '  \u00b7  <b>P' + s.place + '</b> au championnat' : '') + '</div>' +
+      '</div>';
+    });
+    return h + "</details>";
+  }
+
   /* --- carte et partage --------------------------------------------- */
   function terminer(d) {
     /* On clôt la partie par la voie du module d'origine, en neutralisant
@@ -371,14 +536,30 @@
       '<div class="rj95-eyebrow">Ta carrière</div>' +
       '<div class="rj95-titre">' + esc(d.rang) + '</div>' +
       '<img class="rj95-apercu" src="' + url + '" alt="Carte de carrière">' +
+      recapitulatifHTML(d) +
       '<div class="rj95-actions">' +
         '<button class="rj95-btn rouge" id="rj95-partage">Partager</button>' +
         '<button class="rj95-btn neutre" id="rj95-tel">Enregistrer l\'image</button>' +
+        (d.saisonsDetail && d.saisonsDetail.length
+          ? '<button class="rj95-btn neutre" id="rj95-recap">Télécharger le récapitulatif</button>' : '') +
         '<button class="rj95-btn neutre" id="rj95-fin">Fermer</button>' +
       '</div>', false
     );
 
     f.querySelector("#rj95-fin").addEventListener("click", fermer);
+
+    var boutonRecap = f.querySelector("#rj95-recap");
+    if (boutonRecap) {
+      boutonRecap.addEventListener("click", function () {
+        var cvR;
+        try { cvR = dessinerRecap(d); }
+        catch (e) { console.warn(TAG, "récapitulatif :", e && e.message); return; }
+        var a = document.createElement("a");
+        a.href = cvR.toDataURL("image/png");
+        a.download = nomFichier.replace(/\.png$/, "-recapitulatif.png");
+        document.body.appendChild(a); a.click(); a.remove();
+      });
+    }
 
     f.querySelector("#rj95-tel").addEventListener("click", function () {
       var a = document.createElement("a");
@@ -445,6 +626,8 @@
 
     window._rj95 = {
       apercu: function () { var d = donnees(); return d ? dessiner(d).toDataURL("image/png") : null; },
+      recap: function () { var d = donnees(); return d ? dessinerRecap(d).toDataURL("image/png") : null; },
+      historique: historique,
       donnees: donnees,
       confirmer: demanderConfirmation
     };
