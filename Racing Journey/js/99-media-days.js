@@ -90,10 +90,34 @@
   function chance() {
     var G = G_();
     if (!G) return 0;
+    /* Sauvegarde de test « media day » : la première conférence est
+       garantie, pour que le parcours soit reproductible. Ensuite, le
+       rythme normal reprend.
+       Le marqueur n'est pas restauré dans l'état de jeu — le chargement ne
+       reprend qu'une liste fermée de champs — on le lit donc directement
+       dans le fichier de sauvegarde. */
+    try {
+      if (faites() === 0 && estPartieDeTest()) return 1;
+    } catch (e) {}
     var manches = (window.CAL_RACES || []).length || 10;
     var restantes = Math.max(1, manches - (G.races || []).length);
     var p = reste() / restantes;
     return Math.max(0.12, Math.min(0.55, p));
+  }
+
+  function estPartieDeTest() {
+    var G = G_();
+    if (!G) return false;
+    if (typeof G._rjEstTest === "boolean") return G._rjEstTest;
+    var trouve = false;
+    try {
+      var slot = (typeof G._slot === "number") ? G._slot : 0;
+      var cle = (window.SAVE_KEYS && window.SAVE_KEYS[slot]) || ("rj_s" + (slot + 1));
+      var brut = localStorage.getItem(cle);
+      if (brut) trouve = JSON.parse(brut)._rjTestSave === true;
+    } catch (e) {}
+    G._rjEstTest = trouve;
+    return trouve;
   }
 
   var _orig = {};

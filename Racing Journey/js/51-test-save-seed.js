@@ -23,7 +23,7 @@
 
   // Marqueur de version de la sauvegarde de test : permet de remplacer une
   // ancienne sauvegarde de test (karting) par la variante F1.
-  var TEST_SAVE_VARIANT = "f1-fin-saison-4";
+  var TEST_SAVE_VARIANT = "f1-media-day-1";
 
   /* Transpose l'instantané en pilote de Formule 1 avec une offre en attente. */
   function toF1(save) {
@@ -84,6 +84,60 @@
 
     save.pilotMental = { value: 71, confidence: 72, pressure: 34, streakGood: 2, streakBad: 0, lastWinRace: -99, history: [] };
     save._rjTestSave = true;
+    save._rjTestVariant = TEST_SAVE_VARIANT;
+    return save;
+  }
+
+  /* ------------------------------------------------------------------
+   * MEDIA DAY — la sauvegarde est placée en MILIEU de saison, juste avant
+   * une conférence de presse. Cinq manches sont courues sur dix-huit, le
+   * quota de convocations est intact, et le module 99 est amené à proposer
+   * la conférence dès le premier appui sur « Continuer ».
+   *
+   * On garde une saison plausible : quelques points marqués, un podium,
+   * rien qui laisse croire à une saison terminée.
+   * ---------------------------------------------------------------- */
+  function toMediaDay(save) {
+    var PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+    var circuits = ["Bahrein", "Djeddah", "Melbourne", "Suzuka", "Miami"];
+    var places = [9, 6, 3, 8, 7];          // un podium, le reste dans les points
+
+    save.races = [];
+    var total = 0;
+    for (var i = 0; i < circuits.length; i++) {
+      var pos = places[i];
+      var pts = PTS[pos - 1] || 0;
+      total += pts;
+      save.races.push({
+        manche: i + 1, circuit: circuits[i], name: circuits[i],
+        pos: pos, dnf: false, pts: pts, quali: pos + 1, saison: 8
+      });
+    }
+    save.champPts = total;
+
+    save.calRaces = [];
+    for (var m = 0; m < 18; m++) {
+      save.calRaces.push({
+        done: m < circuits.length,
+        result: m < circuits.length ? { pos: places[m] } : null
+      });
+    }
+
+    save.semaine = 12;                     // milieu de saison
+    save.seasonOver = false;
+    save.contractWeeksLeft = 30;           // le contrat ne presse plus
+
+    /* Le quota de conférences est neuf : la prochaine avancée du temps
+       déclenchera la proposition. */
+    delete save._rjMediaDays;
+    save.rjMediaDays = null;
+
+    /* L'offre concurrente d'Aston Martin, prévue pour la variante de fin de
+       contrat, fait planter le rendu des contrats en milieu de saison
+       (« ReferenceError: o is not defined » dans renderOffers). Elle n'a de
+       toute façon aucun sens ici : le contrat court encore trente semaines. */
+    save.offers = [];
+
     save._rjTestVariant = TEST_SAVE_VARIANT;
     return save;
   }
@@ -200,7 +254,7 @@
   /* Instantané effectivement écrit : karting transposé en F1. */
   function buildSaveRaw() {
     try {
-      return JSON.stringify(toFinDeSaison(toF1(JSON.parse(TEST_SAVE_RAW))));
+      return JSON.stringify(toMediaDay(toF1(JSON.parse(TEST_SAVE_RAW))));
     } catch (e) {
       console.warn("[51-test-save-seed] transposition F1 impossible :", e);
       return TEST_SAVE_RAW;
