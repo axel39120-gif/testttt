@@ -939,6 +939,16 @@
       while (p && p !== document.body) {
         if (p.tagName === "svg" || p.tagName === "SVG") return;
         if (p.hasAttribute && p.hasAttribute("data-rj-noround")) return;
+        /* Les compteurs des réseaux sociaux sont écrits avec deux décimales
+           voulues (« 1,45 k », « 487,4 k »). L'arrondi les ramenait à
+           l'entier juste après le rendu, d'où l'impression de clignotement
+           à chaque interaction. */
+        if (p.id === "ig-feed" || p.id === "ig-followers-display" ||
+            p.id === "mt-reseaux" || p.id === "S-media") return;
+        if (p.classList && (p.classList.contains("rj66-stat") ||
+                            p.classList.contains("rj66-tw") ||
+                            p.classList.contains("rj66-hdr") ||
+                            p.classList.contains("rj66-wrap"))) return;
         if (p.classList && (p.classList.contains("rj-bcast-counter") || 
                              p.classList.contains("rj-bcast-title") ||
                              p.classList.contains("lec-lap-display"))) {
