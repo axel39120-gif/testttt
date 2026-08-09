@@ -35,6 +35,24 @@
     if (document.getElementById(CSS_ID)) return;
     var css = [
       "#rj93-arcs{margin-bottom:10px}",
+      /* --- suivi des histoires ------------------------------------- */
+      "#rj93-arcs .rj93-suivis{margin-top:14px}",
+      "#rj93-arcs .rj93-sec{display:flex;align-items:center;gap:7px;margin:14px 0 8px;" +
+        "font-family:var(--font-display);font-size:9.5px;font-weight:800;letter-spacing:.14em;" +
+        "text-transform:uppercase;color:var(--text3,#6b7280)}",
+      "#rj93-arcs .rj93-sec .pt{width:5px;height:5px;border-radius:50%;background:var(--text3,#6b7280)}",
+      "#rj93-arcs .rj93-suivi{margin-bottom:8px;padding:11px 12px;border-radius:11px;" +
+        "background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);" +
+        "border-left:3px solid var(--red3,#FF1801)}",
+      "#rj93-arcs .rj93-suivi.rj93-clos{border-left-color:rgba(255,255,255,.18);opacity:.72}",
+      "#rj93-arcs .rj93-ti{font-family:var(--font-display);font-size:12.5px;font-weight:800;color:#fff}",
+      "#rj93-arcs .rj93-at{font-size:11px;color:var(--muted,#8b93a7);font-style:italic;margin-top:3px}",
+      "#rj93-arcs .rj93-out{font-size:11.5px;color:var(--soft,#aeb6c6);margin-top:4px;line-height:1.45}",
+      "#rj93-arcs .rj93-h{display:flex;align-items:flex-start;gap:8px;margin-top:7px;" +
+        "padding-top:7px;border-top:1px solid rgba(255,255,255,.06)}",
+      "#rj93-arcs .rj93-hp{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;" +
+        "background:var(--red3,#FF1801);opacity:.75}",
+      "#rj93-arcs .rj93-ht{flex:1;font-size:11.5px;color:var(--soft,#aeb6c6);line-height:1.45}",
       "#rj93-arcs .rj93-tete{display:flex;align-items:center;gap:7px;margin:0 0 8px;" +
         "font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.14em;" +
         "text-transform:uppercase;color:var(--red3,#FF1801)}",
@@ -68,7 +86,61 @@
   /* ------------------------------------------------------------------
    * Injection dans l'onglet Événements
    * ---------------------------------------------------------------- */
-  function injecter() {
+    /* ------------------------------------------------------------------
+   * SUIVI DE LA VIE DE PADDOCK
+   *
+   * Une fois la décision prise, tout disparaissait de l'écran : le joueur
+   * ne pouvait plus savoir quelle histoire il avait engagée, ni ce qu'il
+   * avait répondu. Les données étaient pourtant conservées — chaque arc
+   * garde l'historique de ses étapes, et les arcs clos leur dénouement.
+   * On les montre : ce qui suit son cours d'abord, ce qui est derrière
+   * ensuite.
+   * ---------------------------------------------------------------- */
+  function ech(t) {
+    return String(t == null ? "" : t)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function ligneHistorique(h) {
+    return '<div class="rj93-h"><span class="rj93-hp"></span>' +
+           '<span class="rj93-ht">' + ech(h.label || "\u2014") + "</span></div>";
+  }
+
+  function suiviHTML(a) {
+    var enCours = [], termines = [];
+    try { enCours = a.enCours ? (a.enCours() || []) : []; } catch (e) {}
+    try { termines = a.termines ? (a.termines() || []) : []; } catch (e) {}
+
+    /* Les arcs qui attendent une décision sont déjà affichés en carte. */
+    var suivis = enCours.filter(function (x) { return x && !x.awaiting; });
+    if (!suivis.length && !termines.length) return "";
+
+    var h = "";
+    if (suivis.length) {
+      h += '<div class="rj93-sec"><span class="pt"></span>Histoires en cours</div>';
+      suivis.forEach(function (inst) {
+        var def = null;
+        try { def = a.definition ? a.definition(inst.arcId) : null; } catch (e) {}
+        h += '<div class="rj93-suivi">' +
+               '<div class="rj93-ti">' + ech((def && def.title) || inst.arcId) + '</div>' +
+               '<div class="rj93-at">La suite viendra d\'elle-même\u2026</div>' +
+               (inst.history || []).map(ligneHistorique).join("") +
+             '</div>';
+      });
+    }
+    if (termines.length) {
+      h += '<div class="rj93-sec"><span class="pt"></span>Histoires closes</div>';
+      termines.slice(0, 6).forEach(function (t) {
+        h += '<div class="rj93-suivi rj93-clos">' +
+               '<div class="rj93-ti">' + ech(t.title || "") + '</div>' +
+               (t.outcome ? '<div class="rj93-out">' + ech(t.outcome) + '</div>' : '') +
+             '</div>';
+      });
+    }
+    return '<div class="rj93-suivis">' + h + "</div>";
+  }
+
+function injecter() {
     var a = api();
     var hote = document.getElementById("evt-media-list");
     if (!a || !hote) return;
@@ -76,8 +148,9 @@
     var enAttente = [];
     try { enAttente = a.enAttente() || []; } catch (e) { return; }
 
+    var suivi = suiviHTML(a);
     var bloc = document.getElementById("rj93-arcs");
-    if (!enAttente.length) { if (bloc) bloc.remove(); return; }
+    if (!enAttente.length && !suivi) { if (bloc) bloc.remove(); return; }
 
     injecterCSS();
     if (!bloc) {
@@ -96,12 +169,17 @@
       hote.parentNode.insertBefore(bloc, hote);
     }
 
-    var html = '<div class="rj93-tete"><span class="pt"></span>' +
-               (enAttente.length > 1 ? enAttente.length + " décisions t\u2019attendent" : "Une décision t\u2019attend") +
-               '</div>';
-    enAttente.forEach(function (inst) {
-      try { html += a.carteHTML(inst); } catch (e) {}
-    });
+    var html = "";
+    if (enAttente.length) {
+      html += '<div class="rj93-tete"><span class="pt"></span>' +
+              (enAttente.length > 1 ? enAttente.length + " décisions t\u2019attendent" : "Une décision t\u2019attend") +
+              '</div>';
+      enAttente.forEach(function (inst) {
+        try { html += a.carteHTML(inst); } catch (e) {}
+      });
+    }
+    /* Ce qui a été décidé reste consultable en dessous. */
+    html += suivi;
     bloc.innerHTML = html;
   }
 

@@ -242,6 +242,32 @@
     fan:    [3000,   45000]      // supporters actifs du paddock
   };
 
+  /* Exposition médiatique de la discipline. Les plages ci-dessus décrivent
+     le sommet du sport ; en dessous, l'écho retombe très vite. Un pilote de
+     karting junior récoltait des milliers de mentions « j'aime » alors que
+     personne, dans la réalité, ne connaît un pilote de cet âge : ses
+     publications sont vues par sa famille, son club et quelques passionnés. */
+  var EXPOSITION = {
+    "Formule 1": 1.00,
+    "Formule 2": 0.42,
+    "Formule 3": 0.22,
+    "Formula Regional": 0.10,
+    "Formule 4": 0.05,
+    "Karting Senior": 0.018,
+    "Karting Junior": 0.007,
+    "IndyCar": 0.55,
+    "Endurance WEC": 0.45,
+    "Super Formula": 0.35
+  };
+
+  function exposition() {
+    try {
+      var c = (typeof G !== "undefined" && G) ? G.cat : "";
+      var e = EXPOSITION[c];
+      return (typeof e === "number") ? e : 0.25;
+    } catch (err) { return 0.25; }
+  }
+
   function audienceDe(item) {
     if (!item) return 50000;
     var plage = AUDIENCE_TYPE[item.type] || [5000, 50000];
@@ -249,7 +275,11 @@
     var base = plage[0] + r * (plage[1] - plage[0]);
     /* Un compte certifié pèse davantage. */
     if (item.v) base *= 1.4;
-    return Math.round(base);
+    /* Les grands médias gardent un socle : même en karting, un titre
+       national reste plus suivi qu'un supporter. */
+    var facteur = exposition();
+    if (item.type === "media") facteur = Math.max(facteur, 0.03);
+    return Math.max(120, Math.round(base * facteur));
   }
 
   function genererFil() {
@@ -766,9 +796,62 @@
     return '<div class="' + cls + '" style="background:' + C + '22;border-color:' + C + '">' + initiales() + '</div>';
   }
 
+  /* ------------------------------------------------------------------
+   * ABONNEMENTS — le carnet d'adresses, pas une formule
+   *
+   * Le nombre de comptes suivis se déduisait du nombre d'abonnés par un
+   * logarithme : il montait tout seul, sans que le joueur ait rencontré
+   * personne. On suit ceux qu'on connaît vraiment — l'écurie, les
+   * organisateurs, et les gens du paddock avec qui la relation est
+   * assez bonne pour qu'on s'abonne mutuellement.
+   * ---------------------------------------------------------------- */
+  var SEUIL_ABONNEMENT = 45;   // en dessous, on se croise sans se suivre
+  var SEUIL_RECIPROQUE = 65;   // au-delà, ils s'abonnent en retour
+
+  function comptesInstitutionnels() {
+    var n = 2;                                  // championnat, fédération
+    try { if (G.currentTeam && G.currentTeam !== "Indépendant") n += 1; } catch (e) {}
+    return n;
+  }
+
+  function relationsSuivies(seuil) {
+    try {
+      if (!window._rj101) return [];
+      return window._rj101.tous().filter(function (c) {
+        return c && (c.relation || 0) >= seuil;
+      });
+    } catch (e) { return []; }
+  }
+
+  function abonnements() {
+    /* Sans le module de réseau, on retombe sur l'ancienne estimation plutôt
+       que d'afficher trois abonnements à un pilote de Formule 1. */
+    if (!window._rj101) {
+      var s = S();
+      var f = (s && s.x && s.x.f) || 0;
+      return 40 + Math.round(Math.log10(f + 10) * 60);
+    }
+    return comptesInstitutionnels() + relationsSuivies(SEUIL_ABONNEMENT).length;
+  }
+
+  /* Les contacts proches s'abonnent en retour. Leur poids dépend de leur
+     propre audience : un team principal amène plus de monde qu'un
+     ingénieur, parce que ses abonnés viennent voir qui il suit. */
+  function abonnesDuReseau() {
+    var total = 0;
+    try {
+      relationsSuivies(SEUIL_RECIPROQUE).forEach(function (c) {
+        var infl = 0.2;
+        try { infl = window._rj101.role(c.role).influence; } catch (e) {}
+        total += Math.round(infl * 400 * exposition());
+      });
+    } catch (e) {}
+    return total;
+  }
+
   function enTete(res) {
     var s = S(), d = s[res];
-    var suivis = 40 + Math.round(Math.log10((d.f || 0) + 10) * 60);
+    var suivis = abonnements();
     return '<div class="rj66-prof">' +
       avatarBloc("rj66-av") +
       '<div class="rj66-id">' +
@@ -782,7 +865,10 @@
         '<div class="rj66-bio">' + ech(bio()) + '</div>' +
         '<div class="rj66-stats">' +
           '<div class="rj66-stat"><b>' + fmt(d.posts.length) + '</b><span>publications</span></div>' +
-          '<div class="rj66-stat"><b>' + fmt(d.f) + '</b><span>abonnés</span></div>' +
+          /* Les contacts proches s'abonnent au pilote : leur audience se répercute
+           sur la sienne. C'est le réseau qui fait grandir le compte, pas
+           seulement les résultats. */
+        '<div class="rj66-stat"><b>' + fmt((d.f || 0) + abonnesDuReseau()) + '</b><span>abonnés</span></div>' +
           '<div class="rj66-stat"><b>' + fmt(suivis) + '</b><span>abonnements</span></div>' +
         '</div>' +
       '</div>' +

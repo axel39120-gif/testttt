@@ -620,7 +620,14 @@
     },
     carteHTML: arcCardHTML,
     choisir: function(arcId, idx){ return choose(arcId, idx); },
-    nombre: pendingCount
+    nombre: pendingCount,
+    /* Exposé pour l'espace de suivi : les arcs en cours conservent
+       l'historique des décisions déjà prises, et les arcs clos gardent leur
+       dénouement. Tout cela était mémorisé sans jamais être montré. */
+    enCours: function(){ var m = mem(); return m ? m.active.slice() : []; },
+    termines: function(){ var m = mem(); return m ? m.completed.slice() : []; },
+    definition: function(id){ return arcDef(id); },
+    etapeDef: function(id, sid){ return stepDef(id, sid); }
   };
 
   function refreshIfOnScreen(){
