@@ -37,7 +37,16 @@
 
   var TAG = "[92-notation]";
 
-  /* ==================================================================
+  /* ÉCHELLE RÉÉTALÉE — les catégories de formation étaient tassées vers
+     le haut : un pilote de karting junior culminait à 74, soit le niveau
+     d'un milieu de grille de Formule 2. Un débutant, qui démarre autour de
+     31, se retrouvait dernier avec près de trente points de retard sur
+     l'avant-dernier — aucune qualification, aucune course jouable.
+     L'échelle couvre désormais toute l'amplitude du karting à la Formule 1,
+     et le fond de grille du karting junior rejoint le niveau d'un vrai
+     débutant.
+
+  ==================================================================
    * 1. PLAFONDS PAR CATÉGORIE
    * ================================================================== */
   var PLAFONDS = {
@@ -77,41 +86,41 @@
       { tier: "recrue",      count: 1, mean: 78.0, spread: 1.0 }
     ],
     "Formule 2": [
-      { tier: "sommet",   count: 2, mean: 90.0, spread: 0.8 },
-      { tier: "elite",    count: 3, mean: 87.0, spread: 1.0 },
-      { tier: "fort",     count: 4, mean: 84.0, spread: 1.2 },
-      { tier: "milieu",   count: 6, mean: 80.0, spread: 1.3 },
-      { tier: "recrue",   count: 5, mean: 76.5, spread: 1.5 }
+      { tier: "sommet",   count: 2, mean: 84.0, spread: 0.8 },
+      { tier: "elite",    count: 3, mean: 81.0, spread: 1.0 },
+      { tier: "fort",     count: 4, mean: 77.0, spread: 1.2 },
+      { tier: "milieu",   count: 6, mean: 73.0, spread: 1.3 },
+      { tier: "recrue",   count: 5, mean: 69.0, spread: 1.5 }
     ],
     "Formule 3": [
-      { tier: "sommet",   count: 2, mean: 87.0, spread: 0.8 },
-      { tier: "elite",    count: 4, mean: 83.0, spread: 1.2 },
-      { tier: "milieu",   count: 8, mean: 78.0, spread: 1.5 },
-      { tier: "recrue",   count: 6, mean: 73.5, spread: 1.8 }
+      { tier: "sommet",   count: 2, mean: 78.0, spread: 0.8 },
+      { tier: "elite",    count: 4, mean: 74.0, spread: 1.2 },
+      { tier: "milieu",   count: 8, mean: 68.0, spread: 1.5 },
+      { tier: "recrue",   count: 6, mean: 63.0, spread: 1.8 }
     ],
     "Formula Regional": [
-      { tier: "sommet",   count: 2, mean: 84.0, spread: 0.9 },
-      { tier: "elite",    count: 4, mean: 80.0, spread: 1.3 },
-      { tier: "milieu",   count: 8, mean: 74.5, spread: 1.8 },
-      { tier: "recrue",   count: 6, mean: 69.5, spread: 2.0 }
+      { tier: "sommet",   count: 2, mean: 71.0, spread: 0.9 },
+      { tier: "elite",    count: 4, mean: 67.0, spread: 1.3 },
+      { tier: "milieu",   count: 8, mean: 61.0, spread: 1.8 },
+      { tier: "recrue",   count: 6, mean: 56.0, spread: 2.0 }
     ],
     "Formule 4": [
-      { tier: "sommet",   count: 2, mean: 81.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 76.0, spread: 1.5 },
-      { tier: "milieu",   count: 10, mean: 70.5, spread: 2.0 },
-      { tier: "recrue",   count: 8, mean: 65.0, spread: 2.2 }
+      { tier: "sommet",   count: 2, mean: 64.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 60.0, spread: 1.5 },
+      { tier: "milieu",   count: 10, mean: 54.0, spread: 2.0 },
+      { tier: "recrue",   count: 8, mean: 49.0, spread: 2.2 }
     ],
     "Karting Senior": [
-      { tier: "sommet",   count: 2, mean: 78.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 73.0, spread: 1.8 },
-      { tier: "milieu",   count: 10, mean: 66.5, spread: 2.4 },
-      { tier: "recrue",   count: 8, mean: 61.0, spread: 2.6 }
+      { tier: "sommet",   count: 2, mean: 54.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 50.0, spread: 1.8 },
+      { tier: "milieu",   count: 10, mean: 44.0, spread: 2.4 },
+      { tier: "recrue",   count: 8, mean: 39.0, spread: 2.6 }
     ],
     "Karting Junior": [
-      { tier: "sommet",   count: 2, mean: 74.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 69.0, spread: 1.8 },
-      { tier: "milieu",   count: 10, mean: 62.5, spread: 2.5 },
-      { tier: "recrue",   count: 8, mean: 57.0, spread: 2.8 }
+      { tier: "sommet",   count: 2, mean: 46.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 42.0, spread: 1.8 },
+      { tier: "milieu",   count: 10, mean: 36.0, spread: 2.5 },
+      { tier: "recrue",   count: 8, mean: 31.0, spread: 2.8 }
     ],
     "Super Formula": [
       { tier: "sommet",   count: 2, mean: 92.0, spread: 0.8 },
