@@ -3633,14 +3633,22 @@
    * ================================================================== */
 
   function compacterPreparation() {
-    /* 975 px de réglages : le plus gros bloc du week-end. */
-    poserBouton({
-      cle: "setup-mode-advanced",
-      idBouton: "rj84-btn-setup",
-      titre: "Réglages de la monoplace",
-      libelle: "Réglages de la voiture",
-      resume: resumeReglages
-    });
+    /* Les réglages restent DANS l'écran de préparation.
+       Ils étaient rangés derrière un bouton, dans une fenêtre — neuf cent
+       soixante-quinze pixels gagnés, mais un aller-retour de plus à chaque
+       ajustement, et les zones optimales qu'on ne voit plus en même temps
+       que le reste de la préparation. On les remet en place.
+       La feuille de temps et le classement, eux, restent en fenêtre. */
+    var bloc = document.getElementById("setup-mode-advanced");
+    if (bloc) {
+      bloc.style.display = "";
+      var marqueur = document.getElementById("rj84-slot-setup-mode-advanced");
+      if (marqueur && marqueur.parentNode && bloc.parentNode !== marqueur.parentNode) {
+        marqueur.parentNode.insertBefore(bloc, marqueur);
+      }
+    }
+    var bouton = document.getElementById("rj84-btn-setup");
+    if (bouton && bouton.parentNode) bouton.parentNode.removeChild(bouton);
   }
 
   function compacterEssais() {
