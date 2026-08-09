@@ -97,14 +97,22 @@
   function injecterCSS() {
     if (document.getElementById(CSS_ID)) return;
     var css = [
-      /* La teinte est portée par une variable, pour que l'anneau, le fond et
-         la lueur restent accordés sans les redéclarer chacun. */
-      "#ni-cta-continue{background:var(--rj105-c,#FF1801) !important;" +
-        "box-shadow:0 0 0 1px color-mix(in srgb,var(--rj105-c,#FF1801) 45%,transparent)," +
-        "0 6px 22px color-mix(in srgb,var(--rj105-c,#FF1801) 42%,transparent) !important;" +
-        "transition:background .25s ease,box-shadow .25s ease}",
-      "#ni-cta-continue .ni-cta-ring{border-color:color-mix(in srgb,var(--rj105-c,#FF1801) 55%,transparent) !important}",
-      "#ni-cta-continue .ni-cta-icon svg{fill:#0d0d12;stroke:#0d0d12}"
+      /* Le fond coloré doit aller sur le DISQUE, pas sur le conteneur : celui-ci
+         est un carré de 64 pixels transparent, et le teinter faisait déborder
+         un carré derrière le bouton rond.
+         Trois éléments à accorder : le halo pulsé, le disque et son ombre. */
+      "#ni-cta-continue .ni-cta-icon{" +
+        "background:linear-gradient(135deg," +
+          "color-mix(in srgb,var(--rj105-c,#FF1801) 82%,#ffffff) 0%," +
+          "var(--rj105-c,#FF1801) 100%) !important;" +
+        "box-shadow:0 8px 24px color-mix(in srgb,var(--rj105-c,#FF1801) 50%,transparent)," +
+          "0 0 0 1px rgba(255,255,255,0.10) inset," +
+          "0 -2px 4px rgba(0,0,0,0.30) inset !important;" +
+        "transition:background .3s ease,box-shadow .3s ease}",
+      "#ni-cta-continue .ni-cta-ring{" +
+        "background:radial-gradient(circle," +
+          "color-mix(in srgb,var(--rj105-c,#FF1801) 40%,transparent) 0%,transparent 65%) !important;" +
+        "transition:background .3s ease}"
     ].join("\n");
     var st = document.createElement("style");
     st.id = CSS_ID; st.textContent = css;
