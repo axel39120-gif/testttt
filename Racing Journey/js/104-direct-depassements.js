@@ -100,7 +100,11 @@
       } else {
         titre = court + " remonte de " + gain + " places" + (qui ? " — " + qui + " sont derrière" : "");
       }
+      /* Le fil n'affiche « title » que pour les messages radio ; les autres
+         entrées passent par « text ». Fournir l'un sans l'autre affichait
+         « undefined » à l'écran. */
       pousser({
+        text: "<strong>" + titre + "</strong> \u00b7 P" + avant + " \u2192 P" + apres,
         title: titre,
         desc: "P" + avant + " \u2192 P" + apres,
         color: "#34D399",
@@ -121,6 +125,7 @@
         t2 = court + " recule de " + perte + " places";
       }
       pousser({
+        text: "<strong>" + t2 + "</strong> \u00b7 P" + avant + " \u2192 P" + apres,
         title: t2,
         desc: "P" + avant + " \u2192 P" + apres,
         color: "#F87171",
@@ -138,6 +143,8 @@
       var ecart = Math.abs((devant.gap || 0) - (m.gap || 0));
       if (ecart > 0 && ecart < 0.8) {
         pousser({
+          text: "Dans les échappements de <strong>" + nomCourt(devant) +
+                "</strong> \u2014 moins d'une seconde",
           title: "Dans les échappements de " + nomCourt(devant),
           desc: "Moins d'une seconde \u2014 l'attaque est possible",
           color: "#F59E0B",

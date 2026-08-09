@@ -71,10 +71,16 @@
   // ICÔNES SVG — palette sobre, monochrome, currentColor
   // ========================================================================
   var ICONS = {
+    /* Casque à micro plutôt que des ondes : la voix vient d'une personne
+       assise au muret, pas d'un émetteur. L'arceau, les deux coquilles et la
+       perche suffisent à l'identifier à quatorze pixels. */
     radio:
       '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M4 11a8 8 0 0 1 16 0"/><path d="M7 14a5 5 0 0 1 10 0"/>' +
-      '<circle cx="12" cy="17.5" r="1.5" fill="currentColor"/></svg>',
+      '<path d="M4.5 13v-1.5a7.5 7.5 0 0 1 15 0V13"/>' +
+      '<rect x="2" y="12" width="4.2" height="6.4" rx="1.6"/>' +
+      '<rect x="17.8" y="12" width="4.2" height="6.4" rx="1.6"/>' +
+      '<path d="M19.9 18.4v1a2.4 2.4 0 0 1-2.4 2.4h-3.4"/>' +
+      '<circle cx="12.7" cy="21.8" r="1.35" fill="currentColor" stroke="none"/></svg>',
     lead_change:
       '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M3 17l3-9 4 5 2-8 2 8 4-5 3 9z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>',
@@ -157,7 +163,16 @@
       '.rj-direct-lap{flex-shrink:0;font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--accent,#9CA3AF);letter-spacing:.04em;min-width:24px;padding:2px 6px;background:rgba(255,255,255,.03);border:1px solid var(--accent-border,rgba(156,163,175,.25));border-radius:5px;text-align:center;line-height:1.25}',
       '.rj-direct-text{flex:1;min-width:0;font-size:12px;color:var(--text2);line-height:1.45;padding-top:1px}',
       '.rj-direct-text strong{color:var(--text);font-weight:700}',
-      '.rj-direct-item.is-radio .rj-direct-text{font-style:italic;color:#A8D8E8}',
+      /* La voix de l'ingénieur se détachait à peine : même fond, même bordure
+         que les autres entrées, seul le texte changeait de teinte. On lui
+         donne un liseré plus épais, un fond plus dense et une lueur discrète,
+         pour qu'on la repère sans avoir à lire. */
+      '.rj-direct-item.is-radio{' +
+        'background:linear-gradient(135deg,rgba(34,211,238,.17) 0%,rgba(8,26,42,.55) 100%) !important;' +
+        'border-color:rgba(34,211,238,.48) !important;border-left-width:4px !important;' +
+        'box-shadow:inset 0 0 0 1px rgba(34,211,238,.10),0 2px 10px rgba(34,211,238,.12)}',
+      '.rj-direct-item.is-radio .rj-direct-ico{color:#22D3EE;opacity:1}',
+      '.rj-direct-item.is-radio .rj-direct-text{font-style:italic;color:#BEE9F5}',
       '.rj-direct-item.is-radio .rj-direct-text strong{color:#67E8F9}',
       '.rj-direct-radio-prefix{font-family:var(--font-display);font-size:9px;font-weight:800;color:#22D3EE;letter-spacing:.10em;text-transform:uppercase;margin-right:6px;display:inline-block;font-style:normal}',
       '.rj-direct-ico{flex-shrink:0;width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;color:var(--accent,#9CA3AF);background:var(--accent-bg,rgba(156,163,175,.08));border:1px solid var(--accent-border,rgba(156,163,175,.2));margin-top:-1px}',
