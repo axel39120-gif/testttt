@@ -383,11 +383,7 @@ switch(G.cat){case "Formule 1":/* #16 — Seuils Q1/Q2/Q3 robustes : Q1 élimine
  // Session bonus: Q3 cars are lighter, fresh tyres → marginally faster
  var sessionBonus=t===3?-0.004:t===2?-0.001:0;
  // Lap-in-stint timing
- var isFinalLap=n&&r===n;
- var lapBonus=0;
- if(r===1)lapBonus=0.005; // out lap (tyres cold)
- else if(isFinalLap)lapBonus=-0.003; // push lap
- else lapBonus=-0.0015; // standard fast lap
+ var isFinalLap=n&&r===n; var lapBonus=0;/* PROGRESSION EN SESSION — l'écart entre deux tours lancés ne valait que 0,15 % du temps de référence, un dixième de seconde, quand la variation de régularité en vaut cinq fois plus. La piste gomme, les pneus arrivent en température, le pilote apprend le circuit : chaque tour lancé gagne maintenant quatre dixièmes de pour cent sur le précédent. */if(r===1)lapBonus=0.005;else lapBonus=-0.002-(r-2)*0.004;if(isFinalLap)lapBonus-=0.002;
  // Time-in-session: pushed harder near end
  var pressureBonus=(typeof a==='number')?(0.005*(1-a)-0.002):0;
  // Combine
@@ -1105,7 +1101,7 @@ function renderChronoBar(e,t,r){var n=document.getElementById("quali-chrono-bar"
 // Init pneus session
 _initQualiTyreState(e);
 QUALI_STATE._sessionRunning=true;
-renderChronoBar(o,a,e),QUALI_STATE.chronoInterval=setInterval(function(){renderChronoBar(o=Math.max(0,o-1),a,e),o<=0&&(clearInterval(QUALI_STATE.chronoInterval),QUALI_STATE.chronoInterval=null)},i/a);var s={},l={};if(t.forEach(function(t){var n=r[t],a=1===e?2:1,i=1===e?3:2;if(n.isPlayer)s[t]=i;else{var o=i-a,l=.6*(n.skill-.5),c=.4*-(n.consistency-.5),d=Math.random()+l+c,p=a+Math.round(d*o);p=Math.max(a,Math.min(i,p)),s[t]=p}}),1===e||2===e){var c=1===e?3:2,d;t.slice().sort(function(e,t){return r[t].skill-r[e].skill}).forEach(function(e,t){var a=r[e],i=t+1,o,d=i<=n&&i>=n-2;
+renderChronoBar(o,a,e),QUALI_STATE.chronoInterval=setInterval(function(){renderChronoBar(o=Math.max(0,o-1),a,e),o<=0&&(clearInterval(QUALI_STATE.chronoInterval),QUALI_STATE.chronoInterval=null)},i/a);var s={},l={};if(t.forEach(function(t){var n=r[t],a=1===e?2:1,i=1===e?3:2;/* Le joueur n'avait qu'un seul tour lancé en Q1 : un tour de sortie, un tour chronométré, puis éventuellement un tour de rattrapage. Aucune comparaison possible, donc aucune amélioration visible. On lui accorde un essai supplémentaire par session. */if(n.isPlayer)s[t]=i+1;else{var o=i-a,l=.6*(n.skill-.5),c=.4*-(n.consistency-.5),d=Math.random()+l+c,p=a+Math.round(d*o);p=Math.max(a,Math.min(i,p)),s[t]=p}}),1===e||2===e){var c=1===e?3:2,d;t.slice().sort(function(e,t){return r[t].skill-r[e].skill}).forEach(function(e,t){var a=r[e],i=t+1,o,d=i<=n&&i>=n-2;
 /* #13 — Calcul du rescue lap chance pour le joueur, basé sur :
  - stat pression (60% du poids) — modulateur principal, refletant la solidité mentale
  - consistency dérivée (40% du poids) — moyenne (regularite + concentration) / 200
