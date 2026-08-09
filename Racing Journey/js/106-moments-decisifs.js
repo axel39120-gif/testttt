@@ -66,11 +66,60 @@
       return w.id === "wet" || w.id === "storm";
     } catch (e) { return false; }
   }
+  /* Une écurie de pointe est une écurie dont la voiture figure parmi les
+     meilleures : c'est ce qui rend le résultat inattendu, ou non. */
+  function dansUneGrandeEcurie() {
+    try {
+      var G = G_();
+      if (!G || !G.currentTeam) return false;
+      if (typeof window.TEAM_RATINGS === "undefined") return false;
+      var notes = [];
+      var cle = G.currentTeam + "_" + G.saison;
+      var moi = window.TEAM_RATINGS[cle];
+      if (!moi) return false;
+      var valeur = moi[G.cat];
+      if (typeof valeur !== "number") return false;
+      Object.keys(window.TEAM_RATINGS).forEach(function (k) {
+        var v = window.TEAM_RATINGS[k] && window.TEAM_RATINGS[k][G.cat];
+        if (typeof v === "number") notes.push(v);
+      });
+      if (notes.length < 4) return false;
+      notes.sort(function (a, b) { return b - a; });
+      /* Le tiers supérieur du plateau. */
+      return valeur >= notes[Math.floor(notes.length / 3)];
+    } catch (e) { return false; }
+  }
+
   function avancement() {
     try {
       var L = window.LIVE_RACE;
       return (L && L.total) ? (L.cur / L.total) : 0;
     } catch (e) { return 0; }
+  }
+
+  /* ==================================================================
+   * LES DISCIPLINES CONCERNÉES
+   *
+   * Ces moments n'ont de sens que dans les catégories où le sport se joue
+   * à ce niveau d'enjeu. Un pilote de karting junior n'a pas de muret qui
+   * lui demande de céder une place, pas de voiture de sécurité, pas de
+   * commissaire sportif qui lui inflige dix secondes d'arrêt.
+   *
+   * Chaque moment déclare les disciplines où il peut survenir. Certains
+   * sont universels — un déluge est un déluge partout —, d'autres tiennent
+   * à la nature même du championnat : les ovales pour l'IndyCar, la nuit
+   * et les relais pour l'endurance, la brutalité des pneus japonais pour
+   * la Super Formula.
+   * ================================================================== */
+  var PHARES = ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"];
+
+  function categorie() {
+    try { return (G_() || {}).cat || ""; } catch (e) { return ""; }
+  }
+  function dansCategorie(liste) {
+    var c = categorie();
+    if (!liste || !liste.length) return PHARES.indexOf(c) >= 0;
+    return liste.indexOf(c) >= 0;
   }
 
   /* ==================================================================
@@ -83,6 +132,7 @@
   var MOMENTS = [
     {
       id: "deluge",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
       /* Fuji 1976 : la pluie tombe si fort que certains rentrent au stand
          et renoncent au titre plutôt que de risquer leur vie. */
       quand: function () { return pluie() && avancement() > 0.15; },
@@ -107,6 +157,7 @@
     },
     {
       id: "chicane",
+      cats: ["Formule 1", "Super Formula"],
       /* Suzuka 1989 et 1990 : la chicane, la porte qui se ferme, et un
          championnat qui bascule sur une seule trajectoire. */
       quand: function () { var d = devant(); return !!d && avancement() > 0.55; },
@@ -130,6 +181,7 @@
     },
     {
       id: "pneu",
+      cats: ["Formule 1", "Super Formula", "IndyCar"],
       /* Adélaïde 1986 : un pneu explose à pleine vitesse dans la dernière
          course, et le titre s'envole en une seconde. */
       quand: function () { return avancement() > 0.65; },
@@ -152,6 +204,7 @@
     },
     {
       id: "trois_roues",
+      cats: ["Formule 1", "Super Formula", "IndyCar"],
       /* Zandvoort 1979 : un tour entier sur trois roues, l'arrière traînant
          sur la piste, parce qu'abandonner ne se conçoit pas. */
       quand: function () { return avancement() > 0.35; },
@@ -174,6 +227,7 @@
     },
     {
       id: "derniere_ligne",
+      cats: ["Formule 1", "Super Formula", "IndyCar"],
       /* Interlagos 2008 : un titre gagné dans le dernier virage du dernier
          tour de la dernière course. */
       quand: function () {
@@ -201,6 +255,7 @@
     },
     {
       id: "consigne",
+      cats: ["Formule 1", "Super Formula"],
       /* Autriche 2002, Malaisie 2013 : l'écurie demande, le pilote obéit
          ou non, et le paddock en parle pendant des années. */
       quand: function () {
@@ -229,6 +284,7 @@
     },
     {
       id: "safety_final",
+      cats: ["Formule 1", "IndyCar"],
       /* Abou Dabi 2021 : une neutralisation tardive, un choix de pneus, et
          un championnat qui change de mains en un tour. */
       quand: function () { return avancement() > 0.82; },
@@ -252,6 +308,7 @@
     },
     {
       id: "carambolage",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
       /* Spa 1998 : treize voitures détruites au premier virage, sous la
          pluie, en quelques secondes. */
       quand: function () { return avancement() < 0.12 && (pluie() || Math.random() < 0.5); },
@@ -274,6 +331,7 @@
     },
     {
       id: "remontee",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
       /* Nürburgring 1957 : cinquante secondes de retard, dix tours, et le
          record du tour battu neuf fois de suite. */
       quand: function () { var m = moi(); return !!m && m.pos >= 8 && avancement() > 0.4 && avancement() < 0.8; },
@@ -297,6 +355,7 @@
     },
     {
       id: "attrition",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
       /* Monaco 1996 : trois voitures à l'arrivée, et un vainqueur parti
          quatorzième. */
       quand: function () {
@@ -322,6 +381,7 @@
     },
     {
       id: "aspiration",
+      cats: ["Formule 1", "Super Formula", "IndyCar"],
       /* Monza 1971 : quatre voitures séparées par un centième après trois
          cents kilomètres d'aspiration. */
       quand: function () {
@@ -349,7 +409,547 @@
       ]
     },
     {
+      id: "secours",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
+      /* Nürburgring 1976 : quatre pilotes s'arrêtent et se jettent dans les
+         flammes pour extraire un concurrent de sa voiture. Aucun n'a
+         terminé la course. Tous ont sauvé une vie. */
+      quand: function () { return avancement() > 0.2 && avancement() < 0.8; },
+      titre: "Les flammes",
+      recit: "Sortie du virage rapide : une voiture est en travers, contre le rail, " +
+             "et elle brûle. Le pilote bouge encore à l'intérieur. Les commissaires " +
+             "sont à deux cents mètres, ils courent, mais ils sont loin. " +
+             "Tu es le premier sur les lieux.",
+      question: "Tu es le seul à pouvoir arriver à temps.",
+      choix: [
+        { label: "Continuer, les secours arrivent",
+          detail: "Ce n'est pas ton rôle. Ils sont formés pour ça.",
+          resultat: { gain: 1, perte: 0, abandon: 0, mental: -6,
+            texte: "Tu passes. Dans le rétroviseur, la fumée noircit. Tu apprendras " +
+                   "après la course qu'il s'en est sorti. Tu y penseras longtemps." } },
+        { label: "S'arrêter et le sortir de là",
+          detail: "Une course n'a pas ce prix.",
+          resultat: { gain: 0, perte: 0, abandon: 1.0, mental: 8, reputation: 25,
+            texte: "Tu ranges la voiture, tu cours, et tu le tires hors du cockpit " +
+                   "avec les autres. Ta course est finie. Le paddock entier le saura." } }
+      ]
+    },
+    {
+      id: "sortie_volontaire",
+      cats: ["Formule 1", "Super Formula"],
+      /* Jerez 1997 : le leader du championnat braque volontairement sur son
+         rival qui le dépasse. La manœuvre échoue, et lui coûte tout. */
+      quand: function () {
+        var m = moi(); var d = devant();
+        return !!(d && m && m.pos <= 4 && avancement() > 0.7);
+      },
+      titre: "Le virage de trop",
+      recit: function () {
+        return nomCourt(devant()) + " vient de plonger à l'intérieur. Il a réussi " +
+               "son freinage, tu as perdu la position. Vous vous battez pour le " +
+               "championnat, et tu sais exactement ce qu'une roue dans son flanc " +
+               "produirait maintenant.";
+      },
+      question: "Le volant est encore entre tes mains.",
+      choix: [
+        { label: "Le laisser passer",
+          detail: "Il y a d'autres tours. Il y a d'autres courses.",
+          resultat: { gain: 0, perte: 1, abandon: 0.02, mental: -2,
+            texte: "Tu ouvres la trajectoire. Il s'en va. Tu ravales quelque chose " +
+                   "et tu continues à rouler." } },
+        { label: "Fermer sur lui",
+          detail: "S'il ne passe pas, le championnat reste ouvert.",
+          resultat: { gain: 0, perte: 2, abandon: 0.50, rivalite: 40, reputation: -12,
+            mental: -3,
+            texte: "Tu braques. Le contact est violent et personne ne s'y trompera : " +
+                   "les caméras ont tout vu." } }
+      ]
+    },
+    {
+      id: "avance_confortable",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
+      /* Monaco 1988 : une minute d'avance, une seconde d'inattention, et le
+         rail. Le pilote rentre chez lui à pied sans parler à personne. */
+      quand: function () {
+        var m = moi();
+        return !!(m && m.pos === 1 && avancement() > 0.6);
+      },
+      titre: "L'avance",
+      recit: "Tu mènes avec une avance considérable. Le muret te demande de lever " +
+             "le pied, de ramener la voiture, de ne rien tenter. Mais tu es dans un " +
+             "de ces états où chaque virage se présente parfaitement, où tu pourrais " +
+             "encore aller plus vite.",
+      question: "Personne ne te demande d'aller plus vite.",
+      choix: [
+        { label: "Lever le pied",
+          detail: "La victoire est faite. Il suffit de la ramener.",
+          resultat: { gain: 0, perte: 0, abandon: 0.02, mental: 0,
+            texte: "Tu ralentis d'une seconde au tour. C'est long, un dernier relais " +
+                   "quand on gère." } },
+        { label: "Continuer à attaquer",
+          detail: "Ces sensations-là ne reviennent pas souvent.",
+          resultat: { gain: 0, perte: 0, abandon: 0.34, mental: 4, reputation: 4,
+            texte: "Tu continues à tourner au rythme des qualifications, seul en " +
+                   "piste, pour personne d'autre que toi." } }
+      ]
+    },
+    {
+      id: "pneu_dernier_tour",
+      cats: ["Formule 1", "Super Formula", "IndyCar"],
+      /* Silverstone 2020 : un pneu avant explose dans le dernier tour et le
+         leader termine sur trois roues, à quelques secondes de la meute. */
+      quand: function () {
+        var m = moi();
+        return !!(m && m.pos <= 5 && avancement() > 0.95);
+      },
+      titre: "Crevaison",
+      recit: "Dernier tour. Le pneu avant gauche part en lambeaux dans le virage " +
+             "rapide. La voiture tire violemment, le volant se bat contre tes bras. " +
+             "L'arrivée est à un tiers de tour. Derrière, ils reviennent à toute allure.",
+      question: "Un tiers de tour, sur trois roues.",
+      choix: [
+        { label: "Ralentir et sécuriser",
+          detail: "Perdre des places mais franchir la ligne.",
+          resultat: { gain: -4, perte: 0, abandon: 0.06, mental: 0,
+            texte: "Tu rampes jusqu'à l'arrivée. Trois voitures te passent dans les " +
+                   "derniers mètres." } },
+        { label: "Maintenir l'allure",
+          detail: "Tenir le rythme et espérer que ça tienne.",
+          resultat: { gain: 0, perte: 3, abandon: 0.35, mental: 4, reputation: 6,
+            texte: "Tu gardes le pied dedans, la jante frotte, les étincelles " +
+                   "éclairent le bas-côté." } }
+      ]
+    },
+    {
+      id: "depart_pluie",
+      cats: ["Formule 1", "Super Formula"],
+      /* Hongrie 2021 : toute la grille rentre aux stands changer de pneus au
+         tour de formation, et un pilote se retrouve seul sur la ligne. */
+      quand: function () { return avancement() < 0.1 && pluie(); },
+      titre: "Seul sur la grille",
+      recit: "Tour de formation. La piste sèche à vue d'œil et tout le monde plonge " +
+             "aux stands pour chausser des gommes lisses. Tu es le seul à ne pas " +
+             "avoir suivi. Dans une minute, tu seras seul sur la ligne de départ, " +
+             "avec des pneus pluie sur une piste qui sèche.",
+      question: "Il est encore temps de les suivre.",
+      choix: [
+        { label: "Rentrer comme les autres",
+          detail: "Ne pas se singulariser. Suivre le peloton.",
+          resultat: { gain: -1, perte: 0, abandon: 0.02, mental: 0,
+            texte: "Tu suis le mouvement et reprends ta place dans la file." } },
+        { label: "Rester en piste",
+          detail: "S'il repleut, tu seras seul devant.",
+          resultat: { gain: 6, perte: 5, abandon: 0.10, mental: 3, reputation: 5,
+            texte: "Tu t'alignes seul sur la grille, moteur au ralenti, pendant que " +
+                   "les autres se pressent dans la voie des stands." } }
+      ]
+    },
+    {
+      id: "chaleur",
+      cats: ["Formule 1", "IndyCar", "Endurance WEC"],
+      /* Dallas 1984 : quarante degrés, la piste se désagrège, les murs se
+         rapprochent à chaque tour et la moitié du plateau s'écrase. */
+      quand: function () {
+        try {
+          var w = (window.RACE_STATE && window.RACE_STATE.weather) || {};
+          return w.id === "hot" && avancement() > 0.4;
+        } catch (e) { return false; }
+      },
+      titre: "La piste se défait",
+      recit: "La chaleur fait éclater le revêtement. À chaque tour, la trajectoire " +
+             "se couvre un peu plus de gravillons et les murs semblent se rapprocher. " +
+             "Dans le cockpit, tu ne sens plus tes mains à force de corriger.",
+      question: "Ceux de devant ralentissent aussi.",
+      choix: [
+        { label: "Rouler large et propre",
+          detail: "Éviter les débris, préserver la voiture et soi-même.",
+          resultat: { gain: 1, perte: 0, abandon: 0.05, mental: -1,
+            texte: "Tu prends des trajectoires inhabituelles, loin des murs. C'est " +
+                   "plus lent, mais tu es encore là." } },
+        { label: "Garder la trajectoire",
+          detail: "La ligne est la plus rapide. Elle l'est encore.",
+          resultat: { gain: 5, perte: 3, abandon: 0.32, mental: 2,
+            texte: "Tu restes sur la corde, entre les gravillons et le béton." } }
+      ]
+    },
+    {
+      id: "petite_ecurie",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
+      /* Hungaroring 1997 : une écurie de fond de grille mène la course à
+         trois tours de l'arrivée, avant qu'une pièce ne lâche. */
+      quand: function () {
+        var m = moi();
+        return !!(m && m.pos <= 3 && avancement() > 0.8 && !dansUneGrandeEcurie());
+      },
+      titre: "Là où personne ne t'attendait",
+      recit: "Tu es dans les trois premiers, et personne n'avait prévu ça — ni les " +
+             "commentateurs, ni les autres écuries, ni ton propre garage. La radio " +
+             "est étrangement silencieuse. Le muret n'ose pas y croire, et la boîte " +
+             "commence à accrocher au passage de la troisième.",
+      question: "Il reste peu de tours.",
+      choix: [
+        { label: "Ménager la mécanique",
+          detail: "Passer les rapports en douceur et ramener le résultat.",
+          resultat: { gain: 0, perte: 1, abandon: 0.08, mental: 1,
+            texte: "Tu roules en épargnant la boîte, en priant pour chaque rapport." } },
+        { label: "Ne rien changer",
+          detail: "Ce résultat ne se représentera peut-être jamais.",
+          resultat: { gain: 2, perte: 0, abandon: 0.30, mental: 4, reputation: 8,
+            texte: "Tu ne changes rien à ton rythme. La boîte tiendra ou ne tiendra pas." } }
+      ]
+    },
+    {
+      id: "defense",
+      cats: ["Formule 1", "Super Formula", "IndyCar"],
+      /* Imola 2005 et 2006 : douze tours de défense sans la moindre erreur,
+         avec une voiture plus rapide collée dans les échappements. */
+      quand: function () {
+        var m = moi();
+        var derriere = null;
+        pilotes().forEach(function (d) { if (d && m && d.pos === m.pos + 1) derriere = d; });
+        return !!(derriere && m && m.pos <= 6 && avancement() > 0.7);
+      },
+      titre: "Dans les échappements",
+      recit: "Il est là depuis dix tours, à moins d'une seconde, et il est plus " +
+             "rapide que toi. Tu connais son point de freinage, il connaît le tien. " +
+             "Une seule sortie de virage manquée et c'est réglé.",
+      question: "Il reste beaucoup de tours.",
+      choix: [
+        { label: "Défendre proprement",
+          detail: "Tenir la corde, ne jamais bloquer deux fois.",
+          resultat: { gain: 0, perte: 1, abandon: 0.03, mental: 2,
+            texte: "Tu défends au millimètre, sans jamais sortir du cadre. Chaque " +
+                   "tour est un exercice de sang-froid." } },
+        { label: "Tout verrouiller",
+          detail: "Fermer chaque porte, quitte à user les pneus et la patience.",
+          resultat: { gain: 0, perte: 0, abandon: 0.18, rivalite: 20, mental: 1,
+            texte: "Tu fermes tout, systématiquement. Derrière, la patience s'épuise." } }
+      ]
+    },
+    {
+      id: "remontee_pluie",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC"],
+      /* Montréal 2011 : quatre heures de course, une pénalité, un tour de
+         retard, et une victoire arrachée au dernier virage. */
+      quand: function () {
+        var m = moi();
+        return !!(m && pluie() && m.pos >= 12 && avancement() > 0.3 && avancement() < 0.75);
+      },
+      titre: "Dernier de la file",
+      recit: "Tu es en fond de classement, la course dure depuis une éternité et " +
+             "la pluie n'a pas cessé. Ceux de devant se traînent, prudents, sur une " +
+             "piste qu'ils ne lisent plus. Toi, tu as trouvé quelque chose : une " +
+             "trajectoire hors ligne où l'eau s'évacue mieux.",
+      question: "Personne d'autre ne l'a vue.",
+      choix: [
+        { label: "Rester sur la trajectoire",
+          detail: "Ne pas prendre de risque supplémentaire.",
+          resultat: { gain: 2, perte: 0, abandon: 0.04, mental: 0,
+            texte: "Tu suis la file et grappilles quelques places au fil des erreurs." } },
+        { label: "Prendre la ligne mouillée",
+          detail: "Là où personne ne roule, la piste est différente.",
+          resultat: { gain: 8, perte: 4, abandon: 0.26, mental: 4, reputation: 7,
+            texte: "Tu sors de la trajectoire et tu gagnes deux secondes au tour. " +
+                   "Personne ne comprend d'où tu viens." } }
+      ]
+    },
+    {
+      id: "penalite",
+      cats: ["Formule 1", "IndyCar"],
+      /* Silverstone 1998 : une pénalité notifiée si tard qu'elle est purgée
+         dans la voie des stands, après la ligne d'arrivée. */
+      quand: function () { return avancement() > 0.75 && Math.random() < 0.5; },
+      titre: "La pénalité",
+      recit: "La direction de course t'inflige dix secondes d'arrêt pour un " +
+             "dépassement jugé irrégulier. Le règlement dit qu'elle doit être purgée " +
+             "avant la fin. Ton ingénieur, lui, relit le règlement à voix haute, et " +
+             "il a l'air de trouver quelque chose.",
+      question: "Le muret hésite.",
+      choix: [
+        { label: "Purger immédiatement",
+          detail: "Prendre la sanction et repartir la conscience tranquille.",
+          resultat: { gain: -3, perte: 0, abandon: 0, mental: 0, confiance: 4,
+            texte: "Tu rentres, tu attends dix secondes, tu repars. Le classement " +
+                   "est ce qu'il est." } },
+        { label: "Suivre l'ingénieur",
+          detail: "Il pense qu'on peut la purger au dernier moment.",
+          resultat: { gain: 3, perte: 4, abandon: 0.05, confiance: -6, reputation: 3,
+            mental: 1,
+            texte: "Tu restes en piste. Les commissaires étudieront le cas après " +
+                   "la course, et personne ne sait ce qu'ils décideront." } }
+      ]
+    },
+    /* ---------------------------------------------------------------
+     * INDYCAR — les ovales, le carburant, les murs
+     * ------------------------------------------------------------- */
+    {
+      id: "ovale_pack",
+      cats: ["IndyCar"],
+      quand: function () { return avancement() > 0.3 && avancement() < 0.9; },
+      titre: "Trois de front",
+      recit: "Sur l'ovale, le peloton roule groupé, à quelques centimètres, à plus " +
+             "de trois cent cinquante à l'heure. Une file s'est formée à l'extérieur " +
+             "et remonte. Pour la suivre, il faut s'engager dans une troisième " +
+             "colonne, là où la piste n'est pas faite pour trois voitures.",
+      question: "Le mur est à un mètre de ta roue droite.",
+      choix: [
+        { label: "Rester en file",
+          detail: "Garder sa place dans le train, attendre une ouverture.",
+          resultat: { gain: 0, perte: 2, abandon: 0.04, mental: 0,
+            texte: "Tu restes dans la file basse. La colonne extérieure te dépasse " +
+                   "voiture après voiture." } },
+        { label: "Prendre la troisième ligne",
+          detail: "Là-haut, l'air est propre et la piste est libre.",
+          resultat: { gain: 6, perte: 3, abandon: 0.30, mental: 3,
+            texte: "Tu montes tout en haut de la piste, roue contre mur, et tu " +
+                   "remontes le long du béton." } }
+      ]
+    },
+    {
+      id: "carburant_ovale",
+      cats: ["IndyCar"],
+      quand: function () { return avancement() > 0.78; },
+      titre: "La dernière goutte",
+      recit: "Le calcul du muret est formel : il manque deux tours de carburant " +
+             "pour rallier l'arrivée. Un dernier ravitaillement coûterait la course. " +
+             "Rouler en économie signifie lever le pied dans les virages et laisser " +
+             "revenir tout le monde.",
+      question: "Deux tours. C'est tout ce qui manque.",
+      choix: [
+        { label: "Ravitailler",
+          detail: "Perdre du terrain, mais finir à coup sûr.",
+          resultat: { gain: -5, perte: 0, abandon: 0.02, mental: 0,
+            texte: "Tu plonges dans la voie des stands. Le plein est fait en huit " +
+                   "secondes, et tu ressors loin derrière." } },
+        { label: "Tenter l'économie",
+          detail: "Lever le pied, rouler à l'ancienne, et prier.",
+          resultat: { gain: 4, perte: 4, abandon: 0.28, mental: 3,
+            texte: "Tu coupes les gaz avant chaque virage et tu roules à l'oreille " +
+                   "du moteur. Le muret ne dit plus rien." } }
+      ]
+    },
+    {
+      id: "mur_sortie",
+      cats: ["IndyCar"],
+      quand: function () {
+        var m = moi();
+        return !!(m && m.pos <= 6 && avancement() > 0.9);
+      },
+      titre: "Sortie du dernier virage",
+      recit: "Dernier tour, dernier virage relevé. La trajectoire idéale passe à " +
+             "quelques centimètres du mur extérieur, et l'aspiration de celui de " +
+             "devant rend ta voiture nerveuse à l'arrière.",
+      question: "Le mur ne pardonne rien.",
+      choix: [
+        { label: "Prendre la ligne basse",
+          detail: "Plus sûr, plus lent, loin du béton.",
+          resultat: { gain: 0, perte: 1, abandon: 0.03, mental: 0,
+            texte: "Tu passes bas et propre. La ligne d'arrivée arrive un peu trop tôt." } },
+        { label: "Coller au mur",
+          detail: "La trajectoire la plus rapide, à la largeur d'une main.",
+          resultat: { gain: 3, perte: 0, abandon: 0.32, mental: 3, reputation: 4,
+            texte: "Tu vises l'extérieur et tu longes le béton, la roue à quelques " +
+                   "centimètres, jusqu'au drapeau." } }
+      ]
+    },
+
+    /* ---------------------------------------------------------------
+     * ENDURANCE — la nuit, le trafic, les relais
+     * ------------------------------------------------------------- */
+    {
+      id: "nuit",
+      cats: ["Endurance WEC"],
+      quand: function () { return avancement() > 0.35 && avancement() < 0.85; },
+      titre: "Quatre heures du matin",
+      recit: "La nuit est totale et les phares n'éclairent que quarante mètres. " +
+             "Tu roules depuis deux heures d'affilée, les yeux brûlants. Devant, " +
+             "des feux rouges se rapprochent : une voiture d'une catégorie plus " +
+             "lente, dans une portion où il n'y a pas de place pour deux.",
+      question: "Le prochain point de dépassement est loin.",
+      choix: [
+        { label: "Attendre la ligne droite",
+          detail: "Perdre trois secondes, ne rien risquer.",
+          resultat: { gain: 0, perte: 1, abandon: 0.02, mental: 0,
+            texte: "Tu restes derrière, patient, jusqu'à l'endroit prévu pour ça." } },
+        { label: "Passer maintenant",
+          detail: "Il t'a vu. Sans doute.",
+          resultat: { gain: 4, perte: 2, abandon: 0.26, mental: 2,
+            texte: "Tu te déportes et tu passes à l'intérieur, dans le noir, en " +
+                   "espérant qu'il tienne sa trajectoire." } }
+      ]
+    },
+    {
+      id: "double_relais",
+      cats: ["Endurance WEC"],
+      quand: function () { return avancement() > 0.3 && avancement() < 0.8; },
+      titre: "Doubler le relais",
+      recit: "L'ingénieur propose de repartir sur les mêmes pneus pour un second " +
+             "relais complet. Tu gagnerais une trentaine de secondes sur la " +
+             "concurrence. En fin de relais, la gomme sera à la corde et la voiture " +
+             "ne tiendra plus la route dans les virages rapides.",
+      question: "Trente secondes, c'est énorme sur une course de cette durée.",
+      choix: [
+        { label: "Chausser du neuf",
+          detail: "Rester en confiance, attaquer sur des gommes fraîches.",
+          resultat: { gain: 0, perte: 1, abandon: 0.02, mental: 1,
+            texte: "Les mécaniciens changent les quatre pneus. Tu repars avec une " +
+                   "voiture qui répond." } },
+        { label: "Repartir sur les mêmes",
+          detail: "Encaisser la dégradation et prendre l'avantage au chrono.",
+          resultat: { gain: 5, perte: 3, abandon: 0.24, mental: -1,
+            texte: "Tu repars sans changer. Les vingt premiers tours sont un délice, " +
+                   "les vingt derniers seront autre chose." } }
+      ]
+    },
+    {
+      id: "panne_finale",
+      cats: ["Endurance WEC"],
+      /* Le Mans 2016 : une voiture en tête s'arrête dans le tour final, à
+         trois minutes de la victoire, sous les yeux du monde entier. */
+      quand: function () {
+        var m = moi();
+        return !!(m && m.pos <= 3 && avancement() > 0.93);
+      },
+      titre: "Le dernier tour",
+      recit: "Tu es en tête après des heures de course. Dans le dernier relais, " +
+             "un voyant s'allume sur le volant et la puissance devient irrégulière. " +
+             "Le muret te demande de couper le moteur et de le relancer — une " +
+             "manœuvre qui peut tout réparer, ou tout arrêter définitivement.",
+      question: "Il reste un tour.",
+      choix: [
+        { label: "Ne rien toucher",
+          detail: "Ramener la voiture telle qu'elle est, à l'allure qu'elle accepte.",
+          resultat: { gain: 0, perte: 3, abandon: 0.20, mental: -1,
+            texte: "Tu ne touches à rien et tu roules doucement, en écoutant chaque " +
+                   "hésitation du moteur." } },
+        { label: "Couper et relancer",
+          detail: "Suivre le muret. Tout ou rien.",
+          resultat: { gain: 1, perte: 0, abandon: 0.40, mental: 2,
+            texte: "Tu coupes le moteur en roulant. Le silence dure une seconde " +
+                   "et demie. C'est très long." } }
+      ]
+    },
+    {
+      id: "trafic_gt",
+      cats: ["Endurance WEC"],
+      quand: function () { return avancement() > 0.2 && avancement() < 0.9; },
+      titre: "Le peloton lent",
+      recit: "Cinq voitures de catégorie inférieure se battent entre elles dans la " +
+             "section rapide. Elles ne se regardent pas, elles ne t'ont pas vu, et " +
+             "elles occupent toute la largeur de la piste. Ton relais se joue sur " +
+             "les prochaines secondes.",
+      question: "Il faudra bien passer.",
+      choix: [
+        { label: "Lever et attendre",
+          detail: "Laisser leur bagarre se dénouer, perdre du temps.",
+          resultat: { gain: 0, perte: 2, abandon: 0.02, mental: -1,
+            texte: "Tu lèves le pied et tu suis leur bagarre pendant un tour entier." } },
+        { label: "Se frayer un passage",
+          detail: "Trouver l'espace entre deux d'entre elles.",
+          resultat: { gain: 4, perte: 2, abandon: 0.24, mental: 2,
+            texte: "Tu vises un espace qui n'existe pas encore et tu comptes sur " +
+                   "leur réaction." } }
+      ]
+    },
+
+    /* ---------------------------------------------------------------
+     * SUPER FORMULA — pneus tranchants, circuits japonais, typhons
+     * ------------------------------------------------------------- */
+    {
+      id: "falaise_pneus",
+      cats: ["Super Formula"],
+      quand: function () { return avancement() > 0.5; },
+      titre: "La falaise",
+      recit: "Les pneus ne se dégradent pas progressivement ici : ils tiennent, " +
+             "tiennent encore, puis lâchent d'un coup en l'espace d'un tour. " +
+             "Les tiens en sont à ce point précis où personne ne sait s'il reste " +
+             "deux tours ou dix.",
+      question: "L'arrêt te ferait ressortir dans le trafic.",
+      choix: [
+        { label: "Rentrer maintenant",
+          detail: "Ne pas jouer avec ce que ces pneus font quand ils lâchent.",
+          resultat: { gain: -3, perte: 0, abandon: 0.02, mental: 0,
+            texte: "Tu rentres avant la falaise et tu ressors au milieu du peloton." } },
+        { label: "Encore trois tours",
+          detail: "Sortir juste après ceux qui viennent de s'arrêter.",
+          resultat: { gain: 5, perte: 4, abandon: 0.26, mental: 2,
+            texte: "Tu continues. Au tour suivant, l'arrière commence à glisser " +
+                   "dans les appuis." } }
+      ]
+    },
+    {
+      id: "courbe_rapide",
+      cats: ["Super Formula"],
+      quand: function () {
+        var m = moi(); var d = devant();
+        return !!(d && m && avancement() > 0.4);
+      },
+      titre: "La grande courbe",
+      recit: function () {
+        return "La courbe rapide se prend à fond, en théorie. Avec l'air perturbé " +
+               "de " + nomCourt(devant()) + " juste devant, l'appui aérodynamique " +
+               "chute et la voiture devient imprévisible au point de corde.";
+      },
+      question: "À fond, ou presque à fond.",
+      choix: [
+        { label: "Lever légèrement",
+          detail: "Un souffle de moins, et la voiture reste posée.",
+          resultat: { gain: 0, perte: 1, abandon: 0.02, mental: 0,
+            texte: "Tu lèves imperceptiblement. La voiture tient, l'écart grandit." } },
+        { label: "Passer à fond",
+          detail: "Garder le pied au plancher dans l'air sale.",
+          resultat: { gain: 3, perte: 1, abandon: 0.28, mental: 3,
+            texte: "Tu gardes le pied au plancher. L'arrière s'allège au point de " +
+                   "corde et tu corriges à l'instinct." } }
+      ]
+    },
+    {
+      id: "typhon",
+      cats: ["Super Formula"],
+      quand: function () { return pluie() && avancement() > 0.25; },
+      titre: "L'avis de typhon",
+      recit: "Le vent forcit à chaque tour et la direction de course surveille " +
+             "l'arrivée du typhon. Si la course est interrompue avant la mi-distance, " +
+             "aucun point ne sera attribué. Après, ils compteront les points de moitié.",
+      question: "Il manque quelques tours pour valider la course.",
+      choix: [
+        { label: "Assurer la position",
+          detail: "Rouler prudemment jusqu'à ce que la distance soit validée.",
+          resultat: { gain: 0, perte: 0, abandon: 0.03, mental: 0,
+            texte: "Tu roules pour durer. La course sera validée de justesse." } },
+        { label: "Attaquer tout de suite",
+          detail: "Gagner des places avant que le drapeau rouge ne fige tout.",
+          resultat: { gain: 5, perte: 3, abandon: 0.30, mental: 3,
+            texte: "Tu attaques sous les rafales, en sachant que chaque tour peut " +
+                   "être le dernier." } }
+      ]
+    },
+    {
+      id: "depart_arrete",
+      cats: ["Super Formula", "Formule 1"],
+      quand: function () { return avancement() < 0.08; },
+      titre: "L'embrayage",
+      recit: "Feux rouges allumés. Ton point de patinage a bougé de quelques " +
+             "millimètres depuis les essais — la chaleur, l'usure. Tu peux " +
+             "reproduire exactement ce que tu as répété, ou tenter un départ plus " +
+             "agressif en jouant sur le régime.",
+      question: "Une seconde de gagnée au départ vaut trois places.",
+      choix: [
+        { label: "Le départ répété",
+          detail: "Faire exactement ce qui a été travaillé.",
+          resultat: { gain: 1, perte: 0, abandon: 0.01, mental: 0,
+            texte: "Départ propre, sans éclat. Tu gardes ta position." } },
+        { label: "Jouer le régime",
+          detail: "Monter plus haut, relâcher plus vite, gagner deux longueurs.",
+          resultat: { gain: 4, perte: 3, abandon: 0.12, mental: 2,
+            texte: "Tu montes le régime et tu lâches l'embrayage plus tôt. " +
+                   "Les roues cherchent l'adhérence pendant un instant." } }
+      ]
+    },
+
+    {
       id: "brouillard",
+      cats: ["Formule 1", "Super Formula", "Endurance WEC"],
       /* Monaco 1984 : une course arrêtée sous la pluie alors qu'un pilote
          revenait sur le leader à trois secondes par tour. */
       quand: function () { return pluie() && avancement() > 0.4 && avancement() < 0.75; },
@@ -393,6 +993,9 @@
   function candidat() {
     var dispo = MOMENTS.filter(function (m) {
       try {
+        /* La discipline d'abord : inutile d'évaluer une situation qui ne
+           peut pas exister dans ce championnat. */
+        if (!dansCategorie(m.cats)) return false;
         if (!m.quand()) return false;
         /* Un moment déjà vécu peut revenir, mais bien plus rarement : ce
            qui fait leur prix, c'est qu'ils ne se répètent pas. */
