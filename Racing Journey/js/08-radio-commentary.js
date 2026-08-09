@@ -911,4 +911,9 @@
   } else {
     bootstrap();
   }
+
+  /* Exposé pour que d'autres sources alimentent le même fil plutôt que
+     d'ouvrir un second canal — le double propriétaire du nœud DOM avait
+     déjà causé des scintillements par le passé. */
+  window._rj08Direct = function (item) { try { _pushDirect(item); } catch (e) {} };
 })();
