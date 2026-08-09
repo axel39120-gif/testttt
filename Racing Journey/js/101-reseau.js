@@ -67,6 +67,22 @@
 
   function role(r) { return ROLES[r] || ROLES.contact; }
 
+  /* Chaque métier a son signe : une cravate pour qui décide, un casque à
+     micro pour qui parle à la radio, un plan pour qui dessine la voiture.
+     On reconnaît un contact avant d'avoir lu son intitulé. */
+  var ICONES = {
+    tp:          "cravate",
+    dir_sport:   "tablette",
+    dir_tech:    "plan",
+    ing_course:  "casque_micro",
+    agent:       "handshake",
+    journaliste: "mic",
+    sponsor:     "money",
+    pilote:      "helmet",
+    contact:     "users"
+  };
+  function iconeDe(r) { return ICONES[r] || "users"; }
+
   /* Poids d'un contact : relation × influence, ramené sur cent. */
   function poids(c) {
     if (!c) return 0;
@@ -152,7 +168,7 @@
     var nom = j.prenom + " " + j.nom;
     return inscrire("presse_" + cleDe(nom), {
       name: nom, role: "journaliste", team: j.media,
-      color: ROLES.journaliste.couleur, roleLabel: "Journaliste", icon: "mic"
+      color: ROLES.journaliste.couleur, roleLabel: "Journaliste", icon: iconeDe("journaliste")
     }, delta);
   }
 
@@ -161,7 +177,7 @@
     if (!p || !p.name) return null;
     return inscrire("pilote_" + cleDe(p.name), {
       name: p.name, role: "pilote", team: p.team || null,
-      color: ROLES.pilote.couleur, roleLabel: "Pilote", icon: "helmet"
+      color: ROLES.pilote.couleur, roleLabel: "Pilote", icon: iconeDe("pilote")
     }, delta);
   }
 
@@ -170,7 +186,7 @@
     if (!nom) return null;
     return inscrire("sponsor_" + cleDe(nom), {
       name: nom, role: "sponsor", team: null,
-      color: ROLES.sponsor.couleur, roleLabel: "Sponsor", icon: "tag"
+      color: ROLES.sponsor.couleur, roleLabel: "Sponsor", icon: iconeDe("sponsor")
     }, delta);
   }
 
@@ -418,6 +434,8 @@
           var G = G_();
           var c = (G && G.races) ? G.races[G.races.length - 1] : null;
           apresCourse(c);
+          rencontresDeCourse(c);
+          amorcerContacts();
         } catch (e) {}
       };
       hook._rj101 = true;
@@ -466,7 +484,7 @@
       if (G._network && G._network[cle]) return;
       var entree = inscrire(cle, {
         name: p.name, role: conf.role, team: equipe,
-        color: role(conf.role).couleur, roleLabel: conf.label, icon: "user"
+        color: role(conf.role).couleur, roleLabel: conf.label, icon: iconeDe(conf.role)
       }, 0);
       /* L'ingénieur de course, qu'on côtoie chaque week-end, démarre plus
          haut qu'un directeur technique aperçu de loin. */
@@ -490,6 +508,10 @@
           c.role = "ing_course";
           c.roleLabel = "Ingénieur de course";
         }
+        /* Les contacts inscrits avant l'arrivée des pictogrammes portaient
+           une icône générique : on la remet à jour au passage. */
+        var ic = iconeDe(c.role);
+        if (ic && c.icon !== ic) c.icon = ic;
         if (uniques[c.role] && !officiels[cle]) {
           c.role = "contact";
           c.roleLabel = "Ancien contact";
@@ -500,16 +522,64 @@
     return n;
   }
 
+  /* ------------------------------------------------------------------
+   * ON NE CONNAÎT PERSONNE EN ARRIVANT
+   *
+   * Six pilotes entraient au répertoire dès la création du personnage :
+   * un gamin de karting junior se retrouvait avec un carnet d'adresses
+   * avant d'avoir couru une seule fois. Un réseau se construit — c'est
+   * même tout l'intérêt d'en avoir un.
+   *
+   * Les rencontres se font maintenant en piste : on retient celui contre
+   * qui on s'est battu, celui avec qui on a partagé un podium, pas les
+   * dix-neuf autres noms de la grille.
+   * ---------------------------------------------------------------- */
+  var COURSES_AVANT_STAFF = 2;      // le temps de connaître son propre garage
+
+  function assezDeCourses() {
+    var G = G_();
+    try { return ((G.races || []).length + (G._rjCoursesTotal || 0)) >= COURSES_AVANT_STAFF; }
+    catch (e) { return false; }
+  }
+
+  /* Après chaque course, on retient ceux qu'on a vraiment croisés : le
+     pilote juste devant, celui juste derrière, et les compagnons de
+     podium. Le reste de la grille demeure un ensemble de noms. */
+  function rencontresDeCourse(course) {
+    var G = G_();
+    if (!G || !course) return;
+    var pos = course.pos;
+    if (!pos || course.dnf) return;
+
+    var rivaux = G.rivals || [];
+    var retenus = [];
+
+    rivaux.forEach(function (r) {
+      if (!r || typeof r.lastPos !== "number") return;
+      var ecart = Math.abs(r.lastPos - pos);
+      /* Voisin direct à l'arrivée : on s'est forcément vus. */
+      if (ecart === 1) retenus.push({ r: r, delta: 3 });
+      /* Podium partagé : on monte sur la même boîte. */
+      else if (pos <= 3 && r.lastPos <= 3) retenus.push({ r: r, delta: 4 });
+    });
+
+    retenus.slice(0, 2).forEach(function (x) {
+      var cle = "pilote_" + cleDe(x.r.name);
+      var existe = G._network && G._network[cle];
+      var e = inscrirePilote(x.r, x.delta);
+      /* Une première rencontre ne fait pas un contact : on démarre bas. */
+      if (e && !existe) e.relation = 35 + Math.round(Math.random() * 8);
+    });
+  }
+
   function amorcerContacts() {
     var G = G_();
     if (!G) return;
     try {
-      amorcerStaff(G.currentTeam);
-      /* Les pilotes de la grille : on connaît forcément ses adversaires. */
-      (G.rivals || []).slice(0, 6).forEach(function (r) {
-        var cle = "pilote_" + cleDe(r.name);
-        if (!G._network || !G._network[cle]) inscrirePilote(r, 0);
-      });
+      /* Le staff de sa propre écurie n'entre au répertoire qu'après
+         quelques week-ends : on ne connaît pas son ingénieur avant de
+         l'avoir vu travailler. */
+      if (assezDeCourses()) amorcerStaff(G.currentTeam);
     } catch (e) { console.warn(TAG, "amorçage :", e && e.message); }
   }
 
@@ -552,7 +622,7 @@
       apresCourse: apresCourse, apresDeclaration: apresDeclaration,
       remise: remise, veto: veto, ajusterOffres: ajusterOffres,
       offreSpontanee: offreSpontanee, porteDeSortie: porteDeSortie,
-      amorcerStaff: amorcerStaff,
+      amorcerStaff: amorcerStaff, rencontres: rencontresDeCourse,
       SEUILS: { appui: SEUIL_APPUI, spontane: SEUIL_SPONTANE, veto: SEUIL_VETO }
     };
     window._rj101Uninstall = function () {

@@ -40,14 +40,20 @@
   }
 
   /* Le plan n'a de sens qu'avant la première course de la saison : après,
-     la saison est lancée et les choix n'auraient plus de portée. */
+     la saison est lancée et les choix n'auraient plus de portée.
+     ATTENTION — j'excluais au passage les pilotes sans écurie. Or en
+     karting, TOUT LE MONDE est « Indépendant » : le plan n'était donc
+     jamais réclamé en début de carrière, précisément là où il compte le
+     plus. Un pilote sans écurie a d'ailleurs autant besoin de fixer son
+     objectif et son budget que les autres, sinon davantage. */
   function planAttendu() {
     var G = G_();
     if (!G) return false;
     if (planFait()) return false;
     try {
       if ((G.races || []).length > 0) return false;
-      if (!G.currentTeam || G.currentTeam === "Indépendant") return false;
+      /* Il faut tout de même une carrière commencée. */
+      if (!G.cat) return false;
     } catch (e) { return false; }
     return true;
   }

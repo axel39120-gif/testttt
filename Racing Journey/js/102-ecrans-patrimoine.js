@@ -227,9 +227,11 @@
     if (!tabs || !scroll) return false;
 
     /* Quatre intitulés occupaient déjà 420 pixels sur 430 : le cinquième
-       n'entrait pas. « Réseaux sociaux » devient « Réseaux ». */
+       n'entrait pas. « Réseaux sociaux » devient « Social » — plus court
+       encore, et sans ambiguïté avec le Réseau de contacts qui vit dans
+       l'écran des contrats. */
     var social = tabs.querySelector('.tab[data-tab="reseaux"]');
-    if (social && /sociaux/i.test(social.textContent)) social.textContent = "Réseaux";
+    if (social && /r[ée]seaux|sociaux/i.test(social.textContent)) social.textContent = "Social";
 
     /* L'écran ne parle plus seulement de réseaux : profil public, presse et
        agent y cohabitent. Le titre le reflète. */

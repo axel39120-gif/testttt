@@ -485,7 +485,8 @@
   function injectDevCSS() {
     if (document.getElementById("rj-dev-css")) return;
     var css = [
-      '.rjdev{position:relative;margin:14px 0 6px;padding:15px 15px 15px 18px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px rgba(0,0,0,.4);font-family:var(--font-display)}',
+      /* La marge latérale était à zéro : la carte touchait les bords de l'écran quand tout le reste de l'entraînement respecte une gouttière. On reprend la valeur du jeu, réglable comme partout ailleurs. */
+      '.rjdev{position:relative;margin:14px var(--rj-gouttiere,14px) 6px;padding:15px 15px 15px 18px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px rgba(0,0,0,.4);font-family:var(--font-display)}',
       '.rjdev-stripe{position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#00D4FF,transparent 78%)}',
       '.rjdev-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}',
       '.rjdev-kicker{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}',

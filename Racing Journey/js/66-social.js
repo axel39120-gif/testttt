@@ -519,16 +519,22 @@
     var s = S();
     var pos = dernierResultat();
     var ton = tonalite(txt);
-    var socle = Math.max(40, s.x.f * 0.02);
+    /* Le plancher de quarante abonnés gagnés s'appliquait quel que soit le niveau : en karting junior, un premier message récoltait trois cent cinquante mentions « j'aime » alors que le compte comptait quelques centaines d'abonnés. Le socle suit désormais l'audience réelle, avec un plancher proportionnel à l'exposition de la discipline. */
+    var socle = Math.max(2 + 38 * exposition(), s.x.f * 0.02);
     var mult = ton === "fédérateur" ? 1.25 : ton === "provocateur" ? 1.5 : 1;
     var badBuzz = (ton === "provocateur" && pos && pos > 8 && Math.random() < 0.45);
     var gain = Math.round(socle * (0.7 + Math.random() * 0.7) * mult * (badBuzz ? -0.5 : 1));
 
     s.x.posts.unshift({
       txt: txt, ton: ton, sem: semaine(), badBuzz: badBuzz,
-      likes: Math.round(Math.abs(gain) * (6 + Math.random() * 6)),
-      rt: Math.round(Math.abs(gain) * (1 + Math.random() * 2)),
-      rep: Math.round(Math.abs(gain) * (0.4 + Math.random() * 0.8)),
+      /* Les compteurs valaient jusqu'à douze fois le gain d'abonnés, soit un
+      quart de l'audience en mentions « j'aime » — un taux que personne
+      n'atteint. On vise trois à six pour cent, l'ordre de grandeur réel d'un
+      compte suivi. Les republications et les réponses suivent, très en
+      dessous des mentions. */
+      likes: Math.round(Math.abs(gain) * (1.5 + Math.random() * 1.5)),
+      rt: Math.round(Math.abs(gain) * (0.2 + Math.random() * 0.35)),
+      rep: Math.round(Math.abs(gain) * (0.1 + Math.random() * 0.2)),
       gain: gain
     });
     if (s.x.posts.length > 40) s.x.posts.length = 40;
@@ -547,15 +553,16 @@
     var sc = estPhoto ? { pub: 1.5, med: 0.9 } : SCENES[SCENE_SEL];
     if (!sc) sc = { pub: 1, med: 1 };
 
-    var socle = Math.max(30, s.ig.f * 0.012);
+    var socle = Math.max(2 + 28 * exposition(), s.ig.f * 0.012);
     var gain = Math.round(socle * (0.85 + Math.random() * 0.4) * sc.pub);
 
     s.ig.posts.unshift({
       scene: estPhoto ? null : SCENE_SEL,
       photo: estPhoto ? PHOTO_EN_COURS : null,
       legende: legende, sem: semaine(),
-      likes: Math.round(gain * (4 + Math.random() * 4)),
-      comm: Math.round(gain * (0.2 + Math.random() * 0.4)),
+      /* Instagram engage davantage que X : sept à dix pour cent de l'audience, contre cinq à six ailleurs. */
+      likes: Math.round(gain * (5 + Math.random() * 3)),
+      comm: Math.round(gain * (0.15 + Math.random() * 0.25)),
       gain: gain
     });
     if (s.ig.posts.length > 40) s.ig.posts.length = 40;

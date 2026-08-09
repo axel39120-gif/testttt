@@ -102,6 +102,19 @@
         "padding-left:var(--rj-gouttiere) !important;" +
         "padding-right:var(--rj-gouttiere) !important}",
 
+      /* --- écran d'entraînement -----------------------------------------
+         Les blocs de cet écran étaient restés à quatorze pixels, hérités
+         d'avant l'unification. Une fois la carte de développement alignée
+         sur la gouttière, l'écart se voyait. */
+      "#S-training .scroll > #train-rating-bar," +
+      "#S-training .scroll > .train-block,#S-training .scroll > .card{" +
+        "margin-left:var(--rj-gouttiere) !important;" +
+        "margin-right:var(--rj-gouttiere) !important}",
+      /* Le corps des sessions porte son propre retrait de quatorze pixels :
+         on le met au diapason plutôt que d'ajouter une marge par-dessus. */
+      "#S-training .rjf{padding-left:var(--rj-gouttiere) !important;" +
+        "padding-right:var(--rj-gouttiere) !important}",
+
       "#S-home > .scroll > .apex-sec," +
       "#S-home > .scroll > .apex-actions-grid{" +
         "padding-left:var(--rj-gouttiere) !important;" +
