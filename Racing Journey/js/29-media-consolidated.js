@@ -144,19 +144,26 @@
     var results = [];
     // Catégorie du joueur d'abord (résultat réel si dispo).
     var lastRace = (G.races && G.races.length) ? G.races[G.races.length - 1] : null;
+    /* AVANT LA PREMIÈRE COURSE — le journal annonçait des vainqueurs et un
+       classement alors qu'aucune manche n'avait été disputée : le nom sortait
+       d'un tri de rivaux tous à zéro point, ou d'un tirage au sort. Une
+       rédaction ne publie pas de résultats avant que la saison commence. */
+    var saisonCommencee = !!(G.races && G.races.length);
     var catWinner;
     if (lastRace && lastRace.pos === 1) catWinner = playerName;
     else if (G.rivals && G.rivals.length) {
       var sorted = G.rivals.slice().filter(function (r) { return r.name; }).sort(function (a, b) { return (b.pts || 0) - (a.pts || 0); });
       catWinner = sorted.length ? sorted[0].name : pick(rng, CAT_POOLS['Formule 3']);
     } else catWinner = pick(rng, CAT_POOLS['Formule 3']);
-    results.push({ cat: cat, winner: catWinner, you: (catWinner === playerName) });
+    if (saisonCommencee) {
+      results.push({ cat: cat, winner: catWinner, you: (catWinner === playerName) });
 
-    // Autres catégories (4 tirées).
-    var otherCats = Object.keys(CAT_POOLS).filter(function (c) { return c !== cat; });
-    pickN(rng, otherCats, 4).forEach(function (c) {
-      results.push({ cat: c, winner: pick(rng, CAT_POOLS[c]), you: false });
-    });
+      // Autres catégories (4 tirées).
+      var otherCats = Object.keys(CAT_POOLS).filter(function (c) { return c !== cat; });
+      pickN(rng, otherCats, 4).forEach(function (c) {
+        results.push({ cat: c, winner: pick(rng, CAT_POOLS[c]), you: false });
+      });
+    }
 
     // ----- TRANSFERTS -----
     var transfers = [];
@@ -188,7 +195,21 @@
     // ----- UNE (gros titre) -----
     var champPos = G.champPos || null, champPts = G.champPts || 0;
     var une;
-    if (lastRace && lastRace.pos === 1) une = { h: esc(playerName) + ' s\u2019impose en ' + esc(cat) + ' !', s: 'Une victoire qui change la dynamique de la saison.' };
+    if (!saisonCommencee) {
+      /* Le sujet du moment n'est pas un classement mais l'attente : essais
+         hivernaux, nouvelles monoplaces, pronostics. */
+      une = pick(rng, [
+        { h: 'La saison ' + esc(cat) + ' se prépare',
+          s: 'Derniers réglages avant le lever de rideau.' },
+        { h: 'Essais : les écuries cachent leur jeu',
+          s: 'Personne ne montre son vrai rythme avant la première manche.' },
+        { h: 'Ce que l\u2019on attend de la saison ' + esc(cat),
+          s: 'Les pronostics vont bon train dans le paddock.' },
+        { h: esc(playerName) + ' aborde une saison charnière',
+          s: 'Tout reste à écrire avant la première course.' }
+      ]);
+    }
+    else if (lastRace && lastRace.pos === 1) une = { h: esc(playerName) + ' s\u2019impose en ' + esc(cat) + ' !', s: 'Une victoire qui change la dynamique de la saison.' };
     else if (lastRace && lastRace.pos && lastRace.pos <= 3) une = { h: 'Podium pour ' + esc(playerName) + ' en ' + esc(cat), s: 'P' + lastRace.pos + ' \u2014 le pilote confirme sa mont\u00e9e en puissance.' };
     else if (champPos && champPos <= 3) une = { h: esc(playerName) + ' dans le top 3 du championnat ' + esc(cat), s: 'Avec ' + champPts + ' pts, la bataille pour le titre fait rage.' };
     else if (results[0]) une = { h: esc(lastName(results[0].winner)) + ' fait la loi en ' + esc(cat), s: 'Le reste du plateau cherche la parade.' };
@@ -252,7 +273,9 @@
       + '<div style="font-size:10px;color:var(--text3);margin-top:7px;font-style:italic">— ' + esc(issue.une.source) + '</div>'
       + '</div>';
 
-    // Résultats / vainqueurs
+    // Résultats / vainqueurs — rien à publier tant qu'aucune manche n'a eu
+    // lieu : le titre restait affiché au-dessus d'un tableau vide.
+    if (issue.results && issue.results.length) {
     html += sectionTitle('R\u00e9sultats \u00b7 Vainqueurs');
     html += '<div style="margin:0 16px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)">';
     issue.results.forEach(function (r, i) {
@@ -263,6 +286,7 @@
         + '</div>';
     });
     html += '</div>';
+    }
 
     // Transferts
     html += sectionTitle('Transferts & rumeurs');
