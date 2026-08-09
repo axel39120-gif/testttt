@@ -1225,3 +1225,66 @@
     console.log(TAG, "désinstallé");
   };
 })();
+
+/* =====================================================================
+ * REMISE À ZÉRO ENTRE DEUX COURSES
+ *
+ * En arrivant sur le deuxième week-end, l'onglet Course affichait encore
+ * l'état du précédent : barre de progression avancée, « Tour 3 / 57 »,
+ * classement et commentaires de la course d'avant.
+ *
+ * La remise à zéro existait, mais n'était déclenchée que si l'onglet
+ * Résultat se trouvait affiché au moment d'entrer dans le week-end. Or on
+ * quitte rarement l'écran depuis cet onglet précis : il suffisait d'être
+ * reparti depuis la préparation ou par le calendrier pour que l'état
+ * survive à la course suivante.
+ *
+ * On la déclenche désormais sur ce qui la justifie vraiment : un nouveau
+ * circuit, ou une course déjà courue.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[40-reset-course]";
+  var _orig = null;
+
+  function nouveauWeekEnd() {
+    try {
+      var e = window.RACE_WEEKEND_STATE || {};
+      if (e.courseDone) return true;
+      if (typeof window.getNextRace === "function" && window.RACE_STATE) {
+        var suivante = window.getNextRace();
+        var nom = suivante ? suivante.name : "";
+        if (nom && window.RACE_STATE.circuit && window.RACE_STATE.circuit !== nom) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function installer() {
+    if (typeof window.goToRaceWeekend !== "function") return false;
+    if (window.goToRaceWeekend._rj40reset) return true;
+    _orig = window.goToRaceWeekend;
+    window.goToRaceWeekend = function () {
+      try {
+        if (nouveauWeekEnd() && typeof window.resetRaceScreen === "function") {
+          window.resetRaceScreen();
+        }
+      } catch (e) { console.warn(TAG, e && e.message); }
+      return _orig.apply(this, arguments);
+    };
+    window.goToRaceWeekend._rj40reset = true;
+    return true;
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) { console.log(TAG, "écran de course remis à zéro entre les manches"); return; }
+    if (essais++ < 80) setTimeout(tenter, 150);
+  })();
+
+  window._rj40ResetUninstall = function () {
+    if (_orig) window.goToRaceWeekend = _orig;
+    console.log(TAG, "désinstallé");
+  };
+})();
