@@ -388,22 +388,39 @@
         "letter-spacing:.1em;text-transform:uppercase;color:var(--text,#e8ebf2)}",
       ".rj95-detail > summary .c{color:var(--muted,#8b93a7);font-size:16px;transition:transform .2s}",
       ".rj95-detail[open] > summary .c{transform:rotate(90deg)}",
-      ".rj95-tab{padding:4px 0 8px}",
-      ".rj95-r{display:flex;align-items:center;gap:0;padding:7px 10px;font-size:11px;" +
-        "border-top:1px solid rgba(255,255,255,.05)}",
-      ".rj95-r .rj95-an{width:34px;flex-shrink:0;font-family:var(--font-display);font-weight:800;color:#fff}",
-      ".rj95-r .rj95-ct{flex:1;min-width:0;color:var(--soft,#aeb6c6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".rj95-r .rj95-ct em{font-style:normal;color:var(--muted,#8b93a7);margin-left:5px;font-size:10px}",
-      ".rj95-r .rj95-ti{width:32px;flex-shrink:0;display:flex;gap:2px;justify-content:center;align-items:center}",
-      ".rj95-r .rj95-ti svg{display:block}",
-      ".rj95-r .rj95-n{width:22px;flex-shrink:0;text-align:center;color:var(--muted,#8b93a7)}",
-      ".rj95-r .rj95-n.rj95-v{color:#F59E0B;font-weight:700}",
-      ".rj95-r .rj95-pt{width:44px;flex-shrink:0;text-align:right;color:#00D4FF;font-weight:700}",
-      ".rj95-r .rj95-pl{width:30px;flex-shrink:0;text-align:right;color:var(--muted,#8b93a7);font-weight:600}",
-      ".rj95-r .rj95-pl.or{color:#F59E0B}",
-      ".rj95-hd{border-top:none;font-family:var(--font-display);font-size:8.5px;font-weight:800;" +
-        "letter-spacing:.05em;text-transform:uppercase;padding-bottom:2px}",
-      ".rj95-hd span{color:var(--text3,#6b7280) !important;font-weight:800 !important}",
+      ".rj95-tab{padding:8px 10px 10px;display:flex;flex-direction:column;gap:8px}",
+      /* --- carte de saison, reprise de l'historique de carrière -------- */
+      ".rj95-sc{border:1px solid rgba(255,255,255,.09);border-radius:12px;overflow:hidden;" +
+        "background:var(--surface2,rgba(255,255,255,.03));position:relative}",
+      ".rj95-sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}",
+      ".rj95-sc-h{display:flex;align-items:center;gap:10px;padding:10px 12px 9px 14px}",
+      ".rj95-sc-eq{display:flex;align-items:center;gap:9px;padding:9px 12px 10px 14px;" +
+        "border-top:1px solid rgba(255,255,255,.07)}",
+      ".rj95-sc-eq .rj95-eq{font-size:12.5px;color:var(--soft,#aeb6c6);margin-top:0;font-weight:600;" +
+        "overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".rj95-blason{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;" +
+        "border-radius:5px;overflow:hidden;flex-shrink:0;background:#0a0a12}",
+      ".rj95-blason.rj95-vide{background:var(--bg3,#16161d);color:var(--muted,#8b93a7)}",
+      ".rj95-sc-id{flex:1;min-width:0}",
+      ".rj95-sc-l1{display:flex;align-items:center;gap:7px}",
+      ".rj95-sc .rj95-an{font-family:var(--font-display);font-size:17px;font-weight:900;color:#fff;line-height:1}",
+      ".rj95-sc .rj95-cat{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.1em;" +
+        "text-transform:uppercase;color:var(--muted,#8b93a7);background:var(--bg3,#16161d);" +
+        "border:1px solid rgba(255,255,255,.12);padding:2px 6px;border-radius:4px}",
+      ".rj95-sc .rj95-eq{font-size:11.5px;color:var(--soft,#aeb6c6);margin-top:3px;" +
+        "overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".rj95-cl{text-align:center;flex-shrink:0;min-width:38px}",
+      ".rj95-cl .rj95-pos{font-family:var(--font-display);font-size:24px;font-weight:900;" +
+        "color:var(--acc);line-height:1}",
+      ".rj95-cl .rj95-poslb{font-family:var(--font-display);font-size:8px;font-weight:700;" +
+        "letter-spacing:.12em;text-transform:uppercase;color:var(--text3,#6b7280);margin-top:2px}",
+      ".rj95-sc-n{display:flex;border-top:1px solid rgba(255,255,255,.07)}",
+      ".rj95-sc-n .rj95-n{flex:1;text-align:center;padding:6px 2px}",
+      ".rj95-sc-n .rj95-n + .rj95-n{border-left:1px solid rgba(255,255,255,.06)}",
+      ".rj95-sc-n .v{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--text,#e8ebf2)}",
+      ".rj95-sc-n .l{font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;" +
+        "color:var(--text3,#6b7280);margin-top:1px}",
+      ".rj95-sc-l1 svg{flex-shrink:0}",
       ".rj95-t{font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.09em;" +
         "text-transform:uppercase;padding:2px 6px;border-radius:3px;white-space:nowrap}",
       ".rj95-t.pil{color:#F59E0B;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.4)}",
@@ -584,27 +601,78 @@
     return h;
   }
 
-  /* Une saison tient sur une seule ligne : c'est un tableau, pas un bloc
-     par année. Les colonnes sont annoncées une fois en tête. */
-  function ligneSaisonHTML(s) {
-    return '<div class="rj95-r">' +
-      '<span class="rj95-an">' + s.annee + '</span>' +
-      '<span class="rj95-ct">' + esc(s.cat) + '<em>' + esc(s.equipe) + '</em></span>' +
-      '<span class="rj95-ti">' + iconesTitres(s) + '</span>' +
-      '<span class="rj95-n">' + s.courses + '</span>' +
-      '<span class="rj95-n rj95-v">' + s.victoires + '</span>' +
-      '<span class="rj95-n">' + s.podiums + '</span>' +
-      '<span class="rj95-n">' + s.poles + '</span>' +
-      '<span class="rj95-n">' + s.abandons + '</span>' +
-      '<span class="rj95-pt">' + nb(s.points) + '</span>' +
-      '<span class="rj95-pl' + (s.place === 1 ? " or" : "") + '">' +
-        (s.place ? "P" + s.place : "\u2013") + '</span>' +
-      '</div>';
+  /* Logo de l'écurie, repris de l'historique de carrière : une saison se
+     reconnaît d'abord à son blason. Sans logo connu (indépendant, écurie
+     hors catalogue), un casque tient lieu de marque. */
+  var CASQUE_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none">' +
+    '<path d="M4 13.5c0-4.4 3.6-8 8-8s8 3.6 8 8v2a1.5 1.5 0 01-1.5 1.5H14L13 19h-2l-1-2H5.5' +
+    'A1.5 1.5 0 014 15.5v-2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' +
+    '<path d="M8 13h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+  function blasonHTML(equipe) {
+    try {
+      if (equipe && typeof window.TEAM_LOGOS !== "undefined" && window.TEAM_LOGOS[equipe]) {
+        return '<span class="rj95-blason">' +
+          window.TEAM_LOGOS[equipe].replace('width="40" height="40"', 'width="30" height="30"') +
+          '</span>';
+      }
+    } catch (e) {}
+    return '<span class="rj95-blason rj95-vide">' + CASQUE_SVG + '</span>';
   }
 
-  /* Pas d'en-tête de colonnes : à 430 pixels, les intitulés se collaient
-     les uns aux autres et devenaient illisibles. Les chiffres se lisent
-     d'eux-mêmes — victoires en doré, points en cyan, place à droite. */
+  var CAT_COURT = {
+    "Karting Junior": "KJ", "Karting Senior": "KS", "Formule 4": "F4",
+    "Formula Regional": "FR", "Formule 3": "F3", "Formule 2": "F2",
+    "Formule 1": "F1", "Super Formula": "SF", "Endurance WEC": "WEC", "IndyCar": "IC"
+  };
+
+  /* Une carte par saison, sur le modèle de l'historique de carrière :
+     blason, année, catégorie, écurie, puis les chiffres et le classement. */
+  function ligneSaisonHTML(s) {
+    var court = CAT_COURT[s.cat] || String(s.cat || "").slice(0, 3).toUpperCase();
+    var accent = s.titrePilote ? "#F59E0B"
+      : (s.place === 2 ? "#9CA3AF" : (s.place === 3 ? "#CD7F32" : "var(--border-hi)"));
+
+    /* Deux lignes plutôt qu'une : l'année, la discipline et les chiffres
+       d'abord ; le blason et le nom de l'écurie ensuite. Tout tenait
+       auparavant sur un seul rang, où le nom de l'écurie se retrouvait
+       coincé sous la catégorie et se faisait tronquer. */
+    return '<div class="rj95-sc" style="--acc:' + accent + '">' +
+      '<div class="rj95-sc-h">' +
+        '<div class="rj95-sc-id">' +
+          '<div class="rj95-sc-l1">' +
+            '<span class="rj95-an">' + s.annee + '</span>' +
+            '<span class="rj95-cat">' + esc(court) + '</span>' +
+            iconesTitres(s) +
+          '</div>' +
+        '</div>' +
+        '<div class="rj95-cl">' +
+          '<div class="rj95-pos">' + (s.place ? s.place : "\u2013") + '</div>' +
+          '<div class="rj95-poslb">Class.</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="rj95-sc-n">' +
+        chiffre(s.courses, "Courses") +
+        chiffre(s.victoires, "Vict.", "#F59E0B") +
+        chiffre(s.podiums, "Pod.", "#34D399") +
+        chiffre(s.poles, "Poles", "#A78BFA") +
+        chiffre(s.abandons, "DNF", "var(--red-light,#F87171)") +
+        chiffre(nb(s.points), "Pts") +
+      '</div>' +
+      '<div class="rj95-sc-eq">' +
+        blasonHTML(s.equipe) +
+        '<span class="rj95-eq">' + esc(s.equipe || "Indépendant") + '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function chiffre(v, l, couleur) {
+    return '<div class="rj95-n"><div class="v"' +
+      (couleur ? ' style="color:' + couleur + '"' : '') + '>' + v + '</div>' +
+      '<div class="l">' + esc(l) + '</div></div>';
+  }
+
   function enTeteColonnes() { return ""; }
 
   function recapitulatifHTML(d) {

@@ -193,7 +193,13 @@
         "font-size:12px;color:var(--muted,#8b93a7);text-align:center;margin-top:10px}",
       /* bilan d'une archive */
       ".rj96-fond{position:fixed;inset:0;z-index:9700;display:none;background:var(--bg,#0a0a0d);" +
-        "overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 14px 26px}",
+        "overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}",
+      ".rj96-hdr{position:sticky;top:0;z-index:2}",
+      /* Les sections héritent de leurs propres marges ; le corps ne rajoute
+         que l'espace vertical. Les listes, elles, gardent la gouttière. */
+      ".rj96-corps{padding:12px 0 26px}",
+      ".rj96-corps > .rj96-liste{padding:0 16px}",
+      ".rj96-corps > .rj74-btns{padding:0 16px}",
       ".rj96-fond.on{display:block}",
       ".rj96-tete{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}",
       ".rj96-retour{background:none;border:none;color:var(--muted,#8b93a7);font-size:22px;cursor:pointer;padding:0 4px 0 0}",
@@ -253,12 +259,12 @@
     injecterCSS();
     var liste = lire();
 
-    var h = '<div class="rj96-tete">' +
-              '<button class="rj96-retour" id="rj96-fermer-liste">\u2039</button>' +
-              '<div><div class="rj96-titre">Historique</div>' +
-              '<div class="rj96-stitre">' + liste.length + " carrière" + (liste.length > 1 ? "s" : "") +
+    var h = '<div class="hdr rj96-hdr">' +
+              '<button class="hdr-back" id="rj96-fermer-liste">\u2039</button>' +
+              '<div><div class="hdr-title">Historique</div>' +
+              '<div class="hdr-sub">' + liste.length + " carrière" + (liste.length > 1 ? "s" : "") +
               " conservée" + (liste.length > 1 ? "s" : "") + '</div></div>' +
-            '</div><div class="rj96-liste">';
+            '</div><div class="rj96-corps"><div class="rj96-liste">';
 
     if (!liste.length) {
       h += '<div class="rj96-vide">Aucune carrière terminée pour le moment.</div>';
@@ -276,7 +282,7 @@
              '</div>';
       });
     }
-    h += "</div>";
+    h += "</div></div>";
 
     var box = document.getElementById("rj96-liste-ecran");
     if (!box) {
@@ -322,12 +328,15 @@
     if (!a) return;
     injecterCSS();
 
-    var h = '<div class="rj96-tete">' +
-              '<button class="rj96-retour" id="rj96-retour">\u2039</button>' +
-              '<div><div class="rj96-titre">' + esc(a.pilote) + '</div>' +
-              '<div class="rj96-stitre">' + esc(a.rang) + "  ·  " + nb(a.total) +
+    /* En-tête au format des autres écrans — barre pleine largeur, collée en
+       haut, titre en police d'affichage. L'ancien bloc flottait à dix-huit
+       pixels du bord et ne ressemblait à aucun autre écran du jeu. */
+    var h = '<div class="hdr rj96-hdr">' +
+              '<button class="hdr-back" id="rj96-retour">\u2039</button>' +
+              '<div><div class="hdr-title">' + esc(a.pilote) + '</div>' +
+              '<div class="hdr-sub">' + esc(a.rang) + "  ·  " + nb(a.total) +
               ' points  ·  ' + dateCourte(a.date) + '</div></div>' +
-            '</div>';
+            '</div><div class="rj96-corps">';
 
     /* Détail des points */
     if (a.lignes && a.lignes.length) {
@@ -367,7 +376,7 @@
       '<button class="rj74-btn" type="button" id="rj96-favori">' +
         (a.favori ? "Retirer des favoris" : "Garder cette carrière") + '</button>' +
       '<button class="rj74-btn" type="button" id="rj96-suppr">Supprimer</button>' +
-      '</div>';
+      '</div></div>';
 
     var box = document.getElementById("rj96-ecran");
     if (!box) {
