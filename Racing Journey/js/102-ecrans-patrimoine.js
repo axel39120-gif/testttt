@@ -258,16 +258,22 @@
      d'origine — dont la création de pilote se sert pour faire choisir le
      premier agent, qui se retrouvait devant une page noire. */
   function placerAgent(ou) {
+    var ecran = document.getElementById("S-agent");
     var contenu = document.getElementById("agent-content");
-    if (!contenu) {
-      var src = document.getElementById("S-agent");
-      contenu = src ? src.querySelector(".scroll") : null;
-    }
+    if (!contenu && ecran) contenu = ecran.querySelector(".scroll");
     if (!contenu) return false;
 
-    var cible = (ou === "onglet")
-      ? document.getElementById("mt-agent")
-      : document.getElementById("S-agent");
+    var cible;
+    if (ou === "onglet") {
+      cible = document.getElementById("mt-agent");
+    } else {
+      /* Le contenu appartient à la ZONE DE DÉFILEMENT de l'écran, pas à
+         l'écran lui-même. Le reposer à la racine laissait la zone de
+         défilement vide au-dessus — cinq cents pixels de noir avant le
+         choix de l'agent. */
+      cible = ecran ? (ecran.querySelector(".scroll") || ecran) : null;
+      if (cible === contenu) cible = ecran;
+    }
     if (!cible) return false;
     if (contenu.parentNode !== cible) cible.appendChild(contenu);
     return true;
