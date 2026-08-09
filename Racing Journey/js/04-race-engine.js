@@ -1019,7 +1019,16 @@ function _renderQualiTyreWidget() {
 
 // --- Rendu du choix de timing ---
 function _renderTimingChoice(session) {
-  if (QUALI_STATE._timingChosen) return '';
+    /* STRATÉGIE DE SORTIE RETIRÉE — trois options dont l'effet se comptait
+       en dixièmes, à choisir avant chaque session, sans information réelle
+       pour trancher : une étape de plus sans décision véritable. On applique
+       l'option médiane, celle qui n'avantage ni ne pénalise, et on passe
+       directement à la piste. */
+    if (!QUALI_STATE._timingChosen) {
+      QUALI_STATE._timingChoice = "mid";
+      QUALI_STATE._timingChosen = true;
+    }
+    return '';
   var weather = RACE_STATE.weather || { id: "dry" };
   var html = '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Stratégie de sortie — Q' + session + '</div>';

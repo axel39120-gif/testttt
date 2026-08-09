@@ -1175,11 +1175,35 @@
     else onglet.removeAttribute("disabled");
   }
 
+  /* Le week-end se parcourt dans un sens : préparation, essais,
+     qualifications, course. On ne revient pas en arrière par la barre du
+     haut — les onglets déjà franchis se ferment au fur et à mesure, et
+     ceux qui restent devant ne s'ouvrent qu'à leur tour. */
+  var ORDRE = ["prep", "essais", "qualif", "strat", "sprint", "course", "res"];
+
+  function etapeCourante(e) {
+    if (e.courseDone) return "res";
+    if (e.strategyDone && e.qualifDone) return "course";
+    if (e.qualifDone) return "strat";
+    if (e.practiceDone) return "qualif";
+    return "prep";
+  }
+
   function appliquer() {
     var e = window.RACE_WEEKEND_STATE;
     if (!e) return;
-    /* Une fois les qualifications courues, la voiture est figée et la
-       séance est derrière nous : les deux onglets se ferment. */
+
+    /* Toutes les étapes antérieures à celle en cours se ferment. */
+    var courante = etapeCourante(e);
+    var rang = ORDRE.indexOf(courante);
+    ORDRE.forEach(function (cle, i) {
+      if (i >= rang) return;
+      var onglet = (cle === "prep")
+        ? document.querySelector('#S-race .tab[data-tab="prep"]')
+        : document.getElementById("race-tab-" + cle);
+      verrouiller(onglet, true);
+    });
+
     if (!e.qualifDone) return;
 
     var prep = document.querySelector('#S-race .tab[data-tab="prep"]');
@@ -1286,5 +1310,242 @@
   window._rj40ResetUninstall = function () {
     if (_orig) window.goToRaceWeekend = _orig;
     console.log(TAG, "désinstallé");
+  };
+})();
+
+/* =====================================================================
+ * ZONES OPTIMALES PRÊTES DÈS L'OUVERTURE
+ *
+ * À l'ouverture des réglages, une seule zone optimale était dessinée. Au
+ * premier clic sur une barre, les neuf apparaissaient d'un coup et la
+ * première changeait de position — d'où l'impression que la zone sautait.
+ *
+ * La cause : l'estimation de l'ingénieur, qui sert à tracer ces zones,
+ * n'était pas encore constituée au premier rendu. Elle l'était au clic
+ * suivant, et tout apparaissait alors en bloc.
+ *
+ * On la constitue donc AVANT de dessiner, une seule fois par circuit.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[40-zones]";
+  var _orig = null;
+
+  function preparer() {
+    try {
+      var e = window.RACE_STATE;
+      if (!e) return;
+      var prete = e.practice && e.practice.knowledge &&
+                  Object.keys(e.practice.knowledge).length;
+      if (!prete && typeof window.initPracticeState === "function") {
+        window.initPracticeState();
+      }
+    } catch (err) { console.warn(TAG, err && err.message); }
+  }
+
+  /* Le contenu des réglages est produit à l'entrée dans le week-end, puis
+     simplement déplacé dans le tiroir à l'ouverture. Si l'estimation n'est
+     pas constituée à ce moment-là, les barres se dessinent avec une zone
+     approximative, remplacée au premier clic par la vraie : la zone semblait
+     sauter. On prépare donc l'estimation dès l'entrée, avant tout rendu. */
+  function preparerAlEntree() {
+    if (typeof window.goToRaceWeekend !== "function") return false;
+    if (window.goToRaceWeekend._rj40zones) return true;
+    var origEntree = window.goToRaceWeekend;
+    window.goToRaceWeekend = function () {
+      var r = origEntree.apply(this, arguments);
+      try {
+        preparer();
+        /* L'estimation venant d'être posée, on redessine une fois pour que
+           les barres partent des bonnes valeurs. */
+        if (typeof window.renderAdvancedSetupUI === "function") {
+          setTimeout(function () { try { window.renderAdvancedSetupUI(); } catch (e) {} }, 40);
+        }
+      } catch (e) {}
+      return r;
+    };
+    window.goToRaceWeekend._rj40zones = true;
+    return true;
+  }
+
+  function installer() {
+    if (typeof window._renderAdvancedSetupUIInner !== "function") return false;
+    if (window._renderAdvancedSetupUIInner._rj40zones) return true;
+    _orig = window._renderAdvancedSetupUIInner;
+    window._renderAdvancedSetupUIInner = function () {
+      preparer();
+      return _orig.apply(this, arguments);
+    };
+    window._renderAdvancedSetupUIInner._rj40zones = true;
+    return true;
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) {
+      preparerAlEntree();
+      console.log(TAG, "zones optimales prêtes dès l'ouverture");
+      return;
+    }
+    if (essais++ < 80) setTimeout(tenter, 150);
+  })();
+
+  window._rj40ZonesUninstall = function () {
+    if (_orig) window._renderAdvancedSetupUIInner = _orig;
+  };
+})();
+
+/* =====================================================================
+ * L'ONGLET COURSE PART TOUJOURS D'UN ÉCRAN VIERGE
+ *
+ * La remise à zéro dépendait du chemin emprunté pour entrer dans le
+ * week-end. Selon d'où l'on venait, l'onglet Course pouvait encore
+ * afficher la barre de progression, le numéro de tour, le classement et
+ * les commentaires de la manche précédente.
+ *
+ * Plutôt que de multiplier les points de déclenchement, on vérifie à
+ * l'ouverture de l'onglet : si la course de cette manche n'a pas démarré,
+ * l'écran doit être vierge. C'est vrai quel que soit le chemin.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[40-onglet-course]";
+  var _orig = null;
+
+  /* La phase de course s'appelle « live », pas « race » : ma première
+     version effaçait donc l'écran d'une course en train de se dérouler dès
+     qu'on quittait l'onglet et qu'on y revenait. On se fie à la phase
+     déclarée par le moteur, et au fait qu'un classement soit déjà rempli. */
+  function courseEnCoursOuFinie() {
+    try {
+      var e = window.RACE_WEEKEND_STATE || {};
+      if (e.courseDone) return true;
+      var phase = window.G && window.G.racePhase;
+      if (phase === "live" || phase === "result") return true;
+      var cl = document.getElementById("live-leaderboard");
+      if (cl && cl.children.length > 1) return true;
+    } catch (err) {}
+    return false;
+  }
+
+  function vider() {
+    var poser = function (id, txt) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = txt;
+    };
+    var vide = function (id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    };
+    try {
+      var bar = document.getElementById("race-bar");
+      if (bar) bar.style.width = "0%";
+      var total = 0;
+      try { total = (window.RACE_STATE && window.RACE_STATE.totalLaps) || window.G.totalLaps || 0; } catch (e) {}
+      poser("live-race-lap", total ? "Tour 0 / " + total : "Tour 0");
+      poser("live-race-label", "Prêt au départ");
+      vide("live-leaderboard");
+      vide("live-news-feed");
+      var btn = document.getElementById("race-btn");
+      if (btn) { btn.disabled = false; btn.textContent = "Départ !"; }
+    } catch (e) { console.warn(TAG, e && e.message); }
+  }
+
+  function installer() {
+    if (typeof window.rtab !== "function") return false;
+    if (window.rtab._rj40course) return true;
+    _orig = window.rtab;
+    window.rtab = function (onglet) {
+      var r = _orig.apply(this, arguments);
+      try {
+        if (onglet === "course" && !courseEnCoursOuFinie()) vider();
+      } catch (e) { console.warn(TAG, e && e.message); }
+      return r;
+    };
+    window.rtab._rj40course = true;
+    return true;
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) { console.log(TAG, "onglet Course vierge tant que la course n'a pas démarré"); return; }
+    if (essais++ < 80) setTimeout(tenter, 150);
+  })();
+
+  window._rj40CourseUninstall = function () {
+    if (_orig) window.rtab = _orig;
+  };
+})();
+
+/* =====================================================================
+ * QUALIFICATIONS — LE CHRONO NE SE PERD PLUS
+ *
+ * En tour lancé, le temps du joueur n'était enregistré QUE dans la
+ * réponse de la séquence de micro-décisions. Si cette séquence était
+ * interrompue — fenêtre fermée autrement que par un choix, navigation,
+ * onglet quitté —, le callback n'était jamais appelé : le meilleur temps
+ * restait à sa valeur précédente, voire à rien du tout.
+ *
+ * Un pilote sans meilleur temps est trié en dernier, quel que soit ce
+ * qu'il a réalisé en piste. D'où des chronos affichés à l'écran qui ne
+ * correspondaient à aucune position au classement.
+ *
+ * On garantit désormais l'enregistrement : si la séquence n'a pas rendu
+ * sa réponse au bout de quelques secondes, on la clôt nous-mêmes avec le
+ * temps brut du tour.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[40-qualif]";
+  var DELAI = 12000;          // au-delà, la séquence est considérée perdue
+  var _orig = null;
+
+  function installer() {
+    if (typeof window._qualiHotLapSequence !== "function") return false;
+    if (window._qualiHotLapSequence._rj40q) return true;
+    _orig = window._qualiHotLapSequence;
+
+    window._qualiHotLapSequence = function (lapTime, session, lap, total, onDone) {
+      var rendu = false;
+      var minuterie = null;
+
+      function cloturer(temps, delta) {
+        if (rendu) return;
+        rendu = true;
+        if (minuterie) { clearTimeout(minuterie); minuterie = null; }
+        try { if (typeof onDone === "function") onDone(temps, delta || 0); }
+        catch (e) { console.warn(TAG, e && e.message); }
+      }
+
+      /* Filet : le temps brut est enregistré si rien ne revient. */
+      minuterie = setTimeout(function () {
+        console.warn(TAG, "séquence sans réponse — chrono enregistré tel quel");
+        cloturer(lapTime, 0);
+      }, DELAI);
+
+      try {
+        _orig.call(this, lapTime, session, lap, total, function (t, d) {
+          cloturer((typeof t === "number") ? t : lapTime, d);
+        });
+      } catch (e) {
+        console.warn(TAG, "séquence :", e && e.message);
+        cloturer(lapTime, 0);
+      }
+    };
+    window._qualiHotLapSequence._rj40q = true;
+    return true;
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) { console.log(TAG, "chronos de qualification sécurisés"); return; }
+    if (essais++ < 80) setTimeout(tenter, 150);
+  })();
+
+  window._rj40QualifUninstall = function () {
+    if (_orig) window._qualiHotLapSequence = _orig;
   };
 })();
