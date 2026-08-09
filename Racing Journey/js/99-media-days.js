@@ -71,6 +71,48 @@
     G._rjMediaDays.derniereSemaine = G.semaine || 0;
   }
 
+  /* ------------------------------------------------------------------
+   * LE CALENDRIER DES CONFÉRENCES
+   *
+   * Les conférences étaient tirées au sort à chaque avancée du temps. Elles
+   * ne pouvaient donc pas s'afficher au calendrier, et le joueur ne pouvait
+   * rien anticiper. La FIA, elle, publie ses convocations à l'avance : on
+   * fait de même, en désignant en début de saison les week-ends concernés
+   * parmi les manches à venir.
+   * ---------------------------------------------------------------- */
+  function programme() {
+    var G = G_();
+    if (!G) return [];
+    if (G._rj99Programme && G._rj99Programme.saison === G.saison) {
+      return G._rj99Programme.semaines || [];
+    }
+
+    var quota = quotaSaison();
+    var semaines = [];
+    try {
+      var manches = (window.CAL_RACES || []).filter(function (c) { return c && c.week; });
+      if (quota > 0 && manches.length) {
+        /* On répartit les convocations sur la saison plutôt que de les
+           grouper : un pilote n'enchaîne pas trois conférences de suite. */
+        var pas = manches.length / quota;
+        for (var i = 0; i < quota; i++) {
+          var idx = Math.min(manches.length - 1, Math.floor(i * pas + Math.random() * pas));
+          var w = manches[idx].week;
+          if (semaines.indexOf(w) < 0) semaines.push(w);
+        }
+      }
+    } catch (e) {}
+    semaines.sort(function (a, b) { return a - b; });
+    G._rj99Programme = { saison: G.saison, semaines: semaines };
+    return semaines;
+  }
+
+  function convoqueCetteSemaine() {
+    var G = G_();
+    if (!G) return false;
+    return programme().indexOf(G.semaine || 0) >= 0;
+  }
+
   /* Disponible tant qu'il reste des convocations et que la saison court.
      On laisse respirer deux semaines entre deux conférences. */
   function disponible() {
@@ -100,9 +142,12 @@
       if (faites() === 0 && estPartieDeTest()) return 1;
     } catch (e) {}
     var manches = (window.CAL_RACES || []).length || 10;
+    /* Semaine inscrite au calendrier : la conférence a lieu. Ailleurs, une
+       chance résiduelle laisse place aux sollicitations imprévues. */
+    if (convoqueCetteSemaine()) return 1;
     var restantes = Math.max(1, manches - (G.races || []).length);
     var p = reste() / restantes;
-    return Math.max(0.12, Math.min(0.55, p));
+    return Math.max(0.05, Math.min(0.25, p * 0.4));
   }
 
   function estPartieDeTest() {
@@ -216,7 +261,8 @@
 
     window._rj99 = {
       quota: quotaSaison, reste: reste, disponible: disponible,
-      chance: chance, proposer: proposer, reprendre: reprendre
+      chance: chance, proposer: proposer, reprendre: reprendre,
+      programme: programme, convoqueCetteSemaine: convoqueCetteSemaine
     };
     window._rj99Uninstall = function () {
       Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
@@ -226,4 +272,98 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+})();
+
+/* =====================================================================
+ * LES CONFÉRENCES AU CALENDRIER
+ *
+ * Le calendrier montrait les courses et les événements de saison, mais
+ * rien des conférences de presse : le joueur ne pouvait pas savoir quand
+ * il serait convoqué. Elles y figurent désormais, dans une teinte propre,
+ * sur le jeudi du week-end concerné.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[99-calendrier]";
+  var COULEUR = "#EC4899";
+  var _orig = null;
+
+  function installer() {
+    if (typeof window.renderCal !== "function") return false;
+    if (window.renderCal._rj99cal) return true;
+    _orig = window.renderCal;
+    window.renderCal = function () {
+      var r = _orig.apply(this, arguments);
+      try { marquer(); } catch (e) { console.warn(TAG, e && e.message); }
+      return r;
+    };
+    window.renderCal._rj99cal = true;
+    return true;
+  }
+
+  /* Le calendrier est produit d'un bloc dans « cal-main-container », chaque
+     entrée portant la classe cal-mini-event. On repère les lignes de course
+     par leur libellé et on signale celles où une conférence est prévue. */
+  function marquer() {
+    var G = (typeof window.G !== "undefined") ? window.G : null;
+    if (!G || !window._rj99 || !window._rj99.programme) return;
+    var semaines = window._rj99.programme();
+    if (!semaines.length) return;
+
+    var hote = document.getElementById("cal-main-container");
+    if (!hote) return;
+
+    injecterCSS();
+
+    var manches = (window.CAL_RACES || []).filter(function (c) { return c && c.week; });
+    var convoquees = {};
+    manches.forEach(function (m) {
+      if (semaines.indexOf(m.week) >= 0 && m.name) convoquees[m.name] = true;
+    });
+
+    var lignes = [].slice.call(hote.querySelectorAll(".cal-mini-event"));
+    lignes.forEach(function (ligne) {
+      if (ligne._rj99marque) return;
+      var titre = ligne.querySelector(".cal-mini-event-title");
+      var nom = titre ? (titre.textContent || "").trim() : "";
+      if (!nom || !convoquees[nom]) return;
+      ligne._rj99marque = true;
+      ligne.classList.add("rj99-conf");
+      if (titre) {
+        var badge = document.createElement("span");
+        badge.className = "rj99-cal";
+        badge.textContent = "Presse";
+        titre.appendChild(badge);
+      }
+    });
+  }
+
+  var CSS_ID = "rj99-cal-css";
+  function injecterCSS() {
+    if (document.getElementById(CSS_ID)) return;
+    var st = document.createElement("style");
+    st.id = CSS_ID;
+    st.textContent =
+      ".rj99-cal{display:inline-block;margin-top:5px;padding:2px 7px;border-radius:4px;" +
+      "font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.08em;" +
+      "text-transform:uppercase;color:" + COULEUR + ";" +
+      "background:color-mix(in srgb," + COULEUR + " 14%,transparent);" +
+      "border:1px solid color-mix(in srgb," + COULEUR + " 40%,transparent);" +
+      "margin-left:6px;vertical-align:middle}" +
+      ".cal-mini-event.rj99-conf .cal-mini-event-dot{background:" + COULEUR + " !important;" +
+      "box-shadow:0 0 0 3px color-mix(in srgb," + COULEUR + " 22%,transparent)}";
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) { console.log(TAG, "conférences affichées au calendrier"); return; }
+    if (essais++ < 80) setTimeout(tenter, 150);
+  })();
+
+  window._rj99CalUninstall = function () {
+    if (_orig) window.renderCal = _orig;
+    var c = document.getElementById(CSS_ID); if (c) c.remove();
+  };
 })();
