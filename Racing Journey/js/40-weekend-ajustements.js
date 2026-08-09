@@ -1142,3 +1142,86 @@
     console.log(TAG + " désinstallé");
   };
 })();
+
+/* =====================================================================
+ * VERROUILLAGE DES ÉTAPES FRANCHIES
+ *
+ * On pouvait revenir sur « Préparation » et « Qualifications » après les
+ * avoir passées. Deux conséquences : on retouchait les réglages de la
+ * voiture une fois les qualifications courues — alors qu'ils sont censés
+ * être figés au parc fermé — et le week-end perdait sa progression, chaque
+ * étape restant indéfiniment ouverte.
+ *
+ * Le verrouillage existant ne fermait ces deux onglets qu'une fois la
+ * course terminée : « Préparation » n'était jamais verrouillée en cours de
+ * week-end, et « Qualifications » s'ouvrait précisément au moment où elle
+ * aurait dû se fermer.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[40-etapes]";
+  var _orig = null;
+
+  function verrouiller(onglet, ferme) {
+    if (!onglet) return;
+    try {
+      if (typeof window._setTabLocked === "function") {
+        window._setTabLocked(onglet, ferme);
+        return;
+      }
+    } catch (e) {}
+    if (ferme) onglet.setAttribute("disabled", "");
+    else onglet.removeAttribute("disabled");
+  }
+
+  function appliquer() {
+    var e = window.RACE_WEEKEND_STATE;
+    if (!e) return;
+    /* Une fois les qualifications courues, la voiture est figée et la
+       séance est derrière nous : les deux onglets se ferment. */
+    if (!e.qualifDone) return;
+
+    var prep = document.querySelector('#S-race .tab[data-tab="prep"]');
+    var qualif = document.getElementById("race-tab-qualif");
+    verrouiller(prep, true);
+    verrouiller(qualif, true);
+
+    /* Si l'un d'eux est encore affiché au moment du verrouillage, on
+       bascule sur l'étape courante plutôt que de laisser le joueur sur un
+       écran qu'il ne peut plus quitter par onglet. */
+    try {
+      var ouvert = document.querySelector("#S-race .tab.on");
+      var t = ouvert ? ouvert.getAttribute("data-tab") : "";
+      if ((t === "prep" || t === "qualif") && typeof window.rtab === "function") {
+        var suite = e.courseDone ? "res" : (e.strategyDone ? "course" : "strat");
+        window.rtab(suite, true);
+      }
+    } catch (err) {}
+  }
+
+  function installer() {
+    if (typeof window.updateRaceTabsVisibility !== "function") return false;
+    if (window.updateRaceTabsVisibility._rj40etapes) return true;
+    _orig = window.updateRaceTabsVisibility;
+    window.updateRaceTabsVisibility = function () {
+      var r = _orig.apply(this, arguments);
+      try { appliquer(); } catch (e) { console.warn(TAG, e && e.message); }
+      return r;
+    };
+    window.updateRaceTabsVisibility._rj40etapes = true;
+    return true;
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) { console.log(TAG, "étapes franchies verrouillées"); return; }
+    if (essais++ < 80) setTimeout(tenter, 150);
+  })();
+
+  window._rj40Etapes = { appliquer: appliquer };
+  window._rj40EtapesUninstall = function () {
+    if (_orig) window.updateRaceTabsVisibility = _orig;
+    console.log(TAG, "désinstallé");
+  };
+})();
