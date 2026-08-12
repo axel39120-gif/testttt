@@ -1549,3 +1549,100 @@
     if (_orig) window._qualiHotLapSequence = _orig;
   };
 })();
+
+/* =====================================================================
+ * LA BARRE DU HAUT N'EST PLUS UN MENU
+ *
+ * Les onglets du week-end restaient cliquables : le verrouillage ne
+ * fermait que les étapes déjà franchies, si bien qu'on pouvait encore
+ * sauter en avant selon l'état de la course.
+ *
+ * La règle est plus simple à tenir qu'à contourner : la barre du haut
+ * devient un FIL D'AVANCEMENT, pas une navigation. Elle montre où l'on en
+ * est et ce qui reste, mais on n'y clique plus. Tout passe par le bouton
+ * d'action de l'écran.
+ * =================================================================== */
+(function () {
+  "use strict";
+
+  var TAG = "[40-barre]";
+  var CSS_ID = "rj40-barre-css";
+  var _orig = null;
+
+  function injecterCSS() {
+    if (document.getElementById(CSS_ID)) return;
+    var st = document.createElement("style");
+    st.id = CSS_ID;
+    st.textContent =
+      /* Le curseur et l'atténuation disent que ce n'est plus un bouton ;
+         l'étape en cours reste pleinement lisible. */
+      "#S-race .tabs .tab{cursor:default !important;pointer-events:none !important}" +
+      "#S-race .tabs .tab:not(.on){opacity:.45}" +
+      "#S-race .tabs .tab.on{opacity:1}";
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  /* Le clic est neutralisé à trois niveaux : le style, l'attribut onclick
+     posé dans le HTML, et un écouteur en capture — c'est celui-ci qui
+     arrête les gestionnaires ajoutés par d'autres modules. */
+  function neutraliser() {
+    var barre = document.querySelector("#S-race .tabs");
+    if (!barre) return;
+    injecterCSS();
+
+    [].slice.call(barre.querySelectorAll(".tab")).forEach(function (t) {
+      if (t._rj40barre) return;
+      t._rj40barre = true;
+      if (t.hasAttribute("onclick")) {
+        t.setAttribute("data-rj40-onclick", t.getAttribute("onclick"));
+        t.removeAttribute("onclick");
+      }
+      t.setAttribute("tabindex", "-1");
+      t.setAttribute("aria-disabled", "true");
+    });
+
+    if (!barre._rj40barre) {
+      barre._rj40barre = true;
+      barre.addEventListener("click", function (ev) {
+        var t = ev.target.closest ? ev.target.closest(".tab") : null;
+        if (!t) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+      }, true);
+    }
+  }
+
+  function installer() {
+    if (!document.querySelector("#S-race .tabs")) return false;
+    neutraliser();
+
+    /* Les onglets sont reconstruits à certains moments : on repasse. */
+    if (typeof window.rtab === "function" && !window.rtab._rj40barre) {
+      _orig = window.rtab;
+      window.rtab = function () {
+        var r = _orig.apply(this, arguments);
+        try { neutraliser(); } catch (e) {}
+        return r;
+      };
+      window.rtab._rj40barre = true;
+    }
+    return true;
+  }
+
+  var essais = 0;
+  (function tenter() {
+    if (installer()) { console.log(TAG, "barre d'onglets passée en fil d'avancement"); return; }
+    if (essais++ < 120) setTimeout(tenter, 200);
+  })();
+
+  window._rj40BarreUninstall = function () {
+    if (_orig) window.rtab = _orig;
+    var c = document.getElementById(CSS_ID); if (c) c.remove();
+    [].slice.call(document.querySelectorAll("#S-race .tab[data-rj40-onclick]"))
+      .forEach(function (t) {
+        t.setAttribute("onclick", t.getAttribute("data-rj40-onclick"));
+        t.removeAttribute("data-rj40-onclick");
+      });
+  };
+})();
