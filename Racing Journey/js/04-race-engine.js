@@ -1028,7 +1028,12 @@ function _renderTimingChoice(session) {
       QUALI_STATE._timingChoice = "mid";
       QUALI_STATE._timingChosen = true;
     }
-    return '';
+    /* Le bouton de lancement n'était créé qu'au clic sur une option de
+       sortie : en retirant ce choix, la séance devenait impossible à
+       démarrer. On le pose donc ici, directement. */
+    return '<button class="btn btn-prim" onclick="runQualiSession()">' +
+           (typeof svgPlay === "function" ? svgPlay(16) : "") +
+           'Lancer Q' + QUALI_STATE.session + '</button>';
   var weather = RACE_STATE.weather || { id: "dry" };
   var html = '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Stratégie de sortie — Q' + session + '</div>';
@@ -1101,7 +1106,9 @@ function renderQualiSession() {
   if (QUALI_STATE.spectatorMode) {
     document.getElementById("quali-status").innerHTML = '<span style="color:#9CA3AF">Mode spectateur · Tu es éliminé(e) en Q' + QUALI_STATE.playerElimSes + "</span>";
   } else {
-    document.getElementById("quali-status").textContent = "Choisis ta stratégie de sortie.";
+    /* La stratégie de sortie ayant disparu, la consigne n'avait plus d'objet. */
+      document.getElementById("quali-status").textContent =
+        "Prêt à sortir en piste. Lance la séance quand tu veux.";
   }
 }
 
