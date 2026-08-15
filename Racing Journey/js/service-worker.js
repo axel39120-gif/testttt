@@ -1,5 +1,5 @@
 // Bump this version on every deploy to force old caches to be purged.
-const CACHE_NAME = 'racing-journey-pwa-v187';
+const CACHE_NAME = 'racing-journey-pwa-v208';
 
 const urlsToCache = [
   './',
@@ -44,7 +44,17 @@ self.addEventListener('fetch', event => {
         return networkResponse;
       })
       .catch(() => caches.match(event.request).then(cached => {
-        return cached || caches.match('./index.html');
+        if (cached) return cached;
+        /* Repli sur la page d'accueil UNIQUEMENT pour une navigation.
+           Auparavant, toute requête échouée recevait index.html en
+           réponse — y compris les fichiers JavaScript. Le navigateur
+           recevait alors du HTML là où il attendait du code, refusait de
+           l'exécuter, et les modules concernés ne s'installaient pas :
+           les boutons de l'accueil ne répondaient plus. Un simple passage
+           hors ligne, ou une coupure d'un instant, suffisait à mettre
+           l'application dans cet état jusqu'au vidage du cache. */
+        if (event.request.mode === 'navigate') return caches.match('./index.html');
+        return Response.error();
       }))
   );
 });
