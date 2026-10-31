@@ -18237,38 +18237,8 @@ function renderPreseasonPlanning() {
   }
 }
 
-function _psPickObj(e) {
-  window._presObjective = e, Object.keys(PRESEASON_OBJECTIVES).forEach(function(t) {
-    var r = document.getElementById("ps-obj-" + t);
-    if (r) {
-      var n = PRESEASON_OBJECTIVES[t],
-        a = e === t;
-      r.style.border = "1px solid " + (a ? n.color : "var(--border)"), r.style.borderLeft = a ? "3px solid " + n.color : "1px solid var(--border)", r.querySelector("div").style.color = a ? n.color : "var(--text)"
-    }
-  })
-}
 
-function _psPickAngle(e) {
-  window._presAngle = e, Object.keys(PRESEASON_ANGLES).forEach(function(t) {
-    var r = document.getElementById("ps-ang-" + t);
-    if (r) {
-      var n = PRESEASON_ANGLES[t],
-        a = e === t;
-      r.style.border = "1px solid " + (a ? n.color : "var(--border)"), r.style.borderLeft = a ? "3px solid " + n.color : "1px solid var(--border)", r.querySelector("div").style.color = a ? n.color : "var(--text)"
-    }
-  })
-}
 
-function _psAdjustBudget(e, t) {
-  t = parseInt(t) || 0, window._presBudget || (window._presBudget = {
-    sim: 25,
-    coach: 25,
-    lifestyle: 25,
-    savings: 25
-  }), window._presBudget[e] = t;
-  var r = document.getElementById("ps-val-" + e);
-  r && (r.textContent = t + "%"), _psUpdateTotal()
-}
 
 function _psUpdateTotal() {
   var e = window._presBudget || {},
@@ -23401,10 +23371,6 @@ function refuseOffer(e) {
   }
 }
 
-function openNeg(e) {
-  var t = G.offers[e];
-  t && (t.negRound >= 3 ? showFb("cont-fb", "err", "Plus de rounds", "Cette equipe ne negocie plus.") : (NEG_IDX = e, document.getElementById("neg-title").textContent = "Negociation", negEnter(NEG_IDX)))
-}
 
 function closeNeg() {
   NEG_IDX = -1, navTo("S-contracts", "ni-more"), setTimeout(function() {
@@ -25825,9 +25791,6 @@ if (typeof _socialFanHandle !== "function") {
     handle: "@dlr_replays",
     color: "#10B981"
   }];
-  window._socialFanHandle = function() {
-    return _RJ_FAN_POOL[Math.floor(Math.random() * _RJ_FAN_POOL.length)];
-  };
 }
 // injectApexIcons: called in updateUI() under typeof guard. No-op stub silences
 // the implicit code path. Replace with real injection if Apex icon lib is added.
@@ -25837,19 +25800,6 @@ if (typeof injectApexIcons !== "function") {
 // recomputeGlobalRep: rebuilds G.reputation from G.rep components when an angle
 // or an event modifies a rep facet. Weighted average matching the implicit model.
 if (typeof recomputeGlobalRep !== "function") {
-  window.recomputeGlobalRep = function() {
-    try {
-      if (!G || !G.rep) return;
-      var r = G.rep;
-      var medias = +r.medias || 0,
-        pub = +r.public || 0,
-        rec = +r.recruteurs || 0,
-        pad = +r.paddock || 0;
-      // Weights chosen to match other game balance: paddock+recruteurs slightly heavier
-      var v = Math.round(0.20 * medias + 0.25 * pub + 0.30 * rec + 0.25 * pad);
-      G.reputation = Math.max(0, Math.min(100, v));
-    } catch (e) {}
-  };
 }
 // G.staff / G.currentTeamStaff bridging: maps STAFF_BY_TEAM[cat][team] onto
 // G.currentTeamStaff (used by recordNetworkInteraction post-race) and onto

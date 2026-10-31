@@ -460,6 +460,53 @@ async function suiteFiabilite() {
 }
 
 /* ==================================================================== *
+ * 3 quater. COUCHES APLATIES (T5)
+ *
+ * Chaque fonction aplatie n'a plus qu'une définition dans les sources, et
+ * c'est bien elle qui est active dans le jeu. On ajoute ici chaque fonction
+ * au fil des aplatissements : une réintroduction de couche échoue aussitôt.
+ * ==================================================================== */
+const APLATIES = {
+  /* nom : marqueur de la version retenue (nom de fonction ou drapeau posé) */
+  pushRadioMsg: "rjPushRadioMsgDirect", renderLiveNewsFeed: "rjRenderDirectFeed", tickNewsFeed: "rjTickDirect",
+  _psPickObj: "rjPsPickObjNew", _psPickAngle: "rjPsPickAngleNew", _psAdjustBudget: "rjPsAdjustBudgetNew",
+  renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
+  _socialFanHandle: null, recomputeGlobalRep: null
+};
+
+function definitionsDansLesSources() {
+  const fs = require("fs"), path = require("path");
+  const parcourir = d => fs.readdirSync(d, { withFileTypes: true })
+    .flatMap(e => e.isDirectory() ? parcourir(path.join(d, e.name)) : [path.join(d, e.name)]);
+  const textes = parcourir(path.join(S.RACINE, "js")).filter(f => f.endsWith(".js")).map(f => fs.readFileSync(f, "utf8"));
+  const compte = {};
+  Object.keys(APLATIES).forEach(n => {
+    const re = new RegExp("function\\s+" + n + "\\s*\\(|window\\." + n + "\\s*=\\s*function", "g");
+    compte[n] = textes.reduce((s, t) => s + (t.match(re) || []).length, 0);
+  });
+  return compte;
+}
+
+async function suiteCouches() {
+  S.suite("Couches aplaties");
+  const compte = definitionsDansLesSources();
+  const multiples = Object.keys(compte).filter(n => compte[n] !== 1);
+  S.verifier(Object.keys(compte).length + " fonctions définies une seule fois", multiples.length === 0,
+    multiples.map(n => n + "×" + compte[n]).join(", "));
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const actives = await page.evaluate(L => L.map(([n, m]) => {
+      const f = window[n];
+      if (typeof f !== "function") return n + " absente";
+      if (m && f.name !== m && !f[m]) return n + " n'est pas la version retenue (" + (f.name || "anonyme") + ")";
+      return null;
+    }).filter(Boolean), Object.entries(APLATIES));
+    S.verifier("chaque fonction aplatie est active dans sa version retenue", actives.length === 0, actives.join(" ; "));
+    S.verifier("aucune erreur au chargement", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 3 ter. PARCOURS DE TOUS LES ÉCRANS ET ONGLETS
  *
  * Les gestionnaires inline (onclick dans le HTML) échappent à la mesure de
@@ -995,6 +1042,7 @@ const SUITES = {
   persistance: suitePersistance,
   fiabilite: suiteFiabilite,
   parcours: suiteParcours,
+  couches: suiteCouches,
   endurance: suiteEndurance,
   qualifications: suiteQualifications,
   course: () => suiteCourse(),

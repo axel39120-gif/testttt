@@ -456,7 +456,6 @@
   // 4) WRAP pushRadioMsg
   // ========================================================================
   function wrapPushRadioMsg() {
-    if (typeof window.pushRadioMsg !== 'function') return false;
     if (window._rjRadioDirectPatched) return true;
     window._rjRadioDirectPatched = true;
 
@@ -750,7 +749,6 @@
   // 7) WRAP renderLiveNewsFeed
   // ========================================================================
   function wrapRenderLiveNewsFeed() {
-    if (typeof window.renderLiveNewsFeed !== 'function') return false;
     if (window._rjDirectRenderPatched) return true;
     window._rjDirectRenderPatched = true;
 
@@ -773,7 +771,6 @@
   // 8) WRAP tickNewsFeed — TTL
   // ========================================================================
   function wrapTickNewsFeed() {
-    if (typeof window.tickNewsFeed !== 'function') return false;
     if (window._rjDirectTickPatched) return true;
     window._rjDirectTickPatched = true;
 

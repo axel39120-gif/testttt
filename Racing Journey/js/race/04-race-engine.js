@@ -6752,30 +6752,6 @@ function triggerPassiveEvent() {
   }
 }
 
-function pushRadioMsg(title, desc, opts) {
-  opts = opts || {};
-  try {
-    if (!LIVE_RACE) return;
-    LIVE_RACE.newsFeed = LIVE_RACE.newsFeed || [];
-    LIVE_RACE.newsFeed.unshift({
-      icon: "",
-      title: " " + title,
-      desc: desc ? " " + desc : null,
-      color: opts.color || "#22D3EE",
-      ttl: opts.ttl || 4,
-      lap: LIVE_RACE.cur
-    });
-    if (LIVE_RACE.newsFeed.length > 3) LIVE_RACE.newsFeed = LIVE_RACE.newsFeed.slice(0, 3);
-    if (typeof playRadioOpen === "function") try {
-      playRadioOpen()
-    } catch (e) {}
-    if (typeof renderLiveNewsFeed === "function") try {
-      renderLiveNewsFeed()
-    } catch (e) {}
-  } catch (e) {
-    console.warn("pushRadioMsg:", e)
-  }
-}
 var TEAM_RADIO_PERSONALITY = {
   Ferrari: {
     tone: "passionate",
@@ -6988,42 +6964,7 @@ function tryContextualRadio() {
   }
 }
 
-function tickNewsFeed() {
-  LIVE_RACE.newsFeed && LIVE_RACE.newsFeed.length && (LIVE_RACE.newsFeed.forEach(function(e) {
-    e.ttl -= 1
-  }), LIVE_RACE.newsFeed = LIVE_RACE.newsFeed.filter(function(e) {
-    return e.ttl > 0
-  }))
-}
 
-function renderLiveNewsFeed() {
-  var e = document.getElementById("live-news-feed");
-  if (e) {
-    if (!LIVE_RACE.newsFeed || 0 === LIVE_RACE.newsFeed.length) return e.style.display = "none", void(e.innerHTML = "");
-    e.style.display = "block";
-    var t = "";
-    LIVE_RACE.newsFeed.forEach(function(e, r) {
-      var n = Math.max(.4, Math.min(1, e.ttl / 5));
-      var isRadio = typeof _isRadioMessage === "function" && _isRadioMessage(e);
-      if (isRadio) {
-        var bg = "linear-gradient(135deg,rgba(8,15,25,0.95) 0%,rgba(15,30,50,0.92) 100%)";
-        var bdr = "rgba(34,211,238,0.4)";
-        var titleColor = "#22D3EE";
-        t += '<div class="radio-msg" style="margin-bottom:6px;padding:8px 11px 9px;background:' + bg + ';border:1px solid ' + bdr + ';border-left:3px solid #22D3EE;border-radius:8px;display:flex;align-items:center;gap:10px;opacity:' + n + ';transition:opacity .25s;overflow:hidden">';
-        t += '<span class="radio-tx-led" style="flex-shrink:0"></span>';
-        t += '<div style="flex:1;min-width:0">';
-        t += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:' + titleColor + ';letter-spacing:.12em;text-transform:uppercase;line-height:1">' + renderIcon('radio', 14, '#60A5FA') + ' RADIO TEAM</span><span class="radio-waveform"><span></span><span></span><span></span><span></span><span></span></span></div>';
-        t += '<div style="font-family:var(--font-display);font-size:10px;font-weight:700;color:' + titleColor + ';letter-spacing:.04em;line-height:1.2">' + e.title.replace(/^📻\s*/, "") + "</div>";
-        if (e.desc) t += '<div style="font-size:11px;color:var(--text2);margin-top:2px;line-height:1.3;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">« ' + e.desc.replace(/^📻\s*/, "") + ' »</div>';
-        t += '</div>';
-        t += '<span style="font-family:var(--font-display);font-size:9px;color:var(--muted);letter-spacing:.06em;flex-shrink:0">T' + e.lap + "</span>";
-        t += '</div>'
-      } else {
-        t += '<div style="margin-bottom:6px;padding:9px 12px;background:rgba(20,20,28,0.85);border:1px solid ' + e.color + "55;border-left:3px solid " + e.color + ";border-radius:8px;display:flex;align-items:center;gap:10px;opacity:" + n + ';transition:opacity .25s"><span style="font-size:16px;flex-shrink:0;line-height:1">' + e.icon + '</span><div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:' + e.color + ';letter-spacing:.08em;text-transform:uppercase;line-height:1.1">' + e.title + "</div>" + (e.desc ? '<div style="font-size:11px;color:var(--text2);margin-top:2px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + e.desc + "</div>" : "") + '</div><span style="font-family:var(--font-display);font-size:9px;color:var(--muted);letter-spacing:.06em;flex-shrink:0">T' + e.lap + "</span></div>"
-      }
-    }), e.innerHTML = t
-  }
-}
 
 function buildLiveEventSchedule(e) {
   var t = RACE_STATE.circuitData || {},
@@ -21519,129 +21460,6 @@ function renderCircuitStats() {
   }
 }
 
-function renderF1Stats() {
-  var e = getF1Stats(),
-    t = (window.CAREER_HISTORY || []).filter(function(e) {
-      return "Formule 1" === e.cat
-    }),
-    r = "F1" === G.cat,
-    n;
-  if (!e.inF1 && 0 === e.seasons) return (n = document.getElementById("f1s-summary")) && (n.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--text3);grid-column:1/-1">Tu n\'as pas encore atteint la F1. Continue ta progression !</div>'), void["f1s-grid", "f1s-seasons", "f1s-wins"].forEach(function(e) {
-    var t = document.getElementById(e);
-    t && (t.innerHTML = '<div style="padding:10px 16px;font-size:13px;color:var(--text3)">—</div>')
-  });
-  var a = e.races > 0 ? Math.round(e.wins / e.races * 100) : 0,
-    i = e.races > 0 ? Math.round(e.pods / e.races * 100) : 0,
-    n;
-  (n = document.getElementById("f1s-summary")) && (n.innerHTML = [{
-    v: e.seasons,
-    l: "Saisons F1"
-  }, {
-    v: e.races,
-    l: "Courses"
-  }, {
-    v: e.wins,
-    l: "Victoires"
-  }, {
-    v: e.pods,
-    l: "Podiums"
-  }, {
-    v: e.titles,
-    l: "Titres F1"
-  }, {
-    v: e.pts,
-    l: "Pts totaux"
-  }].map(function(e) {
-    return '<div class="mc"><div class="mc-l">' + e.l + '</div><div class="mc-v">' + e.v + "</div></div>"
-  }).join(""));
-  var o = document.getElementById("f1s-grid");
-  if (o) {
-    var s = [
-      ["Courses F1", e.races, null],
-      ["Victoires", e.wins, a + "%"],
-      ["Podiums", e.pods, i + "%"],
-      ["Top 5", e.top5, e.races > 0 ? Math.round(e.top5 / e.races * 100) + "%" : null],
-      ["Titres F1", e.titles, null],
-      ["Points totaux F1", e.pts, null],
-      ["Abandons (DNF)", e.dnfs, e.races > 0 ? Math.round(e.dnfs / e.races * 100) + "%" : null],
-      ["Score Panthéon", calcHofScore().score + " / 100", null]
-    ];
-    o.innerHTML = '<div style="margin:0 16px 4px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface2);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red2)"></div>' + s.map(function(e, t) {
-      var r = t === s.length - 1,
-        n = e[0].includes("Victoires") ? "var(--gold)" : e[0].includes("Podiums") ? "var(--teal,#34D399)" : e[0].includes("Titres") ? "#F59E0B" : e[0].includes("Abandons") ? "var(--red-light)" : e[0].includes("Panthéon") ? "#E040FB" : "var(--text)";
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 10px 18px;' + (r ? "" : "border-bottom:1px solid var(--border)") + '"><span style="font-size:13px;color:var(--text2)">' + e[0] + '</span><div style="display:flex;align-items:center;gap:10px">' + (e[2] ? '<span style="font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.04em">' + e[2] + "</span>" : "") + '<span style="font-family:var(--font-display);font-size:15px;font-weight:900;color:' + n + '">' + e[1] + "</span></div></div>"
-    }).join("") + "</div>"
-  }
-  var l = document.getElementById("f1s-seasons");
-  if (l) {
-    var c = t.slice();
-    if (r && G.races.length > 0) {
-      var d = [{
-        pts: G.champPts,
-        me: !0
-      }];
-      G.rivals.forEach(function(e) {
-        d.push({
-          pts: e.pts,
-          me: !1
-        })
-      }), d.sort(function(e, t) {
-        return t.pts - e.pts
-      }), c.push({
-        saison: G.saison,
-        cat: "Formule 1",
-        pos: d.findIndex(function(e) {
-          return e.me
-        }) + 1,
-        pts: G.champPts,
-        races: G.races.length,
-        wins: G.races.filter(function(e) {
-          return 1 === e.pos
-        }).length,
-        pods: G.races.filter(function(e) {
-          return e.pos <= 3 && e.pos >= 1
-        }).length,
-        top5: G.races.filter(function(e) {
-          return e.pos >= 1 && e.pos <= 5
-        }).length,
-        dnfs: G.races.filter(function(e) {
-          return 0 === e.pos
-        }).length,
-        age: G.age,
-        rating: calcPlayerRating(),
-        current: !0
-      })
-    }
-    c.length ? l.innerHTML = '<div style="margin:0 16px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)">' + c.slice().reverse().map(function(e, t) {
-      var r = 1 === e.pos ? "b-gold" : e.pos <= 3 ? "b-teal" : "b-gray",
-        n = 1 === e.pos ? "" : "",
-        a = t === c.length - 1,
-        i = e.rating ? getRatingTier(e.rating) : null;
-      return '<div style="padding:12px 14px;' + (a ? "" : "border-bottom:1px solid var(--border)") + (e.current ? ";background:#0D1A2A" : "") + '"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700;color:var(--text)">F1 S' + e.saison + n + (e.current ? ' <span style="font-size:9px;color:var(--red);background:var(--red-bg);padding:1px 5px;border-radius:3px">EN COURS</span>' : "") + '</span><div style="display:flex;align-items:center;gap:8px">' + (i ? '<span style="font-size:13px;font-weight:900;color:' + i.color + '">' + e.rating + '<small style="font-size:9px;margin-left:1px">' + i.tier + "</small></span>" : "") + '<span class="badge ' + r + '">P' + e.pos + '</span></div></div><div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text3)"><span>' + e.races + ' courses</span><span style="color:var(--gold)">' + e.wins + " victoire" + (1 !== e.wins ? "s" : "") + '</span><span style="color:var(--teal,#34D399)">' + e.pods + " podium" + (1 !== e.pods ? "s" : "") + '</span><span style="color:var(--text3)">' + (e.top5 || 0) + ' top5</span><span style="font-weight:700;color:' + (1 === e.pos ? "#F59E0B" : "var(--text2)") + '">' + e.pts + ' pts</span><span style="color:var(--text3)">Âge ' + e.age + " ans</span></div></div>"
-    }).join("") + "</div>" : l.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--text3)">Aucune saison F1 terminée.</div>'
-  }
-  var p = document.getElementById("f1s-wins");
-  if (p) {
-    var u = [];
-    t.forEach(function(e) {
-      e.raceDetails && e.raceDetails.forEach(function(t) {
-        u.push(Object.assign({}, t, {
-          saison: e.saison
-        }))
-      })
-    }), r && G.races.forEach(function(e) {
-      u.push(Object.assign({}, e, {
-        saison: G.saison
-      }))
-    });
-    var f = u.filter(function(e) {
-      return 1 === e.pos
-    }).slice(0, 8);
-    f.length ? p.innerHTML = '<div style="margin:0 16px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)"><div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">' + f.length + " victoire" + (f.length > 1 ? "s" : "") + " en F1</div>" + f.map(function(e, t) {
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;' + (t < f.length - 1 ? "border-bottom:1px solid var(--border)" : "") + '"><span style="font-size:20px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 21h8m-4-4v4M5 3H2l3 9a4 4 0 008 0l3-9h-3"/><path d="M19 3h3l-3 9"/></svg></span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text)">' + e.nom + '</div><div style="font-size:11px;color:var(--text3);margin-top:1px">F1 · Saison ' + e.saison + "</div></div>" + (e.team && TEAM_LOGOS[e.team] ? '<span style="display:inline-block;width:16px;height:16px;border-radius:2px;overflow:hidden;vertical-align:middle;margin-left:4px">' + TEAM_LOGOS[e.team].replace('width="40" height="40"', 'width="16" height="16"') + "</span>" : "") + '<span class="badge b-gold">P1</span></div>'
-    }).join("") + "</div>" : p.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--text3)">Aucune victoire en F1 encore.</div>'
-  }
-}
 var _origShowSeasonEnd = showSeasonEnd;
 showSeasonEnd = function() {
   saveSeasonToHistory(), _origShowSeasonEnd()

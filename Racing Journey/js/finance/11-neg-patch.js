@@ -724,8 +724,7 @@
 // ===========================================================================
 (function _rjFixOpenNeg() {
   function doFix() {
-    if (typeof window.openNeg !== 'function') { setTimeout(doFix, 400); return; }
-    if (window.openNeg._rjNegFixed) return;
+    if (window.openNeg && window.openNeg._rjNegFixed) return;
     window.openNeg = function(idx) {
       var offer = G.offers && G.offers[idx];
       if (!offer) return;

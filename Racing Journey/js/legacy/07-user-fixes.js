@@ -1103,8 +1103,7 @@
   }
 
   function wrapPsPickObj() {
-    if (typeof window._psPickObj !== 'function') return false;
-    if (window._psPickObj._rjUserFixPS) return true;
+    if (window._psPickObj && window._psPickObj._rjUserFixPS) return true;
     window._psPickObj = function rjPsPickObjNew(k) {
       try {
         window._presObjective = k;
@@ -1122,8 +1121,7 @@
   }
 
   function wrapPsPickAngle() {
-    if (typeof window._psPickAngle !== 'function') return false;
-    if (window._psPickAngle._rjUserFixPS) return true;
+    if (window._psPickAngle && window._psPickAngle._rjUserFixPS) return true;
     window._psPickAngle = function rjPsPickAngleNew(k) {
       try {
         window._presAngle = k;
@@ -1141,8 +1139,7 @@
   }
 
   function wrapPsAdjustBudget() {
-    if (typeof window._psAdjustBudget !== 'function') return false;
-    if (window._psAdjustBudget._rjUserFixPS) return true;
+    if (window._psAdjustBudget && window._psAdjustBudget._rjUserFixPS) return true;
     window._psAdjustBudget = function rjPsAdjustBudgetNew(k, t) {
       try {
         t = parseInt(t) || 0;
@@ -1989,8 +1986,7 @@
 
   // Neutraliser renderF1Stats : conserver une référence au cas où, mais ne plus rien afficher
   (function _rjNeutralizeRenderF1Stats() {
-    if (typeof window.renderF1Stats !== 'function') return;
-    if (window.renderF1Stats._rjNeutralized) return;
+    if (window.renderF1Stats && window.renderF1Stats._rjNeutralized) return;
     window.renderF1Stats = function() {
       _rjHideF1StatsSection();
     };

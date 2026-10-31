@@ -1,5 +1,5 @@
 /* =====================================================================
- * 90-gouttiere.js — UNE SEULE MARGE LATÉRALE DANS TOUT LE JEU
+ * 91-gouttiere.js — UNE SEULE MARGE LATÉRALE DANS TOUT LE JEU
  *
  * CE QUE LA MESURE A ÉTABLI (fenêtre de 430 px, marges gauche/droite)
  *
@@ -24,7 +24,7 @@
  * La valeur est exposée en variable CSS (--rj-gouttiere) : la changer une
  * fois suffit à décaler tout le jeu.
  *
- * Réversible : window._rj90Uninstall().
+ * Réversible : window._rj91Uninstall().
  * =================================================================== */
 (function () {
   "use strict";
@@ -192,7 +192,8 @@
         return GOUTTIERE;
       }
     };
-    window._rj90Uninstall = function () {
+    /* _rj91 : ce module écrasait la désinstallation du module 90. */
+  window._rj91Uninstall = function () {
       var css = document.getElementById(CSS_ID);
       if (css && css.parentNode) css.parentNode.removeChild(css);
       console.log(TAG, "désinstallé");
