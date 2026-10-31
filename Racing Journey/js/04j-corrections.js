@@ -182,14 +182,27 @@
         var maxRaceMs = totalLaps * estimatedTickMs * 2.5 + 30000;
         // Plafond raisonnable : 10 minutes max
         maxRaceMs = Math.min(maxRaceMs, 10 * 60 * 1000);
-        
+        var tourVu = -1, reports = 0;
+
         window._rjRaceWatchdogId = setTimeout(function rjRaceWatchdogTrigger() {
           window._rjRaceWatchdogId = null;
           
           // Si la course est déjà finalisée proprement, on ne fait rien
           if (typeof LIVE_RACE === "undefined" || !LIVE_RACE) return;
           if (LIVE_RACE.finished) return;
-          
+
+          // Le délai se compte en temps réel : les pauses de décision s'y ajoutent.
+          // Une course qui avance encore, ou qui attend une réponse, n'est pas
+          // bloquée : on reporte, dans la limite de 10 minutes (filet préservé).
+          var modale = document.getElementById("live-event-modal");
+          var attend = LIVE_RACE.paused && LIVE_RACE.pendingEvent && modale && getComputedStyle(modale).display !== "none";
+          if (reports < 40 && (attend || LIVE_RACE.cur !== tourVu)) {
+            tourVu = LIVE_RACE.cur;
+            reports++;
+            window._rjRaceWatchdogId = setTimeout(rjRaceWatchdogTrigger, 15000);
+            return;
+          }
+
           // Vérif état du bouton — s'il a été réactivé manuellement, on laisse
           var btn = (typeof document !== "undefined") ? document.getElementById("race-btn") : null;
           if (!btn || !btn.disabled) return;
