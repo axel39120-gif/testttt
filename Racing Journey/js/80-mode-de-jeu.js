@@ -21,10 +21,9 @@
  *      final, et conservé dans la sauvegarde.
  *
  * OPTION A — aucun fichier cœur modifié : enveloppes de goCreate,
- * updateCreUI, buildRecap, saveGame et loadSave.
+ * updateCreUI et buildRecap.
  *
- * PERSISTANCE : saveGame sérialise une liste fermée de champs ; on écrit
- * donc un bloc « rj80 » à côté, dans le même emplacement.
+ * PERSISTANCE : bloc « rj80 » de la sauvegarde (RJ_SAVE_HOOKS, 04s).
  *
  * Réversible : window._rj80Uninstall().
  * =================================================================== */
@@ -566,7 +565,6 @@
     else host.appendChild(div);
   }
 
-
   /* ==================================================================
    * 3 bis. ÉCURIE DE CŒUR
    *
@@ -801,16 +799,7 @@
    * 4. PERSISTANCE DU MODE
    * ================================================================== */
 
-  var _origSave = null, _origLoad = null;
-
-  function cleSlot(slot) {
-    try {
-      if (window.SAVE_KEYS && window.SAVE_KEYS[slot] != null) return window.SAVE_KEYS[slot];
-    } catch (e) {}
-    return "rj_s" + (Number(slot) + 1);
-  }
-
-  /* Persistance déléguée au registre commun (module 87). */
+  /* Persistance : bloc « rj80 » de la sauvegarde (04s-sauvegarde). */
   function installPersistance() {
     if (!Array.isArray(window.RJ_SAVE_HOOKS)) window.RJ_SAVE_HOOKS = [];
     if (window.RJ_SAVE_HOOKS.some(function (h) { return h && h.cle === "rj80"; })) return;

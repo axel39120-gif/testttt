@@ -32,10 +32,6 @@
   var CSS_ID = "rj102-css";
 
   function G_() { return (typeof window.G !== "undefined") ? window.G : null; }
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
 
   /* ==================================================================
    * 1. L'ÉCRAN PATRIMOINE

@@ -1039,12 +1039,6 @@
   function styleActuel() {
     try { return localStorage.getItem('rj_neg_hands') || 'B'; } catch (e) { return 'B'; }
   }
-  function styleSuivant() {
-    var i = STYLES.indexOf(styleActuel());
-    var next = STYLES[(i + 1) % STYLES.length];
-    try { localStorage.setItem('rj_neg_hands', next); } catch (e) {}
-    return next;
-  }
 
   // Recentrage du style B après rotation (valeurs ajustées par mesure).
   var BR_DX = 2.2, BR_DY = 0.9;

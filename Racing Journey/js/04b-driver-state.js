@@ -357,26 +357,6 @@ function rjDebugStates() {
   });
 }
 
-function rjDebugStateOf(driverName) {
-  // Affiche les détails complets d'un pilote spécifique
-  if (typeof LIVE_RACE === "undefined" || !LIVE_RACE || !LIVE_RACE.drivers) {
-    console.log("[RJ Debug] Pas de course active");
-    return;
-  }
-  var d = LIVE_RACE.drivers.find(function(dd) {
-    return dd.name && dd.name.toLowerCase().indexOf((driverName || "").toLowerCase()) >= 0;
-  });
-  if (!d) {
-    console.log("[RJ Debug] Pilote non trouvé : " + driverName);
-    return;
-  }
-  console.log("=== " + d.name + " ===");
-  console.log("Mental :", d._rjDriverState && d._rjDriverState.mental);
-  console.log("Style  :", d._rjDriverState && d._rjDriverState.style);
-  console.log("Pneus  :", d._rjCarState && d._rjCarState.tyres);
-  console.log("Fuel   :", d._rjCarState && d._rjCarState.fuel);
-  console.log("Engine :", d._rjCarState && d._rjCarState.engine);
-}
 
 /* ========================================================================
  * 7. AUTO-INSTALLATION DU HOOK

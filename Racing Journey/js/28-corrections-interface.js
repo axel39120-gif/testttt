@@ -899,11 +899,6 @@
     return (typeof course.pts === "number") ? course.pts : null;
   }
 
-  function nomManche(course, index) {
-    if (!course) return "Manche " + (index + 1);
-    return course.circuit || course.name || ("Manche " + (index + 1));
-  }
-
   /* L'historique d'un rival mêle les courses et les sprints dans une seule
      liste. On le replie en manches : chaque course principale forme une
      manche, et le sprint qui la précède immédiatement lui est rattaché. */

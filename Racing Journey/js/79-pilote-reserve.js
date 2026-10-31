@@ -30,13 +30,11 @@
  *      remplacements, issue.
  *
  * OPTION A — aucun fichier cœur modifié. Tout passe par des enveloppes de
- * fonctions globales (goToRaceWeekend, signContract, saveGame, loadSave,
- * saveSeasonToHistory, renderPalmares, openScheduledEvent) et par les hooks
+ * fonctions globales (goToRaceWeekend, signContract, saveSeasonToHistory,
+ * renderPalmares, openScheduledEvent) et par les hooks
  * existants (WEEKLY_TICK_HOOKS, RACE_POST_HOOKS).
  *
- * PERSISTANCE : saveGame énumère explicitement ses champs, un ajout naïf ne
- * survivrait pas au rechargement. On enveloppe donc saveGame/loadSave pour
- * écrire un bloc « rj79 » à côté, dans le même slot.
+ * PERSISTANCE : bloc « rj79 » de la sauvegarde (RJ_SAVE_HOOKS, 04s).
  *
  * Réversible : window._rj79Uninstall().
  * =================================================================== */
@@ -143,19 +141,9 @@
   /* ==================================================================
    * 2. PERSISTANCE
    *
-   * saveGame sérialise une liste FERMÉE de champs : tout ajout dans G est
-   * perdu au rechargement. On enveloppe donc la sauvegarde pour réinjecter
-   * notre bloc dans le JSON du slot, et le chargement pour le relire.
+   * Le contrat de réserve est un bloc « rj79 » de la sauvegarde
+   * (RJ_SAVE_HOOKS, écrit et relu par 04s-sauvegarde).
    * ================================================================== */
-
-  var _origSave = null, _origLoad = null;
-
-  function cleSlot(slot) {
-    try {
-      if (has("SAVE_KEYS") && window.SAVE_KEYS && window.SAVE_KEYS[slot] != null) return window.SAVE_KEYS[slot];
-    } catch (e) {}
-    return "rj_s" + (Number(slot) + 1);
-  }
 
   function blocSauvegarde() {
     var G = G_(); if (!G) return null;
@@ -253,8 +241,6 @@
     });
     return { moyenne: somme / h.length, dnf: dnf, n: h.length };
   }
-
-  function ecurieDuDeal() { var d = RD(); return d ? d.team : null; }
 
   /* Table de points, quelle que soit la catégorie. */
   function tablePoints() {

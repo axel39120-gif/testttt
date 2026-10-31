@@ -638,8 +638,6 @@
   }
 })();
 
-
-
 // ===================================================================
 
 // ===== Bloc intégré : 13-essais-libres-live.js =====
@@ -1433,77 +1431,6 @@
       if (qual) qual.addEventListener("click", function () { stopClockTicker(); if (typeof goToQualifStep === "function") goToQualifStep(); });
     }
 
-    // ---- Panneau de réglages (HTML + câblage) ----
-    function setupPanelHtml() {
-      var params = (typeof getAvailableSetupParams === "function") ? getAvailableSetupParams(G.cat) : [];
-      if (!params.length) return '';
-      var b = '';
-      b += '<div id="fpl-setup-panel" style="margin-bottom:10px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid #A78BFA;border-radius:6px;overflow:hidden">';
-      b += '<div id="fpl-setup-head" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none">';
-      b += '<div style="display:flex;align-items:center;gap:8px">';
-      b += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
-      b += '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#A78BFA;letter-spacing:.16em;text-transform:uppercase">Réglages voiture</span>';
-      b += '<span style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.08em">' + params.length + ' param' + (params.length > 1 ? 's' : '') + '</span>';
-      b += '</div>';
-      b += '<svg id="fpl-setup-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s ease;transform:rotate(' + (_setupOpen ? '180' : '0') + 'deg)"><polyline points="6 9 12 15 18 9"/></svg>';
-      b += '</div>';
-      b += '<div id="fpl-setup-body" style="padding:' + (_setupOpen ? '4px 14px 12px' : '0 14px') + ';max-height:' + (_setupOpen ? '600px' : '0') + ';overflow:hidden;transition:max-height .25s ease,padding .25s ease">';
-      params.forEach(function (k, idx) {
-        var v = (G.setupAdv && typeof G.setupAdv[k] === "number") ? G.setupAdv[k] : 5;
-        var label = PARAM_LABELS[k] || k;
-        b += '<div style="padding:7px 0;border-bottom:' + (idx === params.length - 1 ? 'none' : '1px solid var(--border)') + '">';
-        b += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
-        b += '<span style="font-size:12px;color:var(--text2);font-weight:600">' + label + '</span>';
-        b += '<span data-fpl-valfor="' + k + '" style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#A78BFA;min-width:18px;text-align:right">' + v + '</span>';
-        b += '</div>';
-        b += '<div style="display:flex;align-items:center;gap:10px">';
-        b += '<span style="font-size:9px;color:var(--dim);font-family:var(--font-display)">0</span>';
-        b += '<input type="range" min="0" max="10" step="1" value="' + v + '" data-fpl-param="' + k + '" class="size-slider" style="flex:1;width:100%;cursor:pointer">';
-        b += '<span style="font-size:9px;color:var(--dim);font-family:var(--font-display)">10</span>';
-        b += '</div></div>';
-      });
-      b += '</div></div>';
-      return b;
-    }
-    var _setupOpen = true;
-
-    function wireSetupPanel(sec, pr) {
-      var panel = sec.querySelector("#fpl-setup-panel");
-      if (!panel) return;
-      var head = panel.querySelector("#fpl-setup-head");
-      var body = panel.querySelector("#fpl-setup-body");
-      head.addEventListener("click", function () {
-        _setupOpen = !_setupOpen;
-        var chev = panel.querySelector("#fpl-setup-chevron");
-        if (chev) chev.style.transform = "rotate(" + (_setupOpen ? "180" : "0") + "deg)";
-        body.style.maxHeight = _setupOpen ? "600px" : "0";
-        body.style.padding = _setupOpen ? "4px 14px 12px" : "0 14px";
-      });
-      panel.querySelectorAll("input[data-fpl-param]").forEach(function (slider) {
-        slider.addEventListener("input", function () {
-          var k = slider.getAttribute("data-fpl-param");
-          var chip = panel.querySelector('[data-fpl-valfor="' + k + '"]');
-          if (chip) chip.textContent = slider.value;
-        });
-        slider.addEventListener("change", function () {
-          var k = slider.getAttribute("data-fpl-param");
-          var val = parseInt(slider.value, 10);
-          if (typeof setAdvParam === "function") setAdvParam("setup", k, val);
-          else { G.setupAdv = G.setupAdv || {}; G.setupAdv[k] = val; }
-          // resync (couplages possibles)
-          var params = (typeof getAvailableSetupParams === "function") ? getAvailableSetupParams(G.cat) : [];
-          params.forEach(function (kk) {
-            var vv = (G.setupAdv && typeof G.setupAdv[kk] === "number") ? G.setupAdv[kk] : 5;
-            var sl = panel.querySelector('input[data-fpl-param="' + kk + '"]');
-            var ch = panel.querySelector('[data-fpl-valfor="' + kk + '"]');
-            if (sl && sl !== document.activeElement) sl.value = vv;
-            if (ch) ch.textContent = vv;
-          });
-          if (typeof renderAdvancedSetupUI === "function") { try { renderAdvancedSetupUI(); } catch (e) {} }
-        });
-      });
-    }
-
     // ========================================================================
     // PISTE (run en cours)
     // ========================================================================
@@ -2024,7 +1951,6 @@
   }
 })();
 
-
 /* ==================================================================== *
  * Formats de week-end — sprint, séquences de séances
  * (anciennement 18-weekend-formats.js)
@@ -2154,23 +2080,6 @@
   function weekendHasSprint(cat) { return getWeekendFormat(cat).races.some(function (r) { return r.type === 'sprint'; }); }
   function weekendRaceCount(cat) { return getWeekendFormat(cat).races.length; }
 
-  /* ----------------------------------------------------------------------- *
-   *  Branchement Phase 1 : nombre de séances d'essais fidèle
-   * ----------------------------------------------------------------------- */
-  function installPracticeCount() {
-    if (!fn('getPracticeMaxSessions') || window.getPracticeMaxSessions._wf18) return false;
-    var orig = window.getPracticeMaxSessions;
-    window.getPracticeMaxSessions = function () {
-      try {
-        var f = getWeekendFormat(curCat());
-        if (f && typeof f.practice === 'number') return f.practice;
-      } catch (e) { /* no-op */ }
-      return orig.apply(this, arguments);
-    };
-    window.getPracticeMaxSessions._wf18 = true;
-    return true;
-  }
-
   function boot(retries) {
     if (typeof window === 'undefined') return;
     // expose pour les phases suivantes (toujours, même avant que G existe)
@@ -2200,7 +2109,6 @@
 
   boot(50);
 })();
-
 
 /* ==================================================================== *
  * Week-ends à plusieurs manches
@@ -2458,7 +2366,6 @@
 
   boot(50);
 })();
-
 
 /* ==================================================================== *
  * Calendrier du week-end
@@ -2752,7 +2659,6 @@
   boot(50);
 })();
 
-
 /* ==================================================================== *
  * Qualifications — nomenclature des sessions, secteurs
  * (anciennement 46-fp-qualif-shortcut.js)
@@ -2826,7 +2732,6 @@
       for (var j = 0; j < ad.length; j++) scan(ad[j]);
     }
   });
-
 
   /* ===================================================================
    * NOMENCLATURE DES SESSIONS DE QUALIFICATION
@@ -3095,7 +3000,6 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 })();
-
 
 /* ==================================================================== *
  * Secteurs — découpage cohérent du tour
@@ -3449,7 +3353,6 @@
   };
 })();
 
-
 /* ==================================================================== *
  * Compacité des écrans du week-end
  * (anciennement 84-weekend-compact.js)
@@ -3609,12 +3512,6 @@
   }
 
   /* --- résumés ------------------------------------------------------ */
-
-  function resumeReglages() {
-    /* Le bandeau d'auto-réglages est juste au-dessus du bouton : répéter son
-       texte n'apporte rien. On annonce plutôt ce que contient la fenêtre. */
-    return "Aéro, suspensions, transmission, freins";
-  }
 
   function resumeFeuilleTemps(bloc) {
     try {
