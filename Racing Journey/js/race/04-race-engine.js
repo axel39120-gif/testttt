@@ -2866,7 +2866,30 @@ var CRISIS_EVENTS = {
 };
 var PHASE_LABELS = ["Formation lap", "Debut de course", "Mi-course", "Duels", "Sprint final", "Dernier tour !"];
 
+/* Départ d'une course. Les modules y réagissent par RJ_RACE_START_HOOKS
+   ({ id, ordre, avant(), apres(course) }), exécutés par ordre croissant
+   (0 par défaut), jamais en enveloppant runRaceLive. */
+if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
+
+function declencherHooksDepart(moment, lr) {
+  window.RJ_RACE_START_HOOKS
+    .map(function (h, i) { return { h: h, i: i }; })
+    .filter(function (x) { return x.h && typeof x.h[moment] === "function"; })
+    .sort(function (a, b) { return ((a.h.ordre || 0) - (b.h.ordre || 0)) || (a.i - b.i); })
+    .forEach(function (x) {
+      try { x.h[moment](lr); }
+      catch (e) { console.warn("[départ] « " + (x.h.id || "?") + " » (" + moment + ") :", e && e.message); }
+    });
+}
+
 function runRaceLive() {
+  declencherHooksDepart("avant", null);
+  var r = _runRaceLiveCoeur.apply(this, arguments);
+  declencherHooksDepart("apres", typeof LIVE_RACE !== "undefined" ? LIVE_RACE : null);
+  return r;
+}
+
+function _runRaceLiveCoeur() {
   PTS_TABLE = _getPtsTable();
   SPRINT_PTS_TABLE = _getSprintPtsTable();
   // Mettre à jour le header course

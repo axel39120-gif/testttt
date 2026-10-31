@@ -386,28 +386,24 @@
     if (window._rjFormRunRaceLiveWrapperInstalled) return true;
     window._rjFormRunRaceLiveWrapperInstalled = true;
     
-    var origRunRaceLive = window.runRaceLive;
-    window.runRaceLive = function rjFormWrappedRunRaceLive() {
+    if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
+    window.RJ_RACE_START_HOOKS.push({ id: "04n-forme", ordre: 20, avant: function () {
       try {
         _rjGenerateAllRivalsForm();
         _rjApplyFormToRivals();
       } catch(e) {
         if (window._rjVerbose) console.warn("[RJ Form] Apply course :", e && e.message);
       }
-      
-      var result = origRunRaceLive.apply(this, arguments);
-      
-      // Restore APRÈS que LIVE_RACE.drivers ait été peuplé
-      // (le moteur a lu skill et consistency, on peut restaurer les valeurs
-      // originales pour ne pas polluer l'état long terme)
+    } });
+    // Restore APRÈS que LIVE_RACE.drivers ait été peuplé (le moteur a lu skill
+    // et consistency) : on ne pollue pas l'état long terme.
+    window.RJ_RACE_START_HOOKS.push({ id: "04n-forme-retrait", ordre: -40, apres: function () {
       try {
         _rjRestoreFormFromRivals();
       } catch(e) {
         if (window._rjVerbose) console.warn("[RJ Form] Restore course :", e && e.message);
       }
-      
-      return result;
-    };
+    } });
     return true;
   }
 

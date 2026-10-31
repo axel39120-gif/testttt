@@ -376,15 +376,7 @@
    *   });
    * ================================================================== */
 
-  function declencherHooksDepart(moment, lr) {
-    if (!Array.isArray(window.RJ_RACE_START_HOOKS)) return;
-    for (var i = 0; i < window.RJ_RACE_START_HOOKS.length; i++) {
-      var h = window.RJ_RACE_START_HOOKS[i];
-      if (!h || typeof h[moment] !== "function") continue;
-      try { h[moment](lr); }
-      catch (e) { console.warn(TAG, "départ « " + (h.id || "?") + " » (" + moment + ") :", e && e.message); }
-    }
-  }
+  /* Le registre est déclenché par runRaceLive (04-race-engine). */
 
   /* ==================================================================
    * 3. INSTALLATION
@@ -399,22 +391,13 @@
       window.updateLivePositions._rj81 = true;
     }
 
-    if (typeof window.runRaceLive === "function" && !window.runRaceLive._rj81) {
-      _origRun = window.runRaceLive;
-      window.runRaceLive = function () {
-        declencherHooksDepart("avant", null);
-        var r = _origRun.apply(this, arguments);
-        try {
-          var lr = LR();
-          if (lr && lr.drivers && lr.drivers.length) recalibrerSurLaGrille();
-          declencherHooksDepart("apres", lr);
-        } catch (e) { console.warn(TAG, "recalibrage :", e && e.message); }
-        return r;
-      };
-      window.runRaceLive._rj81 = true;
+    if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "81-recalibrage"; })) {
+      window.RJ_RACE_START_HOOKS.push({ id: "81-recalibrage", ordre: -10, apres: function (lr) {
+        if (lr && lr.drivers && lr.drivers.length) recalibrerSurLaGrille();
+      } });
     }
 
-    return !!(window.updateLivePositions._rj81 && window.runRaceLive && window.runRaceLive._rj81);
+    return !!window.updateLivePositions._rj81;
   }
 
   function boot() {
@@ -440,7 +423,6 @@
 
     window._rj81Uninstall = function () {
       if (_origUpdate) window.updateLivePositions = _origUpdate;
-      if (_origRun) window.runRaceLive = _origRun;
       console.log(TAG, "désinstallé");
     };
   }

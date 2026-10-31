@@ -746,17 +746,8 @@
   }
 
   function wrapRunRaceLive() {
-    if (typeof window.runRaceLive !== "function") return false;
-    if (window.runRaceLive._rj55) return true;
-    var orig = window.runRaceLive;
-    var fn = function () {
-      var r = orig.apply(this, arguments);
-      try { alignPlayerPace(); } catch (e) {}
-      return r;
-    };
-    fn._rj55 = true;
-    wrapped.runRaceLive = orig;
-    window.runRaceLive = fn;
+    if (window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "55-rythme-joueur"; })) return true;
+    window.RJ_RACE_START_HOOKS.push({ id: "55-rythme-joueur", ordre: -20, apres: function () { alignPlayerPace(); } });
     return true;
   }
 

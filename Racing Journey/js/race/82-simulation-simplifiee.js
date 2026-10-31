@@ -312,20 +312,14 @@
     neutraliserPneus();
     neutraliserPitJoueur();
 
-    if (fn("runRaceLive") && !window.runRaceLive._rj82) {
-      _origRun = window.runRaceLive;
-      window.runRaceLive = function () {
-        validerStrategieAutomatiquement();
-        var r = _origRun.apply(this, arguments);
-        try {
-          uniformiserVariance();
-          planifierArrets();
-          neutraliserPneus();
-          neutraliserPitJoueur();
-        } catch (e) { console.warn(TAG, "init course :", e && e.message); }
-        return r;
-      };
-      window.runRaceLive._rj82 = true;
+    if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "82-depart"; })) {
+      window.RJ_RACE_START_HOOKS.push({ id: "82-depart", ordre: -30, avant: function () { validerStrategieAutomatiquement(); } });
+      window.RJ_RACE_START_HOOKS.push({ id: "82-depart-apres", ordre: 10, apres: function () {
+        uniformiserVariance();
+        planifierArrets();
+        neutraliserPneus();
+        neutraliserPitJoueur();
+      } });
     }
 
     /* Ce travail est celui d'un tour de course, pas du démarrage de la
@@ -385,7 +379,6 @@
     };
 
     window._rj82Uninstall = function () {
-      if (_origRun) window.runRaceLive = _origRun;
       if (_origConfirm) window.confirmStrategy = _origConfirm;
       Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
       try {

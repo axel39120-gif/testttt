@@ -130,16 +130,15 @@ window.rjRattraperResultat = function (e) {
     if (window._rjRaceWatchdogInstalled) return;
     window._rjRaceWatchdogInstalled = true;
     
-    var origRun = window.runRaceLive;
-    
-    window.runRaceLive = function rjWatchdogRunRaceLive() {
-      // Annule un watchdog précédent si existant (course relancée)
+    if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
+    // Annule un watchdog précédent si existant (course relancée)
+    window.RJ_RACE_START_HOOKS.push({ id: "04j-chien-de-garde-arret", ordre: 30, avant: function () {
       if (window._rjRaceWatchdogId) {
         clearTimeout(window._rjRaceWatchdogId);
         window._rjRaceWatchdogId = null;
       }
-      
-      var result = origRun.apply(this, arguments);
+    } });
+    window.RJ_RACE_START_HOOKS.push({ id: "04j-chien-de-garde", ordre: -50, apres: function () {
       
       // Calcule le temps maximum attendu de la course
       // tickRace tourne avec un setTimeout de t ms entre chaque tour.
@@ -210,8 +209,7 @@ window.rjRattraperResultat = function (e) {
         console.warn("[RJ] Erreur installation watchdog :", e && e.message);
       }
       
-      return result;
-    };
+    } });
   }
   
   tryInstall();

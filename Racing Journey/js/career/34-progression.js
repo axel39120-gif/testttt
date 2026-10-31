@@ -1169,12 +1169,11 @@
 
   /* -------------------------------- abandon silencieux du départ ------- */
   function installerJournalDepart() {
-    if (typeof window.runRaceLive !== "function" || window.runRaceLive._rj71) return false;
-    var orig = window.runRaceLive;
-    var fn = function () {
-      var avant = 0;
+    if (window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "71-journal-depart"; })) return false;
+    var avant = 0;
+    window.RJ_RACE_START_HOOKS.push({ id: "71-journal-depart", ordre: 10, avant: function () {
       try { avant = (G.races || []).length; } catch (e) {}
-      var r = orig.apply(this, arguments);
+    }, apres: function () {
       try {
         setTimeout(function () {
           var demarre = false;
@@ -1195,11 +1194,7 @@
           }
         }, 900);
       } catch (e) {}
-      return r;
-    };
-    fn._rj71 = true;
-    wrapped.runRaceLive = orig;
-    window.runRaceLive = fn;
+    } });
     return true;
   }
 
