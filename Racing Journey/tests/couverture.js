@@ -48,10 +48,16 @@ function inventaire() {
   let m;
   while ((m = re.exec(html))) charges.add(m[1]);
 
-  return fs.readdirSync(dossier)
+  /* Les scripts sont rangés par domaine (core/, race/…) : on parcourt
+     l'arborescence ; le chemin relatif sert à savoir s'ils sont chargés. */
+  const parcourir = rel => fs.readdirSync(path.join(dossier, rel), { withFileTypes: true })
+    .flatMap(e => e.isDirectory() ? parcourir(path.posix.join(rel, e.name)) : [path.posix.join(rel, e.name)]);
+
+  return parcourir("")
     .filter(f => f.endsWith(".js"))
-    .map(f => {
-      const contenu = fs.readFileSync(path.join(dossier, f), "utf8");
+    .map(chemin => {
+      const f = path.posix.basename(chemin);
+      const contenu = fs.readFileSync(path.join(dossier, chemin), "utf8");
       const lignes = contenu.split("\n").length;
       /* déclarations de fonctions, tous styles confondus */
       const nommees = new Set();
@@ -69,7 +75,8 @@ function inventaire() {
 
       return {
         fichier: f,
-        charge: charges.has(f),
+        chemin,
+        charge: charges.has(chemin),
         octets: Buffer.byteLength(contenu),
         lignes,
         fonctions: [...nommees],
