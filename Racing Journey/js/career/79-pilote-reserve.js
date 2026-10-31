@@ -2277,13 +2277,10 @@
 
   /* On tente un remplacement au moment où le joueur part vers le week-end,
      avant que l'interception ne décide du format. */
-  var _origAdvance = null;
 
   function installAvancementTemps() {
-    if (!fn("advanceToNextMoment") || window.advanceToNextMoment._rj79) return false;
-    _origAdvance = window.advanceToNextMoment;
-    window.advanceToNextMoment = function () {
-      try {
+    if (window.RJ_ADVANCE_HOOKS.some(function (h) { return h && h.id === "79-reserve"; })) return true;
+    window.RJ_ADVANCE_HOOKS.push({ id: "79-reserve", ordre: 30, avant: function () {
         var G = G_();
         if (G && estReservistePur() && !G._rj79Remplacement) {
           assurerContrat();
@@ -2294,10 +2291,7 @@
           G._rj79Remplacement.circuit = course ? (course.name || "Grand Prix") : "Grand Prix";
           preparerRemplacement();
         }
-      } catch (e) { console.warn(TAG, "avancement :", e && e.message); }
-      return _origAdvance.apply(this, arguments);
-    };
-    window.advanceToNextMoment._rj79 = true;
+    } });
     return true;
   }
 
@@ -2373,7 +2367,6 @@
         if (_origSign) window.signContract = _origSign;
         if (_origOpenSched) window.openScheduledEvent = _origOpenSched;
         if (_origGenObj) window.generateSeasonObjectives = _origGenObj;
-        if (_origAdvance) window.advanceToNextMoment = _origAdvance;
         if (_origSaveSeason) window.saveSeasonToHistory = _origSaveSeason;
         if (_origPalmares) window.renderPalmares = _origPalmares;
         if (_origChamp) window.renderChamp = _origChamp;

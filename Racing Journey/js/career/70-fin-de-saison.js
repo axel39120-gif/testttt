@@ -680,24 +680,17 @@
       ok = true;
     }
 
-    if (typeof window.advanceToNextMoment === "function" && !window.advanceToNextMoment._rj70) {
-      var origAdv = window.advanceToNextMoment;
-      var fnAdv = function () {
-        try {
-          var cur = document.querySelector(".scr.on");
-          var id = cur ? cur.id : "";
-          if (saisonADebriefer() && id === "S-home") {
-            css();
-            try { navTo("S-season-end", "ni-home"); } catch (e) {}
-            setTimeout(rendre, 0);
-            return;
-          }
-        } catch (e) { etat.erreur = String(e && e.message || e); }
-        return origAdv.apply(this, arguments);
-      };
-      fnAdv._rj70 = true;
-      wrapped.advanceToNextMoment = origAdv;
-      window.advanceToNextMoment = fnAdv;
+    if (!window.RJ_ADVANCE_HOOKS.some(function (h) { return h && h.id === "70-bilan"; })) {
+      window.RJ_ADVANCE_HOOKS.push({ id: "70-bilan", ordre: 40, intercepte: function () {
+        var cur = document.querySelector(".scr.on");
+        var id = cur ? cur.id : "";
+        if (saisonADebriefer() && id === "S-home") {
+          css();
+          try { navTo("S-season-end", "ni-home"); } catch (e) {}
+          setTimeout(rendre, 0);
+          return true;
+        }
+      } });
       ok = true;
     }
 

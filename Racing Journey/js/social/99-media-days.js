@@ -204,32 +204,25 @@
     }
 
     /* La conférence vient au joueur, et non l'inverse. */
-    if (typeof window.advanceToNextMoment === "function" && !window.advanceToNextMoment._rj99) {
-      _orig.advanceToNextMoment = window.advanceToNextMoment;
-      window.advanceToNextMoment = function () {
-        /* La décision se prend AVANT de faire avancer le temps. L'ancienne
-           version laissait l'écran de préparation s'afficher une seconde
-           avant d'être recouvert par la conférence — un clignotement
-           désagréable. La conférence a lieu le jeudi, donc AVANT d'entrer
-           dans le week-end : on l'ouvre d'abord, l'avancée reprend après. */
+    if (!window.RJ_ADVANCE_HOOKS.some(function (h) { return h && h.id === "99-conference"; })) {
+      /* La décision se prend AVANT de faire avancer le temps : la conférence
+         a lieu le jeudi, donc avant d'entrer dans le week-end. L'avancée
+         reprend à la sortie (reprendre). */
+      window.RJ_ADVANCE_HOOKS.push({ id: "99-conference", ordre: 20, intercepte: function (options) {
+        if (options.reprise) return false;
         var G = G_();
-        try {
-          var ici = document.querySelector(".scr.on");
-          var id = ici ? ici.id : "";
-          if ((id === "S-home" || id === "") && disponible() &&
-              Math.random() <= chance() && typeof window.openMediaDay === "function") {
-            if (G) G._rj99Reprendre = true;
-            window.openMediaDay();
-            return;
-          }
-        } catch (e) {}
-        return _orig.advanceToNextMoment.apply(this, arguments);
-      };
-      window.advanceToNextMoment._rj99 = true;
+        var ici = document.querySelector(".scr.on");
+        var id = ici ? ici.id : "";
+        if ((id === "S-home" || id === "") && disponible() &&
+            Math.random() <= chance() && typeof window.openMediaDay === "function") {
+          if (G) G._rj99Reprendre = true;
+          window.openMediaDay();
+          return true;
+        }
+      } });
     }
 
-    return !!(window.mediaDayAvailable && window.mediaDayAvailable._rj99 &&
-              window.advanceToNextMoment && window.advanceToNextMoment._rj99);
+    return !!(window.mediaDayAvailable && window.mediaDayAvailable._rj99);
   }
 
   /* Appelée par le module 100 à la sortie de la conférence : si l'avancée
@@ -239,10 +232,8 @@
     if (!G || !G._rj99Reprendre) return false;
     delete G._rj99Reprendre;
     try {
-      if (typeof _orig.advanceToNextMoment === "function") {
-        setTimeout(function () { _orig.advanceToNextMoment(); }, 60);
-        return true;
-      }
+      setTimeout(function () { window.advanceToNextMoment({ reprise: true }); }, 60);
+      return true;
     } catch (e) {}
     return false;
   }

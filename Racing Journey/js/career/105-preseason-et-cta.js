@@ -141,27 +141,20 @@
   var _orig = {};
 
   function installer() {
-    if (typeof window.advanceToNextMoment !== "function") return false;
-    if (window.advanceToNextMoment._rj105) return true;
-
-    _orig.advanceToNextMoment = window.advanceToNextMoment;
-    window.advanceToNextMoment = function () {
+    if (!window.RJ_ADVANCE_HOOKS.some(function (h) { return h && h.id === "105-plan"; })) {
       /* Le plan passe avant tout le reste : on ne part pas en saison sans
          avoir dit où l'on va. */
-      if (planAttendu()) {
-        try {
-          if (typeof window.navTo === "function") window.navTo("S-preseason", null);
-          if (typeof window.renderPreseasonPlanning === "function") {
-            setTimeout(function () {
-              try { window.renderPreseasonPlanning(); } catch (e) {}
-            }, 40);
-          }
-        } catch (e) { console.warn(TAG, e && e.message); }
-        return;
-      }
-      return _orig.advanceToNextMoment.apply(this, arguments);
-    };
-    window.advanceToNextMoment._rj105 = true;
+      window.RJ_ADVANCE_HOOKS.push({ id: "105-plan", ordre: 10, intercepte: function (options) {
+        if (options.reprise || !planAttendu()) return false;
+        if (typeof window.navTo === "function") window.navTo("S-preseason", null);
+        if (typeof window.renderPreseasonPlanning === "function") {
+          setTimeout(function () {
+            try { window.renderPreseasonPlanning(); } catch (e) {}
+          }, 40);
+        }
+        return true;
+      } });
+    }
 
     /* Une fois le plan validé, on enchaîne sur la première course plutôt
        que de laisser le joueur chercher son chemin. */

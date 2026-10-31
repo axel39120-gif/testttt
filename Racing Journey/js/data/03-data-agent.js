@@ -8145,7 +8145,34 @@ function getNextMoment() {
   } : null
 }
 
-function advanceToNextMoment() {
+/* Avancer le temps depuis l'accueil. Les modules y réagissent par
+   RJ_ADVANCE_HOOKS ({ id, ordre, avant(options), intercepte(options) → true,
+   apres(options) }), parcourus par ordre croissant : un hook qui intercepte
+   arrête l'avancement (plan de pré-saison, conférence, bilan de saison).
+   options.reprise : reprise après une conférence, sans nouvelle interception. */
+if (!Array.isArray(window.RJ_ADVANCE_HOOKS)) window.RJ_ADVANCE_HOOKS = [];
+
+function advanceToNextMoment(options) {
+  options = (options && typeof options === "object" && !options.target) ? options : {};
+  var L = window.RJ_ADVANCE_HOOKS
+    .map(function (h, i) { return { h: h, i: i }; })
+    .filter(function (x) { return !!x.h; })
+    .sort(function (a, b) { return ((a.h.ordre || 0) - (b.h.ordre || 0)) || (a.i - b.i); });
+  function appeler(h, m) {
+    if (typeof h[m] !== "function") return;
+    try { return h[m](options); }
+    catch (err) { console.warn("[avancement] « " + (h.id || "?") + " » (" + m + ") :", err && err.message); }
+  }
+  for (var i = 0; i < L.length; i++) {
+    appeler(L[i].h, "avant");
+    if (appeler(L[i].h, "intercepte") === true) return;
+  }
+  var r = _advanceToNextMomentCoeur.call(this);
+  L.forEach(function (x) { appeler(x.h, "apres"); });
+  return r;
+}
+
+function _advanceToNextMomentCoeur() {
   if (!(G._advancingMoment && Date.now() - G._advancingMomentAt < 400)) {
     var _curScr = document.querySelector(".scr.on"),
       _curScrId = _curScr ? _curScr.id : "";

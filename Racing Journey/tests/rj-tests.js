@@ -473,7 +473,8 @@ const APLATIES = {
   renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
   _socialFanHandle: null, recomputeGlobalRep: null,
   startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null,
-  mtab: null, rtab: null, showResult: null, runRaceLive: null
+  mtab: null, rtab: null, showResult: null, runRaceLive: null,
+  advanceToNextMoment: null
 };
 
 function definitionsDansLesSources() {

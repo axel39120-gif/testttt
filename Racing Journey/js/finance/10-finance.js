@@ -492,23 +492,19 @@
     var _rjPending = null;
 
     function doWrap() {
-      if (typeof window.advanceToNextMoment !== 'function') {
-        setTimeout(doWrap, 500); return;
-      }
-      if (window.advanceToNextMoment._rjFinanceWrapped) return;
-
-      var orig = window.advanceToNextMoment;
-      window.advanceToNextMoment = function() {
+      if (window.RJ_ADVANCE_HOOKS.some(function (h) { return h && h.id === '10-finance'; })) return;
+      var scrBefore = '', weekBefore = 0, snapshot = null;
+      window.RJ_ADVANCE_HOOKS.push({ id: '10-finance', ordre: 50, avant: function () {
         // Écran courant AVANT avancement
-        var scrBefore = '';
+        scrBefore = '';
         try { var _sb = document.querySelector('.scr.on'); scrBefore = _sb ? _sb.id : ''; } catch(e) {}
 
         // Snapshot avant
-        var weekBefore = G.semaine;
-        var snapshot = null;
+        weekBefore = G.semaine;
+        snapshot = null;
         try { snapshot = _rjSnapFinance(); } catch(e) {}
 
-        var result = orig.apply(this, arguments);
+      }, apres: function () {
 
         // Écran courant APRÈS avancement
         var scrAfter = '';
@@ -551,10 +547,8 @@
           }
         } catch(e) { console.warn('[10-finance] wrap advance:', e); }
 
-        return result;
-      };
-      window.advanceToNextMoment._rjFinanceWrapped = true;
-      console.log('[10-finance] advanceToNextMoment wrappé pour bilan financier (bilan en fin de week-end)');
+      } });
+      console.log('[10-finance] bilan financier inscrit à l\'avancement du temps (bilan en fin de week-end)');
     }
 
     if (document.readyState === 'loading') {
