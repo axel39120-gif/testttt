@@ -471,7 +471,8 @@ const APLATIES = {
   pushRadioMsg: "rjPushRadioMsgDirect", renderLiveNewsFeed: "rjRenderDirectFeed", tickNewsFeed: "rjTickDirect",
   _psPickObj: "rjPsPickObjNew", _psPickAngle: "rjPsPickAngleNew", _psAdjustBudget: "rjPsAdjustBudgetNew",
   renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
-  _socialFanHandle: null, recomputeGlobalRep: null
+  _socialFanHandle: null, recomputeGlobalRep: null,
+  startNextSeason: null
 };
 
 function definitionsDansLesSources() {
@@ -502,6 +503,16 @@ async function suiteCouches() {
       return null;
     }).filter(Boolean), Object.entries(APLATIES));
     S.verifier("chaque fonction aplatie est active dans sa version retenue", actives.length === 0, actives.join(" ; "));
+
+    /* Le hook de 04o relançait tout le changement de saison : on sautait
+       deux saisons (âge +2, contrat −2) à chaque passage. */
+    const saison = await page.evaluate(() => {
+      const a = { saison: G.saison, age: G.age };
+      startNextSeason();
+      return { saisons: G.saison - a.saison, ans: G.age - a.age };
+    });
+    S.verifier("un changement de saison avance d'une saison", saison.saisons === 1 && saison.ans === 1,
+      "+" + saison.saisons + " saison(s), +" + saison.ans + " an(s)");
     S.verifier("aucune erreur au chargement", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }

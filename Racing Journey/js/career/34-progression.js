@@ -1206,19 +1206,13 @@
   /* ---------------------------------------------------------- montage --- */
   function installer() {
     var ok = false;
-    if (typeof window.startNextSeason === "function" && !window.startNextSeason._rj71) {
-      var orig = window.startNextSeason;
-      var fn = function () {
-        var r = orig.apply(this, arguments);
+    if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "71-vivier"; })) {
+      window.RJ_SEASON_HOOKS.push({ id: "71-vivier", prioritaire: true, apres: function () {
         try { equilibrer(); } catch (e) { etat.erreur = String(e && e.message || e); console.warn(TAG, e); }
         try { if (typeof saveGame === "function") saveGame((G && G._slot) || 0); } catch (e) {}
-        return r;
-      };
-      fn._rj71 = true;
-      wrapped.startNextSeason = orig;
-      window.startNextSeason = fn;
-      ok = true;
+      } });
     }
+    ok = true;
     installerJournalDepart();
     return ok;
   }

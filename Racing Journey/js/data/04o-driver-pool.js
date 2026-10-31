@@ -1053,7 +1053,6 @@
     if (window._rjPoolStartNextSeasonWrapperInstalled) return true;
     window._rjPoolStartNextSeasonWrapperInstalled = true;
     
-    var origStartNextSeason = window.startNextSeason;
   /* Évolution du vivier au changement de saison : inscription au registre
      (module 89) plutôt qu'une enveloppe sur le passage de saison. */
   if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
@@ -1069,9 +1068,7 @@
           if (window._rjVerbose) console.warn("[RJ Pool] Évolution :", e.message);
         }
       }
-      
-      // Appelle legacy (qui appellera initRivals via notre wrapper)
-      return origStartNextSeason.apply(this, arguments);
+
           }
     });
   }

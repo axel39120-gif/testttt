@@ -19364,7 +19364,18 @@ function calcPilotAge() {
   return G.pilot.dob.month > 6 && t--, Math.max(8, t)
 }
 
+/* Changement de saison. Les modules y réagissent par RJ_SEASON_HOOKS
+   ({ id, avant(), apres(), prioritaire }), jamais en enveloppant la fonction. */
 function startNextSeason(e) {
+  if (typeof declencherHooksSaison === "function") declencherHooksSaison("avant");
+  // Lue sans déclaration par la branche « rétrograder en Karting Junior » du corps.
+  try { window.newCatIdx = CATEGORIES.indexOf(G.cat); } catch (err) {}
+  var r = _startNextSeasonCoeur.apply(this, arguments);
+  if (typeof declencherHooksSaison === "function") declencherHooksSaison("apres");
+  return r;
+}
+
+function _startNextSeasonCoeur(e) {
   var t = CATEGORIES.indexOf(G.cat),
     r = G.currentTeam,
     n = G.cat;

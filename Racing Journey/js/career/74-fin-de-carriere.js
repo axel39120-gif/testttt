@@ -395,16 +395,10 @@
 
   /* ---------------------------------------------------------- montage --- */
   function installer() {
-    if (typeof window.startNextSeason === "function" && !window.startNextSeason._rj74) {
-      var orig = window.startNextSeason;
-      var fn = function () {
-        var r = orig.apply(this, arguments);
+    if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "74-age"; })) {
+      window.RJ_SEASON_HOOKS.push({ id: "74-age", prioritaire: true, apres: function () {
         try { setTimeout(verifierAge, 300); } catch (e) {}
-        return r;
-      };
-      fn._rj74 = true;
-      wrapped.startNextSeason = orig;
-      window.startNextSeason = fn;
+      } });
     }
     if (typeof window.navTo === "function" && !window.navTo._rj74) {
       var origNav = window.navTo;

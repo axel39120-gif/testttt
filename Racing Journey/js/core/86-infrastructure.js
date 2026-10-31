@@ -275,19 +275,18 @@
     }
   }
 
-  var _origSaison = null, _origClassement = null;
+  var _origClassement = null;
+
+  /* Appelé par startNextSeason (04). Les hooks « prioritaires » passent en
+     premier : ce sont les anciennes enveloppes de 34, 70 et 74, qui
+     s'exécutaient avant les autres hooks « apres ». */
+  window.declencherHooksSaison = function (moment) {
+    var L = window.RJ_SEASON_HOOKS;
+    declencher(L.filter(function (h) { return h && h.prioritaire; }), moment);
+    declencher(L.filter(function (h) { return h && !h.prioritaire; }), moment);
+  };
 
   function installer() {
-    if (fn("startNextSeason") && !window.startNextSeason._rj89) {
-      _origSaison = window.startNextSeason;
-      window.startNextSeason = function () {
-        declencher(window.RJ_SEASON_HOOKS, "avant");
-        var r = _origSaison.apply(this, arguments);
-        declencher(window.RJ_SEASON_HOOKS, "apres");
-        return r;
-      };
-      window.startNextSeason._rj89 = true;
-    }
 
     if (fn("renderLiveLeaderboard") && !window.renderLiveLeaderboard._rj89) {
       _origClassement = window.renderLiveLeaderboard;
@@ -303,8 +302,7 @@
       window.renderLiveLeaderboard._rj89 = true;
     }
 
-    return !!(window.startNextSeason && window.startNextSeason._rj89 &&
-              window.renderLiveLeaderboard && window.renderLiveLeaderboard._rj89);
+    return !!(window.renderLiveLeaderboard && window.renderLiveLeaderboard._rj89);
   }
 
   function boot() {
@@ -323,7 +321,6 @@
       classement: function () { return window.RJ_LEADERBOARD_HOOKS.map(function (h) { return h.id; }); }
     };
     window._rj89Uninstall = function () {
-      if (_origSaison) window.startNextSeason = _origSaison;
       if (_origClassement) window.renderLiveLeaderboard = _origClassement;
       console.log(TAG, "désinstallé");
     };

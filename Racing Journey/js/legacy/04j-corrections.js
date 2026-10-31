@@ -294,35 +294,6 @@
   window._rjEngineFixesInstalled = true;
 
   /* ====================================================================
-   * FIX #1 — newCatIdx undefined dans startNextSeason
-   * ================================================================= */
-  
-  function _rjFixNewCatIdx() {
-    if (typeof window.startNextSeason !== "function") return false;
-    if (window._rjFix1Installed) return true;
-    window._rjFix1Installed = true;
-    
-    var origStartNextSeason = window.startNextSeason;
-    window.startNextSeason = function rjFix1WrappedStartNextSeason() {
-      // Pose newCatIdx en variable globale AVANT que la fonction soit
-      // exécutée. Le legacy l'utilise sans la déclarer (cf. ligne ~1655) :
-      //   1===newCatIdx?(G.cat="Karting Junior"...)
-      // Sans cette correction, newCatIdx est undefined et la branche
-      // "rétrograder en Karting Junior" ne se déclenche jamais.
-      try {
-        if (typeof CATEGORIES !== "undefined" && CATEGORIES && typeof G !== "undefined" && G) {
-          // Idée legacy : si la cat actuelle est juste au-dessus de Karting Junior
-          // (idx=1 = Karting Senior), on rétrograde au lieu de saison blanche.
-          window.newCatIdx = CATEGORIES.indexOf(G.cat);
-        }
-      } catch(e) {}
-      
-      return origStartNextSeason.apply(this, arguments);
-    };
-    return true;
-  }
-
-  /* ====================================================================
    * FIX #2 — Idempotence finalizeLiveRace
    * ================================================================= */
   
@@ -456,12 +427,11 @@
   var attempts = 0, maxAttempts = 60; // 6s à 100ms
   
   function _rjTryInstallAllFixes() {
-    var fix1 = _rjFixNewCatIdx();
     var fix2 = _rjFixFinalizeIdempotent();
     var fix3 = _rjFixQualiStateReset();
     var fix4 = _rjFixPlayerQualiConsistency();
     
-    return fix1 && fix2 && fix3 && fix4;
+    return fix2 && fix3 && fix4;
   }
   
   function _rjInstallLoop() {
@@ -469,14 +439,13 @@
     var allInstalled = _rjTryInstallAllFixes();
     
     if (allInstalled) {
-      console.log("[RJ Fixes] Module Engine Fixes chargé — 4 bugs corrigés (newCatIdx, finalize, qualiReset, playerQualiConsistency)");
+      console.log("[RJ Fixes] Module Engine Fixes chargé — 3 bugs corrigés (finalize, qualiReset, playerQualiConsistency) ; newCatIdx est posé par startNextSeason");
       return;
     }
     
     if (attempts >= maxAttempts) {
       // Stop le retry, log les fixes qui n'ont pas pu s'installer
       var missing = [];
-      if (!window._rjFix1Installed) missing.push("#1 newCatIdx");
       if (!window._rjFix2Installed) missing.push("#2 finalize idempotent");
       if (!window._rjFix3Installed) missing.push("#3 quali reset");
       if (!window._rjFix4Installed) missing.push("#4 player quali consistency");
@@ -497,7 +466,6 @@
   
   window.rjEngineFixesDebug = function() {
     console.log("=== État des Engine Fixes ===");
-    console.log("Fix #1 (newCatIdx) :", window._rjFix1Installed ? "✓ installé" : "⚠ non installé");
     console.log("Fix #2 (finalize idempotent) :", window._rjFix2Installed ? "✓ installé" : "⚠ non installé");
     console.log("Fix #3 (quali state reset) :", window._rjFix3Installed ? "✓ installé" : "⚠ non installé");
     console.log("Fix #4 (player quali consistency) :", window._rjFix4Installed ? "✓ installé" : "⚠ non installé");

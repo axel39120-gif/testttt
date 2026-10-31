@@ -702,17 +702,11 @@
     }
 
     // Règles de titre appliquées après l'évolution du vivier.
-    if (typeof window.startNextSeason === "function" && !window.startNextSeason._rj70) {
-      var origNext = window.startNextSeason;
-      var fnNext = function () {
-        var r = origNext.apply(this, arguments);
+    if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "70-titres"; })) {
+      window.RJ_SEASON_HOOKS.push({ id: "70-titres", prioritaire: true, apres: function () {
         try { faireRespecterLesRegles(); sauver(); } catch (e) { console.warn(TAG, e); }
         try { majBouton(); } catch (e) {}
-        return r;
-      };
-      fnNext._rj70 = true;
-      wrapped.startNextSeason = origNext;
-      window.startNextSeason = fnNext;
+      } });
     }
 
     // Le champ doit être sauvegardé avec la partie.
