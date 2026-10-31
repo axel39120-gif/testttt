@@ -26,6 +26,10 @@ Pour changer de port : `RJ_PORT=9000 node tests/rj-tests.js`.
 Pour utiliser un navigateur déjà installé plutôt que le Chromium de
 Playwright : `RJ_CHANNEL=chrome` (ou `msedge`).
 
+Le hasard du jeu est tiré d'une graine, affichée en tête du rapport. La
+simulation dépend aussi du temps réel : la même graine rejoue un échec au
+plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tests.js course`.
+
 ## Les suites
 
 | Suite | Ce qu'elle vérifie |
@@ -33,10 +37,14 @@ Playwright : `RJ_CHANNEL=chrome` (ou `msedge`).
 | `chargement` | build exposé, tous les modules chargés, aucune erreur console, reprise d'une partie sans blocage |
 | `creation` | étape du mode de jeu, conservation de la saisie lors d'un aller-retour, écurie de cœur, lancement de carrière |
 | `sauvegarde` | écriture et relecture des blocs hors-cœur (pilote de réserve, mode de jeu, écurie de cœur) après rechargement complet |
+| `persistance` | aller-retour complet d'une partie (cœur, extras, blocs inscrits), réglages, export puis import, et chargement d'une partie réelle de la v208 figée dans `fixtures/` |
+| `parcours` | ouverture de chaque écran et de chaque onglet sans erreur (les `onclick` échappent à la mesure de couverture) |
 | `qualifications` | intitulés de session par catégorie, remise à zéro des références de secteurs entre Q1/Q2/Q3 |
 | `course` | déroulé complet dans quatre catégories : positions distinctes, écarts positifs, sauts bornés, résultat enregistré, absence d'usure de pneus, plateau multi-classes de l'endurance, arrêts au stand |
 | `course-rapide` | la même chose sur la seule Formule 1, pour une vérification en une minute |
-| `weekend` | stratégie retirée du parcours et inatteignable, compacité des onglets, fenêtres de réglages et de feuille de temps |
+| `endurance` | six courses d'endurance : plus grand saut de places par course (défaut connu signalé, à corriger avec le nouveau moteur) |
+| `weekend` | stratégie retirée du parcours et inatteignable, réglages dans la préparation, feuille de temps en fenêtre |
+| `decisions` | décisions en course, mini-classement, chien de garde |
 | `ui` | hauteurs d'écran sous leurs seuils, absence d'icônes dans les boutons d'action, navigation sans erreur |
 
 ## Lire un échec

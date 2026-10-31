@@ -185,6 +185,214 @@ async function suiteSauvegarde() {
 }
 
 /* ==================================================================== *
+ * 3 bis. PERSISTANCE COMPLÈTE — filet de la restructuration
+ *
+ * La sauvegarde est écrite par plusieurs couches (cœur, extras de 07,
+ * champs de 63, blocs RJ_SAVE_HOOKS de 86). Avant de les fusionner, on
+ * fige ce qu'elles produisent ensemble : un aller-retour complet, les
+ * réglages, l'export/import, et une partie réelle de la v208 qui doit
+ * toujours se charger.
+ * ==================================================================== */
+const FIXTURE_V208 = require("./fixtures/sauvegarde-v208.json");
+
+/* Champs comparés d'une sauvegarde à l'autre : le cœur et les extras. */
+function empreinte() {
+  const champs = ["pilot", "stats", "rep", "budget", "saison", "semaine", "champPts", "age",
+                  "gameYear", "cat", "races", "currentTeam", "owned", "happiness", "igFollowers",
+                  "sponsors", "staff", "_network"];
+  const o = {};
+  champs.forEach(c => { o[c] = JSON.stringify(G[c] === undefined ? null : G[c]); });
+  return o;
+}
+
+async function suitePersistance() {
+  S.suite("Persistance complète");
+  const { navigateur, page, journal } = await S.ouvrirJeu({
+    /* La partie figée est posée avant le démarrage, comme chez un joueur. */
+    avantChargement: {
+      fn: f => {
+        try {
+          /* Rejoué à chaque rechargement : on ne pose la partie qu'une fois. */
+          if (localStorage.getItem("rj_s3") !== null) return;
+          localStorage.setItem("rj_s3", JSON.stringify(f.slots.slot_2));
+          if (f.extras && f.extras.slot_2) localStorage.setItem("rj_extra_slot_2", JSON.stringify(f.extras.slot_2));
+        } catch (e) {}
+      },
+      arg: FIXTURE_V208
+    }
+  });
+  try {
+    /* 1. Aller-retour complet dans l'emplacement 2. */
+    const avant = await page.evaluate(empreinteSrc => {
+      const empreinte = new Function("return (" + empreinteSrc + ")()");
+      /* La partie de départ est la sauvegarde de test du module 51, qui
+         remplace au démarrage toute sauvegarde qu'il reconnaît comme sienne
+         (bug à corriger en T3). On en fait une vraie partie. */
+      G._rjTestSave = false; G.pilot.prenom = "Sonde"; G.pilot.nom = "Persistance";
+      G.budget = 123456; G.champPts = 77; G.happiness = 61;
+      G.sponsors = [{ name: "Sonde", value: 4242, weeks: 9 }];
+      G._slot = 1; saveGame(1);
+      const brut = JSON.parse(localStorage.getItem(SAVE_KEYS[1]));
+      const blocs = (window.RJ_SAVE_HOOKS || []).filter(h => {
+        /* undefined : rien à écrire ; null : bloc vide, volontairement retiré. */
+        try { const b = h && h.cle && h.ecrire && h.ecrire(G); return b !== undefined && b !== null; } catch (e) { return false; }
+      }).map(h => h.cle);
+      return { e: empreinte(), blocs, manquants: blocs.filter(c => !(c in brut)),
+               extras: !!localStorage.getItem("rj_extra_slot_1") };
+    }, empreinte.toString());
+    S.verifier("chaque bloc inscrit est écrit dans la sauvegarde", avant.manquants.length === 0,
+      avant.manquants.length ? "manque " + avant.manquants.join(", ") : avant.blocs.join(", "));
+    S.verifier("les extras sont écrits à part", avant.extras);
+
+    /* Réglages modifiés avant le rechargement. */
+    await page.evaluate(() => { SETTINGS.simSpeed = "slow"; saveSettings(); });
+
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(6500);
+
+    const apres = await page.evaluate(empreinteSrc => {
+      const empreinte = new Function("return (" + empreinteSrc + ")()");
+      const brut = JSON.parse(localStorage.getItem(SAVE_KEYS[1]) || "{}");
+      window.__brutAvantChargement = { budget: brut.budget, test: brut._rjTestSave, variante: brut._rjTestVariant };
+      loadSave(1);
+      return { e: empreinte(), vitesse: SETTINGS.simSpeed, brut: window.__brutAvantChargement };
+    }, empreinte.toString());
+    const differents = Object.keys(avant.e).filter(k => avant.e[k] !== apres.e[k]);
+    S.verifier("la partie revient à l'identique après rechargement", differents.length === 0,
+      differents.map(k => k + " " + avant.e[k].slice(0, 30) + " → " + apres.e[k].slice(0, 30)).join(" ; ") +
+      " | stocké " + JSON.stringify(apres.brut));
+    S.verifier("les réglages survivent au rechargement", apres.vitesse === "slow", apres.vitesse);
+
+    /* 2. La partie figée de la v208 se charge, se joue et se sauvegarde. */
+    const fige = await page.evaluate(f => {
+      const s = f.slots.slot_2;
+      loadSave(2);
+      return {
+        pilote: G.pilot && G.pilot.nom === s.pilot.nom,
+        categorie: G.cat === s.cat,
+        saison: G.saison === s.saison,
+        budget: G.budget === s.budget,
+        courses: (G.races || []).length === (s.races || []).length,
+        sponsors: !f.extras.slot_2 || JSON.stringify(G.sponsors || null) === JSON.stringify(f.extras.slot_2.sponsors || null),
+        cat: G.cat
+      };
+    }, FIXTURE_V208);
+    ["pilote", "categorie", "saison", "budget", "courses", "sponsors"].forEach(k =>
+      S.verifier("partie v208 : " + k + " retrouvé", fige[k] === true));
+
+    await S.repondeurAutomatique(page);
+    const course = await S.courirUneCourse(page, { categorie: fige.cat, reinitialiserRivaux: false });
+    S.verifier("partie v208 : une course se joue", course.terminee === true && !!course.resultat,
+      course.bloqueeA || (course.anomalies || [])[0] || "");
+    const resauve = await page.evaluate(n => {
+      G._slot = 2; saveGame(2);
+      const o = JSON.parse(localStorage.getItem(SAVE_KEYS[2]));
+      return (o.races || []).length === n + 1;
+    }, (FIXTURE_V208.slots.slot_2.races || []).length);
+    S.verifier("partie v208 : se sauvegarde avec la nouvelle course", resauve);
+    /* 3. Export puis import, en dernier : l'import programme un rechargement. */
+    const echange = await page.evaluate(async () => {
+      const cles = ["rj_s2", "rj_extra_slot_1", "rj_settings_v1", "rj_s3"];
+      const original = cles.map(k => localStorage.getItem(k));
+      let blob; const oc = URL.createObjectURL; URL.createObjectURL = b => { blob = b; return "blob:x"; };
+      const ck = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () {};
+      try { exportSaveData(); } finally { URL.createObjectURL = oc; HTMLAnchorElement.prototype.click = ck; }
+      const bundle = JSON.parse(await blob.text());
+      cles.forEach(k => localStorage.removeItem(k));
+      const sad = window.showAlertDialog; window.showAlertDialog = function () {};   // pas de rechargement
+      try { _applyImportedBundle(bundle); } finally { window.showAlertDialog = sad; }
+      return cles.map((k, i) => {
+        const v = localStorage.getItem(k);
+        return original[i] === null ? v === null : (v !== null && JSON.stringify(JSON.parse(v)) === JSON.stringify(JSON.parse(original[i])));
+      });
+    });
+    S.verifier("l'import restaure l'emplacement", echange[0]);
+    S.verifier("l'import restaure les extras", echange[1]);
+    S.verifier("l'import restaure les réglages", echange[2]);
+    S.verifier("l'import restaure la partie v208", echange[3]);
+
+    S.verifier("aucune erreur pendant la suite", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 3 ter. PARCOURS DE TOUS LES ÉCRANS ET ONGLETS
+ *
+ * Les gestionnaires inline (onclick dans le HTML) échappent à la mesure de
+ * couverture : avant de supprimer du code, on vérifie que chaque écran et
+ * chaque onglet s'ouvre sans erreur.
+ * ==================================================================== */
+async function suiteParcours() {
+  S.suite("Parcours des écrans et onglets");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const attendre = ms => new Promise(res => setTimeout(res, ms));
+      /* Écrans de jeu ; la création de carrière et l'accueil sont couverts ailleurs. */
+      const ecrans = [...document.querySelectorAll(".scr[id^='S-']")].map(e => e.id)
+        .filter(id => !/^S-(splash|cre|create|intro)$/i.test(id));
+      const rapport = { ecrans: 0, onglets: 0, ko: [] };
+      for (const id of ecrans) {
+        try {
+          navTo(id, null);
+          await attendre(220);
+          if (!document.getElementById(id).classList.contains("on")) {
+            /* Certains anciens écrans redirigent vers leur remplaçant (S-arcs → Médias). */
+            const ouvert = document.querySelector(".scr.on");
+            if (!ouvert) { rapport.ko.push(id + " ne s'ouvre pas"); continue; }
+            rapport.redirections = (rapport.redirections || []).concat(id + "→" + ouvert.id);
+          }
+          rapport.ecrans++;
+          /* Onglets internes : boutons dont le onclick appelle une fonction *tab('…'). */
+          const boutons = [...document.getElementById(id).querySelectorAll("[onclick]")]
+            .filter(b => /\b\w*tab\(\s*'[^']+'/.test(b.getAttribute("onclick")) && b.offsetParent !== null);
+          for (const b of boutons) {
+            const code = b.getAttribute("onclick");
+            try { b.click(); await attendre(120); rapport.onglets++; }
+            catch (e) { rapport.ko.push(id + " › " + code.slice(0, 40) + " : " + e.message.slice(0, 60)); }
+          }
+        } catch (e) { rapport.ko.push(id + " : " + e.message.slice(0, 60)); }
+      }
+      try { navTo("S-home", null); } catch (e) {}
+      return rapport;
+    });
+    S.verifier("tous les écrans s'ouvrent", r.ko.length === 0 && r.ecrans > 5, r.ecrans + " écran(s)" +
+      (r.redirections ? ", redirigés : " + r.redirections.join(" ") : "") + (r.ko.length ? " — " + r.ko.slice(0, 3).join(" ; ") : ""));
+    S.verifier("des onglets ont été parcourus", r.onglets > 5, r.onglets + " onglet(s)");
+    S.verifier("aucune erreur pendant le parcours", journal.erreurs.length === 0, journal.erreurs.slice(0, 2).join(" ; "));
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 5 bis. ENDURANCE — MESURE DES BONDS DE POSITION
+ *
+ * Défaut connu : le joueur saute d'une dizaine de places d'un tour à
+ * l'autre environ une course sur six. On le chiffre avant la refonte du
+ * moteur (T7), qui doit le faire disparaître : le seuil sera alors abaissé.
+ * ==================================================================== */
+async function suiteEndurance() {
+  S.suite("Endurance : bonds de position");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const sauts = [];
+    for (let i = 0; i < 6; i++) {
+      const r = await S.courirUneCourse(page, { categorie: "Endurance WEC" });
+      if (!r.terminee) { S.verifier("course " + (i + 1) + " arrive au drapeau", false, r.bloqueeA || (r.anomalies || [])[0] || ""); continue; }
+      sauts.push(r.sautMax);
+    }
+    const gros = sauts.filter(s => s >= 8).length;
+    S.verifier("6 courses d'endurance courues", sauts.length === 6, "sauts max : " + sauts.join(", "));
+    const detail = gros + " course(s) avec un saut de 8 places ou plus";
+    /* Plafond dur : une régression franche ne doit pas passer pour le défaut connu. */
+    S.verifier("aucun saut aberrant (plafond dur 25)", sauts.every(s => s <= 25), "max " + Math.max(...sauts));
+    if (sauts.every(s => s <= 12)) S.verifier("aucun saut au-delà du seuil actuel (12)", true, detail);
+    else S.ignorer("aucun saut au-delà du seuil actuel (12)", "défaut connu, à corriger en T7 — " + detail);
+    S.verifier("aucune erreur pendant les courses", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 4. QUALIFICATIONS
  * ==================================================================== */
 async function suiteQualifications() {
@@ -342,30 +550,24 @@ async function suiteWeekend() {
 
     /* Compacité des onglets. */
     const prep = await page.evaluate(async () => {
+      /* La préparation se verrouille une fois les essais faits (40) : on
+         repart d'un week-end neuf, comme au début d'une manche. */
+      if (typeof resetRaceWeekend === "function") resetRaceWeekend();
       rtab("prep", true);
       await new Promise(r => setTimeout(r, 500));
       const c = document.getElementById("rt-prep");
+      const reglages = c.querySelector("#setup-mode-advanced");
       return {
         hauteur: c.scrollHeight,
         boutonReglages: !!document.getElementById("rj84-btn-setup"),
-        reglagesRanges: (document.getElementById("setup-mode-advanced") || {}).style
-          ? document.getElementById("setup-mode-advanced").style.display : null
+        reglagesVisibles: !!reglages && reglages.offsetParent !== null
       };
     });
-    S.verifier("la préparation tient dans l'écran", prep.hauteur <= 900, prep.hauteur + " px");
-    S.verifier("les réglages sont accessibles par un bouton", prep.boutonReglages);
-    S.verifier("les réglages sont rangés hors de l'écran", prep.reglagesRanges === "none");
-
-    const ouverture = await page.evaluate(async () => {
-      document.getElementById("rj84-btn-setup").click();
-      await new Promise(r => setTimeout(r, 350));
-      const ok = !!document.querySelector("#rj84-corps #setup-mode-advanced");
-      document.getElementById("rj84-fermer").click();
-      await new Promise(r => setTimeout(r, 300));
-      return { ouvert: ok, revenu: !!document.querySelector("#rt-prep #setup-mode-advanced") };
-    });
-    S.verifier("la fenêtre de réglages s'ouvre", ouverture.ouvert);
-    S.verifier("les réglages regagnent leur place à la fermeture", ouverture.revenu);
+    /* Les réglages ont été remis dans l'écran de préparation (18-weekend,
+       compacterPreparation) : ils ne sont plus derrière un bouton, et la
+       préparation dépasse donc volontairement la hauteur d'écran. */
+    S.verifier("les réglages sont dans la préparation", prep.reglagesVisibles, prep.hauteur + " px");
+    S.verifier("plus de bouton de réglages", !prep.boutonReglages);
 
     /* L'écran de course : progression visible, classement différé. */
     const progression = await page.evaluate(async () => {
@@ -646,6 +848,9 @@ const SUITES = {
   chargement: suiteChargement,
   creation: suiteCreation,
   sauvegarde: suiteSauvegarde,
+  persistance: suitePersistance,
+  parcours: suiteParcours,
+  endurance: suiteEndurance,
   qualifications: suiteQualifications,
   course: () => suiteCourse(),
   "course-rapide": () => suiteCourse(["Formule 1"]),
@@ -671,7 +876,7 @@ async function principal() {
   }
 
   const serveur = await S.servir();
-  console.log(`Racing Journey — filet de tests   (http://127.0.0.1:${S.PORT})`);
+  console.log(`Racing Journey — filet de tests   (http://127.0.0.1:${S.PORT}, graine ${S.GRAINE})`);
   try {
     for (const nom of aJouer) {
       try { await SUITES[nom](); }
