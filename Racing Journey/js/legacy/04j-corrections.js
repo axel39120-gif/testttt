@@ -855,7 +855,8 @@ window.rjRattraperResultat = function (e) {
   function walkAndProcess(node) {
     if (!node) return;
     // Skip pendant qu'une course tourne live (perf)
-    if (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE.lap > 0 && !LIVE_RACE.finished) {
+    // (LIVE_RACE.lap n'existe pas : le tour courant est LIVE_RACE.cur.)
+    if (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE.cur > 0 && !LIVE_RACE.finished) {
       return;
     }
     if (node.nodeType === 3) {

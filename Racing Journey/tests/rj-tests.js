@@ -538,6 +538,32 @@ async function suiteCouches() {
 }
 
 /* ==================================================================== *
+ * 3 quinquies. SOBRIÉTÉ AU REPOS (T6)
+ *
+ * Au repos sur l'accueil, le jeu ne doit presque rien faire : on mesurait
+ * 178 réveils de surveillances du DOM et ~1 650 setTimeout par seconde
+ * (boucles d'installation mortes, chrono redessiné hors écran, classes
+ * réécrites à l'identique). Une batterie de téléphone le paie.
+ * ==================================================================== */
+async function suiteSobriete() {
+  S.suite("Sobriété au repos");
+  const { navigateur, page } = await S.ouvrirJeu({ avantChargement: { fn: () => {
+    window.__c = { obs: 0, to: 0 };
+    const st = window.setTimeout; window.setTimeout = function () { window.__c.to++; return st.apply(this, arguments); };
+    const MO = window.MutationObserver; window.MutationObserver = function (cb) { return new MO(function () { window.__c.obs++; return cb.apply(this, arguments); }); };
+  } } });
+  try {
+    await page.evaluate(() => navTo("S-home", "ni-home"));
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => { window.__c = { obs: 0, to: 0 }; });
+    await page.waitForTimeout(5000);
+    const c = await page.evaluate(() => window.__c);
+    S.verifier("surveillances du DOM au repos < 10/s", c.obs / 5 < 10, (c.obs / 5).toFixed(1) + "/s");
+    S.verifier("setTimeout au repos < 60/s", c.to / 5 < 60, (c.to / 5).toFixed(1) + "/s");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 3 ter. PARCOURS DE TOUS LES ÉCRANS ET ONGLETS
  *
  * Les gestionnaires inline (onclick dans le HTML) échappent à la mesure de
@@ -1079,6 +1105,7 @@ const SUITES = {
   fiabilite: suiteFiabilite,
   parcours: suiteParcours,
   couches: suiteCouches,
+  sobriete: suiteSobriete,
   endurance: suiteEndurance,
   qualifications: suiteQualifications,
   course: () => suiteCourse(),

@@ -201,34 +201,15 @@
   /* ==================================================================
    * INSTALLATION
    * ================================================================== */
-  /* Le registre des tours n'est pas alimenté par toutes les configurations
-     de course — mesuré à zéro appel sur une course de cinquante-sept tours.
-     On surveille donc directement le compteur de tours : c'est peu coûteux,
-     et cela fonctionne quel que soit le moteur employé. */
-  var veille = null;
-
-  function surveiller() {
-    if (veille) return;
-    veille = setInterval(function () {
-      try {
-        var L = window.LIVE_RACE;
-        if (!L || !L.drivers || !L.drivers.length) { etat.tour = 0; return; }
-        var cur = L.cur || 0;
-        if (cur < etat.tour) reinitialiser();      // nouvelle course
-        if (cur !== etat.tour) surTour();
-      } catch (e) {}
-    }, 350);
-  }
-
+  /* Un passage par tour (RJ_LAP_HOOKS, 81) ; remise à zéro au départ
+     (RJ_RACE_START_HOOKS, 04). Le hook était inscrit sous la forme d'une
+     fonction nue, que le registre ignore : une minuterie de 350 ms le
+     remplaçait en permanence, course ou pas. */
   function installer() {
-    surveiller();
-    /* Si le registre existe, on s'y branche aussi : deux sources valent
-       mieux qu'une, la déduplication par clé évite les doublons. */
-    if (Array.isArray(window.RJ_LAP_HOOKS) &&
-        !window.RJ_LAP_HOOKS.some(function (h) { return h && h._rj104; })) {
-      var hook = function () { surTour(); };
-      hook._rj104 = true;
-      window.RJ_LAP_HOOKS.push(hook);
+    if (!Array.isArray(window.RJ_LAP_HOOKS) || !Array.isArray(window.RJ_RACE_START_HOOKS)) return false;
+    if (!window.RJ_LAP_HOOKS.some(function (h) { return h && h.id === "104-depassements"; })) {
+      window.RJ_LAP_HOOKS.push({ id: "104-depassements", run: function () { surTour(); } });
+      window.RJ_RACE_START_HOOKS.push({ id: "104-depassements", apres: function () { reinitialiser(); } });
     }
     return true;
   }
@@ -242,9 +223,9 @@
 
     window._rj104 = { surTour: surTour, reinitialiser: reinitialiser, etat: function () { return etat; } };
     window._rj104Uninstall = function () {
-      if (veille) { clearInterval(veille); veille = null; }
       if (Array.isArray(window.RJ_LAP_HOOKS)) {
-        window.RJ_LAP_HOOKS = window.RJ_LAP_HOOKS.filter(function (h) { return !(h && h._rj104); });
+        window.RJ_LAP_HOOKS = window.RJ_LAP_HOOKS.filter(function (h) { return !(h && h.id === "104-depassements"); });
+      window.RJ_RACE_START_HOOKS = window.RJ_RACE_START_HOOKS.filter(function (h) { return !(h && h.id === "104-depassements"); });
       }
       console.log(TAG, "désinstallé");
     };

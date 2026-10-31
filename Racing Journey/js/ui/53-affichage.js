@@ -1679,8 +1679,9 @@
         var v = cartes[i].querySelector(".mc-v, .f1-metric-val, .f1-metric-v");
         var t = v ? (v.textContent || "").trim() : "";
         var neg = /^[-−]/.test(t);
-        if (neg) cartes[i].classList.add("rj73-neg");
-        else cartes[i].classList.remove("rj73-neg");
+        // Ne toucher la classe que si elle change : chaque écriture, même
+        // identique, réveillait toutes les surveillances du DOM du jeu.
+        if (cartes[i].classList.contains("rj73-neg") !== neg) cartes[i].classList.toggle("rj73-neg", neg);
       }
     } catch (e) {
     } finally {

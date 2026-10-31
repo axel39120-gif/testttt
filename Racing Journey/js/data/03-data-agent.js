@@ -19357,6 +19357,9 @@ function _fpTickTimer() {
   // Mettre à jour la barre
   var bar = document.getElementById("fp-timer-bar-fill");
   var label = document.getElementById("fp-timer-label");
+  // Le chrono continue de compter hors de l'écran, mais n'y redessine rien :
+  // dix écritures par seconde réveillaient toutes les surveillances du DOM.
+  if (bar && bar.offsetParent === null) bar = label = null;
   if (bar) {
     bar.style.width = (100 * pct).toFixed(1) + "%";
     bar.style.background = pct > 0.4 ? "#22D3EE" : pct > 0.15 ? "#F59E0B" : "#EF4444";
