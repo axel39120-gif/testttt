@@ -395,6 +395,7 @@
 
   /* ---------------------------------------------------------- montage --- */
   function installer() {
+    if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "74-age"; })) {
       window.RJ_SEASON_HOOKS.push({ id: "74-age", prioritaire: true, apres: function () {
         try { setTimeout(verifierAge, 300); } catch (e) {}

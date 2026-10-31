@@ -267,6 +267,7 @@
     /* Réactions au changement de saison : inscription au registre
        (module 89) plutôt qu'une enveloppe de plus. */
     if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
+    if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "34-progression-depth"; })) {
       window.RJ_SEASON_HOOKS.push({
         id: "34-progression-depth",
@@ -746,6 +747,7 @@
     if (window.startNextSeason._rjTrainReset) return true;
     _origNextSeason = window.startNextSeason;
     if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
+    if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "38-training-rework"; })) {
       window.RJ_SEASON_HOOKS.push({
         id: "38-training-rework",
@@ -1201,6 +1203,7 @@
   /* ---------------------------------------------------------- montage --- */
   function installer() {
     var ok = false;
+    if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "71-vivier"; })) {
       window.RJ_SEASON_HOOKS.push({ id: "71-vivier", prioritaire: true, apres: function () {
         try { equilibrer(); } catch (e) { etat.erreur = String(e && e.message || e); console.warn(TAG, e); }

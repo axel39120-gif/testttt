@@ -98,9 +98,11 @@
     });
   }
 
-  /* Filtre de notification (86) : hors de l'accueil, on garde pour plus tard. */
+  /* Filtre de notification (86) : hors de l'accueil, on garde pour plus tard.
+     Placé en tête, comme l'ancienne enveloppe la plus externe : les autres
+     filtres (40, 28) ne voient la notification qu'au rejeu, sur l'accueil. */
   if (!Array.isArray(window.RJ_TOAST_FILTERS)) window.RJ_TOAST_FILTERS = [];
-  window.RJ_TOAST_FILTERS.push({
+  window.RJ_TOAST_FILTERS.unshift({
     id: "58-file",
     filtre: function () {
       if (!actif || onHome()) return;

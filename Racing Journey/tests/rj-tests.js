@@ -531,6 +531,20 @@ async function suiteCouches() {
     journal.erreurs = journal.erreurs.filter(e => e.indexOf("panne simulée") < 0);
     S.verifier("fin de course en panne : le jeu reprend la main", filet.err === null && filet.bouton === true && filet.course,
       JSON.stringify(filet));
+    /* Une notification reçue hors de l'accueil est gardée, puis affichée au
+       retour (filtre de file de 53, placé avant ceux de 40 et 28). */
+    const notif = await page.evaluate(async () => {
+      const vus = [], coeur = window._pushHomeToastCoeur;
+      window._pushHomeToastCoeur = function (l) { vus.push(l); };
+      try {
+        navTo("S-media", "ni-media"); await new Promise(r => setTimeout(r, 200));
+        pushHomeToast("Nouveau message", "Sonde de file d'attente", "#fff");
+        const pendant = vus.length;
+        navTo("S-home", "ni-home"); await new Promise(r => setTimeout(r, 1200));
+        return { pendant, apres: vus.filter(l => l === "Nouveau message").length };
+      } finally { window._pushHomeToastCoeur = coeur; }
+    });
+    S.verifier("notification hors accueil : gardée puis affichée au retour", notif.pendant === 0 && notif.apres === 1, JSON.stringify(notif));
     S.verifier("un changement de saison avance d'une saison", saison.saisons === 1 && saison.ans === 1,
       "+" + saison.saisons + " saison(s), +" + saison.ans + " an(s)");
     S.verifier("aucune erreur au chargement", journal.erreurs.length === 0, journal.erreurs[0] || "");

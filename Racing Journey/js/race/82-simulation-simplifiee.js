@@ -356,8 +356,8 @@
        réellement installé : elle mentionnait encore tickRace, dont on est
        sorti au profit du registre de tour. Le boot ne se terminait donc
        jamais et ré-enveloppait rtab à chaque passage, jusqu'à la récursion. */
-    return !!(window.runRaceLive && window.runRaceLive._rj82 &&
-              window.rtab && window.rtab._rj82);
+    return window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "82-depart"; }) &&
+           window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "82-strategie"; });
   }
 
   function boot() {

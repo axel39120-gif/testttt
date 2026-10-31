@@ -171,7 +171,7 @@
       return;
     }
     window._rjWeekendEntryFixUninstall = function () {
-      if (window.pushHomeToast && window.pushHomeToast._rjOrig) window.pushHomeToast = window.pushHomeToast._rjOrig;
+      window.RJ_TOAST_FILTERS = (window.RJ_TOAST_FILTERS || []).filter(function (f) { return !(f && f.id === "42-weekend-entry"); });
       console.log("[42-weekend-entry-fixes] désinstallé");
     };
     console.log("[42-weekend-entry-fixes] actif (essais reset:" + ok1 + ", notif gate:" + ok2 + ")");

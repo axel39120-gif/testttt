@@ -695,6 +695,7 @@
     }
 
     // Règles de titre appliquées après l'évolution du vivier.
+    if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "70-titres"; })) {
       window.RJ_SEASON_HOOKS.push({ id: "70-titres", prioritaire: true, apres: function () {
         try { faireRespecterLesRegles(); sauver(); } catch (e) { console.warn(TAG, e); }
