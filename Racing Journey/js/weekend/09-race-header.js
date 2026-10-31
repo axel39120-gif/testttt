@@ -408,18 +408,10 @@
 
   // 3) showResult() — pour cohérence après course (race-title est setté ici)
   function wrapShowResult() {
-    if (typeof window.showResult !== 'function') return false;
     if (window._rjShowResultHeaderPatched) return true;
     window._rjShowResultHeaderPatched = true;
-
-    var orig = window.showResult;
-    window.showResult = function rjShowResultWithHeader() {
-      var ret = orig.apply(this, arguments);
-      try {
-        setTimeout(updateRaceHeader, 50);
-      } catch (e) {}
-      return ret;
-    };
+    if (!Array.isArray(window.RJ_RESULT_HOOKS)) window.RJ_RESULT_HOOKS = [];
+    window.RJ_RESULT_HOOKS.push({ id: "09-entete", apres: function () { setTimeout(updateRaceHeader, 50); } });
     return true;
   }
 

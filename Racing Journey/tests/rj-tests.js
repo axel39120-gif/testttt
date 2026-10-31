@@ -473,7 +473,7 @@ const APLATIES = {
   renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
   _socialFanHandle: null, recomputeGlobalRep: null,
   startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null,
-  mtab: null, rtab: null
+  mtab: null, rtab: null, showResult: null
 };
 
 function definitionsDansLesSources() {
@@ -512,6 +512,23 @@ async function suiteCouches() {
       startNextSeason();
       return { saisons: G.saison - a.saison, ans: G.age - a.age };
     });
+    /* Filet de fin de course (04j) : sa fonction de réactivation n'existait
+       pas, chaque filet levait une ReferenceError au pire moment. */
+    const filet = await page.evaluate(() => {
+      const coeur = window._showResultCoeur, btn = document.getElementById("race-btn");
+      if (btn) btn.disabled = true;
+      const n = (G.races || []).length;
+      window._showResultCoeur = function () { throw new Error("panne simulée"); };
+      let err = null;
+      try { showResult(); } catch (e) { err = e.message; } finally { window._showResultCoeur = coeur; }
+      const r = { err, bouton: btn ? !btn.disabled : null, course: (G.races || []).length === n + 1 };
+      G.races.pop();
+      return r;
+    });
+    /* La panne simulée est journalisée volontairement : on ne la compte pas. */
+    journal.erreurs = journal.erreurs.filter(e => e.indexOf("panne simulée") < 0);
+    S.verifier("fin de course en panne : le jeu reprend la main", filet.err === null && filet.bouton === true && filet.course,
+      JSON.stringify(filet));
     S.verifier("un changement de saison avance d'une saison", saison.saisons === 1 && saison.ans === 1,
       "+" + saison.saisons + " saison(s), +" + saison.ans + " an(s)");
     S.verifier("aucune erreur au chargement", journal.erreurs.length === 0, journal.erreurs[0] || "");

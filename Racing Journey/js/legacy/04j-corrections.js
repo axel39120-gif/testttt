@@ -15,6 +15,15 @@
  * (anciennement 04j-race-finalization-fix.js)
  * ==================================================================== */
 
+/* Réactive le bouton de course quand une fin de course a planté. Appelée par
+   tous les filets de ce fichier — elle n'était définie nulle part, si bien que
+   chaque filet levait lui-même une ReferenceError. */
+function _rjForceReactivateRaceButton(raison) {
+  console.warn("[RJ] bouton de course réactivé de force :", raison);
+  try { var b = document.getElementById("race-btn"); if (b) b.disabled = false; } catch (e) {}
+  try { if (typeof G !== "undefined" && G) G.raceLocked = false; } catch (e) {}
+}
+
 (function rjInstallFinalizeLiveRaceFix() {
   if (typeof window === "undefined") return;
   if (window._rjFinalizeRaceFixInstalled) return;
@@ -85,61 +94,24 @@
  * COUCHE 2 — Wrap showResult
  * ===================================================================== */
 
-(function rjInstallShowResultFix() {
-  if (typeof window === "undefined") return;
-  if (window._rjShowResultFixInstalled) return;
-  
-  function tryInstall() {
-    if (typeof window.showResult !== "function") {
-      if (typeof setTimeout !== "undefined") setTimeout(tryInstall, 50);
-      return;
+/* Appelé par showResult (04) quand son cœur plante : on rend quand même la
+   main au joueur (onglet Résultat, bouton réactivé, course enregistrée). */
+window.rjRattraperResultat = function (e) {
+  console.error("[RJ] showResult a planté :", e && e.message, e && e.stack);
+  try { if (typeof window.rtab === "function") window.rtab("res", true); } catch (_e) {}
+  _rjForceReactivateRaceButton("showResult planté");
+  // Marque la course comme courue, pour que markRaceDone n'échoue pas ensuite.
+  try {
+    if (G && G.races && Array.isArray(G.races)) {
+      G.races.push({
+        nom: "Course (erreur de finalisation)", pos: window.LIVE_RACE_FINAL_POS || 99, pts: 0,
+        detail: "Une erreur s'est produite à la fin de la course.",
+        saison: G.saison, cat: G.cat, _hadError: true
+      });
     }
-    
-    if (window._rjShowResultFixInstalled) return;
-    window._rjShowResultFixInstalled = true;
-    
-    var origShowResult = window.showResult;
-    
-    window.showResult = function rjGuardedShowResult() {
-      try {
-        return origShowResult.apply(this, arguments);
-      } catch(e) {
-        console.error("[RJ] showResult a planté :", e && e.message, e && e.stack);
-        
-        // Tente quand même de basculer vers l'écran résultat
-        try {
-          if (typeof window.rtab === "function") {
-            window.rtab("res", true);
-          }
-        } catch(_e) {}
-        
-        // Force la réactivation du bouton
-        _rjForceReactivateRaceButton("showResult planté");
-        
-        // Tente de marquer la course comme courue (pour que markRaceDone
-        // n'échoue pas la prochaine fois)
-        try {
-          if (G && G.races && Array.isArray(G.races)) {
-            var fallbackPos = window.LIVE_RACE_FINAL_POS || 99;
-            G.races.push({
-              nom: "Course (erreur de finalisation)",
-              pos: fallbackPos,
-              pts: 0,
-              detail: "Une erreur s'est produite à la fin de la course.",
-              saison: G.saison,
-              cat: G.cat,
-              _hadError: true
-            });
-          }
-        } catch(_e) {}
-        
-        return null;
-      }
-    };
-  }
-  
-  tryInstall();
-})();
+  } catch (_e) {}
+  return null;
+};
 
 /* ========================================================================
  * COUCHE 3 — Watchdog sur runRaceLive

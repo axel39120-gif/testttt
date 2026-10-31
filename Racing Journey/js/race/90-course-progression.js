@@ -318,15 +318,13 @@
     }
 
     /* À l'arrivée, le moteur affiche l'écran de résultat : on rend la main. */
-    if (fn("showResult") && !window.showResult._rj90) {
-      _orig.showResult = window.showResult;
-      window.showResult = function () {
-        try { revelerClassement(); majProgression(); } catch (e) {}
-        var r = _orig.showResult.apply(this, arguments);
-        try { setTimeout(habillerClassementFinal, 60); } catch (e) {}
-        return r;
-      };
-      window.showResult._rj90 = true;
+    if (!Array.isArray(window.RJ_RESULT_HOOKS)) window.RJ_RESULT_HOOKS = [];
+    if (!window.RJ_RESULT_HOOKS.some(function (h) { return h && h.id === "90-resultat"; })) {
+      window.RJ_RESULT_HOOKS.push({
+        id: "90-resultat",
+        avant: function () { revelerClassement(); majProgression(); },
+        apres: function () { setTimeout(habillerClassementFinal, 60); }
+      });
     }
 
     if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
@@ -343,7 +341,7 @@
       } });
     }
 
-    return !!(window.showResult && window.showResult._rj90);
+    return true;
   }
 
   function boot() {
@@ -359,7 +357,6 @@
     window._rj90 = { maj: majProgression, masquer: masquerClassement, reveler: revelerClassement };
     window._rj90Uninstall = function () {
       try {
-        if (_orig.showResult) window.showResult = _orig.showResult;
         revelerClassement();
         var b = document.getElementById("rj90-progression");
         if (b && b.parentNode) b.parentNode.removeChild(b);

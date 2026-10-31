@@ -17549,7 +17549,30 @@ function _buildMoralWidget() {
   }
 }
 
+/* Écran de résultat. Les modules y réagissent par RJ_RESULT_HOOKS
+   ({ id, avant(), apres(), orchestre(coeur) }). Un seul hook « orchestre »
+   décide de l'appel au cœur : l'enchaînement des manches d'un week-end (18). */
+if (!Array.isArray(window.RJ_RESULT_HOOKS)) window.RJ_RESULT_HOOKS = [];
+
 function showResult() {
+  var H = window.RJ_RESULT_HOOKS, self = this, args = arguments, i, orchestre = null;
+  function appeler(h, m) {
+    if (!h || typeof h[m] !== "function") return;
+    try { h[m](); } catch (err) { console.warn("[showResult] « " + (h.id || "?") + " » (" + m + ") :", err && err.message); }
+  }
+  for (i = 0; i < H.length; i++) appeler(H[i], "avant");
+  // Une erreur du cœur ne doit pas laisser la course sans issue (04j).
+  var coeur = function () {
+    try { return _showResultCoeur.apply(self, args); }
+    catch (err) { if (typeof rjRattraperResultat === "function") return rjRattraperResultat(err); throw err; }
+  };
+  for (i = 0; i < H.length && !orchestre; i++) if (H[i] && typeof H[i].orchestre === "function") orchestre = H[i];
+  var r = orchestre ? orchestre.orchestre.call(self, coeur) : coeur();
+  for (i = 0; i < H.length; i++) appeler(H[i], "apres");
+  return r;
+}
+
+function _showResultCoeur() {
   try {
     /* SPRINT — Si on sort d'une course sprint, utiliser un écran dédié au lieu du résultat complet */
     if (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE._isSprintMode) {

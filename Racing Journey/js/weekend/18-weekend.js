@@ -2259,9 +2259,10 @@
       }
     });
 
-    // --- wrap showResult : orchestration de la séquence ---
-    var origSR = window.showResult;
-    window.showResult = function () {
+    // --- showResult : orchestration de la séquence (hook « orchestre », 04) ---
+    if (!Array.isArray(window.RJ_RESULT_HOOKS)) window.RJ_RESULT_HOOKS = [];
+    if (!window.RJ_RESULT_HOOKS.some(function (h) { return h && h.id === "18-manches"; }))
+    window.RJ_RESULT_HOOKS.push({ id: "18-manches", orchestre: function (coeur) {
       // IDEMPOTENCE : une seule orchestration par course. finalizeLiveRace peut
       // être déclenché plusieurs fois pour une même course (watchdog 04j,
       // fallback rjGuardedFinalize, double tick). Sans ce verrou, chaque appel
@@ -2286,7 +2287,7 @@
 
       if (isLast || s.total <= 1) {
         // Dernière course (ou catégorie mono-course) : clôture normale.
-        var r = origSR.apply(this, arguments);
+        var r = coeur();
         renameLast(def);
         seq = null;                       // prêt pour le prochain week-end
         weekendRaceCount = 0;
@@ -2298,7 +2299,7 @@
       var origTicks = window.runWeeklyTicks;
       window.runWeeklyTicks = function () { /* différé jusqu'à la dernière course */ };
       try {
-        origSR.apply(this, arguments);    // calcule pos/pts + push G.races (clôture neutralisée)
+        coeur();    // calcule pos/pts + push G.races (clôture neutralisée)
       } finally {
         window.runWeeklyTicks = origTicks;
         if (savedSemaine != null && G) G.semaine = savedSemaine;  // annule l'avancement de semaine
@@ -2312,8 +2313,7 @@
       s.idx++;
       relaunchNext();
       return null;
-    };
-    window.showResult._td20 = true;
+    } });
 
     installPracticeReset();
     return true;
