@@ -1901,26 +1901,29 @@
     // ========================================================================
     // Le chrono de séance ne doit pas continuer à courir pendant qu'on est sur
     // un autre onglet → on gèle/dégèle via wrap de rtab si présent.
-    if (typeof window.rtab === "function" && !window._rjFplRtabWrapped) {
+    if (!window._rjFplRtabWrapped) {
       window._rjFplRtabWrapped = true;
-      var _origRtab = window.rtab;
-      window.rtab = function (tab, force) {
-        var pr = (typeof RACE_STATE !== "undefined" && RACE_STATE.practice) ? RACE_STATE.practice : null;
+      if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+      var seance = function () { return (typeof RACE_STATE !== "undefined" && RACE_STATE.practice) ? RACE_STATE.practice : null; };
+      window.RJ_RACE_TAB_HOOKS.push({
+        id: "18-chrono",
         // Quitter l'onglet essais → geler le chrono
-        if (pr && pr._live && tab !== "essais") {
-          if (!pr._live.ended && !pr._live._frozen) {
+        avant: function (tab) {
+          var pr = seance();
+          if (pr && pr._live && tab !== "essais" && !pr._live.ended && !pr._live._frozen) {
             pr._live._frozen = clockRemaining(pr);
             stopClockTicker();
           }
-        }
-        var out = _origRtab.apply(this, arguments);
+        },
         // Revenir sur essais → dégeler
-        if (tab === "essais" && pr && pr._live && typeof pr._live._frozen === "number") {
-          pr._live.clockStart = Date.now() - (pr._live.clockTotal - pr._live._frozen);
-          pr._live._frozen = undefined;
+        apres: function (tab) {
+          var pr = seance();
+          if (tab === "essais" && pr && pr._live && typeof pr._live._frozen === "number") {
+            pr._live.clockStart = Date.now() - (pr._live.clockTotal - pr._live._frozen);
+            pr._live._frozen = undefined;
+          }
         }
-        return out;
-      };
+      });
     }
 
     // getPracticeMaxTests neutralisé (le chrono est désormais le limiteur)

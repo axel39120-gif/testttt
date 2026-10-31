@@ -498,15 +498,11 @@
         return r;
       };
     }
-    if (typeof window.rtab === "function" && !origRtab) {
-      origRtab = window.rtab;
-      window.rtab = function (tab, force) {
-        // Week-end terminé : seul l'onglet Résultat reste navigable.
-        if (raceIsOver() && tab && tab !== "res") {
-          return;
-        }
-        return origRtab.apply(this, arguments);
-      };
+    if (!origRtab) {
+      origRtab = true;
+      if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+      // Week-end terminé : seul l'onglet Résultat reste navigable.
+      window.RJ_RACE_TAB_HOOKS.push({ id: "54-verrou-apres-course", refuse: function (tab) { return raceIsOver() && tab && tab !== "res"; } });
     }
     return !!(origUpdate && origRtab);
   }
@@ -526,7 +522,10 @@
 
   window._rj54Uninstall = function () {
     if (origUpdate) { window.updateRaceTabsVisibility = origUpdate; origUpdate = null; }
-    if (origRtab) { window.rtab = origRtab; origRtab = null; }
+    if (origRtab) {
+      window.RJ_RACE_TAB_HOOKS = window.RJ_RACE_TAB_HOOKS.filter(function (h) { return h.id !== "54-verrou-apres-course"; });
+      origRtab = null;
+    }
     console.log("[54-post-race-lock] désinstallé");
   };
 })();
@@ -1454,17 +1453,12 @@
   }
 
   function installer() {
-    if (typeof window.rtab !== "function") return false;
-    if (window.rtab._rj40course) return true;
-    _orig = window.rtab;
-    window.rtab = function (onglet) {
-      var r = _orig.apply(this, arguments);
-      try {
+    if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+    if (!window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "40-course-vierge"; })) {
+      window.RJ_RACE_TAB_HOOKS.push({ id: "40-course-vierge", apres: function (onglet) {
         if (onglet === "course" && !courseEnCoursOuFinie()) vider();
-      } catch (e) { console.warn(TAG, e && e.message); }
-      return r;
-    };
-    window.rtab._rj40course = true;
+      } });
+    }
     return true;
   }
 
@@ -1475,7 +1469,6 @@
   })();
 
   window._rj40CourseUninstall = function () {
-    if (_orig) window.rtab = _orig;
   };
 })();
 
@@ -1618,14 +1611,9 @@
     neutraliser();
 
     /* Les onglets sont reconstruits à certains moments : on repasse. */
-    if (typeof window.rtab === "function" && !window.rtab._rj40barre) {
-      _orig = window.rtab;
-      window.rtab = function () {
-        var r = _orig.apply(this, arguments);
-        try { neutraliser(); } catch (e) {}
-        return r;
-      };
-      window.rtab._rj40barre = true;
+    if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+    if (!window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "40-barre"; })) {
+      window.RJ_RACE_TAB_HOOKS.push({ id: "40-barre", apres: function () { neutraliser(); } });
     }
     return true;
   }
@@ -1637,7 +1625,6 @@
   })();
 
   window._rj40BarreUninstall = function () {
-    if (_orig) window.rtab = _orig;
     var c = document.getElementById(CSS_ID); if (c) c.remove();
     [].slice.call(document.querySelectorAll("#S-race .tab[data-rj40-onclick]"))
       .forEach(function (t) {

@@ -336,14 +336,11 @@
         apres: function () { setTimeout(habillerClassementFinal, 80); }
       });
     }
-    if (fn("rtab") && !window.rtab._rj90) {
-      _orig.rtab = window.rtab;
-      window.rtab = function (nom) {
-        var r = _orig.rtab.apply(this, arguments);
-        if (nom === "res") { try { setTimeout(habillerClassementFinal, 80); } catch (e) {} }
-        return r;
-      };
-      window.rtab._rj90 = true;
+    if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+    if (!window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "90-classement"; })) {
+      window.RJ_RACE_TAB_HOOKS.push({ id: "90-classement", apres: function (nom) {
+        if (nom === "res") setTimeout(habillerClassementFinal, 80);
+      } });
     }
 
     return !!(window.showResult && window.showResult._rj90);

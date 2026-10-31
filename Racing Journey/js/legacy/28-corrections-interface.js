@@ -406,18 +406,12 @@
     }
 
     // Filet : même un appel programmatique est refusé.
-    if (typeof window.rtab === "function" && !window.rtab._rj78) {
-      var o3 = window.rtab;
-      var f3 = function (onglet, force) {
-        try {
-          var w = (typeof RACE_WEEKEND_STATE !== "undefined") ? RACE_WEEKEND_STATE : null;
-          if (onglet === "essais" && !force && w && !w.prepDone && !w.essaisDone && !w.qualifDone) return;
-        } catch (e) {}
-        return o3.apply(this, arguments);
-      };
-      f3._rj78 = true;
-      wrapped.rtab = o3;
-      window.rtab = f3;
+    if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+    if (!window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "78-verrou-essais"; })) {
+      window.RJ_RACE_TAB_HOOKS.push({ id: "78-verrou-essais", refuse: function (onglet, force) {
+        var w = (typeof RACE_WEEKEND_STATE !== "undefined") ? RACE_WEEKEND_STATE : null;
+        return onglet === "essais" && !force && w && !w.prepDone && !w.essaisDone && !w.qualifDone;
+      } });
     }
     note("1-verrou-essais");
   }

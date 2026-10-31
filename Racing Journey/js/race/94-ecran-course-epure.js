@@ -92,21 +92,15 @@
     } catch (e) {}
   }
 
-  var _origRtab = null;
 
   function boot() {
     injecterCSS();
     majBarreDuBas();
 
     /* La bascule d'onglet est le seul moment où l'état change. */
-    if (typeof window.rtab === "function" && !window.rtab._rj94) {
-      _origRtab = window.rtab;
-      window.rtab = function () {
-        var r = _origRtab.apply(this, arguments);
-        try { setTimeout(majBarreDuBas, 40); } catch (e) {}
-        return r;
-      };
-      window.rtab._rj94 = true;
+    if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+    if (!window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "94-barre"; })) {
+      window.RJ_RACE_TAB_HOOKS.push({ id: "94-barre", apres: function () { setTimeout(majBarreDuBas, 40); } });
     }
 
     /* Quitter l'écran de course rétablit la barre. */
@@ -126,8 +120,7 @@
       var css = document.getElementById(CSS_ID);
       if (css && css.parentNode) css.parentNode.removeChild(css);
       document.body.classList.remove("rj94-resultat");
-      if (_origRtab) window.rtab = _origRtab;
-      console.log(TAG, "désinstallé");
+        console.log(TAG, "désinstallé");
     };
   }
 

@@ -154,18 +154,15 @@
   /* L'onglet Stratégie ne doit plus pouvoir être atteint, même en forçant
      la navigation par onglets. */
   function bloquerOngletStrategie() {
-    if (!fn("rtab") || window.rtab._rj82) return;
-    _orig.rtab = window.rtab;
-    window.rtab = function (nom) {
-      if (nom === "strat") {
-        validerStrategieAutomatiquement();
-        return _orig.rtab.apply(this, ["course"].concat([].slice.call(arguments, 1)));
-      }
-      var r = _orig.rtab.apply(this, arguments);
-      try { masquerEtapeStrategie(); masquerModeEnCourse(); } catch (e) {}
-      return r;
-    };
-    window.rtab._rj82 = true;
+    if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+    if (window.RJ_RACE_TAB_HOOKS.some(function (h) { return h && h.id === "82-strategie"; })) return;
+    window.RJ_RACE_TAB_HOOKS.push({
+      id: "82-strategie",
+      redirige: function (nom) {
+        if (nom === "strat") { validerStrategieAutomatiquement(); return "course"; }
+      },
+      apres: function () { masquerEtapeStrategie(); masquerModeEnCourse(); }
+    });
   }
 
   /* ==================================================================

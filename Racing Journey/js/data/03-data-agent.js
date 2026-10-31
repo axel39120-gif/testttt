@@ -10073,7 +10073,28 @@ function _rjUpdateBroadcastTitles() {
   } catch (e) {}
 }
 
+/* Onglets du week-end de course. Les modules y réagissent par
+   RJ_RACE_TAB_HOOKS ({ id, redirige(onglet, force) → onglet,
+   refuse(onglet, force) → true, avant(onglet), apres(onglet) }),
+   jamais en enveloppant rtab. */
+if (!Array.isArray(window.RJ_RACE_TAB_HOOKS)) window.RJ_RACE_TAB_HOOKS = [];
+
 function rtab(e, t) {
+  var H = window.RJ_RACE_TAB_HOOKS, i, v;
+  function appeler(h, m, a) {
+    if (!h || typeof h[m] !== "function") return;
+    try { return h[m].apply(h, a); }
+    catch (err) { console.warn("[rtab] « " + (h.id || "?") + " » (" + m + ") :", err && err.message); }
+  }
+  for (i = 0; i < H.length; i++) { v = appeler(H[i], "redirige", [e, t]); if (v) e = v; }
+  for (i = 0; i < H.length; i++) { if (appeler(H[i], "refuse", [e, t])) return; }
+  for (i = 0; i < H.length; i++) appeler(H[i], "avant", [e, t]);
+  var r = _rtabCoeur.call(this, e, t);
+  for (i = 0; i < H.length; i++) appeler(H[i], "apres", [e, t]);
+  return r;
+}
+
+function _rtabCoeur(e, t) {
   if (!t) {
     var r = document.querySelector('#S-race .tab[data-tab="' + e + '"]');
     if (r && r.hasAttribute("disabled")) return
