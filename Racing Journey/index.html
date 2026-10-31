@@ -175,6 +175,7 @@ window.addEventListener('error', function (e) {
 <script src="js/career/105-preseason-et-cta.js?v213" defer></script>
 <script src="js/race/106-moments-decisifs.js?v213" defer></script>
 <script src="js/race/107-decisions-course.js?v213" defer></script>
+<script src="js/race/108-modele-piste.js?v213" defer></script>
 
 <script>
 /* ---- REPÈRE DE VERSION & AUTO-DIAGNOSTIC (inline : toujours à jour avec index.html) ---- */
@@ -230,7 +231,8 @@ window.addEventListener('error', function (e) {
     ["104 direct course",          "_rj104Uninstall"],
     ["105 pré-saison & CTA",       "_rj105Uninstall"],
     ["106 moments décisifs",       "_rj106Uninstall"],
-    ["107 décisions course",       "_rj107Uninstall"]
+    ["107 décisions course",       "_rj107Uninstall"],
+    ["108 modèle de piste",        "_rj108Uninstall"]
   ];
   function verifier(){
     var absents = ATTENDUS.filter(function(m){ return typeof window[m[1]] !== "function"; });

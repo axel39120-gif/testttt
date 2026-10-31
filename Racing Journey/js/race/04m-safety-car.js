@@ -367,10 +367,10 @@
     var alive = LIVE_RACE.drivers.filter(function(d) { return !d.dnf; });
     if (alive.length === 0) return;
     
-    // Tri par totalTime (= classement actuel)
-    alive.sort(function(a, b) { 
-      return ((a.totalTime || 0) + (a.penaltySec || 0)) - ((b.totalTime || 0) + (b.penaltySec || 0)); 
-    });
+    // Tri par position affichée. Le moteur (81) classe au score, pas au
+    // temps cumulé : trier par totalTime réordonnait tout le peloton d'un
+    // coup (jusqu'à 13 places en endurance, trafic sans totalTime en tête).
+    alive.sort(function(a, b) { return (a.pos || 99) - (b.pos || 99); });
     
     var leaderTime = (alive[0].totalTime || 0) + (alive[0].penaltySec || 0);
     

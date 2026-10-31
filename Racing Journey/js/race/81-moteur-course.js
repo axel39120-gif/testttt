@@ -79,6 +79,16 @@
 
   function attribuer(liste) {
     var lr = LR();
+    /* Multi-classes (endurance) : le trafic des catégories inférieures (_mc)
+       reste derrière la catégorie du joueur au général. Classé au même score,
+       il passait devant le leader après un arrêt au stand (P1 → P13), alors
+       qu'en réalité ces voitures comptent des tours de retard. */
+    var principaux = liste.filter(function (d) { return !d._mc; });
+    if (principaux.length && principaux.length < liste.length) {
+      var trafic = liste.filter(function (d) { return d._mc; });
+      liste.length = 0;
+      Array.prototype.push.apply(liste, principaux.concat(trafic));
+    }
     for (var i = 0; i < liste.length; i++) {
       liste[i].pos = i + 1;
       liste[i]._rj81PosLaissee = i + 1;      // repère pour détecter les déplacements externes

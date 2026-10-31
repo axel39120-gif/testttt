@@ -99,6 +99,18 @@
     return Math.max(-0.18, Math.min(0.10, v * 0.85));
   }
 
+  /* Rapproche l'écart appliqué (_relayOffset) de sa cible, d'un tiers au
+     plus de l'écart maximal par tour. */
+  function lisserRelais(L, pd) {
+    if (typeof L._relayCible !== "number" || L._relayDernierTour === L.cur) return;
+    L._relayDernierTour = L.cur;
+    var actuel = L._relayOffset || 0, ecart = L._relayCible - actuel;
+    if (!ecart) return;
+    var pas = Math.max(-0.06, Math.min(0.06, ecart));
+    pd.score = Math.max(.02, Math.min(.98, pd.score + pas));
+    L._relayOffset = actuel + pas;
+  }
+
   function syncRelay() {
     if (!raceLive() || !isWecEndurance()) return;
     var L = lr(), pd = playerDriver();
@@ -107,13 +119,16 @@
     var pct = L.total > 0 ? L.cur / L.total : 0;
     var seg = segAt(L._relayPlan, pct);
     var key = seg.who === "player" ? "player" : ("mate" + seg.mate);
+    lisserRelais(L, pd);
     if (L._relayDriver === key) return;
-    if (L._relayOffset) { pd.score = Math.max(.02, Math.min(.98, pd.score - L._relayOffset)); L._relayOffset = 0; }
+    // L'écart de niveau du nouveau pilote s'installe sur trois tours
+    // (lisserRelais) : appliqué d'un coup, et combiné à l'arrêt au stand
+    // du relais, il faisait sauter la voiture de 6 à 8 places.
+    L._relayCible = 0;
     if (seg.who === "mate") {
       var mate = (L._relayMates && L._relayMates[seg.mate]) || { name: "Coéquipier", skill: playerRating() - 5 };
-      var off = mateOffset(mate.skill);
-      pd.score = Math.max(.02, Math.min(.98, pd.score + off));
-      L._relayOffset = off; L._relayMateName = mate.name;
+      L._relayCible = mateOffset(mate.skill);
+      L._relayMateName = mate.name;
       radio("Changement de pilote", mate.name + " prend le relais.", "#22D3EE");
     } else {
       L._relayMateName = null;

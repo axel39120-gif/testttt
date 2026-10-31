@@ -564,6 +564,43 @@ async function suiteSobriete() {
 }
 
 /* ==================================================================== *
+ * 3 sexies. MODÈLE DE PISTE (T7)
+ *
+ * Position continue de chaque voiture, base de la future vue en direct.
+ * ==================================================================== */
+async function suitePiste() {
+  S.suite("Modèle de piste");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    for (const cat of ["Formule 1", "Endurance WEC"]) {
+      await page.evaluate(() => {
+        window.__piste = { releves: 0, ordre: 0, bornes: 0, stand: 0, joueur: 0 };
+        window.RJ_LAP_HOOKS.push({ id: "__test_piste", run: function () {
+          const e = RJModelePiste.etat(); if (!e) return;
+          const P = window.__piste; P.releves++;
+          const vivantes = e.voitures.filter(v => !v.abandon);
+          if (!e.voitures.some(v => v.joueur)) P.joueur++;
+          vivantes.forEach(v => { if (!(v.distance >= 0 && v.distance <= e.tour + 1)) P.bornes++; if (v.auStand) P.stand++; });
+          /* Dans la catégorie du joueur, la position affichée suit la distance. */
+          const L = vivantes.filter(v => !v.autreCategorie).sort((a, b) => a.pos - b.pos);
+          for (let i = 1; i < L.length; i++) if (L[i].distance > L[i - 1].distance + 1e-9) { P.ordre++; break; }
+        } });
+      });
+      const r = await S.courirUneCourse(page, { categorie: cat });
+      const P = await page.evaluate(() => { window.RJ_LAP_HOOKS = window.RJ_LAP_HOOKS.filter(h => h.id !== "__test_piste"); return window.__piste; });
+      const t = cat.padEnd(14);
+      S.verifier(t + "course terminée et modèle relevé", r.terminee && P.releves > 5, P.releves + " tours");
+      S.verifier(t + "distances dans les bornes", P.bornes === 0, P.bornes + " hors bornes");
+      S.verifier(t + "l'ordre des distances suit le classement", P.ordre === 0, P.ordre + " tour(s) incohérent(s)");
+      S.verifier(t + "le joueur est toujours présent", P.joueur === 0);
+      if (r.arretsPrevus) S.verifier(t + "les arrêts au stand sont visibles", P.stand > 0, P.stand + " passage(s)");
+    }
+    S.verifier("aucune erreur pendant la suite", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 3 ter. PARCOURS DE TOUS LES ÉCRANS ET ONGLETS
  *
  * Les gestionnaires inline (onclick dans le HTML) échappent à la mesure de
@@ -632,10 +669,9 @@ async function suiteEndurance() {
     const gros = sauts.filter(s => s >= 8).length;
     S.verifier("6 courses d'endurance courues", sauts.length === 6, "sauts max : " + sauts.join(", "));
     const detail = gros + " course(s) avec un saut de 8 places ou plus";
-    /* Plafond dur : une régression franche ne doit pas passer pour le défaut connu. */
-    S.verifier("aucun saut aberrant (plafond dur 25)", sauts.every(s => s <= 25), "max " + Math.max(...sauts));
-    if (sauts.every(s => s <= 12)) S.verifier("aucun saut au-delà du seuil actuel (12)", true, detail);
-    else S.ignorer("aucun saut au-delà du seuil actuel (12)", "défaut connu, à corriger en T7 — " + detail);
+    /* Corrigé en T7 : regroupement sous safety car dans l'ordre affiché,
+       relais lissés, trafic des autres catégories derrière au général. */
+    S.verifier("aucun saut au-delà de 12 places", sauts.every(s => s <= 12), detail);
     S.verifier("aucune erreur pendant les courses", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -727,12 +763,7 @@ async function suiteCourse(categories) {
          un tour n'a aucune justification. */
       const plafondSaut = r.arretsPrevus ? 12 : 8;
       const detailSaut = "saut max " + r.sautMax + (r.toursManques ? ", " + r.toursManques + " tours non échantillonnés" : "");
-      /* Endurance : bonds connus (relais, regroupement sous safety car), à
-         corriger avec le moteur à position continue (T7). Plafond dur à 25. */
-      if (cat === "Endurance WEC" && r.sautMax > plafondSaut && r.sautMax <= 25)
-        S.ignorer(titre + "aucun saut de position aberrant", "défaut connu, T7 — " + detailSaut);
-      else
-        S.verifier(titre + "aucun saut de position aberrant", r.sautMax <= plafondSaut, detailSaut);
+      S.verifier(titre + "aucun saut de position aberrant", r.sautMax <= plafondSaut, detailSaut);
       S.verifier(titre + "le résultat est enregistré", !!r.resultat,
         r.resultat ? "P" + r.resultat.pos + " · " + r.resultat.pts + " pts" : "aucun");
       if (r.resultat && !r.abandon) {
@@ -1106,6 +1137,7 @@ const SUITES = {
   parcours: suiteParcours,
   couches: suiteCouches,
   sobriete: suiteSobriete,
+  piste: suitePiste,
   endurance: suiteEndurance,
   qualifications: suiteQualifications,
   course: () => suiteCourse(),
