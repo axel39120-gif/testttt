@@ -13,7 +13,7 @@
  *   function X(a, b) { return rjAppeler("X", _XCoeur, this, arguments); }
  *
  *   rjInscrire("X", {
- *     id, ordre,                  // ordre croissant (0 par défaut), puis inscription
+ *     id, ordre,                  // comme des enveloppes : plus bas = plus extérieur
  *     avant(args),                // effet préalable
  *     remplace(args, suite),      // prend la main ; suite() poursuit la chaîne
  *     apres(resultat, args)       // effet postérieur ; une valeur ≠ undefined
@@ -29,6 +29,15 @@ function rjInscrire(nom, hook) {
   var L = (window.RJ_HOOKS[nom] = window.RJ_HOOKS[nom] || []);
   if (hook && hook.id && L.some(function (h) { return h.id === hook.id; })) return;
   L.push(hook);
+  /* Une fonction qui n'est pas encore extensible le devient, une fois et
+     ici seulement : son corps actuel devient le cœur de rjAppeler. */
+  var f = window[nom];
+  if (typeof f === "function" && !f._rjRepartiteur && String(f).indexOf('rjAppeler("' + nom + '"') < 0) {
+    var rep = function () { return rjAppeler(nom, f, this, arguments); };
+    Object.keys(f).forEach(function (k) { rep[k] = f[k]; });   // drapeaux d'installation conservés
+    rep._rjRepartiteur = true;
+    window[nom] = rep;
+  }
 }
 
 function rjAppeler(nom, coeur, self, args) {
@@ -57,7 +66,8 @@ function rjAppeler(nom, coeur, self, args) {
   }
   var r = suite(0, args)();
 
-  L.forEach(function (h) {
+  // « après » remonte l'emboîtement : le hook le plus intérieur d'abord.
+  L.slice().reverse().forEach(function (h) {
     if (typeof h.apres !== "function") return;
     var v = essayer(h, "apres", [r, args]);
     if (v !== undefined) r = v;

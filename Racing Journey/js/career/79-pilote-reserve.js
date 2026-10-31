@@ -1456,7 +1456,8 @@
   function installSignature() {
     if (!fn("signContract") || window.signContract._rj79) return false;
     _origSign = window.signContract;
-    window.signContract = function (idx) {
+    rjInscrire("signContract", { id: "79-pilote-reserve:signContract", ordre: -5800, remplace: function (args, suite) {
+      var idx = args[0];
       var G = G_();
       var offre = G && G.offers ? G.offers[idx] : null;
 
@@ -1466,8 +1467,8 @@
       if (offre && offre.role === "num3") {
         return signerReserve(idx, offre);
       }
-      return _origSign.apply(this, arguments);
-    };
+      return suite();
+    } });
     window.signContract._rj79 = true;
     return true;
   }
@@ -1745,13 +1746,14 @@
   function installEvenementsPlanifies() {
     if (!fn("openScheduledEvent") || window.openScheduledEvent._rj79) return false;
     _origOpenSched = window.openScheduledEvent;
-    window.openScheduledEvent = function (entry) {
+    rjInscrire("openScheduledEvent", { id: "79-pilote-reserve:openScheduledEvent", ordre: -5800, remplace: function (args, suite) {
+      var entry = args[0];
       if (entry && entry.eventId === EVT_ID) {
         ouvrirSeanceCumul(entry);
         return;
       }
-      return _origOpenSched.apply(this, arguments);
-    };
+      return suite();
+    } });
     window.openScheduledEvent._rj79 = true;
     return true;
   }
@@ -1967,10 +1969,10 @@
   function installHistorique() {
     if (fn("saveSeasonToHistory") && !window.saveSeasonToHistory._rj79) {
       _origSaveSeason = window.saveSeasonToHistory;
-      window.saveSeasonToHistory = function () {
+      rjInscrire("saveSeasonToHistory", { id: "79-pilote-reserve:saveSeasonToHistory", ordre: -5800, remplace: function (args, suite) {
         var etaitReserviste = estReservistePur();
         var d = RD();
-        var r = _origSaveSeason.apply(this, arguments);
+        var r = suite();
         try {
           if (has("CAREER_HISTORY") && window.CAREER_HISTORY.length) {
             var last = window.CAREER_HISTORY[window.CAREER_HISTORY.length - 1];
@@ -1986,17 +1988,17 @@
           }
         } catch (e) { console.warn(TAG, "marquage de l'historique :", e && e.message); }
         return r;
-      };
+      } });
       window.saveSeasonToHistory._rj79 = true;
     }
 
     if (fn("renderPalmares") && !window.renderPalmares._rj79) {
       _origPalmares = window.renderPalmares;
-      window.renderPalmares = function () {
-        var r = _origPalmares.apply(this, arguments);
+      rjInscrire("renderPalmares", { id: "79-pilote-reserve:renderPalmares", ordre: -5800, remplace: function (args, suite) {
+        var r = suite();
         try { injecterPalmaresReserve(); } catch (e) {}
         return r;
-      };
+      } });
       window.renderPalmares._rj79 = true;
     }
   }
@@ -2071,7 +2073,7 @@
   var _origGenObj = null;
 
   function installObjectifs() {
-    rjInscrire("generateSeasonObjectives", { id: "79-reserviste", ordre: 10, apres: function () {
+    rjInscrire("generateSeasonObjectives", { id: "79-reserviste", ordre: 0, apres: function () {
       if (estReservistePur() && has("TEAM_TRUST") && window.TEAM_TRUST) window.TEAM_TRUST.objectives = objectifsReserviste();
     } });
     return true;
@@ -2119,11 +2121,11 @@
   function installBandeauChamp() {
     if (!fn("renderChamp") || window.renderChamp._rj79) return false;
     _origChamp = window.renderChamp;
-    window.renderChamp = function () {
-      var r = _origChamp.apply(this, arguments);
+    rjInscrire("renderChamp", { id: "79-pilote-reserve:renderChamp", ordre: -5800, remplace: function (args, suite) {
+      var r = suite();
       try { injecterBandeauChamp(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderChamp._rj79 = true;
     return true;
   }
@@ -2283,25 +2285,27 @@
   function installBadge() {
     if (fn("getRoleInfo") && !window.getRoleInfo._rj79) {
       var orig = window.getRoleInfo;
-      window.getRoleInfo = function (r) {
+      rjInscrire("getRoleInfo", { id: "79-pilote-reserve:getRoleInfo", ordre: -5800, remplace: function (args, suite) {
+      var r = args[0];
         if (r === "num3") {
           return {
             label: "Pilote de réserve", short: "RÉS", color: CYAN,
             bg: "rgba(0,212,255,.10)", border: "rgba(0,212,255,.35)", icon: "🔧"
           };
         }
-        return orig.apply(this, arguments);
-      };
+        return suite();
+      } });
       window.getRoleInfo._rj79 = true;
     }
     if (fn("_getRoleDesc") && !window._getRoleDesc._rj79) {
       var origD = window._getRoleDesc;
-      window._getRoleDesc = function (r) {
+      rjInscrire("_getRoleDesc", { id: "79-pilote-reserve:_getRoleDesc", ordre: -5800, remplace: function (args, suite) {
+      var r = args[0];
         if (r === "num3") {
           return "Pilote de réserve · Essais le vendredi, pas de course · Gagne en crédibilité pour décrocher un baquet";
         }
-        return origD.apply(this, arguments);
-      };
+        return suite();
+      } });
       window._getRoleDesc._rj79 = true;
     }
   }

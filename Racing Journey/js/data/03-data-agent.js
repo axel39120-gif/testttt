@@ -38,9 +38,10 @@ var CAT_LAP_MULT = {
 };
 var CIRCUIT_SECTORS = {};
 if (typeof renderIcon !== "function") {
-  renderIcon = function(i, s, c) {
+  rjInscrire("renderIcon", { id: "03-data-agent:renderIcon", ordre: -300, remplace: function (args, suite) {
+      var i = args[0], s = args[1], c = args[2];
     return "";
-  }
+  } });
 }
 // === Racing Journey: F1 Dreams ===
 // Module: 03-data-agent

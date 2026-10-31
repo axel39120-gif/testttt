@@ -679,18 +679,14 @@
   function wrapResolver(name) {
     if (typeof window[name] !== "function") return false;
     if (window[name]._rj55) return true;
-    var orig = window[name];
-    var fn = function () {
+    rjInscrire(name, { id: "55-borne-" + name, ordre: -4650, remplace: function (args, suite) {
       var p = playerDriver();
       var before = (p && typeof p.eventScoreOffset === "number") ? p.eventScoreOffset : 0;
-      var r = orig.apply(this, arguments);
+      var r = suite();
       try { clampEventEffect(before); } catch (e) {}
       return r;
-    };
-    fn._rj55 = true;
-    fn._rj55Orig = orig;
-    window[name] = fn;
-    wrapped[name] = orig;
+    } });
+    window[name]._rj55 = true;
     return true;
   }
 
@@ -866,15 +862,12 @@
   /* ------------------------------------------------- B. moins d'événements */
   function wrapChance(name) {
     if (typeof window[name] !== "function" || window[name]._rj56) return false;
-    var orig = window[name];
-    var fn = function () {
+    rjInscrire(name, { id: "56-frequence-" + name, ordre: -4650, remplace: function (args, suite) {
       // on laisse passer seulement une fraction des déclenchements
       if (Math.random() >= TUNING.eventFactor) return;
-      return orig.apply(this, arguments);
-    };
-    fn._rj56 = true;
-    wrapped[name] = orig;
-    window[name] = fn;
+      return suite();
+    } });
+    window[name]._rj56 = true;
     return true;
   }
 

@@ -850,8 +850,10 @@
       if (essais++ < 80) setTimeout(tenter, 150);
     })();
 
-    window._rj91 = { phrase: phraseEcurieDeCoeur, tableau: remplacerGraphique };
-    window._rj91Uninstall = function () {
+    /* _rj91Bio : ce module portait le même numéro que la gouttière (91),
+       dont il écrasait la désinstallation. */
+    window._rj91Bio = { phrase: phraseEcurieDeCoeur, tableau: remplacerGraphique };
+    window._rj91BioUninstall = function () {
       if (_origBio) window.generatePilotBio = _origBio;
       if (_origH2H) window.renderH2H = _origH2H;
       var css = document.getElementById(CSS_ID);

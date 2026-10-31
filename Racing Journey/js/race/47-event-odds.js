@@ -209,7 +209,6 @@
    * ================================================================== */
   var MODAL_ID = "rj47-outcome-modal";
   var _capture = null;                 // tampon des outcomes pendant la résolution
-  var _origResolveEvt = null, _origApply = null, _origShowNext = null;
   var _repriseCourse = false;          // faut-il relancer la course à la fermeture ?
   var _nextEnAttente = false;          // un événement suivant a-t-il été retenu ?
 
@@ -357,7 +356,7 @@
     /* L'événement suivant retenu pendant la résolution peut sortir. */
     if (_nextEnAttente) {
       _nextEnAttente = false;
-      try { if (typeof _origShowNext === "function") _origShowNext(); } catch (e) {}
+      try { window.showNextRaceEvent(); } catch (e) {}
     }
     /* Modale de choix laissée masquée alors qu'il n'y a plus rien à montrer. */
     try {
@@ -432,44 +431,38 @@
     if (ok) ok.addEventListener("click", fermerModale);
   }
 
+  var _enResolution = false;           // une résolution d'évènement est en cours
+
   function wrapResolution() {
-    if (typeof window.resolveRaceEvt !== "function") return false;
-    if (window.resolveRaceEvt._rj47) return true;
+    if (window._rj47Inscrit) return true;
+    window._rj47Inscrit = true;
 
     /* Capture des outcomes appliqués au joueur pendant la résolution. */
-    if (typeof window.applyEventOutcome === "function" && !window.applyEventOutcome._rj47) {
-      _origApply = window.applyEventOutcome;
-      window.applyEventOutcome = function (d, outcome) {
-        var res = _origApply.apply(this, arguments);
-        try { if (_capture && d && d.isPlayer) _capture.push({ outcome: outcome, res: res }); } catch (e) {}
-        return res;
-      };
-      window.applyEventOutcome._rj47 = true;
-    }
+    rjInscrire("applyEventOutcome", { id: "47-capture", apres: function (res, args) {
+      if (_capture && args[0] && args[0].isPlayer) _capture.push({ outcome: args[1], res: res });
+    } });
 
-    _origResolveEvt = window.resolveRaceEvt;
-    window.resolveRaceEvt = function () {
+    /* Pendant la résolution, l'évènement suivant attend la fermeture du
+       compte rendu (il serait sinon affiché par-dessus). */
+    rjInscrire("showNextRaceEvent", { id: "47-attente", remplace: function (args, suite) {
+      if (!_enResolution) return suite();
+      _nextEnAttente = true;
+      var rem = document.getElementById("race-event-modal");
+      if (rem) rem.style.display = "none";   // ne pas recouvrir le compte rendu
+    } });
+
+    rjInscrire("resolveRaceEvt", { id: "47-compte-rendu", remplace: function (args, suite) {
       var av, captures = [], retour;
       try { av = photo(); } catch (e) { av = null; }
 
       _capture = captures;
       _nextEnAttente = false;
-      _origShowNext = window.showNextRaceEvent;
-      if (typeof _origShowNext === "function") {
-        window.showNextRaceEvent = function () {
-          _nextEnAttente = true;
-          try {
-            var rem = document.getElementById("race-event-modal");
-            if (rem) rem.style.display = "none";   // ne pas recouvrir le compte rendu
-          } catch (e) {}
-        };
-      }
-
+      _enResolution = true;
       try {
-        retour = _origResolveEvt.apply(this, arguments);
+        retour = suite();
       } finally {
         _capture = null;
-        if (typeof _origShowNext === "function") window.showNextRaceEvent = _origShowNext;
+        _enResolution = false;
       }
 
       try {
@@ -487,12 +480,11 @@
       } catch (e) {
         /* un compte rendu raté ne doit jamais bloquer la course */
         if (_repriseCourse) { _repriseCourse = false; try { if (window.LIVE_RACE) LIVE_RACE.paused = false; } catch (e2) {} }
-        if (_nextEnAttente) { _nextEnAttente = false; try { if (typeof _origShowNext === "function") _origShowNext(); } catch (e3) {} }
+        if (_nextEnAttente) { _nextEnAttente = false; try { window.showNextRaceEvent(); } catch (e3) {} }
       }
 
       return retour;
-    };
-    window.resolveRaceEvt._rj47 = true;
+    } });
     return true;
   }
 
@@ -510,8 +502,10 @@
 
   window._rjEventOddsUninstall = function () {
     obs.disconnect();
-    if (_origResolveEvt) window.resolveRaceEvt = _origResolveEvt;
-    if (_origApply) window.applyEventOutcome = _origApply;
+    ["resolveRaceEvt", "applyEventOutcome", "showNextRaceEvent"].forEach(function (n) {
+      window.RJ_HOOKS[n] = (window.RJ_HOOKS[n] || []).filter(function (h) { return !/^47-/.test(h.id); });
+    });
+    window._rj47Inscrit = false;
     var m = document.getElementById(MODAL_ID);
     if (m && m.parentNode) m.parentNode.removeChild(m);
     console.log("[47-event-odds] désinstallé");

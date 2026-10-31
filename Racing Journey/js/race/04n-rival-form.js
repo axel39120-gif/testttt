@@ -356,7 +356,7 @@
     if (window._rjFormStartQualWrapperInstalled) return true;
     window._rjFormStartQualWrapperInstalled = true;
     // Forme appliquée avant la création des pilotes de qualif, retirée après.
-    rjInscrire("startQual", { id: "04n-forme", ordre: 10,
+    rjInscrire("startQual", { id: "04n-forme", ordre: 0,
       avant: function () { _rjGenerateAllRivalsForm(); _rjApplyFormToRivals(); },
       apres: function () { _rjRestoreFormFromRivals(); } });
     return true;

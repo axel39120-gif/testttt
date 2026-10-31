@@ -160,8 +160,8 @@
        que de laisser le joueur chercher son chemin. */
     if (typeof window.savePreseasonPlan === "function" && !window.savePreseasonPlan._rj105) {
       _orig.savePreseasonPlan = window.savePreseasonPlan;
-      window.savePreseasonPlan = function () {
-        var r = _orig.savePreseasonPlan.apply(this, arguments);
+      rjInscrire("savePreseasonPlan", { id: "105-preseason-et-cta:savePreseasonPlan", ordre: -7900, remplace: function (args, suite) {
+        var r = suite();
         setTimeout(function () {
           try {
             teinter();
@@ -169,7 +169,7 @@
           } catch (e) {}
         }, 260);
         return r;
-      };
+      } });
       window.savePreseasonPlan._rj105 = true;
     }
 

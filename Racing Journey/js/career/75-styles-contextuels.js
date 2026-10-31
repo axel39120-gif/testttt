@@ -173,7 +173,22 @@
     };
     fn._rj75 = true;
     wrapped._getEffectiveSkillFor = orig;
-    window._getEffectiveSkillFor = fn;
+    rjInscrire("_getEffectiveSkillFor", { id: "75-styles-contextuels:_getEffectiveSkillFor", ordre: -5700, remplace: function (args, suite) {
+      var axe = args[0];
+      var n = suite();
+      try {
+        var style = (G && G.pilot && G.pilot.style) || "complet";
+        var c = contexte();
+        var k = coef(style, axe, c);
+        if (k !== 1) {
+          n = n * k;
+          // on respecte les bornes d'origine de la fonction
+          n = Math.max(20, Math.min(95, n));
+          etat.dernier = { axe: axe, style: style, coef: +k.toFixed(3), contexte: c };
+        }
+      } catch (e) {}
+      return n;
+    } });
     return true;
   }
 
@@ -356,15 +371,11 @@
 
   function envelopper(nom, maj) {
     if (typeof window[nom] !== "function" || window[nom]._rj75) return;
-    var orig = window[nom];
-    var fn = function (el, cle) {
-      var r = orig.apply(this, arguments);
-      try { setTimeout(function () { maj(cle); }, 0); } catch (e) {}
-      return r;
-    };
-    fn._rj75 = true;
-    wrapped[nom] = orig;
-    window[nom] = fn;
+    rjInscrire(nom, { id: "75-" + nom, ordre: -5750, apres: function (r, args) {
+      var cle = args[1];
+      setTimeout(function () { maj(cle); }, 0);
+    } });
+    window[nom]._rj75 = true;
   }
 
   function installerFiche() {
@@ -387,7 +398,17 @@
       };
       fn._rj75 = true;
       wrapped.creNext = orig;
-      window.creNext = fn;
+      rjInscrire("creNext", { id: "75-styles-contextuels:creNext", ordre: -5700, remplace: function (args, suite) {
+        var r = suite();
+        try {
+          setTimeout(function () {
+            var e = (typeof creStep !== "undefined") ? creStep : 0;
+            if (e === 3) majStyle((typeof selStyleVal !== "undefined" && selStyleVal) || "attaquant");
+            if (e === 4) majTrait((typeof selTraitVal !== "undefined" && selTraitVal) || "leader");
+          }, 40);
+        } catch (e) {}
+        return r;
+      } });
     }
   }
 

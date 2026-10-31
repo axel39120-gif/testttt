@@ -174,18 +174,18 @@
     if (window.renderFinancePage._rj102) return true;
 
     _orig.renderFinancePage = window.renderFinancePage;
-    window.renderFinancePage = function () {
+    rjInscrire("renderFinancePage", { id: "102-ecrans-patrimoine:renderFinancePage", ordre: -7600, remplace: function (args, suite) {
       /* On prête temporairement l'identifiant attendu au nouveau
          conteneur : la fonction d'origine reste intacte. */
       var cible = document.getElementById("pat-comptes");
       var ancien = document.getElementById("ct-finances");
-      if (!cible) return _orig.renderFinancePage.apply(this, arguments);
+      if (!cible) return suite();
 
       var idAncien = null;
       if (ancien) { idAncien = ancien.id; ancien.id = "ct-finances-parked"; }
       cible.id = "ct-finances";
       var r;
-      try { r = _orig.renderFinancePage.apply(this, arguments); }
+      try { r = suite(); }
       finally {
         cible.id = "pat-comptes";
         if (ancien && idAncien) ancien.id = idAncien;
@@ -195,7 +195,7 @@
          dès qu'on investissait. */
       try { extraireInvestissements(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderFinancePage._rj102 = true;
     return true;
   }

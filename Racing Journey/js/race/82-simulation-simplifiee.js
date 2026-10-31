@@ -66,7 +66,7 @@
   function neutraliserPneus() {
     if (fn("_tickTyreWear") && !window._tickTyreWear._rj82) {
       _orig._tickTyreWear = window._tickTyreWear;
-      window._tickTyreWear = function () { return 0; };
+      rjInscrire("_tickTyreWear", { id: "82-simulation-simplifiee:_tickTyreWear", ordre: -6100, remplace: function (args, suite) { return 0; } });
       window._tickTyreWear._rj82 = true;
     }
     if (fn("rjUpdateTyresForLap") && !window.rjUpdateTyresForLap._rj82) {
@@ -76,7 +76,7 @@
     }
     if (fn("_setTyreMode") && !window._setTyreMode._rj82) {
       _orig._setTyreMode = window._setTyreMode;
-      window._setTyreMode = function () { var lr = LR(); if (lr) lr._tyreMode = "normal"; };
+      rjInscrire("_setTyreMode", { id: "82-simulation-simplifiee:_setTyreMode", ordre: -6100, remplace: function (args, suite) { var lr = LR(); if (lr) lr._tyreMode = "normal"; } });
       window._setTyreMode._rj82 = true;
     }
     /* Les indicateurs d'usure n'ont plus rien à montrer. */
@@ -254,7 +254,7 @@
   function neutraliserPitJoueur() {
     if (!fn("_playerPit") || window._playerPit._rj82) return;
     _orig._playerPit = window._playerPit;
-    window._playerPit = function () {
+    rjInscrire("_playerPit", { id: "82-simulation-simplifiee:_playerPit", ordre: -6100, remplace: function (args, suite) {
       var lr = LR(); if (!lr || !lr.drivers || lr.finished) return;
       var cfg = configPit(); if (!cfg || !cfg.enabled) return;
       var p = lr.drivers.find(function (d) { return d.isPlayer; });
@@ -264,7 +264,7 @@
                 Math.random() * ((cfg.stopTimeMax || 3.4) - (cfg.stopTimeMin || 2.2));
       arretRival(p, dur);
       annoncerArret(p, dur);
-    };
+    } });
     window._playerPit._rj82 = true;
   }
 
@@ -342,10 +342,10 @@
     /* La confirmation de stratégie ne demande plus rien : elle valide. */
     if (fn("confirmStrategy") && !window.confirmStrategy._rj82) {
       _origConfirm = window.confirmStrategy;
-      window.confirmStrategy = function () {
+      rjInscrire("confirmStrategy", { id: "82-simulation-simplifiee:confirmStrategy", ordre: -6100, remplace: function (args, suite) {
         validerStrategieAutomatiquement();
-        return _origConfirm.apply(this, arguments);
-      };
+        return suite();
+      } });
       window.confirmStrategy._rj82 = true;
     }
 

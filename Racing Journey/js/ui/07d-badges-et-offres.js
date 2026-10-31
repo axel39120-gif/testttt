@@ -84,7 +84,7 @@
 
   function wrapUpdateHomeBadges() {
     // Nos règles l'emportent : elles passent après l'original.
-    rjInscrire("updateHomeBadges", { id: "07-badges", ordre: 10, apres: function () { applyHomeBadges(); } });
+    rjInscrire("updateHomeBadges", { id: "07-badges", ordre: 0, apres: function () { applyHomeBadges(); } });
     return true;
   }
 

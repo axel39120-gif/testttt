@@ -56,7 +56,8 @@
     /* Mentions « j'aime », republications et réponses du fil. */
     if (typeof window._fmtCompactNum === "function" && !window._fmtCompactNum._rj98) {
       _orig._fmtCompactNum = window._fmtCompactNum;
-      window._fmtCompactNum = function (n) { return compact(n, false); };
+      rjInscrire("_fmtCompactNum", { id: "98-formats-compteurs:_fmtCompactNum", ordre: -7200, remplace: function (args, suite) {
+      var n = args[0]; return compact(n, false); } });
       window._fmtCompactNum._rj98 = true;
       pose++;
     }
@@ -64,7 +65,8 @@
     /* Nombre d'abonnés. */
     if (typeof window.fmtFollowers === "function" && !window.fmtFollowers._rj98) {
       _orig.fmtFollowers = window.fmtFollowers;
-      window.fmtFollowers = function (n) { return compact(n, false); };
+      rjInscrire("fmtFollowers", { id: "98-formats-compteurs:fmtFollowers", ordre: -7200, remplace: function (args, suite) {
+      var n = args[0]; return compact(n, false); } });
       window.fmtFollowers._rj98 = true;
       pose++;
     }

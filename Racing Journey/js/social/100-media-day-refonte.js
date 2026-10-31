@@ -1553,13 +1553,13 @@
     if (window.openMediaDay._rj100) return true;
 
     _orig.openMediaDay = window.openMediaDay;
-    window.openMediaDay = function () {
+    rjInscrire("openMediaDay", { id: "100-media-day-refonte:openMediaDay", ordre: -7400, remplace: function (args, suite) {
       /* La condition d'accès reste celle du module 99. */
       if (typeof window.mediaDayAvailable === "function" && !window.mediaDayAvailable()) return;
       try { if (typeof navTo === "function") navTo("S-mediaday", null); } catch (e) {}
       try { document.getElementById("main-nav").classList.add("show"); } catch (e) {}
       setTimeout(ouvrir, 40);
-    };
+    } });
     window.openMediaDay._rj100 = true;
 
     /* La fin de conférence passe toujours par le module d'origine, qui

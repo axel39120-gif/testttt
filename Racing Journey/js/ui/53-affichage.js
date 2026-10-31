@@ -569,15 +569,8 @@
 
   function wrapRender(name, after) {
     if (typeof window[name] !== "function" || window[name]._rj60) return false;
-    var orig = window[name];
-    var fn = function () {
-      var r = orig.apply(this, arguments);
-      try { setTimeout(after, 30); } catch (e) {}
-      return r;
-    };
-    fn._rj60 = true;
-    wrapped[name] = orig;
-    window[name] = fn;
+    rjInscrire(name, { id: "60-" + name, ordre: -5050, apres: function () { setTimeout(after, 30); } });
+    window[name]._rj60 = true;
     return true;
   }
 
@@ -675,15 +668,8 @@
 
   function wrap(name) {
     if (typeof window[name] !== "function" || window[name]._rj61) return false;
-    var orig = window[name];
-    var fn = function () {
-      var r = orig.apply(this, arguments);
-      try { setTimeout(place, 20); } catch (e) {}
-      return r;
-    };
-    fn._rj61 = true;
-    wrapped[name] = orig;
-    window[name] = fn;
+    rjInscrire(name, { id: "61-" + name, ordre: -5050, apres: function () { setTimeout(place, 20); } });
+    window[name]._rj61 = true;
     return true;
   }
 
@@ -1266,7 +1252,24 @@
       return origApplyAppSize.apply(this, arguments);
     };
     fn._rj68 = true;
-    window.applyAppSize = fn;
+    rjInscrire("applyAppSize", { id: "53-affichage:applyAppSize", ordre: -5000, remplace: function (args, suite) {
+      // Appel externe (60, molettes, boot du jeu) : en mode auto on
+      // recalcule d'abord, pour que ce soit toujours la même valeur qui
+      // gagne, quel que soit l'appelant.
+      if (!enCours && modeAuto()) {
+        try {
+          var vp = mesurerViewport();
+          var eff = insetsEffectifs(sonderInsets(), vp);
+          var z = calculerZone(vp, eff);
+          if (typeof SETTINGS !== "undefined" && SETTINGS) {
+            SETTINGS.appWidth = z.w;
+            SETTINGS.appHeight = z.h;
+          }
+          etat.zone = z;
+        } catch (e) {}
+      }
+      return suite();
+    } });
     return true;
   }
 
@@ -1831,14 +1834,8 @@
 
   function wrap(nom) {
     if (typeof window[nom] !== "function" || window[nom]._rj85) return;
-    var o = window[nom];
-    window[nom] = function () {
-      var r = o.apply(this, arguments);
-      try { setTimeout(function () { marquerDescriptions(); }, 20); } catch (e) {}
-      return r;
-    };
+    rjInscrire(nom, { id: "85-" + nom, ordre: -5050, apres: function () { setTimeout(function () { marquerDescriptions(); }, 20); } });
     window[nom]._rj85 = true;
-    _orig[nom] = o;
   }
 
   function boot() {

@@ -405,11 +405,27 @@ function _rjNewTeamRatingToBonus(rating) {
     
     // === Override _getCarPerformanceWeight ===
     window._rjOriginalCarPerfWeight = window._getCarPerformanceWeight;
-    window._getCarPerformanceWeight = _rjNewCarPerfWeight;
+    rjInscrire("_getCarPerformanceWeight", { id: "04k-realism-overhaul:_getCarPerformanceWeight", ordre: -3100, remplace: function (args, suite) {
+      var category = args[0];
+  return RJ_CAR_PERF_WEIGHTS[category] !== undefined ? RJ_CAR_PERF_WEIGHTS[category] : 1.0;
+} });
     
     // === Override teamRatingToBonus ===
     window._rjOriginalTeamRatingToBonus = window.teamRatingToBonus;
-    window.teamRatingToBonus = _rjNewTeamRatingToBonus;
+    rjInscrire("teamRatingToBonus", { id: "04k-realism-overhaul:teamRatingToBonus", ordre: -3100, remplace: function (args, suite) {
+      var rating = args[0];
+  // Centre la note autour de 75 (moyenne grille)
+  var r = (rating - 75) / 100;
+  
+  // Courbe non-linéaire amplifiée :
+  //   - composante linéaire 0.85 × r (inchangée)
+  //   - composante quadratique amplifiée : 0.55 × r² (vs 0.4 avant)
+  //   - sign-preserving : conserve le signe pour les ratings < 75
+  var quadratic = 0.55 * r * r * (r >= 0 ? 1 : -1);
+  var bonus = (0.85 * r + quadratic) * _rjNewCarPerfWeight(typeof G !== "undefined" ? G.cat : "");
+  
+  return bonus;
+} });
     
     // === Hook sur runRaceLive : recalibrage skills après init ===
     var originalRunRaceLive = window.runRaceLive;

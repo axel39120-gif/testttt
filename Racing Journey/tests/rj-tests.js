@@ -507,6 +507,26 @@ async function suiteCouches() {
     }).filter(Boolean), Object.entries(APLATIES));
     S.verifier("chaque fonction aplatie est active dans sa version retenue", actives.length === 0, actives.join(" ; "));
 
+    /* Plus aucune couche, quelle que soit sa forme (window.X =, X =,
+       window[nom] =) : chaque fonction déclarée au premier niveau est active
+       telle quelle, ou passe par son répartiteur rjAppeler. */
+    const declarees = (() => {
+      const fs = require("fs"), path = require("path"), noms = new Set();
+      const parcourir = d => fs.readdirSync(d, { withFileTypes: true })
+        .flatMap(e => e.isDirectory() ? parcourir(path.join(d, e.name)) : [path.join(d, e.name)]);
+      parcourir(path.join(S.RACINE, "js")).filter(f => f.endsWith(".js")).forEach(f => {
+        for (const m of fs.readFileSync(f, "utf8").matchAll(/^function ([A-Za-z_$][\w$]*)\s*\(/gm)) noms.add(m[1]);
+      });
+      return [...noms];
+    })();
+    const enCouches = await page.evaluate(L => L.filter(n => {
+      const f = window[n];
+      if (typeof f !== "function") return false;
+      const s = String(f);
+      return !(s.indexOf("function " + n + "(") === 0 || s.indexOf('rjAppeler("' + n + '"') >= 0 || f._rjRepartiteur);
+    }), declarees);
+    S.verifier(declarees.length + " fonctions déclarées, aucune enveloppée", enCouches.length === 0, enCouches.slice(0, 8).join(", "));
+
     /* Le hook de 04o relançait tout le changement de saison : on sautait
        deux saisons (âge +2, contrat −2) à chaque passage. */
     const saison = await page.evaluate(() => {

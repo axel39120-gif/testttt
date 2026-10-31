@@ -1397,9 +1397,7 @@
 
   function wrap(name, after) {
     if (typeof window[name] !== 'function' || window[name]._rjui) return false;
-    var orig = window[name];
-    var fn = function () {
-      var r = orig.apply(this, arguments);
+    rjInscrire(name, { id: "11-ui-" + name, ordre: -3650, apres: function () {
       // Nettoyage monétaire immédiat, avant tout rendu : l'embellissement
       // plus lourd (logos, couleurs) peut rester différé, il ne provoque
       // pas de scintillement de texte.
@@ -1407,12 +1405,9 @@
         var scr = document.querySelector('.scr.on');
         if (scr) cleanMoney(scr);
       } catch (e) {}
-      try { setTimeout(after, 0); } catch (e) {}
-      return r;
-    };
-    fn._rjui = true;
-    wrapped[name] = orig;
-    window[name] = fn;
+      setTimeout(after, 0);
+    } });
+    window[name]._rjui = true;
     return true;
   }
 

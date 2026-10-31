@@ -93,7 +93,7 @@
   function _rjFixPlayerQualiConsistency() {
     if (window._rjFix4Installed) return true;
     window._rjFix4Installed = true;
-    rjInscrire("startQual", { id: "04j-coherence-joueur", ordre: 0, apres: function () {
+    rjInscrire("startQual", { id: "04j-coherence-joueur", ordre: 10, apres: function () {
       
       // Le legacy hardcode driver[0].consistency = 0.85 pour le joueur.
       // On corrige post-init avec une formule basée sur les stats

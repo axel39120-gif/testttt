@@ -236,11 +236,11 @@ function injecter() {
         }
         if (typeof window.renderRepEvents === "function" && !window.renderRepEvents._rj93) {
           var origRender = window.renderRepEvents;
-          window.renderRepEvents = function () {
-            var r = origRender.apply(this, arguments);
+          rjInscrire("renderRepEvents", { id: "93-paddock-dans-evenements:renderRepEvents", ordre: -6700, remplace: function (args, suite) {
+            var r = suite();
             try { injecter(); } catch (e) {}
             return r;
-          };
+          } });
           window.renderRepEvents._rj93 = true;
           _origRender = origRender;
         }

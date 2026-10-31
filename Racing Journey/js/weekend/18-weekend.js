@@ -3695,14 +3695,8 @@
 
   function wrap(nom) {
     if (!fn(nom) || window[nom]._rj84) return;
-    var o = window[nom];
-    window[nom] = function () {
-      var r = o.apply(this, arguments);
-      try { setTimeout(compacter, 30); } catch (e) {}
-      return r;
-    };
+    rjInscrire(nom, { id: "84-" + nom, ordre: -3850, apres: function () { setTimeout(compacter, 30); } });
     window[nom]._rj84 = true;
-    _orig[nom] = o;
   }
 
   function installer() {

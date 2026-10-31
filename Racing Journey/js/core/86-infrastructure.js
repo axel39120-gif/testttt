@@ -258,15 +258,15 @@
 
     if (fn("renderLiveLeaderboard") && !window.renderLiveLeaderboard._rj89) {
       _origClassement = window.renderLiveLeaderboard;
-      window.renderLiveLeaderboard = function () {
+      rjInscrire("renderLiveLeaderboard", { id: "86-infrastructure:renderLiveLeaderboard", ordre: -6300, remplace: function (args, suite) {
         var r;
         /* Garde défensif : une erreur d'affichage ne doit pas interrompre
            la course, mais elle ne doit pas non plus disparaître en silence. */
-        try { r = _origClassement.apply(this, arguments); }
+        try { r = suite(); }
         catch (e) { console.warn(TAG, "rendu du classement :", e && e.message); }
         declencher(window.RJ_LEADERBOARD_HOOKS, "apres");
         return r;
-      };
+      } });
       window.renderLiveLeaderboard._rj89 = true;
     }
 

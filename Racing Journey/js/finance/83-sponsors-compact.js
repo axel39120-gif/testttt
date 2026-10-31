@@ -243,18 +243,18 @@
   function installer() {
     if (!fn("renderSponsorsNew") || window.renderSponsorsNew._rj83) return !!(window.renderSponsorsNew && window.renderSponsorsNew._rj83);
     _orig = window.renderSponsorsNew;
-    window.renderSponsorsNew = function () {
+    rjInscrire("renderSponsorsNew", { id: "83-sponsors-compact:renderSponsorsNew", ordre: -6200, remplace: function (args, suite) {
       /* Le verrouillage d'avant-première course (module 07) remplace la
          liste par son propre message : on le laisse faire. */
       try {
         var G = G_();
-        if (!G || !G.races || !G.races.length) return _orig.apply(this, arguments);
+        if (!G || !G.races || !G.races.length) return suite();
       } catch (e) {}
       try { rendre(); } catch (e) {
         console.warn(TAG, "rendu compact :", e && e.message);
-        return _orig.apply(this, arguments);
+        return suite();
       }
-    };
+    } });
     window.renderSponsorsNew._rj83 = true;
     return true;
   }

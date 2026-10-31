@@ -606,11 +606,10 @@
   function wrap(name, builder) {
     if (!fnOk(name)) return false;
     if (window[name]._ps25) return true;
-    var orig = window[name];
-    window[name] = function () {
-      try { if (isPreSeason()) return builder.apply(this, arguments); } catch (e) {}
-      return orig.apply(this, arguments);
-    };
+    rjInscrire(name, { id: "29-pre-saison-" + name, ordre: -2350, remplace: function (args, suite) {
+      try { if (isPreSeason()) return builder.apply(this, args); } catch (e) {}
+      return suite();
+    } });
     window[name]._ps25 = true;
     return true;
   }

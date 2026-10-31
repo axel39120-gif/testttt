@@ -341,11 +341,11 @@
     /* Les rivaux reçoivent l'échelle dès leur création. */
     if (typeof window.initRivals === "function" && !window.initRivals._rj92) {
       var origInit = window.initRivals;
-      window.initRivals = function () {
-        var r = origInit.apply(this, arguments);
+      rjInscrire("initRivals", { id: "92-notation-pilotes:initRivals", ordre: -6600, remplace: function (args, suite) {
+        var r = suite();
         try { appliquerAuxRivaux(); } catch (e) { console.warn(TAG, "application :", e && e.message); }
         return r;
-      };
+      } });
       window.initRivals._rj92 = true;
       _avant.initRivals = origInit;
     }

@@ -1,7 +1,8 @@
 if (typeof renderIcon !== "function") {
-  renderIcon = function(i, s, c) {
+  rjInscrire("renderIcon", { id: "04-race-engine:renderIcon:1", ordre: -401, remplace: function (args, suite) {
+      var i = args[0], s = args[1], c = args[2];
     return "";
-  }
+  } });
 }
 // === Racing Journey: F1 Dreams ===
 // Module: 04-race-engine
@@ -15518,7 +15519,8 @@ function _tickRaceCoeur() {
   }
 }
 
-function updateLivePositions() {
+function updateLivePositions() { return rjAppeler("updateLivePositions", _updateLivePositionsCoeur, this, arguments); }
+function _updateLivePositionsCoeur() {
   var e = LIVE_RACE.drivers.filter(function(e) {
     return !e.dnf
   });
@@ -21559,9 +21561,9 @@ function renderCircuitStats() {
 }
 
 var _origShowSeasonEnd = showSeasonEnd;
-showSeasonEnd = function() {
-  saveSeasonToHistory(), _origShowSeasonEnd()
-};
+rjInscrire("showSeasonEnd", { id: "04-race-engine:showSeasonEnd", ordre: -400, remplace: function (args, suite) {
+  saveSeasonToHistory(), suite([])
+} });
 var TEAM_RATINGS = {},
   REGULATION_YEAR = 1,
   TEAM_SEASON_DEV = {};
@@ -21583,18 +21585,21 @@ function getPlayerCarDevNews() {
   return t
 }
 
-function getEffectiveTeamRating(e) {
+function getEffectiveTeamRating() { return rjAppeler("getEffectiveTeamRating", _getEffectiveTeamRatingCoeur, this, arguments); }
+function _getEffectiveTeamRatingCoeur(e) {
   var t = getTeamRatings();
   return t && t[e] ? Math.max(50, Math.min(99, t[e] + getTeamSeasonDelta(e))) : 72
 }
 
-function teamRatingToBonus(e) {
+function teamRatingToBonus() { return rjAppeler("teamRatingToBonus", _teamRatingToBonusCoeur, this, arguments); }
+function _teamRatingToBonusCoeur(e) {
   var t, r = (e - 75) / 100,
     n;
   return (.85 * r + (r >= 0 ? r * r * .4 : -r * r * .4)) * _getCarPerformanceWeight(G.cat)
 }
 
-function _getCarPerformanceWeight(e) {
+function _getCarPerformanceWeight() { return rjAppeler("_getCarPerformanceWeight", __getCarPerformanceWeightCoeur, this, arguments); }
+function __getCarPerformanceWeightCoeur(e) {
   switch (e) {
     case "Karting Junior":
       return .4;

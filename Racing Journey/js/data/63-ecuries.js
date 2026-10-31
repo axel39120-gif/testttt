@@ -516,7 +516,11 @@
       };
       fn._rj63 = true;
       wrapped.geRenderTeamDetail = orig;
-      window.geRenderTeamDetail = fn;
+      rjInscrire("geRenderTeamDetail", { id: "63-ecuries:geRenderTeamDetail", ordre: -5200, remplace: function (args, suite) {
+      var name = args[0];
+        var html = suite();
+        try { return html + panneauHTML(name); } catch (e) { return html; }
+      } });
     }
 
     // le renommage doit déplacer aussi le style enregistré
@@ -532,7 +536,15 @@
       };
       f2._rj63 = true;
       wrapped._geRenameTeam = o2;
-      window._geRenameTeam = f2;
+      rjInscrire("_geRenameTeam", { id: "63-ecuries:_geRenameTeam", ordre: -5200, remplace: function (args, suite) {
+      var oldName = args[0], newName = args[1];
+        var r = suite();
+        try {
+          var s = styles();
+          if (s[oldName] && oldName !== newName) { s[newName] = s[oldName]; delete s[oldName]; appliquer(newName); }
+        } catch (e) {}
+        return r;
+      } });
     }
 
     // réappliquer les logos personnalisés au chargement d'une partie
@@ -812,7 +824,20 @@
         return wrapped._getTeamProfile.apply(this, arguments);
       };
       fn._rj64 = true;
-      window._getTeamProfile = fn;
+      rjInscrire("_getTeamProfile", { id: "63-ecuries:_getTeamProfile", ordre: -5200, remplace: function (args, suite) {
+      var team = args[0], cat = args[1];
+        try {
+          if (team && team !== "Indépendant") {
+            var s = store();
+            var saison = (typeof G !== "undefined" && G && G.saison) || 1;
+            if (s) {
+              if (!s[cat] || G._rjProfilesSaison[cat] !== saison) majCategorie(cat, saison);
+              if (s[cat] && s[cat][team]) return s[cat][team].slice();
+            }
+          }
+        } catch (e) {}
+        return suite();
+      } });
     }
 
     // le renommage d'une écurie doit emporter son profil
@@ -832,7 +857,19 @@
       };
       f2._rj64 = true;
       wrapped._geRenameTeam = o2;
-      window._geRenameTeam = f2;
+      rjInscrire("_geRenameTeam", { id: "63-ecuries:_geRenameTeam:1", ordre: -5201, remplace: function (args, suite) {
+      var oldName = args[0], newName = args[1];
+        var r = suite();
+        try {
+          var s = store();
+          if (s && oldName !== newName) {
+            Object.keys(s).forEach(function (cat) {
+              if (s[cat] && s[cat][oldName]) { s[cat][newName] = s[cat][oldName]; delete s[cat][oldName]; }
+            });
+          }
+        } catch (e) {}
+        return r;
+      } });
     }
 
     installerPersistance();

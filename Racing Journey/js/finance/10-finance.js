@@ -1109,12 +1109,7 @@
   function wrapFn(fnName) {
     if (typeof window[fnName] !== 'function') return;
     if (window[fnName]._rjSalarySync) return;
-    var orig = window[fnName];
-    window[fnName] = function() {
-      var r = orig.apply(this, arguments);
-      try { syncNow(); } catch(e) {}
-      return r;
-    };
+    rjInscrire(fnName, { id: "10-salaire-" + fnName, ordre: -3550, apres: function () { syncNow(); } });
     window[fnName]._rjSalarySync = true;
   }
 

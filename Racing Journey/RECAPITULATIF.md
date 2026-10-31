@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v214**. Ce document décrit l'organisation du code après la
+Version **BUILD v215**. Ce document décrit l'organisation du code après la
 restructuration (étape 1), ce qui reste à faire, et comment reprendre.
 
 ---
@@ -10,7 +10,7 @@ restructuration (étape 1), ce qui reste à faire, et comment reprendre.
 Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et le dossier `js/` avec ses sous-dossiers.
 
-Le badge en bas à gauche doit afficher `BUILD v214 · OK`. S'il liste des
+Le badge en bas à gauche doit afficher `BUILD v215 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -67,8 +67,11 @@ s'inscrit à un registre, il ne l'enveloppe jamais :
 | `goToRaceWeekend` | `RJ_WEEKEND_ENTRY_HOOKS` | avant, intercepte, apres, ordre |
 | `renderLiveLeaderboard` | `RJ_LEADERBOARD_HOOKS` | apres |
 
-La suite de tests `couches` liste les fonctions déjà ramenées à une seule
-définition : une couche réintroduite la fait échouer.
+La suite de tests `couches` vérifie, dans le jeu chargé, qu'aucune des
+fonctions déclarées n'est enveloppée : une couche réintroduite, sous
+n'importe quelle forme, la fait échouer. Les modules qui doivent agir sur
+une fonction appellent `rjInscrire` ; si la fonction n'est pas encore
+extensible, `rjInscrire` lui pose son répartiteur.
 
 ---
 
@@ -80,9 +83,11 @@ définition : une couche réintroduite la fait échouer.
   (autosave compris), sauvegarde illisible conservée, format versionné.
 - **T2** les trois gros fichiers (03, 04, 05) remis en forme lisible.
 - **T3** code mort certain supprimé ; **T4** fichiers rangés par domaine.
-- **T5** toutes les chaînes de 3 couches ou plus aplaties (navTo, rtab,
+- **T5** plus aucune fonction enveloppée : les grandes chaînes (navTo, rtab,
   mtab, showResult, runRaceLive, startNextSeason, advanceToNextMoment,
-  goToRaceWeekend…) et une vingtaine de doubles.
+  goToRaceWeekend…) ont leur registre, les ~150 autres passent par
+  `rjAppeler` (transformation automatique par l'arbre syntaxique, puis
+  vérifiée à l'exécution sur les 980 fonctions déclarées).
 - **T6** le jeu ne s'agite plus au repos (178 → 3 réveils de surveillance
   du DOM par seconde ; ~1 650 → 17 setTimeout par seconde).
 - **T7** bonds de places en endurance corrigés ; modèle de piste
@@ -102,11 +107,6 @@ définition : une couche réintroduite la fait échouer.
 
 ## Reste à faire
 
-- **Doubles restants.** Une centaine de fonctions sont encore définies deux
-  fois (une base et une enveloppe), surtout dans 11-neg-patch, 34, 40, 63,
-  79, 80. Les ramener à `rjInscrire` au fil des chantiers, fonction par
-  fonction, en ajoutant chacune à la suite `couches`. Pour les lister :
-  `node tests/couverture.js` (section « empilements »).
 - **Moteur.** Les positions restent calculées au score (bridées à ±2 places
   par tour) ; le modèle de piste en dérive une position continue. Faire
   piloter les positions par la distance parcourue est une évolution

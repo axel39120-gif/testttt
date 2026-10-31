@@ -1317,7 +1317,8 @@ function renderHomeEvents() {
   })))
 }
 
-function resolveRepEvent(e, t) {
+function resolveRepEvent() { return rjAppeler("resolveRepEvent", _resolveRepEventCoeur, this, arguments); }
+function _resolveRepEventCoeur(e, t) {
   var r = REP_EVENTS_PENDING[e];
   if (r) {
     var n = r.choices[t];

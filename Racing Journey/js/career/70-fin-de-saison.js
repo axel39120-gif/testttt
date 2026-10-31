@@ -676,7 +676,13 @@
       };
       fnShow._rj70 = true;
       wrapped.showSeasonEnd = origShow;
-      window.showSeasonEnd = fnShow;
+      rjInscrire("showSeasonEnd", { id: "70-fin-de-saison:showSeasonEnd:1", ordre: -5501, remplace: function (args, suite) {
+        var r;
+        try { r = suite(); } catch (e) { console.warn(TAG, e); }
+        try { setTimeout(rendre, 0); } catch (e) {}
+        try { setTimeout(majBouton, 30); } catch (e) {}
+        return r;
+      } });
       ok = true;
     }
 

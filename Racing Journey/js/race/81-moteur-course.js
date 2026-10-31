@@ -397,7 +397,104 @@
   function installer() {
     if (typeof window.updateLivePositions === "function" && !window.updateLivePositions._rj81) {
       _origUpdate = window.updateLivePositions;
-      window.updateLivePositions = nouvelleUpdateLivePositions;
+      rjInscrire("updateLivePositions", { id: "81-moteur-course:updateLivePositions", ordre: -6000, remplace: function (args, suite) {
+    var lr = LR();
+    if (!lr || !lr.drivers) return;
+
+    if (neutralisationFigeLOrdre()) { declencherHooksDeTour(); return; }
+
+    var vivants = lr.drivers.filter(function (d) { return d && !d.dnf; });
+    if (!vivants.length) return;
+
+    /* Premier tour : la grille de départ fait foi, sans réordonnancement. */
+    if (lr.cur <= 1) {
+      vivants.sort(function (a, b) {
+        return (a.gridPos || a.pos || 99) - (b.gridPos || b.pos || 99);
+      });
+      attribuer(vivants);
+      return;
+    }
+
+    /* Filet de sécurité sur les déplacements d'origine externe.
+       Le plafond appliqué plus bas ne borne que NOTRE calcul. D'autres
+       codes déplacent les voitures directement entre deux tours : swaps
+       d'événements, regroupement de neutralisation, arrivée du plateau
+       multi-classes en cours d'épreuve. On a mesuré ainsi des bonds de
+       treize places. On compare donc la position courante à celle que nous
+       avions laissée, et on ramène l'écart dans les limites — le rattrapage
+       se fait alors sur les tours suivants, ce qui reste lisible. */
+    var plafondExterne = SAUT_PLAFOND_LARGE;   /* même en regroupement : au-delà, le mouvement devient illisible */
+    for (var e = 0; e < vivants.length; e++) {
+      var v = vivants[e];
+      if (typeof v._rj81PosLaissee !== "number") continue;
+      var bond = v.pos - v._rj81PosLaissee;
+      if (bond > plafondExterne) v.pos = v._rj81PosLaissee + plafondExterne;
+      else if (bond < -plafondExterne) v.pos = v._rj81PosLaissee - plafondExterne;
+    }
+
+    /* Rang visé : l'ordre des scores effectifs. */
+    var cible = vivants.slice().sort(function (a, b) {
+      return scoreEffectif(b) - scoreEffectif(a);
+    });
+    for (var i = 0; i < cible.length; i++) cible[i]._rangCible = i + 1;
+
+    /* Bridage : on se rapproche du rang visé sans téléportation. */
+    var bypass = lr._bypassPositionCap;
+    if (bypass) lr._bypassPositionCap = false;
+
+    /* Fin de course : le bridage doit se relâcher, sinon le classement
+       affiché à l'arrivée reste figé à mi-chemin de l'ordre réel et diverge
+       du résultat calculé au drapeau.
+       Mais le lever d'un coup au dernier tour produisait des rattrapages
+       brutaux — jusqu'à 14 places en un tour, mesuré dans les catégories à
+       arrêts. On le relâche donc progressivement sur les cinq derniers
+       tours : la convergence est la même, elle s'étale. */
+    var restants = (lr.total || 0) - (lr.cur || 0);
+    var relachement = 0;
+    if (lr.total && restants <= 5) relachement = [6, 5, 4, 3, 2, 1][Math.max(0, Math.min(5, restants))];
+
+    for (var j = 0; j < vivants.length; j++) {
+      var d = vivants[j];
+      var precedente = d.pos || d._rangCible;
+      var saut = SAUT_MAX;
+      if (d._lastPitLap && (lr.cur - d._lastPitLap) <= 2) saut = SAUT_MAX_APRES_ARRET;
+      if (relachement) saut = Math.max(saut, relachement);
+      if (bypass) saut = vivants.length;
+
+
+      /* Plafond dur. Le bridage ci-dessus peut être levé par un
+         regroupement ou par l'arrivée d'un plateau multi-classes en cours
+         d'épreuve ; on a mesuré dans ce cas des bonds de quatorze à seize
+         places en un tour, incompréhensibles pour le joueur. Quelle que
+         soit la raison, une voiture ne se déplace jamais de plus de
+         SAUT_PLAFOND places d'un tour à l'autre : le rattrapage se fait
+         alors sur deux ou trois tours, ce qui reste lisible. */
+      saut = Math.min(saut, bypass ? SAUT_PLAFOND_LARGE : SAUT_PLAFOND);
+
+      var delta = d._rangCible - precedente;
+      if (delta > saut) delta = saut;
+      else if (delta < -saut) delta = -saut;
+      d._posSouhaitee = precedente + delta;
+    }
+
+    /* Attribution séquentielle : unicité par construction. Le rang visé
+       départage deux pilotes qui convoitent la même place — c'est le plus
+       rapide qui passe devant, jamais un repli arbitraire. */
+    /* Départage : à souhait égal, c'est l'ordre du tour précédent qui
+       tranche, et le rang au score seulement ensuite. Départager par le
+       seul rang au score faisait glisser un pilote de plus de dix places
+       quand plusieurs convoitaient la même position — le bornage portait
+       sur le souhait, pas sur le rang finalement attribué. */
+    vivants.sort(function (a, b) {
+      if (a._posSouhaitee !== b._posSouhaitee) return a._posSouhaitee - b._posSouhaitee;
+      var pa = (typeof a._rj81PosLaissee === "number") ? a._rj81PosLaissee : a._rangCible;
+      var pb = (typeof b._rj81PosLaissee === "number") ? b._rj81PosLaissee : b._rangCible;
+      if (pa !== pb) return pa - pb;
+      return a._rangCible - b._rangCible;
+    });
+    attribuer(vivants);
+    declencherHooksDeTour();
+  } });
       window.updateLivePositions._rj81 = true;
     }
 

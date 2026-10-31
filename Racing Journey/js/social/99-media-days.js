@@ -184,22 +184,32 @@
     /* Le quota remplace l'occasion unique. */
     if (typeof window.mediaDayAvailable === "function" && !window.mediaDayAvailable._rj99) {
       _orig.mediaDayAvailable = window.mediaDayAvailable;
-      window.mediaDayAvailable = disponible;
+      rjInscrire("mediaDayAvailable", { id: "99-media-days:mediaDayAvailable", ordre: -7300, remplace: function (args, suite) {
+    var G = G_();
+    if (!G || !quotaSaison()) return false;
+    if (reste() <= 0) return false;
+    try {
+      var manches = (window.CAL_RACES || []).length || 10;
+      if ((G.races || []).length >= manches) return false;
+    } catch (e) {}
+    var ecart = (G.semaine || 0) - ((G._rjMediaDays && G._rjMediaDays.derniereSemaine) || -99);
+    return ecart >= 2;
+  } });
       window.mediaDayAvailable._rj99 = true;
     }
 
     /* On compte les conférences tenues plutôt que de fermer la porte. */
     if (typeof window.endMediaDay === "function" && !window.endMediaDay._rj99) {
       _orig.endMediaDay = window.endMediaDay;
-      window.endMediaDay = function () {
+      rjInscrire("endMediaDay", { id: "99-media-days:endMediaDay", ordre: -7300, remplace: function (args, suite) {
         try { enregistrer(); } catch (e) {}
-        var r = _orig.endMediaDay.apply(this, arguments);
+        var r = suite();
         try {
           if (typeof window.MD_STATE !== "undefined") window.MD_STATE.usedThisSeason = false;
           if (typeof window.updateMediaDayRow === "function") window.updateMediaDayRow();
         } catch (e) {}
         return r;
-      };
+      } });
       window.endMediaDay._rj99 = true;
     }
 

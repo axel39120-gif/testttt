@@ -320,7 +320,7 @@
       wrapped.showGlossary = window.showGlossary;
       var fn = function () { try { ouvrir(); } catch (e) { return wrapped.showGlossary.apply(this, arguments); } };
       fn._rj65 = true;
-      window.showGlossary = fn;
+      rjInscrire("showGlossary", { id: "65-manual:showGlossary", ordre: -5300, remplace: function (args, suite) { try { ouvrir(); } catch (e) { return suite(); } } });
     }
     return true;
   }

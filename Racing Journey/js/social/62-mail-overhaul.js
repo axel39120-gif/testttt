@@ -564,7 +564,17 @@
       };
       fn._rj62 = true;
       wrapped.pushMail = orig;
-      window.pushMail = fn;
+      rjInscrire("pushMail", { id: "62-mail-overhaul:pushMail", ordre: -5100, remplace: function (args, suite) {
+      var o = args[0];
+        try {
+          if (o) {
+            stabiliserExpediteur(o);
+            varier(o);
+            if (tropRecent(o)) return null;   // même sujet trop récent : on n'insiste pas
+          }
+        } catch (e) {}
+        return suite();
+      } });
     }
 
     // filet : si une offre est apparue hors du tick (fin de saison…), on la
@@ -574,7 +584,7 @@
       var f3 = function () { var r = o3.apply(this, arguments); try { scanOffres(); } catch (e) {} return r; };
       f3._rj62 = true;
       wrapped.renderOffers = o3;
-      window.renderOffers = f3;
+      rjInscrire("renderOffers", { id: "62-mail-overhaul:renderOffers", ordre: -5100, remplace: function (args, suite) { var r = suite(); try { scanOffres(); } catch (e) {} return r; } });
     }
 
     if (typeof window.renderMailbox === "function" && !window.renderMailbox._rj62) {
@@ -586,7 +596,11 @@
       };
       f2._rj62 = true;
       wrapped.renderMailbox = o2;
-      window.renderMailbox = f2;
+      rjInscrire("renderMailbox", { id: "62-mail-overhaul:renderMailbox", ordre: -5100, remplace: function (args, suite) {
+        var r = suite();
+        try { setTimeout(function () { habillerListe(); habillerFil(); }, 0); } catch (e) {}
+        return r;
+      } });
     }
 
     // hook hebdomadaire pour les nouveaux expéditeurs

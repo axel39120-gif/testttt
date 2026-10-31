@@ -313,14 +313,8 @@
   var _wraps = [];
   function wrapRendu(nom) {
     if (typeof window[nom] !== "function" || window[nom]._rj57btn) return;
-    var orig = window[nom];
-    window[nom] = function () {
-      var r = orig.apply(this, arguments);
-      try { nettoyerBoutons(document.body); } catch (e) {}
-      return r;
-    };
+    rjInscrire(nom, { id: "57-boutons-" + nom, ordre: -2450, apres: function () { nettoyerBoutons(document.body); } });
     window[nom]._rj57btn = true;
-    _wraps.push({ nom: nom, orig: orig });
   }
 
   var tries = 0;

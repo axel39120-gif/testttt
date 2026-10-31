@@ -479,8 +479,8 @@
   function installFocusManquant() {
     if (!fn("creNext") || window.creNext._rj80) return false;
     _origNext = window.creNext;
-    window.creNext = function () {
-      var r = _origNext.apply(this, arguments);
+    rjInscrire("creNext", { id: "80-mode-de-jeu:creNext:1", ordre: -5901, remplace: function (args, suite) {
+      var r = suite();
       try {
         if (!etapeComplete()) {
           var step = (typeof window.creStep === "number") ? window.creStep : 1;
@@ -499,7 +499,7 @@
         majBoutonContinuer();
       } catch (e) {}
       return r;
-    };
+    } });
     window.creNext._rj80 = true;
     return true;
   }
@@ -507,38 +507,38 @@
   function installParcours() {
     if (fn("goCreate") && !window.goCreate._rj80) {
       _origGoCreate = window.goCreate;
-      window.goCreate = function () {
+      rjInscrire("goCreate", { id: "80-mode-de-jeu:goCreate", ordre: -5900, remplace: function (args, suite) {
         /* premier passage : on montre les modes ; ensuite on laisse faire */
         if (!_dansCreation) {
           if (ouvrirEcranMode()) return;
         }
         _dansCreation = false;
-        return _origGoCreate.apply(this, arguments);
-      };
+        return suite();
+      } });
       window.goCreate._rj80 = true;
     }
 
     if (fn("updateCreUI") && !window.updateCreUI._rj80) {
       _origUpdate = window.updateCreUI;
-      window.updateCreUI = function () {
-        var r = _origUpdate.apply(this, arguments);
+      rjInscrire("updateCreUI", { id: "80-mode-de-jeu:updateCreUI", ordre: -5900, remplace: function (args, suite) {
+        var r = suite();
         try {
           habillerCreation();
           brancherEcoute();
         } catch (e) { console.warn(TAG, "habillage :", e && e.message); }
         return r;
-      };
+      } });
       window.updateCreUI._rj80 = true;
     }
 
     /* Le récapitulatif rappelle le mode retenu. */
     if (fn("buildRecap") && !window.buildRecap._rj80) {
       _origRecap = window.buildRecap;
-      window.buildRecap = function () {
-        var r = _origRecap.apply(this, arguments);
+      rjInscrire("buildRecap", { id: "80-mode-de-jeu:buildRecap", ordre: -5900, remplace: function (args, suite) {
+        var r = suite();
         try { injecterRecapMode(); } catch (e) {}
         return r;
-      };
+      } });
       window.buildRecap._rj80 = true;
     }
     return true;
@@ -777,8 +777,8 @@
   function installLancement() {
     if (!fn("launchGame") || window.launchGame._rj80) return false;
     _origLaunch = window.launchGame;
-    window.launchGame = function () {
-      var r = _origLaunch.apply(this, arguments);
+    rjInscrire("launchGame", { id: "80-mode-de-jeu:launchGame", ordre: -5900, remplace: function (args, suite) {
+      var r = suite();
       try {
         var G = G_();
         if (G) {
@@ -790,7 +790,7 @@
         }
       } catch (e) {}
       return r;
-    };
+    } });
     window.launchGame._rj80 = true;
     return true;
   }

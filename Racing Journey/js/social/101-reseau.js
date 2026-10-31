@@ -392,14 +392,14 @@
     if (typeof window.syncNetworkFromSources !== "function") return false;
     if (window.syncNetworkFromSources._rj101) return true;
     var orig = window.syncNetworkFromSources;
-    window.syncNetworkFromSources = function () {
-      var r = orig.apply(this, arguments);
+    rjInscrire("syncNetworkFromSources", { id: "101-reseau:syncNetworkFromSources", ordre: -7500, remplace: function (args, suite) {
+      var r = suite();
       try {
         var G = G_();
         if (G && G.currentTeam) amorcerStaff(G.currentTeam);
       } catch (e) {}
       return r;
-    };
+    } });
     window.syncNetworkFromSources._rj101 = true;
     return true;
   }
@@ -415,13 +415,13 @@
     /* --- marché : on filtre et ajuste la liste produite ------------- */
     if (typeof window.buildTransferOffers === "function" && !window.buildTransferOffers._rj101) {
       _orig.buildTransferOffers = window.buildTransferOffers;
-      window.buildTransferOffers = function () {
-        var liste = _orig.buildTransferOffers.apply(this, arguments);
+      rjInscrire("buildTransferOffers", { id: "101-reseau:buildTransferOffers", ordre: -7500, remplace: function (args, suite) {
+        var liste = suite();
         try { return ajusterOffres(liste); } catch (e) {
           console.warn(TAG, "ajustement :", e && e.message);
           return liste;
         }
-      };
+      } });
       window.buildTransferOffers._rj101 = true;
       pose++;
     }
