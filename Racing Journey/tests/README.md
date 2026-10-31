@@ -38,6 +38,10 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `creation` | étape du mode de jeu, conservation de la saisie lors d'un aller-retour, écurie de cœur, lancement de carrière |
 | `sauvegarde` | écriture et relecture des blocs hors-cœur (pilote de réserve, mode de jeu, écurie de cœur) après rechargement complet |
 | `persistance` | aller-retour complet d'une partie (cœur, extras, blocs inscrits), réglages, export puis import, et chargement d'une partie réelle de la v208 figée dans `fixtures/` |
+| `fiabilite` | sauvegarde tout-ou-rien : stockage plein, sauvegarde automatique, sauvegarde illisible, migration de l'ancien format, bloc en panne, sauvegarde de test seulement avec `?dev` |
+| `couches` | chaque fonction aplatie n'a qu'une définition et c'est la version retenue ; changement de saison ; filet de fin de course |
+| `sobriete` | au repos sur l'accueil, presque aucune surveillance du DOM ni minuterie |
+| `piste` | modèle de piste : distances dans les bornes, ordre conforme au classement, arrêts au stand visibles |
 | `parcours` | ouverture de chaque écran et de chaque onglet sans erreur (les `onclick` échappent à la mesure de couverture) |
 | `qualifications` | intitulés de session par catégorie, remise à zéro des références de secteurs entre Q1/Q2/Q3 |
 | `course` | déroulé complet dans quatre catégories : positions distinctes, écarts positifs, sauts bornés, résultat enregistré, absence d'usure de pneus, plateau multi-classes de l'endurance, arrêts au stand |
