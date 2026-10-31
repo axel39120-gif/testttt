@@ -9335,7 +9335,30 @@ function _navToCoeur(e, t) {
   }
 }
 
+/* Entrée dans le week-end de course. Même mécanique qu'advanceToNextMoment :
+   RJ_WEEKEND_ENTRY_HOOKS ({ id, ordre, avant(), intercepte() → true, apres() }). */
+if (!Array.isArray(window.RJ_WEEKEND_ENTRY_HOOKS)) window.RJ_WEEKEND_ENTRY_HOOKS = [];
+
 function goToRaceWeekend() {
+  var L = window.RJ_WEEKEND_ENTRY_HOOKS
+    .map(function (h, i) { return { h: h, i: i }; })
+    .filter(function (x) { return !!x.h; })
+    .sort(function (a, b) { return ((a.h.ordre || 0) - (b.h.ordre || 0)) || (a.i - b.i); });
+  function appeler(h, m) {
+    if (typeof h[m] !== "function") return;
+    try { return h[m](); }
+    catch (err) { console.warn("[week-end] « " + (h.id || "?") + " » (" + m + ") :", err && err.message); }
+  }
+  for (var i = 0; i < L.length; i++) {
+    appeler(L[i].h, "avant");
+    if (appeler(L[i].h, "intercepte") === true) return;
+  }
+  var r = _goToRaceWeekendCoeur.apply(this, arguments);
+  L.forEach(function (x) { appeler(x.h, "apres"); });
+  return r;
+}
+
+function _goToRaceWeekendCoeur() {
   var e = document.getElementById("rt-res");
   e && "none" !== e.style.display && resetRaceScreen();
   var t = getNextRace(),

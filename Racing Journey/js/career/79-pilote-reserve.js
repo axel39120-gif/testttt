@@ -972,25 +972,17 @@
    * qu'aucun remplacement n'est prévu pour cette course.
    * ================================================================== */
 
-  var _origGoWeekend = null;
 
   function installInterceptionWeekEnd() {
-    if (!fn("goToRaceWeekend") || window.goToRaceWeekend._rj79) return false;
-    _origGoWeekend = window.goToRaceWeekend;
-    window.goToRaceWeekend = function () {
-      try {
-        var G = G_();
-        if (G && estReservistePur() && !G._rj79Remplacement) {
-          assurerContrat();
-          if (ouvrirWeekEndReserve()) return;
-        }
-        /* Remplacement en cours : on laisse le week-end normal se dérouler. */
-      } catch (e) {
-        console.warn(TAG, "interception du week-end impossible :", e && e.message);
+    if (window.RJ_WEEKEND_ENTRY_HOOKS.some(function (h) { return h && h.id === "79-reserve"; })) return true;
+    window.RJ_WEEKEND_ENTRY_HOOKS.push({ id: "79-reserve", ordre: 10, intercepte: function () {
+      var G = G_();
+      if (G && estReservistePur() && !G._rj79Remplacement) {
+        assurerContrat();
+        if (ouvrirWeekEndReserve()) return true;
       }
-      return _origGoWeekend.apply(this, arguments);
-    };
-    window.goToRaceWeekend._rj79 = true;
+      /* Remplacement en cours : on laisse le week-end normal se dérouler. */
+    } });
     return true;
   }
 
@@ -2363,7 +2355,6 @@
 
     window._rj79Uninstall = function () {
       try {
-        if (_origGoWeekend) window.goToRaceWeekend = _origGoWeekend;
         if (_origSign) window.signContract = _origSign;
         if (_origOpenSched) window.openScheduledEvent = _origOpenSched;
         if (_origGenObj) window.generateSeasonObjectives = _origGenObj;

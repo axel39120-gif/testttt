@@ -132,16 +132,8 @@
   }
 
   function installPracticeFix() {
-    if (typeof window.goToRaceWeekend !== "function") return false;
-    if (window.goToRaceWeekend._rjWkndFix) return true;
-    var orig = window.goToRaceWeekend;
-    window.goToRaceWeekend = function () {
-      var r = orig.apply(this, arguments);
-      ensureFreshPractice();
-      return r;
-    };
-    window.goToRaceWeekend._rjWkndFix = true;
-    window.goToRaceWeekend._rjOrig = orig;
+    if (window.RJ_WEEKEND_ENTRY_HOOKS.some(function (h) { return h && h.id === "42-essais-neufs"; })) return true;
+    window.RJ_WEEKEND_ENTRY_HOOKS.push({ id: "42-essais-neufs", ordre: 30, apres: ensureFreshPractice });
     return true;
   }
 
@@ -179,7 +171,6 @@
       return;
     }
     window._rjWeekendEntryFixUninstall = function () {
-      if (window.goToRaceWeekend && window.goToRaceWeekend._rjOrig) window.goToRaceWeekend = window.goToRaceWeekend._rjOrig;
       if (window.pushHomeToast && window.pushHomeToast._rjOrig) window.pushHomeToast = window.pushHomeToast._rjOrig;
       console.log("[42-weekend-entry-fixes] désinstallé");
     };
@@ -1276,18 +1267,10 @@
   }
 
   function installer() {
-    if (typeof window.goToRaceWeekend !== "function") return false;
-    if (window.goToRaceWeekend._rj40reset) return true;
-    _orig = window.goToRaceWeekend;
-    window.goToRaceWeekend = function () {
-      try {
-        if (nouveauWeekEnd() && typeof window.resetRaceScreen === "function") {
-          window.resetRaceScreen();
-        }
-      } catch (e) { console.warn(TAG, e && e.message); }
-      return _orig.apply(this, arguments);
-    };
-    window.goToRaceWeekend._rj40reset = true;
+    if (window.RJ_WEEKEND_ENTRY_HOOKS.some(function (h) { return h && h.id === "40-remise-a-zero"; })) return true;
+    window.RJ_WEEKEND_ENTRY_HOOKS.push({ id: "40-remise-a-zero", ordre: 20, avant: function () {
+      if (nouveauWeekEnd() && typeof window.resetRaceScreen === "function") window.resetRaceScreen();
+    } });
     return true;
   }
 
@@ -1298,7 +1281,6 @@
   })();
 
   window._rj40ResetUninstall = function () {
-    if (_orig) window.goToRaceWeekend = _orig;
     console.log(TAG, "désinstallé");
   };
 })();
@@ -1340,22 +1322,15 @@
      approximative, remplacée au premier clic par la vraie : la zone semblait
      sauter. On prépare donc l'estimation dès l'entrée, avant tout rendu. */
   function preparerAlEntree() {
-    if (typeof window.goToRaceWeekend !== "function") return false;
-    if (window.goToRaceWeekend._rj40zones) return true;
-    var origEntree = window.goToRaceWeekend;
-    window.goToRaceWeekend = function () {
-      var r = origEntree.apply(this, arguments);
-      try {
+    if (window.RJ_WEEKEND_ENTRY_HOOKS.some(function (h) { return h && h.id === "40-zones"; })) return true;
+    window.RJ_WEEKEND_ENTRY_HOOKS.push({ id: "40-zones", ordre: 40, apres: function () {
         preparer();
         /* L'estimation venant d'être posée, on redessine une fois pour que
            les barres partent des bonnes valeurs. */
         if (typeof window.renderAdvancedSetupUI === "function") {
           setTimeout(function () { try { window.renderAdvancedSetupUI(); } catch (e) {} }, 40);
         }
-      } catch (e) {}
-      return r;
-    };
-    window.goToRaceWeekend._rj40zones = true;
+    } });
     return true;
   }
 
