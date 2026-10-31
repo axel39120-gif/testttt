@@ -472,7 +472,8 @@ const APLATIES = {
   _psPickObj: "rjPsPickObjNew", _psPickAngle: "rjPsPickAngleNew", _psAdjustBudget: "rjPsAdjustBudgetNew",
   renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
   _socialFanHandle: null, recomputeGlobalRep: null,
-  startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null
+  startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null,
+  mtab: null
 };
 
 function definitionsDansLesSources() {

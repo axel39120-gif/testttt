@@ -1114,16 +1114,8 @@
   /* ---------------------------------------------------------- montage --- */
   function installer() {
     if (typeof window.mtab !== "function") return false;
-    if (!window.mtab._rj66) {
-      var orig = window.mtab;
-      var fn = function (t) {
-        var r = orig.apply(this, arguments);
-        try { if (t === "reseaux") setTimeout(rendre, 0); } catch (e) {}
-        return r;
-      };
-      fn._rj66 = true;
-      wrapped.mtab = orig;
-      window.mtab = fn;
+    if (!window.RJ_MEDIA_TAB_HOOKS.some(function (h) { return h && h.id === "66-reseaux"; })) {
+      window.RJ_MEDIA_TAB_HOOKS.push({ id: "66-reseaux", onglet: "reseaux", apres: function () { setTimeout(rendre, 0); } });
     }
     try {
       if (typeof window._rj64Champs === "function") window._rj64Champs("_rjSocial");

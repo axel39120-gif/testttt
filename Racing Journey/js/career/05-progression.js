@@ -1349,13 +1349,25 @@ function showEventFeedback(e, t) {
   }
 }
 
+/* Onglets de l'écran Médias. Les modules y réagissent par
+   RJ_MEDIA_TAB_HOOKS ({ id, onglet: nom | "*", apres(onglet) }),
+   jamais en enveloppant mtab. */
+if (!Array.isArray(window.RJ_MEDIA_TAB_HOOKS)) window.RJ_MEDIA_TAB_HOOKS = [];
+
 function mtab(e) {
-  ["profil", "evenements", "reseaux"].forEach(function(t) {
+  ["profil", "evenements", "reseaux", "presse", "agent"].forEach(function(t) {
     var r = document.getElementById("mt-" + t);
     r && (r.style.display = t === e ? "block" : "none")
-  }), document.querySelectorAll("#S-media .tab").forEach(function(t) {
+  });
+  document.querySelectorAll("#S-media .tab").forEach(function(t) {
     t.classList.toggle("on", t.getAttribute("data-tab") === e)
-  }), renderRepMediaScreen(e)
+  });
+  // L'onglet Agent (102) a son propre contenu : pas de rendu de réputation.
+  if (e !== "agent") renderRepMediaScreen(e);
+  window.RJ_MEDIA_TAB_HOOKS.forEach(function(h) {
+    if (!h || typeof h.apres !== "function" || (h.onglet !== "*" && h.onglet !== e)) return;
+    try { h.apres(e) } catch (err) { console.warn("[mtab] « " + (h.id || "?") + " » :", err && err.message) }
+  });
 }
 
 function renderRepMediaScreen(e) {

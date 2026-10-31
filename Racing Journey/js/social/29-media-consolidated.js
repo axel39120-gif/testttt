@@ -350,26 +350,11 @@
   }
 
   function wrapMtab() {
-    if (!fn('mtab') || window.mtab._td17) return false;
-    var orig = window.mtab;
-    window.mtab = function (e) {
-      var r;
-      try { r = orig.apply(this, arguments); } catch (err) { console.warn(TAG, 'mtab orig:', err); }
-      try {
-        var panel = document.getElementById('mt-presse');
-        if (panel) {
-          if (e === 'presse') { panel.style.display = 'block'; renderPress(); }
-          else { panel.style.display = 'none'; }
-        }
-        // Garde l'état actif visuel cohérent
-        var media = document.getElementById('S-media');
-        if (media) media.querySelectorAll('.tab').forEach(function (t) {
-          t.classList.toggle('on', t.getAttribute('data-tab') === e);
-        });
-      } catch (err) { console.warn(TAG, 'mtab wrap:', err); }
-      return r;
-    };
-    window.mtab._td17 = true;
+    /* Panneau Presse : mtab (05) gère l'affichage, on y ajoute le rendu. */
+    if (!Array.isArray(window.RJ_MEDIA_TAB_HOOKS)) window.RJ_MEDIA_TAB_HOOKS = [];
+    if (!window.RJ_MEDIA_TAB_HOOKS.some(function (h) { return h && h.id === "29-presse"; })) {
+      window.RJ_MEDIA_TAB_HOOKS.push({ id: "29-presse", onglet: "presse", apres: function () { renderPress(); } });
+    }
     return true;
   }
 

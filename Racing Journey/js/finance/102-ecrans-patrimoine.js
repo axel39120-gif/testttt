@@ -284,31 +284,10 @@
   }
 
   function brancherOngletAgent() {
-    if (typeof window.mtab !== "function" || window.mtab._rj102) return false;
-    _orig.mtab = window.mtab;
-    window.mtab = function (t) {
-      var r;
-      if (t === "agent") {
-        ["profil", "evenements", "reseaux", "presse", "agent"].forEach(function (k) {
-          var el = document.getElementById("mt-" + k);
-          if (el) el.style.display = (k === "agent") ? "block" : "none";
-        });
-        var media = document.getElementById("S-media");
-        if (media) {
-          [].slice.call(media.querySelectorAll(".tab")).forEach(function (b) {
-            b.classList.toggle("on", b.getAttribute("data-tab") === "agent");
-          });
-        }
-        montrerAgent(true);
-        return;
-      }
-      montrerAgent(false);
-      var h = document.getElementById("mt-agent");
-      if (h) h.style.display = "none";
-      r = _orig.mtab.apply(this, arguments);
-      return r;
-    };
-    window.mtab._rj102 = true;
+    /* mtab (05) affiche le panneau mt-agent ; on y place le contenu de l'agent. */
+    if (!Array.isArray(window.RJ_MEDIA_TAB_HOOKS)) window.RJ_MEDIA_TAB_HOOKS = [];
+    if (window.RJ_MEDIA_TAB_HOOKS.some(function (h) { return h && h.id === "102-agent"; })) return true;
+    window.RJ_MEDIA_TAB_HOOKS.push({ id: "102-agent", onglet: "*", apres: function (t) { montrerAgent(t === "agent"); } });
     return true;
   }
 

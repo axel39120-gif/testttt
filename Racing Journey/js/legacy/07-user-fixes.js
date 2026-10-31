@@ -2589,30 +2589,7 @@
 // ===========================================================================
 (function _rjFixSocialFeed() {
 
-  // Wrapper mtab pour s'assurer que renderSocialTab est appelée
-  (function _rjWrapMtab() {
-    function doWrap() {
-      if (typeof window.mtab !== 'function') {
-        setTimeout(doWrap, 500); return;
-      }
-      if (window.mtab._rjSocialWrapped) return;
-      var orig = window.mtab;
-      window.mtab = function(tab) {
-        var r = orig.apply(this, arguments);
-        try {
-          if (tab === 'reseaux' && typeof renderSocialTab === 'function') {
-            renderSocialTab();
-          }
-        } catch(e) { console.warn('[07-FIX20] mtab social:', e); }
-        return r;
-      };
-      window.mtab._rjSocialWrapped = true;
-      console.log('[07-FIX20] mtab wrappé pour renderSocialTab');
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doWrap);
-    } else { doWrap(); }
-  })();
+  // (renderSocialTab est appelée par mtab via renderRepMediaScreen("reseaux").)
 
   // Wrapper refreshScreen pour S-media
   (function _rjWrapRefreshForSocial() {

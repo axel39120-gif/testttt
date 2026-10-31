@@ -1568,14 +1568,9 @@
 
     /* Les déclarations reparaissent dans l'onglet Médias. On s'accroche à
        mtab, qui est appelé à chaque changement d'onglet. */
-    if (typeof window.mtab === "function" && !window.mtab._rj100) {
-      _orig.mtab = window.mtab;
-      window.mtab = function (t) {
-        var r = _orig.mtab.apply(this, arguments);
-        if (t === "presse") setTimeout(injecterPresse, 60);
-        return r;
-      };
-      window.mtab._rj100 = true;
+    if (!Array.isArray(window.RJ_MEDIA_TAB_HOOKS)) window.RJ_MEDIA_TAB_HOOKS = [];
+    if (!window.RJ_MEDIA_TAB_HOOKS.some(function (h) { return h && h.id === "100-presse"; })) {
+      window.RJ_MEDIA_TAB_HOOKS.push({ id: "100-presse", onglet: "presse", apres: function () { setTimeout(injecterPresse, 60); } });
     }
 
     return true;
