@@ -2631,17 +2631,13 @@
   }
 
   function install() {
-    if (typeof window.renderCal !== 'function') return false;
-    if (window.renderCal._wk24) return true;
-    window._origRenderCal = window.renderCal;
-    window.renderCal = function () {
+    rjInscrire("renderCal", { id: "18-calendrier", ordre: 0, remplace: function (args, suite) {
       try { injectCss(); enhancedRenderCal(); }
       catch (err) {
         console.error(TAG, 'fallback original renderCal:', err && err.message);
-        try { return window._origRenderCal.apply(this, arguments); } catch (e2) {}
+        try { return suite(); } catch (e2) {}
       }
-    };
-    window.renderCal._wk24 = true;
+    } });
     window.rjDebugWeekendCal = function () {
       var c = curCat();
       console.log(TAG, c, '→ week-end de', weekendDays(c), 'jours · course = dimanche (7×week+4)');

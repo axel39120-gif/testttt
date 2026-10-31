@@ -15028,7 +15028,10 @@ function updateMailBadge() {
   r && (e > 0 ? (r.style.display = "inline-flex", r.textContent = e > 99 ? "99+" : e) : r.style.display = "none")
 }
 
-function updateHomeBadges() {
+/* Badges de l'accueil. Extensible : rjInscrire("updateHomeBadges", …) — voir core/00-hooks.js. */
+function updateHomeBadges() { return rjAppeler("updateHomeBadges", _updateHomeBadgesCoeur, this, arguments); }
+
+function _updateHomeBadgesCoeur() {
   try {
     var pendingOffers = (G.offers || []).filter(function(o) {
       return !o.declined && !o.signed

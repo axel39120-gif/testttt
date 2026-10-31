@@ -864,23 +864,19 @@
     };
 
     // 3) Enveloppe de la résolution → effets relationnels (confiance) des consignes d'équipe
-    if (typeof window.resolveLiveEvent === "function") {
-      var _origResolve = window.resolveLiveEvent;
-      window.resolveLiveEvent = function (idx) {
+    var trustDelta = 0;
+    rjInscrire("resolveLiveEvent", { id: "27-consigne", ordre: 0,
+      avant: function (args) {
         var pe = LIVE_RACE && LIVE_RACE.pendingEvent;
-        var rjId = pe && pe._rjId;
-        var choice = pe && pe.choices && pe.choices[idx];
-        var trustDelta = choice && typeof choice._rjTrust === "number" ? choice._rjTrust : 0;
-        var ret = _origResolve.apply(this, arguments);
-        try {
-          if (trustDelta && typeof changeTrust === "function") {
-            var reason = trustDelta > 0 ? "Consigne d'équipe respectée" : "Consigne d'équipe ignorée";
-            changeTrust(trustDelta, reason, trustDelta > 0 ? "↑" : "↓");
-          }
-        } catch (_e) { console.warn(TAG + " (trust):", _e); }
-        return ret;
-      };
-    }
+        var choice = pe && pe.choices && pe.choices[args[0]];
+        trustDelta = choice && typeof choice._rjTrust === "number" ? choice._rjTrust : 0;
+      },
+      apres: function () {
+        if (trustDelta && typeof changeTrust === "function") {
+          var reason = trustDelta > 0 ? "Consigne d'équipe respectée" : "Consigne d'équipe ignorée";
+          changeTrust(trustDelta, reason, trustDelta > 0 ? "↑" : "↓");
+        }
+      } });
 
     // 4) API de réversibilité
     window._rjEventsOverhaul = {

@@ -474,7 +474,8 @@ const APLATIES = {
   _socialFanHandle: null, recomputeGlobalRep: null,
   startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null,
   mtab: null, rtab: null, showResult: null, runRaceLive: null,
-  advanceToNextMoment: null, goToRaceWeekend: null
+  advanceToNextMoment: null, goToRaceWeekend: null,
+  updateHomeBadges: null, startQual: null, resolveLiveEvent: null, renderCal: null, generateSeasonObjectives: null
 };
 
 function definitionsDansLesSources() {
@@ -484,7 +485,7 @@ function definitionsDansLesSources() {
   const textes = parcourir(path.join(S.RACINE, "js")).filter(f => f.endsWith(".js")).map(f => fs.readFileSync(f, "utf8"));
   const compte = {};
   Object.keys(APLATIES).forEach(n => {
-    const re = new RegExp("function\\s+" + n + "\\s*\\(|window\\." + n + "\\s*=\\s*function", "g");
+    const re = new RegExp("function\\s+" + n + "\\s*\\(|(?:window|GR)\\." + n + "\\s*=\\s*function", "g");
     compte[n] = textes.reduce((s, t) => s + (t.match(re) || []).length, 0);
   });
   return compte;

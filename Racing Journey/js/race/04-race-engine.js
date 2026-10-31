@@ -465,7 +465,10 @@ function _showFreePracticeResult(obj, outcome, bonus, onDone) {
 }
 /* #5 — Reset du flag FP au début d'un nouveau week-end. À appeler quand on entre sur la page d'une nouvelle course (pas tous les rounds de quali). */
 
-function startQual() {
+/* Départ des qualifications. Extensible : rjInscrire("startQual", …) — voir core/00-hooks.js. */
+function startQual() { return rjAppeler("startQual", _startQualCoeur, this, arguments); }
+
+function _startQualCoeur() {
   /* #5 — Intercept FP : si pas encore fait et catégorie compatible, lance d'abord la séance d'essais libres. RACE_WEEKEND_STATE.fpDone est utilisé car il survit à initRaceState (contrairement à RACE_STATE qui est reset). */
   if (!(typeof RACE_WEEKEND_STATE !== "undefined" && RACE_WEEKEND_STATE.fpDone) && !G._fpSkipping && G.cat !== "Karting Junior" && G.cat !== "Karting Senior" && typeof _showFreePracticePopup === "function" && typeof document !== "undefined") {
     if (typeof RACE_WEEKEND_STATE !== "undefined") RACE_WEEKEND_STATE.fpDone = true;
@@ -11904,7 +11907,10 @@ function getTrustThresholds() {
   return i[r > 80 ? "top" : r > 65 ? "mid" : "small"] || i["mid"]
 }
 
-function generateSeasonObjectives() {
+/* Objectifs de saison. Extensible : rjInscrire("generateSeasonObjectives", …) — voir core/00-hooks.js. */
+function generateSeasonObjectives() { return rjAppeler("generateSeasonObjectives", _generateSeasonObjectivesCoeur, this, arguments); }
+
+function _generateSeasonObjectivesCoeur() {
   if (!G.currentTeam || "Indépendant" === G.currentTeam) return TEAM_TRUST.objectives = [], void(TEAM_TRUST.value = 50);
   var e = getTrustThresholds();
   if (e) {
@@ -16164,7 +16170,10 @@ function showLiveEvent(e) {
   }
 }
 
-function resolveLiveEvent(e) {
+/* Réponse du joueur à un évènement de course. Extensible : rjInscrire("resolveLiveEvent", …) — voir core/00-hooks.js. */
+function resolveLiveEvent() { return rjAppeler("resolveLiveEvent", _resolveLiveEventCoeur, this, arguments); }
+
+function _resolveLiveEventCoeur(e) {
   var t = LIVE_RACE.pendingEvent;
   if (t) {
     if (typeof _isRadioMessage === "function" && _isRadioMessage(t) && typeof playRadioClose === "function") try {
@@ -18747,7 +18756,10 @@ function markRaceDone(e, t) {
   }
 }
 
-function renderCal() {
+/* Calendrier. Extensible : rjInscrire("renderCal", …) — voir core/00-hooks.js. */
+function renderCal() { return rjAppeler("renderCal", _renderCalCoeur, this, arguments); }
+
+function _renderCalCoeur() {
   try {
     CAL_RACES.length || buildCalendar(), G._scheduledEvents || scheduleSeasonEvents();
     var e = document.getElementById("cal-sub");
@@ -22113,30 +22125,21 @@ function renderTeamPerf() {
   GR._evtForcePit = _forcePlayerPit;
   GR._evtChoiceImpliesPit = _choiceImpliesPitStop;
 
-  /* === 3. WRAP resolveLiveEvent === */
-  if (typeof GR.resolveLiveEvent === 'function') {
-    var _origResolveLive = GR.resolveLiveEvent;
-    GR.resolveLiveEvent = function(choiceIdx) {
-      var willPit = false;
-      try {
-        var pendingEvt = (typeof GR.LIVE_RACE !== 'undefined' && GR.LIVE_RACE) ? GR.LIVE_RACE.pendingEvent : null;
-        var chosen = pendingEvt && pendingEvt.choices ? pendingEvt.choices[choiceIdx] : null;
-        if (chosen && !chosen._doPit && !chosen._weatherStrategy) {
-          if (_choiceImpliesPitStop(chosen.text)) {
-            chosen._doPit = true;
-            willPit = true;
-          }
-        }
-      } catch (e) {
-        console.warn('resolveLiveEvent wrap:', e);
+  /* === 3. resolveLiveEvent : un choix qui implique un arrêt déclenche l'arrêt === */
+  var willPit = false;
+  rjInscrire("resolveLiveEvent", { id: "04-arret-implicite", ordre: 20,
+    avant: function (args) {
+      willPit = false;
+      var pendingEvt = (typeof GR.LIVE_RACE !== 'undefined' && GR.LIVE_RACE) ? GR.LIVE_RACE.pendingEvent : null;
+      var chosen = pendingEvt && pendingEvt.choices ? pendingEvt.choices[args[0]] : null;
+      if (chosen && !chosen._doPit && !chosen._weatherStrategy && _choiceImpliesPitStop(chosen.text)) {
+        chosen._doPit = true;
+        willPit = true;
       }
-      var ret = _origResolveLive.apply(this, arguments);
-      if (willPit) setTimeout(function() {
-        _forcePlayerPit();
-      }, 150);
-      return ret;
-    };
-  }
+    },
+    apres: function () {
+      if (willPit) setTimeout(function () { _forcePlayerPit(); }, 150);
+    } });
 
   /* === 4. WRAP resolveRaceEvt === */
   if (typeof GR.resolveRaceEvt === 'function') {

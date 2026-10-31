@@ -251,11 +251,7 @@
    *  Objectifs : allègement N°3 + voie de promotion
    * ======================================================================= */
   function installObjectivesWrap() {
-    if (!fn('generateSeasonObjectives') || window.generateSeasonObjectives._td14) return;
-    var orig = window.generateSeasonObjectives;
-    window.generateSeasonObjectives = function () {
-      var r = orig.apply(this, arguments);
-      try {
+    rjInscrire("generateSeasonObjectives", { id: "14-num3", ordre: 0, apres: function () {
         var G = G_();
         if (G && G._playerRole === 'num3' && has('TEAM_TRUST') && window.TEAM_TRUST && window.TEAM_TRUST.objectives) {
           var objs = window.TEAM_TRUST.objectives;
@@ -284,10 +280,7 @@
             });
           }
         }
-      } catch (err) { console.warn(TAG, 'objectives wrap:', err); }
-      return r;
-    };
-    window.generateSeasonObjectives._td14 = true;
+    } });
   }
 
   /* ======================================================================= *

@@ -578,22 +578,16 @@
    * ================================================================= */
 
   function _rjInstallResolveEventWrapper() {
-    if (typeof window.resolveLiveEvent !== "function") return false;
     if (window._rjSCResolveWrapperInstalled) return true;
     window._rjSCResolveWrapperInstalled = true;
-    
-    var legacyResolve = window.resolveLiveEvent;
-    window.resolveLiveEvent = function rjSCResolveWrapped(choiceIdx) {
-      // Si l'événement en cours est une neutralisation, intercepte avant de passer
+    // Si l'évènement en cours est une neutralisation, on applique le choix avant le moteur.
+    rjInscrire("resolveLiveEvent", { id: "04m-neutralisation", ordre: 10, avant: function (args) {
       if (LIVE_RACE && LIVE_RACE.pendingEvent && LIVE_RACE.pendingEvent._rjNeutralEvent) {
         var event = LIVE_RACE.pendingEvent;
-        var choice = event.choices && event.choices[choiceIdx];
-        if (choice && choice._rjAction) {
-          _rjApplyPlayerChoice(choice._rjAction, event._rjNeutralType);
-        }
+        var choice = event.choices && event.choices[args[0]];
+        if (choice && choice._rjAction) _rjApplyPlayerChoice(choice._rjAction, event._rjNeutralType);
       }
-      return legacyResolve.apply(this, arguments);
-    };
+    } });
     return true;
   }
 

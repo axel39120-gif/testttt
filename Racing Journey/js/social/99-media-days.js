@@ -281,15 +281,7 @@
   var _orig = null;
 
   function installer() {
-    if (typeof window.renderCal !== "function") return false;
-    if (window.renderCal._rj99cal) return true;
-    _orig = window.renderCal;
-    window.renderCal = function () {
-      var r = _orig.apply(this, arguments);
-      try { marquer(); } catch (e) { console.warn(TAG, e && e.message); }
-      return r;
-    };
-    window.renderCal._rj99cal = true;
+    rjInscrire("renderCal", { id: "99-conferences", ordre: 10, apres: function () { marquer(); } });
     return true;
   }
 

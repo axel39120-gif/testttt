@@ -676,20 +676,8 @@
   }
 
   function wrapUpdateHomeBadges() {
-    if (typeof window.updateHomeBadges !== 'function') return false;
-    if (window.updateHomeBadges._rjUserFixBadges) return true;
-
-    var orig = window.updateHomeBadges;
-    window.updateHomeBadges = function rjUpdateHomeBadgesUserFix() {
-      var r;
-      try { r = orig.apply(this, arguments); }
-      catch (e) { console.warn('[07] updateHomeBadges orig:', e); }
-      // Override : nos règles l'emportent (passe après l'original)
-      applyHomeBadges();
-      return r;
-    };
-    window.updateHomeBadges._rjUserFixBadges = true;
-    console.log('[07] updateHomeBadges wrapped (agent off, sponsors+contrats on)');
+    // Nos règles l'emportent : elles passent après l'original.
+    rjInscrire("updateHomeBadges", { id: "07-badges", ordre: 10, apres: function () { applyHomeBadges(); } });
     return true;
   }
 

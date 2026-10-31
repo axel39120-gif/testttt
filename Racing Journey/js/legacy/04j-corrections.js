@@ -340,13 +340,9 @@ window.rjRattraperResultat = function (e) {
    * ================================================================= */
   
   function _rjFixPlayerQualiConsistency() {
-    if (typeof window.startQual !== "function") return false;
     if (window._rjFix4Installed) return true;
     window._rjFix4Installed = true;
-    
-    var origStartQual = window.startQual;
-    window.startQual = function rjFix4WrappedStartQual() {
-      var result = origStartQual.apply(this, arguments);
+    rjInscrire("startQual", { id: "04j-coherence-joueur", ordre: 0, apres: function () {
       
       // Le legacy hardcode driver[0].consistency = 0.85 pour le joueur.
       // On corrige post-init avec une formule basée sur les stats
@@ -379,8 +375,7 @@ window.rjRattraperResultat = function (e) {
         if (window._rjVerbose) console.warn("[RJ Fix #4] Player quali consistency :", e && e.message);
       }
       
-      return result;
-    };
+    } });
     return true;
   }
 
@@ -651,23 +646,8 @@ window.rjRattraperResultat = function (e) {
   }
 
   function wrapUpdateHomeBadges() {
-    if (typeof window.updateHomeBadges !== "function") return false;
-    if (window.updateHomeBadges._rjPolishedBadges) return true;
-
-    var orig = window.updateHomeBadges;
-    window.updateHomeBadges = function rjUpdateHomeBadgesWrapped() {
-      var r;
-      try {
-        r = orig.apply(this, arguments);
-      } catch (e) {
-        console.warn("[04q] updateHomeBadges orig:", e);
-      }
-      // Override : nos règles l'emportent
-      applyHomeBadges();
-      return r;
-    };
-    window.updateHomeBadges._rjPolishedBadges = true;
-    console.log("[04q] updateHomeBadges wrapped (badges agent/sponsors/contrats)");
+    // Nos règles l'emportent : elles passent après l'original.
+    rjInscrire("updateHomeBadges", { id: "04q-badges", ordre: 0, apres: function () { applyHomeBadges(); } });
     return true;
   }
 

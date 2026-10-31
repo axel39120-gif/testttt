@@ -2071,18 +2071,9 @@
   var _origGenObj = null;
 
   function installObjectifs() {
-    if (!fn("generateSeasonObjectives") || window.generateSeasonObjectives._rj79) return false;
-    _origGenObj = window.generateSeasonObjectives;
-    window.generateSeasonObjectives = function () {
-      var r = _origGenObj.apply(this, arguments);
-      try {
-        if (!estReservistePur()) return r;
-        if (!has("TEAM_TRUST") || !window.TEAM_TRUST) return r;
-        window.TEAM_TRUST.objectives = objectifsReserviste();
-      } catch (e) { console.warn(TAG, "objectifs réserviste :", e && e.message); }
-      return r;
-    };
-    window.generateSeasonObjectives._rj79 = true;
+    rjInscrire("generateSeasonObjectives", { id: "79-reserviste", ordre: 10, apres: function () {
+      if (estReservistePur() && has("TEAM_TRUST") && window.TEAM_TRUST) window.TEAM_TRUST.objectives = objectifsReserviste();
+    } });
     return true;
   }
 
@@ -2357,7 +2348,6 @@
       try {
         if (_origSign) window.signContract = _origSign;
         if (_origOpenSched) window.openScheduledEvent = _origOpenSched;
-        if (_origGenObj) window.generateSeasonObjectives = _origGenObj;
         if (_origSaveSeason) window.saveSeasonToHistory = _origSaveSeason;
         if (_origPalmares) window.renderPalmares = _origPalmares;
         if (_origChamp) window.renderChamp = _origChamp;

@@ -353,31 +353,12 @@
    * ================================================================= */
 
   function _rjInstallStartQualWrapper() {
-    if (typeof window.startQual !== "function") return false;
     if (window._rjFormStartQualWrapperInstalled) return true;
     window._rjFormStartQualWrapperInstalled = true;
-    
-    var origStartQual = window.startQual;
-    window.startQual = function rjFormWrappedStartQual() {
-      try {
-        _rjGenerateAllRivalsForm();
-        _rjApplyFormToRivals();
-      } catch(e) {
-        if (window._rjVerbose) console.warn("[RJ Form] Apply qualif :", e && e.message);
-      }
-      
-      var result = origStartQual.apply(this, arguments);
-      
-      // Restore après que les drivers de QUALI_STATE aient été créés
-      // (on a déjà appliqué, le legacy a lu, on peut restorer)
-      try {
-        _rjRestoreFormFromRivals();
-      } catch(e) {
-        if (window._rjVerbose) console.warn("[RJ Form] Restore qualif :", e && e.message);
-      }
-      
-      return result;
-    };
+    // Forme appliquée avant la création des pilotes de qualif, retirée après.
+    rjInscrire("startQual", { id: "04n-forme", ordre: 10,
+      avant: function () { _rjGenerateAllRivalsForm(); _rjApplyFormToRivals(); },
+      apres: function () { _rjRestoreFormFromRivals(); } });
     return true;
   }
 
