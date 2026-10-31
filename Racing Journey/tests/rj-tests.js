@@ -238,11 +238,11 @@ async function suitePersistance() {
         try { const b = h && h.cle && h.ecrire && h.ecrire(G); return b !== undefined && b !== null; } catch (e) { return false; }
       }).map(h => h.cle);
       return { e: empreinte(), blocs, manquants: blocs.filter(c => !(c in brut)),
-               extras: !!localStorage.getItem("rj_extra_slot_1") };
+               extras: !!(brut.extras && brut.extras.sponsors) };
     }, empreinte.toString());
     S.verifier("chaque bloc inscrit est écrit dans la sauvegarde", avant.manquants.length === 0,
       avant.manquants.length ? "manque " + avant.manquants.join(", ") : avant.blocs.join(", "));
-    S.verifier("les extras sont écrits à part", avant.extras);
+    S.verifier("les extras sont écrits dans l'emplacement", avant.extras);
 
     /* Réglages modifiés avant le rechargement. */
     await page.evaluate(() => { SETTINGS.simSpeed = "slow"; saveSettings(); });
@@ -313,6 +313,150 @@ async function suitePersistance() {
 
     S.verifier("aucune erreur pendant la suite", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 3 bis bis. SAUVEGARDE FIABLE (T1)
+ *
+ * Une sauvegarde s'écrit en une fois, tout ou rien ; un échec est toujours
+ * signalé au joueur, y compris en sauvegarde automatique ; une sauvegarde
+ * illisible est mise de côté, jamais écrasée ; le format est versionné.
+ * ==================================================================== */
+async function suiteFiabilite() {
+  S.suite("Sauvegarde fiable");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    /* Outillage : espion des écritures et des messages d'erreur, panne de quota. */
+    await page.evaluate(() => {
+      window.__sonde = { ecritures: {}, erreurs: [] };
+      const si = Storage.prototype.setItem;
+      window.__panne = null;
+      Storage.prototype.setItem = function (k, v) {
+        window.__sonde.ecritures[k] = (window.__sonde.ecritures[k] || 0) + 1;
+        if (window.__panne && window.__panne(k)) {
+          const e = new Error("quota"); e.name = "QuotaExceededError"; throw e;
+        }
+        return si.call(this, k, v);
+      };
+      const toast = window.pushHomeToast, fb = window.showFb;
+      window.pushHomeToast = function (t, m) { window.__sonde.erreurs.push("toast:" + t + " " + m); try { return toast && toast.apply(this, arguments); } catch (e) {} };
+      window.showFb = function (id, type, t) { if (type === "err") window.__sonde.erreurs.push("fb:" + t); try { return fb && fb.apply(this, arguments); } catch (e) {} };
+      G._rjTestSave = false; G.pilot.prenom = "Sonde"; G.pilot.nom = "Fiabilite";
+    });
+
+    /* 1. Une seule écriture, format versionné. */
+    const unique = await page.evaluate(() => {
+      window.__sonde.ecritures = {};
+      const ok = saveGame(1);
+      const o = JSON.parse(localStorage.getItem(SAVE_KEYS[1]));
+      return { ok, ecritures: window.__sonde.ecritures[SAVE_KEYS[1]] || 0, version: o._v,
+               extrasDansEmplacement: !!(o.extras && o.extras.sponsors !== undefined) || o.extras !== undefined,
+               cleExtras: localStorage.getItem("rj_extra_slot_1") };
+    });
+    S.verifier("saveGame indique la réussite", unique.ok === true, String(unique.ok));
+    S.verifier("une seule écriture de l'emplacement", unique.ecritures === 1, unique.ecritures + " écriture(s)");
+    S.verifier("le format porte une version", unique.version === 2, String(unique.version));
+    S.verifier("les extras sont dans l'emplacement", unique.extrasDansEmplacement);
+    S.verifier("l'ancienne clé d'extras n'est plus utilisée", unique.cleExtras === null);
+
+    /* 2. Stockage plein : rien n'est écrit à moitié, le joueur est prévenu. */
+    const plein = await page.evaluate(() => {
+      const avant = { slot: localStorage.getItem(SAVE_KEYS[1]), nbCles: Object.keys(localStorage).length };
+      window.__sonde.erreurs = [];
+      G.budget = 999; G.sponsors = [{ name: "Perdu", value: 1, weeks: 1 }];
+      /* Le quota casse sur la grosse écriture, pas forcément sur les petites. */
+      window.__panne = k => k === SAVE_KEYS[1];
+      let ok;
+      try { ok = saveGame(1); } finally { window.__panne = null; }
+      return { ok, inchange: localStorage.getItem(SAVE_KEYS[1]) === avant.slot,
+               extrasInchanges: Object.keys(localStorage).length === avant.nbCles,
+               prevenu: window.__sonde.erreurs.length > 0, erreurs: window.__sonde.erreurs.slice(0, 2) };
+    });
+    S.verifier("stockage plein : saveGame signale l'échec", plein.ok === false, String(plein.ok));
+    S.verifier("stockage plein : l'emplacement reste intact", plein.inchange);
+    S.verifier("stockage plein : aucune autre clé n'est écrite", plein.extrasInchanges);
+
+    /* 2 bis. Un bloc qui échoue : la sauvegarde est faite, mais le joueur le sait. */
+    const incomplet = await page.evaluate(() => {
+      window.__sonde.erreurs = [];
+      const h = { cle: "__panne", ecrire: () => { throw new Error("bloc en panne"); } };
+      window.RJ_SAVE_HOOKS.push(h);
+      try { saveGame(1); } finally { window.RJ_SAVE_HOOKS.splice(window.RJ_SAVE_HOOKS.indexOf(h), 1); }
+      return window.__sonde.erreurs.some(e => /incompl/i.test(e));
+    });
+    S.verifier("bloc en échec : sauvegarde signalée incomplète", incomplet);
+    S.verifier("stockage plein : le joueur est prévenu", plein.prevenu, plein.erreurs.join(" | "));
+
+    /* 3. Sauvegarde automatique en échec : jamais silencieuse. */
+    const auto = await page.evaluate(() => {
+      window.__sonde.erreurs = [];
+      SETTINGS.autoSaveAfterRace = true; G._slot = 1;
+      window.__panne = () => true;
+      try { _autoSaveOnRaceEnd(); } finally { window.__panne = null; }
+      return { prevenu: window.__sonde.erreurs.length > 0 };
+    });
+    S.verifier("sauvegarde automatique en échec : le joueur est prévenu", auto.prevenu);
+
+    /* 4. Sauvegarde illisible : mise de côté, jamais écrasée. */
+    const illisible = await page.evaluate(() => {
+      window.__sonde.erreurs = [];
+      localStorage.setItem(SAVE_KEYS[1], "{illisible");
+      let plante = null;
+      try { loadSave(1); } catch (e) { plante = e.message; }
+      const prevenuChargement = window.__sonde.erreurs.length > 0;
+      G._slot = 1; saveGame(1);
+      const copie = Object.keys(localStorage).filter(k => k.indexOf(SAVE_KEYS[1] + "_illisible") === 0)
+        .map(k => localStorage.getItem(k));
+      /* Une deuxième sauvegarde illisible remplace la copie : une seule par emplacement. */
+      localStorage.setItem(SAVE_KEYS[1], "{illisible2"); saveGame(1);
+      const copies = Object.keys(localStorage).filter(k => k.indexOf(SAVE_KEYS[1] + "_illisible") === 0);
+      const uneCopie = copies.length === 1 && localStorage.getItem(copies[0]) === "{illisible2";
+      const listeCopies = copies.map(k => k + "=" + String(localStorage.getItem(k)).slice(0, 14)).join(" ");
+      localStorage.setItem(SAVE_KEYS[1], "null");
+      let planteNull = null;
+      try { loadSave(1); } catch (e) { planteNull = e.message; }
+      const slotApresNull = G._slot;
+      G._slot = 1; saveGame(1);   // remise en état pour la suite
+      return { plante, prevenuChargement, conservee: copie.indexOf("{illisible") >= 0,
+               uneCopie, copies: listeCopies,
+               nullSansErreur: planteNull === null && slotApresNull !== null };
+    });
+    S.verifier("sauvegarde illisible : le chargement ne plante pas", illisible.plante === null, illisible.plante || "");
+    S.verifier("sauvegarde illisible : le joueur est prévenu", illisible.prevenuChargement);
+    S.verifier("sauvegarde illisible : conservée avant d'être remplacée", illisible.conservee);
+    S.verifier("sauvegarde illisible : une seule copie par emplacement", illisible.uneCopie, illisible.copies);
+    S.verifier("emplacement « null » : traité comme illisible", illisible.nullSansErreur);
+
+    /* 5. Ancien format (sans version, extras à part) : migré au chargement. */
+    const migration = await page.evaluate(() => {
+      const ancien = JSON.parse(localStorage.getItem(SAVE_KEYS[1]));
+      delete ancien._v; delete ancien.extras; delete ancien.champs;
+      const extras = { sponsors: [{ name: "Ancien", value: 7, weeks: 3 }] };
+      ancien._rjTeamStyle = { test: "migre" };
+      G.sponsors = []; G._rjTeamStyle = null;   // rien ne doit venir de la mémoire
+      localStorage.setItem(SAVE_KEYS[0], JSON.stringify(ancien));
+      localStorage.setItem("rj_extra_slot_0", JSON.stringify(extras));
+      loadSave(0);
+      const ok = JSON.stringify(G.sponsors) === JSON.stringify(extras.sponsors) &&
+                 G._rjTeamStyle && G._rjTeamStyle.test === "migre";
+      saveGame(0);
+      const o = JSON.parse(localStorage.getItem(SAVE_KEYS[0]));
+      return { ok, version: o._v, cleRetiree: localStorage.getItem("rj_extra_slot_0") === null };
+    });
+    S.verifier("ancien format : extras et champs d'écurie retrouvés", migration.ok);
+    S.verifier("ancien format : réécrit au nouveau format", migration.version === 2 && migration.cleRetiree,
+      "version " + migration.version + ", ancienne clé " + (migration.cleRetiree ? "retirée" : "présente"));
+    S.verifier("aucune erreur pendant la suite", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+
+  /* 6. La sauvegarde de test n'existe qu'en mode développeur. */
+  const joueur = await S.ouvrirJeu({ dev: false, charger: false });
+  try {
+    const n = await joueur.page.evaluate(() => SAVE_KEYS.filter(k => {
+      try { const o = JSON.parse(localStorage.getItem(k)); return o && o._rjTestSave; } catch (e) { return false; }
+    }).length);
+    S.verifier("pas de sauvegarde de test chez un joueur", n === 0, n + " créée(s)");
+  } finally { await joueur.navigateur.close(); }
 }
 
 /* ==================================================================== *
@@ -849,6 +993,7 @@ const SUITES = {
   creation: suiteCreation,
   sauvegarde: suiteSauvegarde,
   persistance: suitePersistance,
+  fiabilite: suiteFiabilite,
   parcours: suiteParcours,
   endurance: suiteEndurance,
   qualifications: suiteQualifications,

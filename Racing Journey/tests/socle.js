@@ -129,7 +129,9 @@ async function ouvrirJeu(options) {
     journal.messages.push(t.slice(0, 200));
   });
 
-  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "load", timeout: 60000 });
+  /* ?dev : la sauvegarde de test (51) n'est créée qu'en mode développeur. */
+  const url = `http://127.0.0.1:${PORT}/index.html` + (options.dev === false ? "" : "?dev");
+  await page.goto(url, { waitUntil: "load", timeout: 60000 });
   await page.waitForTimeout(options.attente || 6500);
 
   if (options.charger !== false) {
@@ -155,6 +157,12 @@ async function repondeurAutomatique(page) {
       try {
         const ok = document.getElementById("rj47-outcome-ok");
         if (ok) { ok.click(); return; }
+        /* Moments décisifs (106) : un choix, puis « Reprendre ». */
+        const m106 = document.getElementById("rj106-modal");
+        if (m106) {
+          const b = m106.querySelector("#rj106-ok") || m106.querySelector(".rj106-c");
+          if (b) { window.__rjAutoCompte++; b.click(); return; }
+        }
         const evt = document.getElementById("race-event-modal");
         if (evt && evt.style.display !== "none") {
           const b = evt.querySelector('[onclick*="resolveRaceEvt"]');
