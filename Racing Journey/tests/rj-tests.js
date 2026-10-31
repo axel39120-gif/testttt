@@ -469,6 +469,176 @@ async function suiteInterface() {
 }
 
 /* ==================================================================== *
+ * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
+ * ==================================================================== */
+async function suiteDecisions() {
+  S.suite("Décisions en course");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const install = await page.evaluate(() => {
+      const a = id => (window[id] || []).some(h => h && h.id === "rj107");
+      return {
+        api: !!(window.RJ107 && RJ107.voisins && RJ107.choixDuMoment && RJ107.evenement),
+        desinstalle: typeof window._rj107Uninstall === "function",
+        hooks: a("RJ_LAP_HOOKS") && a("RJ_RACE_START_HOOKS") && a("RJ_LEADERBOARD_HOOKS")
+      };
+    });
+    S.verifier("le module expose son API", install.api);
+    S.verifier("le module se désinstalle", install.desinstalle);
+    S.verifier("le module est inscrit aux trois registres", install.hooks);
+    if (!install.api) return;
+
+    /* Fonctions pures, sur des courses fabriquées. */
+    const pur = await page.evaluate(() => {
+      const pilote = (pos, gap, x) => Object.assign({ name: "P" + pos, pos, gap, dnf: false }, x || {});
+      const course = (drivers, x) => Object.assign({ drivers, cur: 10, total: 20, _rj107: { n: 0, dernierTour: -99, faits: {} } }, x || {});
+      const base = () => [pilote(1, 0), pilote(2, 0.6), pilote(3, 1.4, { isPlayer: true }), pilote(4, 2.1)];
+      const r = {};
+
+      let v = RJ107.voisins(course(base()));
+      r.milieu = v.devant.pos === 2 && v.derriere.pos === 4 && Math.abs(v.ecartDevant - 0.8) < 1e-9 && Math.abs(v.ecartDerriere - 0.7) < 1e-9;
+      const tete = base(); tete[0].isPlayer = true; tete[2].isPlayer = false;
+      v = RJ107.voisins(course(tete));
+      r.enTete = v.devant === null && v.derriere.pos === 2;
+      const dnf = base(); dnf[1].dnf = true;
+      v = RJ107.voisins(course(dnf));
+      r.devantAbandonne = v.devant === null;
+      const mc = base(); mc[3]._mc = true;
+      v = RJ107.voisins(course(mc));
+      r.traficExclu = v.derriere === null;
+
+      const m = (drivers, x) => RJ107.choixDuMoment(course(drivers, x));
+      r.rienAuDepart = m(base(), { cur: 0 }) === null;
+      r.relance = m(base(), { cur: 9, _rjLastNeutralEndLap: 9 }) === "relance";
+      const loin = () => base().map(d => Object.assign(d, { gap: d.pos * 3 }));
+      r.relanceUneFois = m(loin(), { cur: 9, _rjLastNeutralEndLap: 9, _rj107: { n: 1, dernierTour: 2, faits: {}, neutreVu: 9 } }) === null;
+      const proche = base(); proche[1].gap = 1.0;
+      r.duel = m(proche) === "duel";
+      r.duelHorsFenetre = m(proche, { cur: 2 }) === null;
+      r.fin = m(base(), { cur: 17 }) === "fin";
+      r.espacement = m(base(), { cur: 17, _rj107: { n: 1, dernierTour: 16, faits: {} } }) === null;
+      r.plafond = m(base(), { cur: 17, _rj107: { n: 4, dernierTour: 1, faits: {} } }) === null;
+      const ko = base(); ko[2].dnf = true;
+      r.joueurAbandonne = m(ko, { cur: 17 }) === null;
+      r.rienSousNeutralisation = m(base(), { cur: 17, _rjNeutral: { active: true, type: "sc" } }) === null &&
+        m(proche, { _rjNeutral: { active: true, type: "vsc" } }) === null;
+      r.finSansPression = m(loin(), { cur: 17 }) === null;
+      const poursuivi = loin(); poursuivi[3].gap = 10;
+      r.finEnDefense = m(poursuivi, { cur: 17 }) === "fin" &&
+        /défense/.test(RJ107.evenement("fin", course(poursuivi, { cur: 17 })).title);
+      /* Le pari doit valoir le coup : espérance du choix osé > choix sûr. */
+      r.oserPaie = ["relance", "duel", "fin"].every(k => {
+        const [ose, sur] = RJ107.evenement(k, course(base(), { cur: 17 })).choices;
+        const esp = ose.mod + ose.chance.fail * ose.chance.failMod;
+        return esp > sur.mod && !sur.chance;
+      });
+      const piege = base(); piege[1].name = '<img src=x onerror="window.__rj107xss=1">';
+      r.nomsEchappes = !/<img/.test(RJ107.evenement("duel", course(piege)).title);
+
+      r.evenements = ["relance", "duel", "fin"].every(k => {
+        const ev = RJ107.evenement(k, course(base(), { cur: 17 }));
+        return ev && ev.title && ev.desc && ev.choices.length === 2 &&
+          ev.choices.every(c => c.text && typeof c.mod === "number" && !c.posGain && !c.posLoss) &&
+          ev.choices.some(c => c.chance && c.chance.fail > 0 && c.chance.failMod < 0 && c.mod + c.chance.failMod > -0.28);
+      });
+      return r;
+    });
+    Object.entries(pur).forEach(([k, ok]) => S.verifier("fonction pure : " + k, ok === true));
+
+    /* Courses complètes : décisions posées et répondues, mini-classement tenu. */
+    await S.repondeurAutomatique(page);
+    let totalDecisions = 0;
+    for (const cat of ["Formule 1", "Formule 3", "Formule 1"]) {
+      await page.evaluate(() => {
+        window.__rj107Sonde = { lus: 0, incoherents: 0, doublons: 0, ecartsArrondis: 0 };
+        window.RJ_LAP_HOOKS.push({ id: "__test_rj107", run: function (tour, lr) {
+          const mini = document.querySelectorAll("#rj107-mini");
+          if (mini.length > 1) window.__rj107Sonde.doublons++;
+          if (!mini.length) return;
+          const v = RJ107.voisins(lr);
+          if (!v.joueur || v.joueur.dnf) return;
+          window.__rj107Sonde.lus++;
+          const pos = mini[0].querySelector(".rj107-moi .rj107-pos");
+          if (!pos || pos.textContent !== "P" + v.joueur.pos) window.__rj107Sonde.incoherents++;
+          /* L'arrondi global (04q) agit après coup : on relit au tick suivant. */
+          setTimeout(() => mini[0].querySelectorAll(".rj107-ecart").forEach(e => {
+            if (e.textContent && !/\d,\d s$/.test(e.textContent)) window.__rj107Sonde.ecartsArrondis++;
+          }), 0);
+        } });
+      });
+      const r = await S.courirUneCourse(page, { categorie: cat });
+      const etat = await page.evaluate(() => {
+        window.RJ_LAP_HOOKS = window.RJ_LAP_HOOKS.filter(h => h.id !== "__test_rj107");
+        (window.RJ_LEADERBOARD_HOOKS || []).forEach(h => { if (h.id === "rj107") h.apres(); });
+        const mini = document.getElementById("rj107-mini");
+        return { n: LIVE_RACE._rj107 ? LIVE_RACE._rj107.n : 0, sonde: window.__rj107Sonde,
+                 miniApres: !!mini && getComputedStyle(mini).display !== "none" };
+      });
+      const t = cat.padEnd(10);
+      S.verifier(t + "arrive au drapeau", r.terminee === true, r.bloqueeA ? "bloquée à " + r.bloqueeA : (r.anomalies || [])[0] || "");
+      /* Une course sans adversaire proche peut légitimement n'en avoir aucune. */
+      S.verifier(t + "au plus 4 décisions posées", etat.n <= 4, etat.n + " décision(s)");
+      totalDecisions += etat.n;
+      S.verifier(t + "le mini-classement est affiché", etat.sonde.lus > 0, etat.sonde.lus + " tour(s) lus");
+      S.verifier(t + "le mini-classement suit la position", etat.sonde.incoherents === 0, etat.sonde.incoherents + " écart(s)");
+      S.verifier(t + "un seul mini-classement", etat.sonde.doublons === 0);
+      S.verifier(t + "les écarts gardent leur dixième", etat.sonde.ecartsArrondis === 0, etat.sonde.ecartsArrondis + " écart(s) arrondi(s)");
+      S.verifier(t + "le mini-classement disparaît à l'arrivée", !etat.miniApres);
+    }
+    S.verifier("des décisions sont posées en course", totalDecisions >= 1, totalDecisions + " sur 3 courses");
+
+    /* Le chien de garde ne doit pas clore une course qui attend une réponse. */
+    const garde = await page.evaluate(async () => {
+      clearInterval(window.__rjAuto); window.__rjAuto = null;
+      const st = window.setTimeout;
+      let declencheur = null;
+      window.setTimeout = function (f, ms) {
+        if (f && f.name === "rjRaceWatchdogTrigger") declencheur = f;
+        return st.apply(this, arguments);
+      };
+      try {
+        if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+        window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+        const btn = document.getElementById("race-btn"); if (btn) btn.disabled = true;
+        runRaceLive();
+      } finally { window.setTimeout = st; }
+      const ev = RJ107.evenement("duel", LIVE_RACE);
+      LIVE_RACE.pendingEvent = ev; LIVE_RACE.paused = true; showLiveEvent(ev);
+      await new Promise(r => st(r, 100));
+      const enAttente = !!LIVE_RACE.pendingEvent && LIVE_RACE.paused;
+      if (LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+      const res = { trouve: !!declencheur, enAttente };
+      if (!declencheur) return res;
+      declencheur();
+      res.finieEnAttente = !!LIVE_RACE.finished;
+      /* Entre deux décisions : plus de modale, mais la course avance. */
+      document.getElementById("live-event-modal").style.display = "none";
+      LIVE_RACE.pendingEvent = null; LIVE_RACE.paused = false; LIVE_RACE.cur += 1;
+      declencheur();
+      res.finieQuandElleAvance = !!LIVE_RACE.finished;
+      /* Course réellement figée : le filet doit toujours jouer. */
+      declencheur();
+      res.finieQuandFigee = !!LIVE_RACE.finished;
+      LIVE_RACE.finished = true;
+      return res;
+    });
+    S.verifier("une décision met la course en attente", garde.enAttente);
+    S.verifier("le chien de garde est armé", garde.trouve);
+    S.verifier("le chien de garde respecte une décision en attente", garde.finieEnAttente === false);
+    S.verifier("le chien de garde laisse filer une course qui avance", garde.finieQuandElleAvance === false);
+    S.verifier("le chien de garde clôt toujours une course figée", garde.finieQuandFigee === true);
+
+    const desinstall = await page.evaluate(() => {
+      window._rj107Uninstall();
+      return ["RJ_LAP_HOOKS", "RJ_RACE_START_HOOKS", "RJ_LEADERBOARD_HOOKS"]
+        .every(id => !(window[id] || []).some(h => h && h.id === "rj107"));
+    });
+    S.verifier("la désinstallation retire les trois inscriptions", desinstall);
+    S.verifier("aucune erreur pendant la suite", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * ORCHESTRATION
  * ==================================================================== */
 
@@ -480,7 +650,8 @@ const SUITES = {
   course: () => suiteCourse(),
   "course-rapide": () => suiteCourse(["Formule 1"]),
   weekend: suiteWeekend,
-  ui: suiteInterface
+  ui: suiteInterface,
+  decisions: suiteDecisions
 };
 
 async function principal() {

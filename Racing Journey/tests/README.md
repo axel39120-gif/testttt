@@ -23,6 +23,8 @@ Prérequis : Node.js et Playwright avec Chromium (`npm i -D playwright`
 puis `npx playwright install chromium`). Aucune autre dépendance : le
 harnais sert lui-même le jeu sur `127.0.0.1:8123`, sans toucher au projet.
 Pour changer de port : `RJ_PORT=9000 node tests/rj-tests.js`.
+Pour utiliser un navigateur déjà installé plutôt que le Chromium de
+Playwright : `RJ_CHANNEL=chrome` (ou `msedge`).
 
 ## Les suites
 

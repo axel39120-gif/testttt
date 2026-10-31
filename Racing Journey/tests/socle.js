@@ -101,7 +101,7 @@ function conclusion() {
 
 async function ouvrirJeu(options) {
   options = options || {};
-  const navigateur = await chromium.launch();
+  const navigateur = await chromium.launch(process.env.RJ_CHANNEL ? { channel: process.env.RJ_CHANNEL } : {});
   const contexte = await navigateur.newContext({ serviceWorkers: "block", viewport: VIEWPORT });
   const page = await contexte.newPage();
 
