@@ -536,16 +536,8 @@
     }
 
     // réappliquer les logos personnalisés au chargement d'une partie
-    if (typeof window.loadSave === "function" && !window.loadSave._rj63) {
-      var o3 = window.loadSave;
-      var f3 = function () {
-        var r = o3.apply(this, arguments);
-        try { setTimeout(appliquerTout, 60); } catch (e) {}
-        return r;
-      };
-      f3._rj63 = true;
-      wrapped.loadSave = o3;
-      window.loadSave = f3;
+    if (!window.RJ_SAVE_HOOKS.some(function (h) { return h.cle === "__logos63"; })) {
+      window.RJ_SAVE_HOOKS.push({ cle: "__logos63", lire: function () { setTimeout(appliquerTout, 60); } });
     }
 
     appliquerTout();
@@ -779,61 +771,25 @@
     return CHAMPS_SUP.slice();
   };
 
-  function cleSlot(slot) {
-    try {
-      if (typeof SAVE_KEYS === "undefined") return null;
-      if (slot === undefined || slot === null) slot = (G && G._slot) || 0;
-      return SAVE_KEYS[slot] || null;
-    } catch (e) { return null; }
-  }
 
+  /* Bloc « champs » de la sauvegarde (04s), relu après le chargement. */
   function installerPersistance() {
-    if (typeof window.saveGame === "function" && !window.saveGame._rj64) {
-      var o1 = window.saveGame;
-      var f1 = function (slot) {
-        var r = o1.apply(this, arguments);
-        try {
-          var k = cleSlot(slot);
-          if (k) {
-            var brut = localStorage.getItem(k);
-            if (brut) {
-              var obj = JSON.parse(brut);
-              CHAMPS_SUP.forEach(function (c) { if (G[c] !== undefined) obj[c] = G[c]; });
-              localStorage.setItem(k, JSON.stringify(obj));
-            }
-          }
-        } catch (e) { console.warn("[64] persistance écriture :", e); }
-        return r;
-      };
-      f1._rj64 = true;
-      wrapped.saveGame = o1;
-      window.saveGame = f1;
-    }
-
-    if (typeof window.loadSave === "function" && !window.loadSave._rj64) {
-      var o2 = window.loadSave;
-      var f2 = function (slot) {
-        var r = o2.apply(this, arguments);
-        try {
-          var k = cleSlot(slot);
-          if (k) {
-            var brut = localStorage.getItem(k);
-            if (brut) {
-              var obj = JSON.parse(brut);
-              CHAMPS_SUP.forEach(function (c) { if (obj[c] !== undefined) G[c] = obj[c]; });
-            }
-          }
-          // les logos personnalisés doivent être réappliqués APRÈS restauration
-          setTimeout(function () {
-            try { if (typeof window._rj63Apply === "function") window._rj63Apply(); } catch (e) {}
-          }, 40);
-        } catch (e) { console.warn("[64] persistance lecture :", e); }
-        return r;
-      };
-      f2._rj64 = true;
-      wrapped.loadSave = o2;
-      window.loadSave = f2;
-    }
+    if (window.RJ_SAVE_HOOKS.some(function (h) { return h.cle === "champs"; })) return;
+    window.RJ_SAVE_HOOKS.push({
+      cle: "champs",
+      ecrire: function (G) {
+        var champs = {};
+        CHAMPS_SUP.forEach(function (c) { if (G[c] !== undefined) champs[c] = G[c]; });
+        return Object.keys(champs).length ? champs : undefined;
+      },
+      lire: function (champs, G) {
+        if (champs) CHAMPS_SUP.forEach(function (c) { if (champs[c] !== undefined) G[c] = champs[c]; });
+        // les logos personnalisés doivent être réappliqués APRÈS restauration
+        setTimeout(function () {
+          try { if (typeof window._rj63Apply === "function") window._rj63Apply(); } catch (e) {}
+        }, 40);
+      }
+    });
   }
 
   /* --------------------------------------------------------- surcharge --- */

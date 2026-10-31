@@ -318,6 +318,10 @@
     console.log("[51-test-save-seed] désinstallé (la sauvegarde existante reste)");
   };
 
+  /* Mode développeur seulement (index.html?dev) : chez un joueur, cette
+     partie occupait un emplacement et remplaçait au démarrage toute
+     sauvegarde qu'elle reconnaissait comme sienne. */
+  if (!/[?&]dev\b/.test(location.search)) return;
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", seed);
   } else {

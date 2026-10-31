@@ -2094,51 +2094,16 @@
   //   4. Ajouter un listener global sur clics "Jouer" en délégation
   // ===========================================================================
 
-  // 1. Wrap loadSave avec logs détaillés
-  (function _rjWrapLoadSave() {
-    if (typeof window.loadSave !== 'function') {
-      console.warn('[07] loadSave non défini au moment du wrap — abandon');
-      return;
+  // 1. Migrations à rejouer après le chargement d'une partie (bloc relu par 04s).
+  window.RJ_SAVE_HOOKS.push({
+    cle: "__migrations07",
+    lire: function () {
+      try { if (typeof _rjMigrateRaceStrategy === 'function') _rjMigrateRaceStrategy(); }
+      catch (e) { console.warn('[07] migration stratégie :', e); }
+      try { if (typeof _rjMigrateMailbox === 'function') _rjMigrateMailbox(); }
+      catch (e) { console.warn('[07] migration messagerie :', e); }
     }
-    if (window.loadSave._rjLogWrapped) return;
-    var orig = window.loadSave;
-    window.loadSave = function(slotIdx) {
-      console.log('[07] loadSave appelé pour slot', slotIdx);
-      try {
-        var save = (typeof getSave === 'function') ? getSave(slotIdx) : null;
-        console.log('[07] getSave a retourné:', save ? 'OBJET (' + Object.keys(save).length + ' propriétés)' : 'NULL');
-        if (!save) {
-          console.warn('[07] Aucune sauvegarde au slot', slotIdx);
-          if (typeof pushHomeToast === 'function') pushHomeToast('Erreur', 'Aucune sauvegarde dans cet emplacement', '#EF4444');
-          return;
-        }
-      } catch (preErr) {
-        console.error('[07] Erreur avant loadSave:', preErr);
-      }
-      try {
-        var r = orig.call(this, slotIdx);
-        console.log('[07] loadSave a terminé sans exception');
-        // Exécuter les migrations APRÈS le load réussi : G est maintenant peuplé
-        try { if (typeof _rjMigrateRaceStrategy === 'function') _rjMigrateRaceStrategy(); } catch (mErr) {}
-        try { if (typeof _rjMigrateMailbox === 'function') _rjMigrateMailbox(); } catch (mErr) {}
-        // Restaurer les sponsors signés (FIX 17)
-        try { if (typeof _rjRestoreSponsors === 'function') _rjRestoreSponsors(slotIdx); } catch (rsErr) {}
-        return r;
-      } catch (err) {
-        console.error('[07] loadSave a planté:', err, err && err.stack);
-        try {
-          if (typeof pushHomeToast === 'function') {
-            pushHomeToast('Chargement échoué', String(err && err.message || err), '#EF4444');
-          } else {
-            alert('Chargement échoué :\n' + (err && err.message || err));
-          }
-        } catch (toastErr) {}
-        return;
-      }
-    };
-    window.loadSave._rjLogWrapped = true;
-    console.log('[07] loadSave wrappé avec logs détaillés');
-  })();
+  });
 
   // 2. Re-render des slots après DOMContentLoaded ET 500ms plus tard pour sécurité
   (function _rjForceRenderSaveSlots() {
@@ -2389,7 +2354,7 @@
   //
   // Sans ces données, à chaque rechargement : sponsors perdus, staff régénéré
   // avec des noms aléatoires, réseau pro vidé, contacts paddock oubliés.
-  // On les sauvegarde séparément en localStorage et on restaure après loadSave.
+  // On les sauvegarde dans un bloc de la sauvegarde (04s) et on les relit au chargement.
   // ===========================================================================
   var _RJ_EXTRA_SAVE_KEYS = {
     sponsors: 'G.sponsors',
@@ -2400,65 +2365,24 @@
     _recentDialogues: 'G._recentDialogues'
   };
 
-  function _rjGetExtraKey(slotIdx) {
-    return 'rj_extra_slot_' + (slotIdx == null ? 0 : slotIdx);
-  }
-
-  function _rjPersistExtras() {
-    try {
-      if (typeof window.G === 'undefined' || !window.G) return;
-      var slot = G._slot;
-      if (slot == null) return;
+  // Écrits dans l'emplacement lui-même (bloc « extras ») : tout ou rien avec
+  // le reste de la partie. L'ancienne clé rj_extra_slot_N est migrée par 04s.
+  window.RJ_SAVE_HOOKS.push({
+    cle: "extras",
+    ecrire: function (G) {
       var extras = {};
-      Object.keys(_RJ_EXTRA_SAVE_KEYS).forEach(function(prop) {
-        if (G[prop] !== undefined) {
-          extras[prop] = G[prop];
-        }
+      Object.keys(_RJ_EXTRA_SAVE_KEYS).forEach(function (prop) {
+        if (G[prop] !== undefined) extras[prop] = G[prop];
       });
-      localStorage.setItem(_rjGetExtraKey(slot), JSON.stringify(extras));
-    } catch (e) {
-      console.warn('[07] _rjPersistExtras failed:', e);
-    }
-  }
-
-  function _rjRestoreExtras(slotIdx) {
-    try {
-      if (typeof window.G === 'undefined' || !window.G) return;
-      var raw = localStorage.getItem(_rjGetExtraKey(slotIdx));
-      if (!raw) return;
-      var extras = JSON.parse(raw);
+      return extras;
+    },
+    lire: function (extras, G) {
       if (!extras || typeof extras !== 'object') return;
-      var restored = [];
-      Object.keys(extras).forEach(function(prop) {
-        if (extras[prop] !== undefined) {
-          G[prop] = extras[prop];
-          restored.push(prop);
-        }
+      Object.keys(extras).forEach(function (prop) {
+        if (extras[prop] !== undefined) G[prop] = extras[prop];
       });
-      if (restored.length) console.log('[07] Données restaurées : ' + restored.join(', '));
-    } catch (e) {
-      console.warn('[07] _rjRestoreExtras failed:', e);
     }
-  }
-
-  // Alias pour compat avec ancien code qui appelle _rjRestoreSponsors
-  function _rjRestoreSponsors(slotIdx) { _rjRestoreExtras(slotIdx); }
-  function _rjPersistSponsors() { _rjPersistExtras(); }
-
-  // Wrap saveGame pour persister les données extras
-  (function _rjWrapSaveExtras() {
-    if (typeof window.saveGame !== 'function') return;
-    if (window.saveGame._rjSponsorsPatched) return;
-    var orig = window.saveGame;
-    window.saveGame = function(slotIdx) {
-      var result;
-      try { result = orig.apply(this, arguments); } catch (e) { throw e; }
-      try { _rjPersistExtras(); } catch (e) {}
-      return result;
-    };
-    window.saveGame._rjSponsorsPatched = true;
-    console.log('[07] saveGame wrappé pour persister les données extras');
-  })();
+  });
 
   console.log('[07] User fixes module loaded — applying 11 UX corrections');
 

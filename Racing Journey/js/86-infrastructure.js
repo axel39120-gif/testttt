@@ -10,8 +10,7 @@
  * CE QU'IL CONTIENT
  *   1. Dégraissage       — neutralise les couches devenues inertes sur le
  *                          calcul des positions.
- *   2. Persistance       — RJ_SAVE_HOOKS : un seul point d'écriture dans
- *                          la sauvegarde.
+ *   2. Persistance       — déplacée dans 04s-sauvegarde.js (RJ_SAVE_HOOKS).
  *   3. Navigation        — RJ_SCREEN_HOOKS : réactions par écran, et
  *                          RJ_TOAST_FILTERS : filtres de notification.
  *   4. Saison, classement — RJ_SEASON_HOOKS et RJ_LEADERBOARD_HOOKS.
@@ -21,7 +20,7 @@
  * déclenchés.
  *
  * Chaque partie conserve sa fonction de désinstallation d'origine
- * (_rj86Uninstall, _rj87Uninstall, _rj88Uninstall, _rj89Uninstall) : le
+ * (_rj86Uninstall, _rj88Uninstall, _rj89Uninstall) : le
  * regroupement ne change rien au comportement, seulement au nombre de
  * fichiers.
  * =================================================================== */
@@ -108,135 +107,9 @@
 
 /* ==================================================================== *
  * 2. PERSISTANCE — registre RJ_SAVE_HOOKS
- * (anciennement 87-persistance.js)
+ * (anciennement 87-persistance.js) — déplacé dans 04s-sauvegarde.js, qui
+ * écrit et relit les blocs inscrits au sein d'une écriture unique.
  * ==================================================================== */
-
-(function () {
-  "use strict";
-
-  var TAG = "[87-persistance]";
-
-  function G_() { return (typeof window.G !== "undefined") ? window.G : null; }
-  function fn(n) { return typeof window[n] === "function"; }
-
-  if (!Array.isArray(window.RJ_SAVE_HOOKS)) window.RJ_SAVE_HOOKS = [];
-
-  /* ------------------------------------------------------------------
-   * Emplacement de sauvegarde
-   * ---------------------------------------------------------------- */
-  function cleSlot(slot) {
-    try {
-      if (window.SAVE_KEYS && window.SAVE_KEYS[slot] != null) return window.SAVE_KEYS[slot];
-    } catch (e) {}
-    return "rj_s" + (Number(slot) + 1);
-  }
-
-  function slotEffectif(slot) {
-    var G = G_();
-    return (typeof slot === "undefined" || slot === null) ? ((G && G._slot) || 0) : slot;
-  }
-
-  /* ------------------------------------------------------------------
-   * Écriture : une seule lecture, une seule écriture
-   * ---------------------------------------------------------------- */
-  function ecrireBlocs(slot) {
-    var G = G_(); if (!G) return;
-    var cle = cleSlot(slotEffectif(slot));
-    var brut;
-    try { brut = localStorage.getItem(cle); } catch (e) { return; }
-    if (!brut) return;
-
-    var obj;
-    try { obj = JSON.parse(brut); } catch (e) { return; }
-
-    var ecrits = 0;
-    for (var i = 0; i < window.RJ_SAVE_HOOKS.length; i++) {
-      var h = window.RJ_SAVE_HOOKS[i];
-      if (!h || !h.cle || typeof h.ecrire !== "function") continue;
-      try {
-        var bloc = h.ecrire(G);
-        if (bloc === undefined) continue;
-        if (bloc === null) { delete obj[h.cle]; continue; }
-        obj[h.cle] = bloc;
-        ecrits++;
-      } catch (e) {
-        console.warn(TAG, "écriture « " + h.cle + " » :", e && e.message);
-      }
-    }
-    if (!ecrits) return;
-    try { localStorage.setItem(cle, JSON.stringify(obj)); }
-    catch (e) { console.warn(TAG, "sauvegarde impossible :", e && e.message); }
-  }
-
-  /* ------------------------------------------------------------------
-   * Lecture : une seule lecture, distribution à tous
-   * ---------------------------------------------------------------- */
-  function lireBlocs(slot) {
-    var G = G_(); if (!G) return;
-    var brut;
-    try { brut = localStorage.getItem(cleSlot(slotEffectif(slot))); } catch (e) { return; }
-    var obj = null;
-    if (brut) { try { obj = JSON.parse(brut); } catch (e) { obj = null; } }
-
-    for (var i = 0; i < window.RJ_SAVE_HOOKS.length; i++) {
-      var h = window.RJ_SAVE_HOOKS[i];
-      if (!h || !h.cle || typeof h.lire !== "function") continue;
-      try { h.lire((obj && obj[h.cle]) || null, G); }
-      catch (e) { console.warn(TAG, "lecture « " + h.cle + " » :", e && e.message); }
-    }
-  }
-
-  /* ------------------------------------------------------------------
-   * Installation
-   * ---------------------------------------------------------------- */
-  var _origSave = null, _origLoad = null;
-
-  function installer() {
-    if (fn("saveGame") && !window.saveGame._rj87) {
-      _origSave = window.saveGame;
-      window.saveGame = function (slot) {
-        var r = _origSave.apply(this, arguments);
-        try { ecrireBlocs(slot); } catch (e) { console.warn(TAG, e && e.message); }
-        return r;
-      };
-      window.saveGame._rj87 = true;
-    }
-    if (fn("loadSave") && !window.loadSave._rj87) {
-      _origLoad = window.loadSave;
-      window.loadSave = function (slot) {
-        var r = _origLoad.apply(this, arguments);
-        try { lireBlocs(slot); } catch (e) { console.warn(TAG, e && e.message); }
-        return r;
-      };
-      window.loadSave._rj87 = true;
-    }
-    return !!(window.saveGame && window.saveGame._rj87 && window.loadSave && window.loadSave._rj87);
-  }
-
-  function boot() {
-    var essais = 0;
-    (function tenter() {
-      if (installer()) {
-        console.log(TAG, "actif — " + window.RJ_SAVE_HOOKS.length + " bloc(s) inscrit(s)");
-        return;
-      }
-      if (essais++ < 80) setTimeout(tenter, 150);
-    })();
-
-    window._rj87 = {
-      blocs: function () { return window.RJ_SAVE_HOOKS.map(function (h) { return h.cle; }); },
-      ecrire: ecrireBlocs, lire: lireBlocs
-    };
-    window._rj87Uninstall = function () {
-      if (_origSave) window.saveGame = _origSave;
-      if (_origLoad) window.loadSave = _origLoad;
-      console.log(TAG, "désinstallé");
-    };
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
-})();
 
 
 /* ==================================================================== *
