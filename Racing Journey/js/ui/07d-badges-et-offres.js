@@ -143,12 +143,12 @@
     }
     if (window.renderSponsorsNew._rjLockWrapped) return;
     var orig = window.renderSponsorsNew;
-    window.renderSponsorsNew = function() {
+    rjInscrire("renderSponsorsNew", { id: "07d-badges-et-offres:renderSponsorsNew", ordre: -2300, remplace: function (args, suite) {
       if (_rjAreSponsorsLocked()) {
         return _rjShowSponsorsLockedMessage();
       }
-      return orig.apply(this, arguments);
-    };
+      return suite();
+    } });
     window.renderSponsorsNew._rjLockWrapped = true;
     console.log('[07] renderSponsorsNew wrappé (verrouillage avant 1ère course)');
   })();
@@ -165,7 +165,7 @@
     }
     if (window.renderSponsorsActiveNew._rjLockWrapped) return;
     var orig = window.renderSponsorsActiveNew;
-    window.renderSponsorsActiveNew = function() {
+    rjInscrire("renderSponsorsActiveNew", { id: "07d-badges-et-offres:renderSponsorsActiveNew", ordre: -2300, remplace: function (args, suite) {
       if (_rjAreSponsorsLocked()) {
         // Affiche aussi le message dans la liste "actifs"
         try {
@@ -174,8 +174,8 @@
         } catch (_e) {}
         return;
       }
-      return orig.apply(this, arguments);
-    };
+      return suite();
+    } });
     window.renderSponsorsActiveNew._rjLockWrapped = true;
     console.log('[07] renderSponsorsActiveNew wrappé');
   })();

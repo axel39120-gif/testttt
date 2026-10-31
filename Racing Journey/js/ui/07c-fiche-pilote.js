@@ -262,8 +262,9 @@
     if (window.showDriverProfileModal._rjUserFixCareer) return true;
 
     var orig = window.showDriverProfileModal;
-    window.showDriverProfileModal = function rjShowDriverProfileModalEnhanced(opts) {
-      var result = orig.apply(this, arguments);
+    rjInscrire("showDriverProfileModal", { id: "07c-fiche-pilote:showDriverProfileModal", ordre: -2200, remplace: function (args, suite) {
+      var opts = args[0];
+      var result = suite();
 
       // Après l'ouverture, on injecte le tableau d'historique dans la modal
       try {
@@ -329,7 +330,7 @@
       }
 
       return result;
-    };
+    } });
     window.showDriverProfileModal._rjUserFixCareer = true;
     console.log('[07] showDriverProfileModal enhanced (full career history)');
     return true;

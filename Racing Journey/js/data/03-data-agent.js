@@ -297,7 +297,8 @@ function recordNetworkInteraction(e, t) {
   }, r.interactions = (r.interactions || 0) + 1, r
 }
 
-function syncNetworkFromSources() {
+function syncNetworkFromSources() { return rjAppeler("syncNetworkFromSources", _syncNetworkFromSourcesCoeur, this, arguments); }
+function _syncNetworkFromSourcesCoeur() {
   G._network || (G._network = {}), G._paddockContacts && G._paddockContacts.length && G._paddockContacts.forEach(function(e) {
     if (e.name) {
       var t = "paddock_" + e.name.replace(/\s+/g, "_").toLowerCase(),
@@ -8204,7 +8205,8 @@ function _advanceToNextMomentCoeur() {
   }
 }
 
-function showToast(e) {
+function showToast() { return rjAppeler("showToast", _showToastCoeur, this, arguments); }
+function _showToastCoeur(e) {
   var t = document.createElement("div");
   t.style.cssText = "position:fixed;top:80px;left:50%;transform:translate(-50%, -8px);padding:11px 20px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-left:3px solid var(--red2);border-radius:var(--r);color:var(--text);font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.5), 0 0 0 1px rgba(232,16,48,.06);opacity:0;transition:opacity .25s ease, transform .25s ease;pointer-events:none", t.textContent = e, document.body.appendChild(t), requestAnimationFrame(function() {
     t.style.opacity = "1", t.style.transform = "translate(-50%, 0)"
@@ -8381,7 +8383,8 @@ var CONCEPT_DEFS = {
   }
 };
 
-function showGlossary() {
+function showGlossary() { return rjAppeler("showGlossary", _showGlossaryCoeur, this, arguments); }
+function _showGlossaryCoeur() {
   try {
     var existing = document.getElementById("glossary-overlay");
     if (existing) {
@@ -8657,7 +8660,8 @@ function _isRadioMessage(item) {
   return t.indexOf("\ud83d\udcfb") >= 0 || d.indexOf("\ud83d\udcfb") >= 0 || t.indexOf("Radio team") >= 0 || t.indexOf("Box-box") >= 0 || /^'+renderIcon('radio',14,'#60A5FA')+'/.test(t) || /^'+renderIcon('radio',14,'#60A5FA')+'/.test(d)
 }
 
-function openScheduledEvent(e) {
+function openScheduledEvent() { return rjAppeler("openScheduledEvent", _openScheduledEventCoeur, this, arguments); }
+function _openScheduledEventCoeur(e) {
   var t = SCHEDULED_EVENTS.find(function(t) {
       return t.id === e.eventId
     }),
@@ -9106,7 +9110,8 @@ function formatPilotName(e, t, r) {
   return n && (FLAGS[n] || FLAGS2[n]) ? e + " " + flagSvg(n, 14) : e
 }
 
-function goCreate() {
+function goCreate() { return rjAppeler("goCreate", _goCreateCoeur, this, arguments); }
+function _goCreateCoeur() {
   creStep = 1, selNatVal = null, selStyleVal = "attaquant", selTraitVal = "leader", _selectedContinent = null;
   var ids = ["p-fn", "p-ln", "p-birthcity"];
   for (var i = 0; i < ids.length; i++) {
@@ -9384,7 +9389,8 @@ function _goToRaceWeekendCoeur() {
   "function" == typeof refreshSetupStratFeedback && setTimeout(refreshSetupStratFeedback, 50)
 }
 
-function navMore(e) {
+function navMore() { return rjAppeler("navMore", _navMoreCoeur, this, arguments); }
+function _navMoreCoeur(e) {
   var t = document.querySelector(".scr.on"),
     r = t ? t.id : "";
   if (G.seasonOver && "S-season-end" !== e && "S-season-end" !== r) return closeMore(), void showSeasonEnd();
@@ -9447,7 +9453,8 @@ function chtab(e) {
   }), "classement" === e && renderChamp(), "ecuries" === e && (initTeamRatings(G.cat, G.saison), renderTeamPerf()), "constructeurs" === e && renderConstructeurs(), "h2h" === e && "function" == typeof renderH2H && renderH2H()
 }
 
-function ptab(e) {
+function ptab() { return rjAppeler("ptab", _ptabCoeur, this, arguments); }
+function _ptabCoeur(e) {
   if (["stats", "rep", "relations", "academy"].forEach(function(t) {
       var r = document.getElementById("pt-" + t);
       r && (r.style.display = t === e ? "block" : "none")
@@ -10038,7 +10045,8 @@ function _resetRaceStrategyDefaults() {
   }
 }
 
-function updateRaceTabsVisibility() {
+function updateRaceTabsVisibility() { return rjAppeler("updateRaceTabsVisibility", _updateRaceTabsVisibilityCoeur, this, arguments); }
+function _updateRaceTabsVisibilityCoeur() {
   var e = RACE_WEEKEND_STATE,
     t = {
       prep: document.querySelector('#S-race .tab[data-tab="prep"]'),
@@ -10088,7 +10096,8 @@ function _setTabStatus(e, t) {
   }
 }
 
-function goToNextRaceStep() {
+function goToNextRaceStep() { return rjAppeler("goToNextRaceStep", _goToNextRaceStepCoeur, this, arguments); }
+function _goToNextRaceStepCoeur() {
   hasPracticeSystem() ? rtab("essais", !0) : goToQualifStep()
 }
 
@@ -10617,7 +10626,8 @@ function updateAgePreview() {
   }
 }
 
-function creNext() {
+function creNext() { return rjAppeler("creNext", _creNextCoeur, this, arguments); }
+function _creNextCoeur() {
   var e = document.getElementById("cre-err");
   if (e.className = "fb err", 1 === creStep) {
     var t = document.getElementById("p-fn").value.trim(),
@@ -10663,7 +10673,8 @@ function _sbToggle() {
   r && (r.style.display = SANDBOX_ACTIVE ? "block" : "none")
 }
 
-function _sbUpdateTeams() {
+function _sbUpdateTeams() { return rjAppeler("_sbUpdateTeams", __sbUpdateTeamsCoeur, this, arguments); }
+function __sbUpdateTeamsCoeur() {
   var e = document.getElementById("sb-cat").value,
     t = document.getElementById("sb-team");
   if (t) {
@@ -10684,7 +10695,8 @@ function _sbPopulateAcademies() {
   })
 }
 
-function updateCreUI() {
+function updateCreUI() { return rjAppeler("updateCreUI", _updateCreUICoeur, this, arguments); }
+function _updateCreUICoeur() {
   for (var e = 1; e <= 6; e++) {
     var t = document.getElementById("cs" + e);
     t && (t.style.display = e === creStep ? "block" : "none", t.style.visibility = e === creStep ? "visible" : "hidden");
@@ -10708,7 +10720,8 @@ function updateNumPreview() {
   n && (n.textContent = e), a && (a.textContent = t + " " + r)
 }
 
-function buildRecap() {
+function buildRecap() { return rjAppeler("buildRecap", _buildRecapCoeur, this, arguments); }
+function _buildRecapCoeur() {
   var e = document.getElementById("p-fn").value || "Lucas",
     t = document.getElementById("p-ln").value || "Martin",
     r, n, a = {
@@ -10924,7 +10937,8 @@ function applyModifiers() {
   }
 }
 
-function launchGame() {
+function launchGame() { return rjAppeler("launchGame", _launchGameCoeur, this, arguments); }
+function _launchGameCoeur() {
   G.pilot.prenom = document.getElementById("p-fn").value.trim() || "Pilote", G.pilot.nom = document.getElementById("p-ln").value.trim() || "", G.pilot.nat = selNatVal, G.pilot.style = selStyleVal, G.pilot.trait = selTraitVal, G.pilot.number = parseInt(document.getElementById("p-num").value) || 23, G._numberChosenByPlayer = !0, G.substats = initSubStats(selStyleVal, selTraitVal), G.stats = {
     vitesse: 52,
     regularite: 45,
@@ -13083,7 +13097,8 @@ function _syncAllRivalsToPool() {
   });
 }
 
-function initRivals() {
+function initRivals() { return rjAppeler("initRivals", _initRivalsCoeur, this, arguments); }
+function _initRivalsCoeur() {
   if (typeof _buildRivalsFromPool === "function") {
     try {
       if (_buildRivalsFromPool()) return
@@ -14881,7 +14896,8 @@ function _getTPSender(team) {
   }
 }
 
-function pushMail(e) {
+function pushMail() { return rjAppeler("pushMail", _pushMailCoeur, this, arguments); }
+function _pushMailCoeur(e) {
   if (!e) return null;
   var t = getMailbox(),
     r = {
@@ -15394,7 +15410,8 @@ function _mailSenderLabel(thread) {
   return (sender && sender.name) || role
 }
 
-function renderMailbox() {
+function renderMailbox() { return rjAppeler("renderMailbox", _renderMailboxCoeur, this, arguments); }
+function _renderMailboxCoeur() {
   var e = document.getElementById("mailbox-list");
   e && (_MAIL_OPEN_THREAD ? _renderMailThread(e, _MAIL_OPEN_THREAD) : _renderMailList(e))
 }
@@ -16097,7 +16114,8 @@ function applyRelationMailEffect(e, t) {
   "relation_parents" === e && r.parents ? (r.parents.closeness = Math.max(0, Math.min(100, r.parents.closeness + n)), r.parents.lastContact = G.semaine || 1, n > 0 && (r.parents._crisisTriggered = !1)) : "relation_partner" === e && r.partner ? (r.partner.closeness = Math.max(0, Math.min(100, r.partner.closeness + n)), r.partner.lastContact = G.semaine || 1, n > 0 && (r.partner._breakupWarned = !1)) : "relation_friends" === e && r.friends && (r.friends.closeness = Math.max(0, Math.min(100, r.friends.closeness + n)), r.friends.lastContact = G.semaine || 1)
 }
 
-function renderVieperso() {
+function renderVieperso() { return rjAppeler("renderVieperso", _renderViepersoCoeur, this, arguments); }
+function _renderViepersoCoeur() {
   var e = document.getElementById("vp-content");
   if (e) {
     var t = getRelations(),
@@ -17376,7 +17394,8 @@ function tickFatigue(e) {
   t.fatigue = Math.max(0, t.fatigue - r)
 }
 
-function applyTrainingSpecialtiesToRace(e, t, r, n) {
+function applyTrainingSpecialtiesToRace() { return rjAppeler("applyTrainingSpecialtiesToRace", _applyTrainingSpecialtiesToRaceCoeur, this, arguments); }
+function _applyTrainingSpecialtiesToRaceCoeur(e, t, r, n) {
   var a = getTraining();
   return a && a.specialties ? (a.specialties.indexOf("start_master") >= 0 && LIVE_RACE && 1 === LIVE_RACE.cur && (e.scoreBonus = (e.scoreBonus || 0) + .01), a.specialties.indexOf("wet_runner") >= 0 && t && ("rain" === t.id || "storm" === t.id) && (e.scoreBonus = (e.scoreBonus || 0) + .02), a.specialties.indexOf("tire_whisperer") >= 0 && (e.tyreWearMult = .92 * (e.tyreWearMult || 1)), a.specialties.indexOf("qualifier") >= 0 && n && (e.scoreBonus = (e.scoreBonus || 0) + .02), a.fatigue >= 80 && (e.scoreBonus = (e.scoreBonus || 0) - .01), e) : e
 }
@@ -17764,7 +17783,8 @@ var WEEKLY_TICK_HOOKS = [{
   }
 }];
 
-function runWeeklyTicks(e) {
+function runWeeklyTicks() { return rjAppeler("runWeeklyTicks", _runWeeklyTicksCoeur, this, arguments); }
+function _runWeeklyTicksCoeur(e) {
   !e || e <= 0 || WEEKLY_TICK_HOOKS.forEach(function(t) {
     try {
       t.run(e)
@@ -18196,7 +18216,8 @@ function getPreseason() {
   return G.preseason || (G.preseason = null), G.preseason
 }
 
-function savePreseasonPlan(e, t, r) {
+function savePreseasonPlan() { return rjAppeler("savePreseasonPlan", _savePreseasonPlanCoeur, this, arguments); }
+function _savePreseasonPlanCoeur(e, t, r) {
   G.preseason = {
     objective: e || "podium",
     budget: t || {
@@ -18291,7 +18312,8 @@ function getPreseasonBudgetBonus() {
   return (r.sim || 0) >= 40 && (t.scoreBonus += .005, t.fatigueMult = .85), (r.coach || 0) >= 40 && (t.subStatMult = 1.15), (r.lifestyle || 0) >= 40 && (t.happinessMult = 1.15), (r.savings || 0) >= 40 && (t.revenueMult = 1.05), t
 }
 
-function renderPreseasonPlanning() {
+function renderPreseasonPlanning() { return rjAppeler("renderPreseasonPlanning", _renderPreseasonPlanningCoeur, this, arguments); }
+function _renderPreseasonPlanningCoeur() {
   var e = document.getElementById("preseason-content");
   if (e) {
     var t = getPreseason(),
@@ -18347,7 +18369,8 @@ function renderPreseasonPlanning() {
 
 
 
-function _psUpdateTotal() {
+function _psUpdateTotal() { return rjAppeler("_psUpdateTotal", __psUpdateTotalCoeur, this, arguments); }
+function __psUpdateTotalCoeur() {
   var e = window._presBudget || {},
     t = (e.sim || 0) + (e.coach || 0) + (e.lifestyle || 0) + (e.savings || 0),
     r = document.getElementById("ps-total");
@@ -18643,7 +18666,8 @@ function _homeNotifClick() {
   }
 }
 
-function updateUI() {
+function updateUI() { return rjAppeler("updateUI", _updateUICoeur, this, arguments); }
+function _updateUICoeur() {
   "function" == typeof injectApexIcons && injectApexIcons();
   var e = document.getElementById("h-year");
   e && (e.textContent = gYear());
@@ -18760,7 +18784,8 @@ function updateUI() {
   } catch (_e) {}
 }
 
-function initSubStats(e, t) {
+function initSubStats() { return rjAppeler("initSubStats", _initSubStatsCoeur, this, arguments); }
+function _initSubStatsCoeur(e, t) {
   var r = {
       attaquant: {
         vitesse_pure: 52,
@@ -19138,12 +19163,14 @@ function hasPracticeSystem() {
   return PRACTICE_CATS.indexOf(G.cat) >= 0
 }
 
-function getPracticeMaxSessions() {
+function getPracticeMaxSessions() { return rjAppeler("getPracticeMaxSessions", _getPracticeMaxSessionsCoeur, this, arguments); }
+function _getPracticeMaxSessionsCoeur() {
   var e = G.cat || "";
   return "Karting Junior" === e || "Karting Senior" === e || "Formule 4" === e ? 2 : 3
 }
 
-function getPracticeMaxTests() {
+function getPracticeMaxTests() { return rjAppeler("getPracticeMaxTests", _getPracticeMaxTestsCoeur, this, arguments); }
+function _getPracticeMaxTestsCoeur() {
   var e = G.cat || "";
   return "Karting Junior" === e || "Karting Senior" === e ? 2 : 3
 }
@@ -19432,7 +19459,8 @@ function _getBestPracticeLap(tests) {
   return best;
 }
 
-function renderPracticeSection() {
+function renderPracticeSection() { return rjAppeler("renderPracticeSection", _renderPracticeSectionCoeur, this, arguments); }
+function _renderPracticeSectionCoeur() {
   var e = document.getElementById("race-practice-section");
   if (e) try {
     if (!hasPracticeSystem()) return void(e.style.display = "none");
@@ -19599,197 +19627,6 @@ function _renderPracticeSectionInner(container) {
   container.innerHTML = c;
 }
 
-function doPracticeTest() {
-  var pr = RACE_STATE.practice;
-  if (!pr) return;
-  if (pr.testsThisSession >= getPracticeMaxTests()) {
-    if (typeof showToast === "function") showToast("Session complète, passe à la suivante.");
-    return;
-  }
-  // Pause timer pendant l'animation
-  _fpPauseTimer();
-  // Désactiver le bouton
-  var btn = document.getElementById("fp-launch-btn");
-  if (btn) {
-    btn.disabled = true;
-    btn.style.opacity = "0.5";
-    btn.style.pointerEvents = "none";
-  }
-  // Calculer le résultat
-  var result = runPracticeTest();
-  if (!result || result.error) {
-    if (typeof showToast === "function") showToast("Impossible de lancer un tour maintenant.");
-    _fpResumeTimer();
-    if (btn) {
-      btn.disabled = false;
-      btn.style.opacity = "";
-      btn.style.pointerEvents = "";
-    }
-    return;
-  }
-  var lastTest = pr.tests[pr.tests.length - 1];
-  var lapTime = lastTest.lapTime || 80;
-  var feedback = lastTest.feedback || {};
-  var s1t = +(.32 * lapTime).toFixed(3);
-  var s2t = +(.36 * lapTime).toFixed(3);
-  var s3t = +(lapTime - s1t - s2t).toFixed(3);
-  var fKeys = Object.keys(feedback);
-  var nPerfect = fKeys.filter(function(k) {
-    return feedback[k].direction === "perfect";
-  }).length;
-  var nClose = fKeys.filter(function(k) {
-    return feedback[k].direction === "close";
-  }).length;
-  var h = fKeys.length;
-
-  function pickSecCol() {
-    if (h === 0) return {
-      col: "#F59E0B",
-      label: "OK"
-    };
-    var r = Math.random() * h;
-    return r < nPerfect ? {
-      col: "#A78BFA",
-      label: "VIOLET"
-    } : r < nPerfect + nClose ? {
-      col: "#22D3EE",
-      label: "VERT"
-    } : {
-      col: "#F59E0B",
-      label: "JAUNE"
-    };
-  }
-  var sv = pickSecCol(),
-    sx = pickSecCol(),
-    sy = pickSecCol();
-  var _baseVmax = {
-    "Karting Junior": 120,
-    "Karting Senior": 135,
-    "Formule 4": 230,
-    "Formula Regional": 250,
-    "Formule 3": 265,
-    "Formule 2": 290,
-    "Formule 1": 335,
-    "Super Formula": 315,
-    "Endurance WEC": 325,
-    "IndyCar": 355
-  } [G.cat] || 280;
-  var _isHS = RACE_STATE.circuitData && "highspeed" === RACE_STATE.circuitData.type;
-  var _isStreet = RACE_STATE.circuitData && "street" === RACE_STATE.circuitData.type;
-  var _vmaxMod = _isHS ? 1.05 : _isStreet ? 0.88 : 1;
-  var _secData = [{
-    n: 1,
-    t: s1t,
-    vmax: Math.round(_baseVmax * _vmaxMod * (0.92 + 0.05 * Math.random())),
-    info: sv
-  }, {
-    n: 2,
-    t: s2t,
-    vmax: Math.round(_baseVmax * _vmaxMod * (0.98 + 0.04 * Math.random())),
-    info: sx
-  }, {
-    n: 3,
-    t: s3t,
-    vmax: Math.round(_baseVmax * _vmaxMod * (0.94 + 0.05 * Math.random())),
-    info: sy
-  }];
-  var circuit = RACE_STATE.circuitData && RACE_STATE.circuitData.name || RACE_STATE.circuit || "Circuit";
-  var weather = RACE_STATE.weather || {
-    label: "Sec",
-    id: "dry"
-  };
-  var prevTests = pr.tests.slice(0, -1);
-  var prevBest = _getBestPracticeLap(prevTests);
-  var prevBestTime = prevBest ? prevBest.lapTime : null;
-  var delta = prevBestTime ? lapTime - prevBestTime : null;
-  var isPB = delta !== null && delta < 0;
-  // Construire l'animation inline dans le container
-  var container = document.getElementById("race-practice-section");
-  if (!container) {
-    _fpResumeTimer();
-    return;
-  }
-  var b = '';
-  b += '<div style="background:linear-gradient(135deg,#0a1418 0%,#0d1a20 100%);border:1px solid #1a3540;border-left:3px solid #22D3EE;margin-bottom:10px;overflow:hidden">';
-  b += '<div style="padding:10px 14px;background:rgba(34,211,238,.08);border-bottom:1px solid rgba(34,211,238,.18);display:flex;justify-content:space-between;align-items:center">';
-  b += '<div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;background:#ef4444;border-radius:50%;box-shadow:0 0 8px #ef4444;animation:practice-pulse 0.6s ease-in-out infinite"></div>';
-  b += '<span style="font-family:var(--font-display);font-size:11px;font-weight:900;color:#ef4444;letter-spacing:.22em;text-transform:uppercase">EN PISTE</span></div>';
-  b += '<span style="font-family:var(--font-display);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">' + _ppEscSafe(circuit) + ' · ' + _ppEscSafe(weather.label) + '</span>';
-  b += '</div>';
-  b += '<div style="padding:18px 14px 8px;text-align:center">';
-  b += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.28em;text-transform:uppercase;margin-bottom:6px">Tour chrono</div>';
-  b += '<div id="practice-chrono" style="font-family:var(--font-display);font-size:34px;font-weight:900;color:var(--white);line-height:1;letter-spacing:.02em">0:00.000</div>';
-  b += '<div style="margin:12px 14px 0;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;position:relative"><div id="practice-progress-bar" style="position:absolute;top:0;left:0;height:100%;width:0%;background:linear-gradient(90deg,#22D3EE 0%,#ef4444 100%);transition:width .1s linear"></div></div>';
-  b += '<div id="practice-current-sector" style="margin-top:10px;font-family:var(--font-display);font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;min-height:14px">—</div>';
-  b += '</div>';
-  b += '<div style="padding:6px 12px 12px;display:flex;gap:7px">';
-  var _secLabels = ["S1", "S2", "S3"];
-  for (var _si = 0; _si < 3; _si++) {
-    b += '<div class="practice-sector" data-sec="' + _secData[_si].n + '" style="flex:1;padding:10px 6px 9px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:6px;text-align:center;opacity:0.25;transition:all .35s ease;position:relative;overflow:hidden">';
-    b += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.22em;text-transform:uppercase;margin-bottom:4px">' + _secLabels[_si] + '</div>';
-    b += '<div class="practice-sector-time" style="font-family:var(--font-display);font-size:15px;font-weight:900;color:var(--dim);line-height:1;letter-spacing:.01em">—.——</div>';
-
-    b += '</div>';
-  }
-  b += '</div></div>';
-  container.innerHTML = b;
-  // Animation chrono
-  var _chronoEl = document.getElementById("practice-chrono");
-  var _progEl = document.getElementById("practice-progress-bar");
-  var _curSecEl = document.getElementById("practice-current-sector");
-  var _startTs = Date.now();
-  var _chronoInt = setInterval(function() {
-    var elapsed = (Date.now() - _startTs) / 1000;
-    var ratio = Math.min(1, elapsed / 2.4);
-    var curLap = lapTime * ratio;
-    if (_chronoEl) _chronoEl.textContent = _formatLapTime(curLap);
-    if (_progEl) _progEl.style.width = (100 * ratio).toFixed(1) + "%";
-    if (_curSecEl) {
-      var cs = ratio < 0.34 ? "S1 — EN COURS" : ratio < 0.7 ? "S2 — EN COURS" : ratio < 1 ? "S3 — EN COURS" : "—";
-      _curSecEl.textContent = cs;
-      _curSecEl.style.color = ratio < 1 ? "#22D3EE" : "var(--muted)";
-    }
-  }, 33);
-  // Révéler les secteurs progressivement
-  _secData.forEach(function(_sd, _idx) {
-    setTimeout(function() {
-      var _r = container.querySelector('.practice-sector[data-sec="' + _sd.n + '"]');
-      if (_r) {
-        _r.style.opacity = "1";
-        var _tn = _r.querySelector(".practice-sector-time");
-        var _vn = _r.querySelector(".practice-sector-vmax");
-        _r.style.background = _sd.info.col + "22";
-        _r.style.borderColor = _sd.info.col;
-        _r.style.boxShadow = "0 0 14px " + _sd.info.col + "40, inset 0 0 0 1px " + _sd.info.col + "55";
-        if (_tn) {
-          _tn.textContent = _sd.t.toFixed(3);
-          _tn.style.color = _sd.info.col;
-        }
-
-      }
-    }, 800 + 800 * _idx);
-  });
-  // Après l'animation → afficher modal ingénieur
-  setTimeout(function() {
-    clearInterval(_chronoInt);
-    if (_chronoEl) _chronoEl.textContent = _formatLapTime(lapTime);
-    if (_progEl) _progEl.style.width = "100%";
-    if (_curSecEl) {
-      _curSecEl.textContent = "TOUR TERMINÉ";
-      _curSecEl.style.color = "var(--muted)";
-    }
-    // Délai court puis modal ingénieur
-    setTimeout(function() {
-      _fpShowEngineerModal(lastTest, delta, isPB, sv, sx, sy, function() {
-        // Après fermeture du modal, reprendre le timer et re-rendre la section
-        _fpResumeTimer();
-        renderPracticeSection();
-        if (typeof renderAdvancedSetupUI === "function") renderAdvancedSetupUI();
-      });
-    }, 400);
-  }, 2500);
-}
-
 function _fpShowEngineerModal(testResult, delta, isPB, s1info, s2info, s3info, onClose) {
   // Supprimer modal existant
   var existing = document.getElementById("fp-engineer-modal");
@@ -19882,18 +19719,6 @@ function _fpShowEngineerModal(testResult, delta, isPB, s1info, s2info, s3info, o
     overlay.remove();
     if (typeof onClose === "function") onClose();
   });
-}
-
-function doEndPracticeSession() {
-  endPracticeSession();
-  // Reset timer pour nouvelle session
-  _fpStopTimer();
-  _fpTimerStart = null;
-  _fpTimerElapsed = 0;
-  _fpTimerPaused = false;
-  if (RACE_STATE.practice) RACE_STATE.practice._timerSessionIdx = -1;
-  renderPracticeSection();
-  if (typeof renderAdvancedSetupUI === "function") renderAdvancedSetupUI();
 }
 
 function backToSetupForPractice() {
@@ -20011,7 +19836,8 @@ function _buildSectorDialogue(s1, s2, s3) {
   }
 }
 
-function doPracticeTest() {
+function doPracticeTest() { return rjAppeler("doPracticeTest", _doPracticeTestCoeur, this, arguments); }
+function _doPracticeTestCoeur() {
   var e = RACE_STATE.practice;
   if (e) {
     var t = getPracticeMaxTests();
@@ -20194,7 +20020,8 @@ function doPracticeTest() {
   }
 }
 
-function doEndPracticeSession() {
+function doEndPracticeSession() { return rjAppeler("doEndPracticeSession", _doEndPracticeSessionCoeur, this, arguments); }
+function _doEndPracticeSessionCoeur() {
   endPracticeSession(), renderPracticeSection(), "function" == typeof renderAdvancedSetupUI && renderAdvancedSetupUI()
 }
 
@@ -20352,7 +20179,8 @@ function computeAdvancedStratScore() {
   }
 }
 
-function askEngineerHint() {
+function askEngineerHint() { return rjAppeler("askEngineerHint", _askEngineerHintCoeur, this, arguments); }
+function _askEngineerHintCoeur() {
   try {
     var team = typeof _getTeamPersonality === "function" ? _getTeamPersonality() : null;
     var engineer = team && team.engineer ? team.engineer : "L'ingénieur";
@@ -20551,7 +20379,8 @@ function computeRacePerformanceScore() {
   return Math.min(.98, Math.max(.02, (.4 * t + .35 * r + .25 * n) * a))
 }
 
-function calcPlayerRating() {
+function calcPlayerRating() { return rjAppeler("calcPlayerRating", _calcPlayerRatingCoeur, this, arguments); }
+function _calcPlayerRatingCoeur() {
   var e = G.substats;
   if (!e) {
     var t = G.stats,
@@ -20587,7 +20416,8 @@ function _hardCapForCategory(e) {
   return Math.min(95, getCategoryStatCap(e) + 12)
 }
 
-function gainSubStat(e, t) {
+function gainSubStat() { return rjAppeler("gainSubStat", _gainSubStatCoeur, this, arguments); }
+function _gainSubStatCoeur(e, t) {
   if (G.substats) {
     if (void 0 === G.substats[e]) {
       var r, n = {
@@ -20814,7 +20644,8 @@ function renderPilot() {
   }
 }
 
-function renderChamp() {
+function renderChamp() { return rjAppeler("renderChamp", _renderChampCoeur, this, arguments); }
+function _renderChampCoeur() {
   var e, t = [{
     name: (G.pilot.prenom ? G.pilot.prenom + " " : "") + G.pilot.nom,
     nat: G.pilot.nat,
@@ -21091,7 +20922,8 @@ function _h2hPointsChart(pRaces, rHistory, nbRaces) {
   return svg
 }
 
-function renderH2H() {
+function renderH2H() { return rjAppeler("renderH2H", _renderH2HCoeur, this, arguments); }
+function _renderH2HCoeur() {
   var c = document.getElementById('h2h-content');
   if (!c) return;
   var rivals = G.rivals || [];
@@ -23234,7 +23066,8 @@ function getTeamLogo(e) {
   return TEAM_LOGOS[e] || '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#1a1a1a"/><text x="20" y="25" text-anchor="middle" font-family="Arial Black" font-size="9" fill="#666">' + (e || "?").substring(0, 4).toUpperCase() + "</text></svg>"
 }
 
-function buildOffer(e) {
+function buildOffer() { return rjAppeler("buildOffer", _buildOfferCoeur, this, arguments); }
+function _buildOfferCoeur(e) {
   var t = Math.max(0, CATEGORIES.indexOf(e.cat)),
     r = Math.pow(1.8, t),
     n = e.role || "num2",
@@ -23258,7 +23091,8 @@ function buildOffer(e) {
   }
 }
 
-function getRoleInfo(e) {
+function getRoleInfo() { return rjAppeler("getRoleInfo", _getRoleInfoCoeur, this, arguments); }
+function _getRoleInfoCoeur(e) {
   return "num1" === e ? {
     label: "Pilote N°1",
     short: "N°1",
@@ -23283,7 +23117,8 @@ function getRoleInfo(e) {
   }
 }
 
-function renderOffers() {
+function renderOffers() { return rjAppeler("renderOffers", _renderOffersCoeur, this, arguments); }
+function _renderOffersCoeur() {
   var e = document.getElementById("ct-budget"),
     t = document.getElementById("ct-revenue");
   e && (e.textContent = G.budget.toLocaleString("fr-FR") + " e"), t && (t.textContent = (G.revenue > 0 ? "+" : "") + G.revenue.toLocaleString("fr-FR") + " e/mois");
@@ -23369,7 +23204,8 @@ function renderOffers() {
   }
 }
 
-function signContract(e) {
+function signContract() { return rjAppeler("signContract", _signContractCoeur, this, arguments); }
+function _signContractCoeur(e) {
   var t = G.offers[e];
   if (t) {
     var r;
@@ -23556,7 +23392,8 @@ function _applyAutoSetup() {
   }, G._lastAutoPrecision = e
 }
 
-function setAdvParam(e, t, r, n) {
+function setAdvParam() { return rjAppeler("setAdvParam", _setAdvParamCoeur, this, arguments); }
+function _setAdvParamCoeur(e, t, r, n) {
   try {
     r = Math.max(0, Math.min(10, parseInt(r) || 0)), G._advPrev || (G._advPrev = {
       setup: {},
@@ -23616,7 +23453,8 @@ function _shallowCloneNumeric(e) {
   }), t
 }
 
-function renderAdvSlider(e, t, r, n, a, i, o, s, l, c) {
+function renderAdvSlider() { return rjAppeler("renderAdvSlider", _renderAdvSliderCoeur, this, arguments); }
+function _renderAdvSliderCoeur(e, t, r, n, a, i, o, s, l, c) {
   var d = "setup" === t && "function" == typeof hasPracticeSystem && hasPracticeSystem();
   if (d && (!RACE_STATE || !RACE_STATE.practice || !RACE_STATE.practice.knowledge) && "function" == typeof initPracticeState) try {
     initPracticeState()
@@ -23696,7 +23534,8 @@ function _advBarClick(e, t, r, n) {
   }
 }
 
-function renderAdvancedSetupUI() {
+function renderAdvancedSetupUI() { return rjAppeler("renderAdvancedSetupUI", _renderAdvancedSetupUICoeur, this, arguments); }
+function _renderAdvancedSetupUICoeur() {
   var e = document.getElementById("advanced-setup-container");
   if (e) try {
     _renderAdvancedSetupUIInner(e)
@@ -23705,7 +23544,8 @@ function renderAdvancedSetupUI() {
   }
 }
 
-function _renderAdvancedSetupUIInner(e) {
+function _renderAdvancedSetupUIInner() { return rjAppeler("_renderAdvancedSetupUIInner", __renderAdvancedSetupUIInnerCoeur, this, arguments); }
+function __renderAdvancedSetupUIInnerCoeur(e) {
   G.setupAdv || applyPresetToAdvanced(G.setup || "bal"), G.stratAdv || applyStratPresetToAdvanced(G.strat || "manage"), G._advPrev || (G._advPrev = {
     setup: {},
     strat: {}
@@ -25572,7 +25412,8 @@ function getCircuitSectorRatios(e) {
   return "highspeed" === n ? [.3, .4, .3] : "technical" === n ? [.36, .33, .31] : "street" === n ? [.345, .355, .3] : "mixed" === n ? [.335, .335, .33] : [.34, .34, .32]
 }
 
-function splitLapIntoSectors(e, t, r) {
+function splitLapIntoSectors() { return rjAppeler("splitLapIntoSectors", _splitLapIntoSectorsCoeur, this, arguments); }
+function _splitLapIntoSectorsCoeur(e, t, r) {
   var n = getCircuitSectorRatios(t);
   r = void 0 === r ? .012 : r;
   var a = 2 * (Math.random() - .5) * r,
@@ -25774,7 +25615,8 @@ var RACE_STATE = {
   qualiPos: 0
 };
 
-function initRaceState() {
+function initRaceState() { return rjAppeler("initRaceState", _initRaceStateCoeur, this, arguments); }
+function _initRaceStateCoeur() {
   var e = getNextRace(),
     t = e ? e.name : "",
     r = getCircuitData(t),
@@ -25905,7 +25747,7 @@ if (typeof _socialFanHandle !== "function") {
 // injectApexIcons: called in updateUI() under typeof guard. No-op stub silences
 // the implicit code path. Replace with real injection if Apex icon lib is added.
 if (typeof injectApexIcons !== "function") {
-  window.injectApexIcons = function() {};
+  rjInscrire("injectApexIcons", { id: "03-data-agent:injectApexIcons", ordre: -300, remplace: function (args, suite) {} });
 }
 // recomputeGlobalRep: rebuilds G.reputation from G.rep components when an angle
 // or an event modifies a rep facet. Weighted average matching the implicit model.
@@ -25938,12 +25780,12 @@ function _rjSyncCurrentTeamStaff() {
     if (typeof updateUI !== "function") return;
     if (updateUI._rjStaffWrapped) return;
     var orig = updateUI;
-    window.updateUI = function rjUpdateUIStaffBridged() {
+    rjInscrire("updateUI", { id: "03-data-agent:updateUI", ordre: -300, remplace: function (args, suite) {
       try {
         _rjSyncCurrentTeamStaff()
       } catch (e) {}
-      return orig.apply(this, arguments);
-    };
+      return suite();
+    } });
     window.updateUI._rjStaffWrapped = true;
   } catch (e) {}
 })();

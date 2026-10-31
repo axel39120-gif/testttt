@@ -628,11 +628,11 @@
     if (!window.generateWeeklySocialFeed._ps25) {
       var origGen = window.generateWeeklySocialFeed;
       window._lastPreviewInject = window._lastPreviewInject || { saison: -1, week: -1 };
-      window.generateWeeklySocialFeed = function () {
+      rjInscrire("generateWeeklySocialFeed", { id: "29-media-consolidated:generateWeeklySocialFeed", ordre: -3700, remplace: function (args, suite) {
         var g = G();
         var need = !window.LAST_FEED_GEN_WEEK ||
           window.LAST_FEED_GEN_WEEK.saison !== g.saison || window.LAST_FEED_GEN_WEEK.week !== g.semaine;
-        var ret = origGen.apply(this, arguments);
+        var ret = suite();
         try {
           if (need && isPreSeason() &&
               (window._lastPreviewInject.saison !== g.saison || window._lastPreviewInject.week !== g.semaine)) {
@@ -641,7 +641,7 @@
           }
         } catch (e) { console.warn(TAG, 'inject preview:', e && e.message); }
         return ret;
-      };
+      } });
       window.generateWeeklySocialFeed._ps25 = true;
     }
 

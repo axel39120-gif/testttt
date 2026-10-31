@@ -85,7 +85,8 @@
     // --- getRoleInfo : badge / libellé du rôle ---
     if (fn('getRoleInfo') && !window.getRoleInfo._td14) {
       var origInfo = window.getRoleInfo;
-      window.getRoleInfo = function (e) {
+      rjInscrire("getRoleInfo", { id: "14-team-dynamics:getRoleInfo", ordre: -3500, remplace: function (args, suite) {
+      var e = args[0];
         if (e === 'num3') {
           return {
             label: 'Pilote N°3',
@@ -96,20 +97,21 @@
             icon: '🔧'
           };
         }
-        return origInfo.apply(this, arguments);
-      };
+        return suite();
+      } });
       window.getRoleInfo._td14 = true;
     }
 
     // --- _getRoleDesc : description longue du rôle ---
     if (fn('_getRoleDesc') && !window._getRoleDesc._td14) {
       var origDesc = window._getRoleDesc;
-      window._getRoleDesc = function (e, t) {
+      rjInscrire("_getRoleDesc", { id: "14-team-dynamics:_getRoleDesc", ordre: -3500, remplace: function (args, suite) {
+      var e = args[0], t = args[1];
         if (e === 'num3') {
           return 'Pilote de réserve / essais · Objectifs allégés · Impressionne pour décrocher un baquet titulaire';
         }
-        return origDesc.apply(this, arguments);
-      };
+        return suite();
+      } });
       window._getRoleDesc._td14 = true;
     }
 
@@ -118,8 +120,9 @@
     // facteur < 1 pour N°3 en post-traitement (sans toucher au cœur).
     if (fn('buildOffer') && !window.buildOffer._td14) {
       var origBuild = window.buildOffer;
-      window.buildOffer = function (e) {
-        var offer = origBuild.apply(this, arguments);
+      rjInscrire("buildOffer", { id: "14-team-dynamics:buildOffer", ordre: -3500, remplace: function (args, suite) {
+      var e = args[0];
+        var offer = suite();
         try {
           if (offer && e && e.role === 'num3') {
             offer.role = 'num3';
@@ -128,7 +131,7 @@
           }
         } catch (err) { /* no-op */ }
         return offer;
-      };
+      } });
       window.buildOffer._td14 = true;
     }
   }
@@ -560,11 +563,11 @@
   function installTrustWrap() {
     if (!fn('evaluateSeasonTrust') || window.evaluateSeasonTrust._td14) return;
     var orig = window.evaluateSeasonTrust;
-    window.evaluateSeasonTrust = function () {
-      var res = orig.apply(this, arguments); // fixe done/failed + confiance finale
+    rjInscrire("evaluateSeasonTrust", { id: "14-team-dynamics:evaluateSeasonTrust", ordre: -3500, remplace: function (args, suite) {
+      var res = suite(); // fixe done/failed + confiance finale
       try { evalEndSeasonFiring(); } catch (err) { console.warn(TAG, 'end-season firing:', err); }
       return res;
-    };
+    } });
     window.evaluateSeasonTrust._td14 = true;
   }
 

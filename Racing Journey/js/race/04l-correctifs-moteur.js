@@ -24,7 +24,7 @@
     window._rjFix2Installed = true;
     
     var origFinalize = window.finalizeLiveRace;
-    window.finalizeLiveRace = function rjFix2WrappedFinalize() {
+    rjInscrire("finalizeLiveRace", { id: "04l-correctifs-moteur:finalizeLiveRace:1", ordre: -901, remplace: function (args, suite) {
       // Garde idempotence : si finalize a déjà été appelée pour cette course,
       // on n'exécute pas une 2e fois (sinon points doublés, UI dupliquée).
       // Le flag est posé sur LIVE_RACE qui est recréé à chaque runRaceLive.
@@ -38,8 +38,8 @@
         LIVE_RACE._rjFinalized = true;
       }
       
-      return origFinalize.apply(this, arguments);
-    };
+      return suite();
+    } });
     return true;
   }
 
@@ -53,8 +53,8 @@
     window._rjFix3Installed = true;
     
     var origResetRaceScreen = window.resetRaceScreen;
-    window.resetRaceScreen = function rjFix3WrappedResetRaceScreen() {
-      var result = origResetRaceScreen.apply(this, arguments);
+    rjInscrire("resetRaceScreen", { id: "04l-correctifs-moteur:resetRaceScreen", ordre: -900, remplace: function (args, suite) {
+      var result = suite();
       
       // Reset complet de QUALI_STATE pour éviter persistance entre courses
       try {
@@ -82,7 +82,7 @@
       }
       
       return result;
-    };
+    } });
     return true;
   }
 

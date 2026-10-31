@@ -69,7 +69,8 @@ function _socialAvatar(e, t, r) {
   return '<div style="width:36px;height:36px;border-radius:50%;background:' + ("color-mix(in srgb," + t + " 18%, transparent)") + ";border:1px solid " + ("color-mix(in srgb," + t + " 45%, transparent)") + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (o = "driver" === e ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + t + '" stroke-width="2"><path d="M4 14v-3a8 8 0 0116 0v3"/><path d="M4 14h16v3a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>' : "team" === e ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + t + '" stroke-width="2"><path d="M12 2l8 3v7c0 5-3.5 8-8 10-4.5-2-8-5-8-10V5z"/></svg>' : "press" === e ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + t + '" stroke-width="2"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0014 0v-1M12 19v3"/></svg>' : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + t + '" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>') + "</div>"
 }
 
-function _addFeedPost(e) {
+function _addFeedPost() { return rjAppeler("_addFeedPost", __addFeedPostCoeur, this, arguments); }
+function __addFeedPostCoeur(e) {
   void 0 !== SETTINGS && !1 === SETTINGS.pressNotifications && e && "press" === e.type || (SOCIAL_FEED_ID++, e.id = "fp_" + SOCIAL_FEED_ID, e.saison = e.saison || G.saison, e.week = e.week || G.semaine, e.likes = e.likes || Math.floor(1500 * Math.random()) + 30, e.replies = e.replies || Math.floor(e.likes / 15), SOCIAL_FEED.unshift(e), SOCIAL_FEED.length > 80 && (SOCIAL_FEED = SOCIAL_FEED.slice(0, 80)))
 }
 
@@ -214,7 +215,8 @@ function _simulateOtherCatEvents(e) {
   return t
 }
 
-function generateWeeklySocialFeed() {
+function generateWeeklySocialFeed() { return rjAppeler("generateWeeklySocialFeed", _generateWeeklySocialFeedCoeur, this, arguments); }
+function _generateWeeklySocialFeedCoeur() {
   if (LAST_FEED_GEN_WEEK.saison !== G.saison || LAST_FEED_GEN_WEEK.week !== G.semaine) {
     LAST_FEED_GEN_WEEK = {
       saison: G.saison,
@@ -1429,7 +1431,8 @@ function renderRepAxesUI() {
   }
 }
 
-function generatePilotBio(e) {
+function generatePilotBio() { return rjAppeler("generatePilotBio", _generatePilotBioCoeur, this, arguments); }
+function _generatePilotBioCoeur(e) {
   var t = G.pilot.prenom || "Le pilote",
     r, n = (t + " " + (G.pilot.nom || "")).trim(),
     a = G.age,
@@ -1577,7 +1580,8 @@ function selectCareerFilter(e, t) {
   n && (n.textContent = "all" === e ? "Toute la carrière" : e), filterCareerStats(e)
 }
 
-function filterCareerStats(e) {
+function filterCareerStats() { return rjAppeler("filterCareerStats", _filterCareerStatsCoeur, this, arguments); }
+function _filterCareerStatsCoeur(e) {
   var t = window._careerAllSeasons || [],
     r = "all" === e ? t : t.filter(function(t) {
       return t.cat === e
@@ -1640,7 +1644,8 @@ function filterCareerStats(e) {
   }
 }
 
-function renderCareerDetail() {
+function renderCareerDetail() { return rjAppeler("renderCareerDetail", _renderCareerDetailCoeur, this, arguments); }
+function _renderCareerDetailCoeur() {
   try {
     var e = document.getElementById("career-detail-content");
     if (!e) return;
@@ -1765,7 +1770,8 @@ function renderCareerDetail() {
   }
 }
 
-function renderRepEvents() {
+function renderRepEvents() { return rjAppeler("renderRepEvents", _renderRepEventsCoeur, this, arguments); }
+function _renderRepEventsCoeur() {
   var e = document.getElementById("evt-media-list");
   if (e) {
     REP_EVENTS_PENDING.length ? (e.innerHTML = "", REP_EVENTS_PENDING.forEach(function(t, r) {
@@ -2176,7 +2182,8 @@ function getIgTier(e) {
   return IG_TIERS[0]
 }
 
-function fmtFollowers(e) {
+function fmtFollowers() { return rjAppeler("fmtFollowers", _fmtFollowersCoeur, this, arguments); }
+function _fmtFollowersCoeur(e) {
   return e >= 1e6 ? (e / 1e6).toFixed(1).replace(".0", "") + "M" : e >= 1e3 ? (e / 1e3).toFixed(1).replace(".0", "") + "K" : e.toString()
 }
 
@@ -2428,7 +2435,8 @@ function _renderFeedPost(e) {
   return '<div style="padding:11px 14px;border-bottom:1px solid var(--line);background:' + (e.isPlayer ? "var(--red-lo)" : "transparent") + ';display:flex;gap:10px">' + t + '<div style="flex:1;min-width:0"><div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span style="font-family:var(--font-display);font-size:12.5px;font-weight:800;color:var(--white);letter-spacing:.01em">' + _ppEscSafe(e.author) + '</span><span style="font-size:11px;color:var(--muted)">' + _ppEscSafe(e.handle) + '</span><span style="font-family:var(--font-display);font-size:8px;font-weight:800;color:' + e.color + ";background:color-mix(in srgb," + e.color + " 14%, transparent);padding:2px 5px;border:1px solid color-mix(in srgb," + e.color + ' 35%, transparent);letter-spacing:.12em;line-height:1">' + r + "</span>" + a + '<span style="margin-left:auto;font-size:10px;color:var(--dim);font-family:var(--font-display);letter-spacing:.06em">' + i + "</span></div>" + (n.length ? '<div style="font-size:10.5px;color:var(--text3);margin-bottom:4px;font-family:var(--font-body)">' + n.join(" · ") + "</div>" : "") + '<div style="font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap;font-family:var(--font-body);margin-bottom:6px">' + _ppEscSafe(e.body) + "</div>" + l + '<div style="display:flex;gap:14px;margin-top:6px;font-size:10.5px;color:var(--muted);font-family:var(--font-body)">' + o + s + "</div></div></div>"
 }
 
-function _fmtCompactNum(e) {
+function _fmtCompactNum() { return rjAppeler("_fmtCompactNum", __fmtCompactNumCoeur, this, arguments); }
+function __fmtCompactNumCoeur(e) {
   return e >= 1e6 ? (e / 1e6).toFixed(1).replace(".0", "") + "M" : e >= 1e3 ? (e / 1e3).toFixed(1).replace(".0", "") + "k" : String(e)
 }
 
@@ -3083,7 +3091,8 @@ function lstab(e) {
   }), "biens" === e && renderLsBiens(), "acheter" === e && lsShopCat(LS_SHOP_CAT), "activites" === e && renderLsActivities(), "vieperso" === e && renderVieperso()
 }
 
-function renderLifestyle() {
+function renderLifestyle() { return rjAppeler("renderLifestyle", _renderLifestyleCoeur, this, arguments); }
+function _renderLifestyleCoeur() {
   var e = document.getElementById("ls-sub");
   e && (e.textContent = "Bonheur " + G.happiness + " / 100"), lstab("biens")
 }
@@ -3229,7 +3238,8 @@ function sellItem(e) {
   }
 }
 
-function renderLsActivities() {
+function renderLsActivities() { return rjAppeler("renderLsActivities", _renderLsActivitiesCoeur, this, arguments); }
+function _renderLsActivitiesCoeur() {
   var e = document.getElementById("ls-activities-list");
   if (e) {
     e.innerHTML = "";
@@ -3747,7 +3757,8 @@ var _KARTING_PROMO_TARGET = {
 };
 
 // Génère un nouveau pilote junior pour combler une place vide
-function _generateNewKartingRookie(cat) {
+function _generateNewKartingRookie() { return rjAppeler("_generateNewKartingRookie", __generateNewKartingRookieCoeur, this, arguments); }
+function __generateNewKartingRookieCoeur(cat) {
   var firstNames = ["Tom", "Lucas", "Hugo", "Alex", "Marco", "Diego", "Pedro", "Yuki", "Liam", "Noah", "Mateo", "Andrea", "Felix", "Oscar", "Theo", "Kenji", "Naoki", "Ravi", "Carlos", "Mario"];
   var lastNames = ["Martin", "Dubois", "Rossi", "Schmidt", "Garcia", "Silva", "Tanaka", "Smith", "Williams", "Sato", "Berg", "Conti", "Vargas", "Park", "Brown", "King", "Hansen", "Petrov", "Costa", "Lefevre"];
   var nats = ["FR", "IT", "DE", "ES", "BR", "JP", "GB", "NL", "SE", "NO", "FI", "CA", "US", "AU", "BE", "AR", "DK", "CH", "KR", "PT"];

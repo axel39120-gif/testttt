@@ -489,7 +489,7 @@
     window._rjSCTickWrapperInstalled = true;
     
     var legacyTick = window.tickRace;
-    window.tickRace = function rjSCTickWrapped() {
+    rjInscrire("tickRace", { id: "04m-safety-car:tickRace", ordre: -1300, remplace: function (args, suite) {
       // Avant le tick : track les DNF déjà présents
       var dnfBefore = [];
       if (LIVE_RACE && LIVE_RACE.drivers) {
@@ -499,7 +499,7 @@
       }
       
       // Exécute le tick normal
-      var result = legacyTick.apply(this, arguments);
+      var result = suite();
       
       // Après le tick : check les nouveaux DNF
       if (LIVE_RACE && LIVE_RACE.drivers && !LIVE_RACE.finished) {
@@ -524,7 +524,7 @@
       _rjUpdateBadge();
       
       return result;
-    };
+    } });
     return true;
   }
 

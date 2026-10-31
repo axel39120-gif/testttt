@@ -45,14 +45,17 @@ function rjAppeler(nom, coeur, self, args) {
 
   L.forEach(function (h) { if (typeof h.avant === "function") essayer(h, "avant", [args]); });
 
+  /* remplace(args, suite) est appelé avec le this de l'appel d'origine ;
+     suite(autresArgs?) poursuit la chaîne, avec d'autres arguments au besoin. */
   var remplacants = L.filter(function (h) { return typeof h.remplace === "function"; });
-  function suite(k) {
-    return function () {
-      if (k >= remplacants.length) return coeur.apply(self, args);
-      return remplacants[k].remplace.call(remplacants[k], args, suite(k + 1));
+  function suite(k, a) {
+    return function (autres) {
+      var b = autres ? [].slice.call(autres) : a;
+      if (k >= remplacants.length) return coeur.apply(self, b);
+      return remplacants[k].remplace.call(self, b, suite(k + 1, b));
     };
   }
-  var r = suite(0)();
+  var r = suite(0, args)();
 
   L.forEach(function (h) {
     if (typeof h.apres !== "function") return;

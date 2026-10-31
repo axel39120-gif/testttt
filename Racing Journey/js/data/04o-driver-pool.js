@@ -1018,10 +1018,10 @@
     var origInitRivals = window.initRivals;
     _rjOrigInitRivalsRef = origInitRivals;  // Sauvegarde pour _rjExtractLegacyRosters
     
-    window.initRivals = function rjPoolWrappedInitRivals() {
+    rjInscrire("initRivals", { id: "04o-driver-pool:initRivals", ordre: -1500, remplace: function (args, suite) {
       // Si pool pas initialisé, on initialise (1ère fois)
       if (typeof G === "undefined" || !G) {
-        return origInitRivals.apply(this, arguments);
+        return suite();
       }
       
       _rjEnsurePool();
@@ -1033,18 +1033,18 @@
       
       // Si après init le pool est toujours vide, fallback legacy
       if (!G.driverPool || G.driverPool.length === 0) {
-        return origInitRivals.apply(this, arguments);
+        return suite();
       }
       
       // Sync G.rivals depuis le pool
       var ok = _rjSyncRivalsFromPool();
       if (!ok) {
         // Fallback legacy en cas d'échec
-        return origInitRivals.apply(this, arguments);
+        return suite();
       }
       
       // Pas de retour value
-    };
+    } });
     return true;
   }
 

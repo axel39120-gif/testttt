@@ -394,15 +394,16 @@
     window._rjNavMoreRaceHeaderPatched = true;
 
     var orig = window.navMore;
-    window.navMore = function rjNavMoreWithRaceHeader(screenId) {
-      var ret = orig.apply(this, arguments);
+    rjInscrire("navMore", { id: "09-race-header:navMore", ordre: -3400, remplace: function (args, suite) {
+      var screenId = args[0];
+      var ret = suite();
       try {
         if (screenId === 'S-race') {
           setTimeout(updateRaceHeader, 30);
         }
       } catch (e) {}
       return ret;
-    };
+    } });
     return true;
   }
 

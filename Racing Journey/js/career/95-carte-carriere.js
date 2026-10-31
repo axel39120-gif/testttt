@@ -858,10 +858,10 @@
     _orig74 = window._rj74Terminer;
     /* Le bouton des Paramètres appelle _rj74Terminer : on l'intercepte pour
        présenter notre confirmation, puis on appelle l'original. */
-    window._rj74Terminer = function () {
+    rjInscrire("_rj74Terminer", { id: "95-carte-carriere:_rj74Terminer", ordre: -6900, remplace: function (args, suite) {
       demanderConfirmation();
       return true;
-    };
+    } });
     window._rj74Terminer._rj95 = true;
     window._rj74Terminer._origine = _orig74;
     return true;

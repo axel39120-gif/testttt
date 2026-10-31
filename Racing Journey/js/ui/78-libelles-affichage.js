@@ -57,7 +57,14 @@
       };
       f1._rj78 = true;
       wrapped.goToNextRaceStep = o1;
-      window.goToNextRaceStep = f1;
+      rjInscrire("goToNextRaceStep", { id: "78-libelles-affichage:goToNextRaceStep", ordre: -4000, remplace: function (args, suite) {
+        try {
+          if (typeof RACE_WEEKEND_STATE !== "undefined" && RACE_WEEKEND_STATE) {
+            RACE_WEEKEND_STATE.prepDone = true;
+          }
+        } catch (e) {}
+        return suite();
+      } });
     }
 
     if (typeof window.updateRaceTabsVisibility === "function" && !window.updateRaceTabsVisibility._rj78) {
@@ -80,7 +87,22 @@
       };
       f2._rj78 = true;
       wrapped.updateRaceTabsVisibility = o2;
-      window.updateRaceTabsVisibility = f2;
+      rjInscrire("updateRaceTabsVisibility", { id: "78-libelles-affichage:updateRaceTabsVisibility", ordre: -4000, remplace: function (args, suite) {
+        var r = suite();
+        try {
+          var w = (typeof RACE_WEEKEND_STATE !== "undefined") ? RACE_WEEKEND_STATE : null;
+          var t = document.getElementById("race-tab-essais");
+          if (w && t && !w.prepDone && !w.essaisDone && !w.qualifDone) {
+            t.style.opacity = "0.3";
+            t.style.color = "var(--text3)";
+            t.style.pointerEvents = "none";
+            t.style.cursor = "not-allowed";
+            t.setAttribute("disabled", "disabled");
+            t.setAttribute("aria-disabled", "true");
+          }
+        } catch (e) {}
+        return r;
+      } });
     }
 
     // Filet : même un appel programmatique est refusé.
@@ -128,7 +150,11 @@
       };
       f._rj78 = true;
       wrapped.renderLiveLeaderboard = o;
-      window.renderLiveLeaderboard = f;
+      rjInscrire("renderLiveLeaderboard", { id: "78-libelles-affichage:renderLiveLeaderboard", ordre: -4000, remplace: function (args, suite) {
+        var r = suite();
+        try { normaliserEcarts(); } catch (e) {}
+        return r;
+      } });
       note("6-ecarts");
     }
   }
@@ -180,7 +206,16 @@
       };
       f._rj78 = true;
       wrapped._generateNewKartingRookie = o;
-      window._generateNewKartingRookie = f;
+      rjInscrire("_generateNewKartingRookie", { id: "78-libelles-affichage:_generateNewKartingRookie", ordre: -4000, remplace: function (args, suite) {
+        var d = suite();
+        try {
+          if (d) {
+            if (d.name) d.name = nettoyerNom(d.name);
+            if (d.lastName) d.lastName = nettoyerNom(d.lastName);
+          }
+        } catch (e) {}
+        return d;
+      } });
     }
     nettoyerVivier();
     note("11-noms");
@@ -338,7 +373,11 @@
     };
     f._rj78 = true;
     wrapped._qualiTyreLapImpact = o;
-    window._qualiTyreLapImpact = f;
+    rjInscrire("_qualiTyreLapImpact", { id: "78-libelles-affichage:_qualiTyreLapImpact", ordre: -4000, remplace: function (args, suite) {
+      var v = suite();
+      try { if (typeof v === "number" && isFinite(v) && v > 0) v = v * 0.5; } catch (e) {}
+      return v;
+    } });
     note("2-qualif");
   }
 
@@ -502,9 +541,9 @@
   function installerBio() {
     if (!fn("generatePilotBio") || window.generatePilotBio._rj91) return false;
     _origBio = window.generatePilotBio;
-    window.generatePilotBio = function () {
+    rjInscrire("generatePilotBio", { id: "78-libelles-affichage:generatePilotBio", ordre: -4000, remplace: function (args, suite) {
       var texte = "";
-      try { texte = _origBio.apply(this, arguments) || ""; } catch (e) { texte = ""; }
+      try { texte = suite() || ""; } catch (e) { texte = ""; }
       try {
         var phrase = phraseEcurieDeCoeur();
         if (phrase) {
@@ -512,7 +551,7 @@
         }
       } catch (e) { console.warn(TAG, "biographie :", e && e.message); }
       return texte;
-    };
+    } });
     window.generatePilotBio._rj91 = true;
     return true;
   }
@@ -737,12 +776,12 @@
   function installerH2H() {
     if (!fn("renderH2H") || window.renderH2H._rj91) return false;
     _origH2H = window.renderH2H;
-    window.renderH2H = function () {
-      var r = _origH2H.apply(this, arguments);
+    rjInscrire("renderH2H", { id: "78-libelles-affichage:renderH2H", ordre: -4000, remplace: function (args, suite) {
+      var r = suite();
       try { remplacerGraphique(); }
       catch (e) { console.warn(TAG, "tableau des points :", e && e.message); }
       return r;
-    };
+    } });
     window.renderH2H._rj91 = true;
     return true;
   }

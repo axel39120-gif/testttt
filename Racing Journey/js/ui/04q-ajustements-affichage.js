@@ -30,10 +30,10 @@
     if (window.showSaveMenu._rjPolishedSave) return true;
 
     var orig = window.showSaveMenu;
-    window.showSaveMenu = function rjShowSaveMenuWrapped() {
+    rjInscrire("showSaveMenu", { id: "04q-ajustements-affichage:showSaveMenu", ordre: -1000, remplace: function (args, suite) {
       var r;
       try {
-        r = orig.apply(this, arguments);
+        r = suite();
       } catch (err) {
         console.warn("[04q] showSaveMenu orig error:", err);
       }
@@ -59,7 +59,7 @@
         console.warn("[04q] showSaveMenu post error:", e);
       }
       return r;
-    };
+    } });
     window.showSaveMenu._rjPolishedSave = true;
     console.log("[04q] showSaveMenu wrapped (bandeau S-save fix)");
     return true;
@@ -593,14 +593,14 @@
     if (window._sbUpdateTeams._rjSandboxConstrained) return true;
 
     var orig = window._sbUpdateTeams;
-    window._sbUpdateTeams = function rjSbUpdateTeamsConstrained() {
+    rjInscrire("_sbUpdateTeams", { id: "04q-ajustements-affichage:_sbUpdateTeams", ordre: -1000, remplace: function (args, suite) {
       var r;
-      try { r = orig.apply(this, arguments); }
+      try { r = suite(); }
       catch (e) { console.warn("[04q] _sbUpdateTeams orig:", e); }
       // Après que l'orig a peuplé le select, applique la contrainte
       applySandboxIndepConstraint();
       return r;
-    };
+    } });
     window._sbUpdateTeams._rjSandboxConstrained = true;
     console.log("[04q] _sbUpdateTeams wrapped (no Indépendant hors Karting Junior)");
     return true;
@@ -803,7 +803,7 @@
       have = true;
       if (!window.renderTimingBoard._rjPn) {
         var o1 = window.renderTimingBoard;
-        window.renderTimingBoard = function () { var r = o1.apply(this, arguments); try { _injectQuali(); } catch (e) {} return r; };
+        rjInscrire("renderTimingBoard", { id: "04q-ajustements-affichage:renderTimingBoard", ordre: -1000, remplace: function (args, suite) { var r = suite(); try { _injectQuali(); } catch (e) {} return r; } });
         window.renderTimingBoard._rjPn = true;
       }
     }

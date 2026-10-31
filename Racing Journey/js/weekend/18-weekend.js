@@ -175,7 +175,7 @@
     var WARMUP_MS = 1900;   // durée visuelle du tour de chauffe
     var CHRONO_MS = 3600;   // durée visuelle du tour chrono
 
-    window.doPracticeTest = function () {
+    rjInscrire("doPracticeTest", { id: "18-weekend:doPracticeTest", ordre: -3800, remplace: function (args, suite) {
       var pr = (typeof RACE_STATE !== "undefined") ? RACE_STATE.practice : null;
       if (!pr) return;
       if (pr.testsThisSession >= getPracticeMaxTests()) {
@@ -324,13 +324,13 @@
           }
         }, 450);
       }, WARMUP_MS + CHRONO_MS);
-    };
+    } });
 
     // ========================================================================
     // 3. doEndPracticeSession — version correcte (reset timer entre sessions)
     // ========================================================================
 
-    window.doEndPracticeSession = function () {
+    rjInscrire("doEndPracticeSession", { id: "18-weekend:doEndPracticeSession", ordre: -3800, remplace: function (args, suite) {
       if (typeof endPracticeSession === "function") endPracticeSession();
       // Réarmer le timer pour la nouvelle session
       if (typeof RACE_STATE !== "undefined" && RACE_STATE.practice) {
@@ -339,7 +339,7 @@
       if (typeof _fpStopTimer === "function") _fpStopTimer();
       if (typeof renderPracticeSection === "function") renderPracticeSection();
       if (typeof renderAdvancedSetupUI === "function") renderAdvancedSetupUI();
-    };
+    } });
 
     // ========================================================================
     // 4. CURSEURS DE RÉGLAGES INTÉGRÉS À LA SÉANCE
@@ -621,12 +621,12 @@
 
     // Enrobage de renderPracticeSection
     var _origRender = window.renderPracticeSection;
-    window.renderPracticeSection = function () {
-      var out = _origRender.apply(this, arguments);
+    rjInscrire("renderPracticeSection", { id: "18-weekend:renderPracticeSection", ordre: -3600, remplace: function (args, suite) {
+      var out = suite();
       try { injectRivalsBoard(); } catch (e) { console.warn("[12] injectRivalsBoard:", e); }
       try { injectSetupPanel(); } catch (e) { console.warn("[12] injectSetupPanel:", e); }
       return out;
-    };
+    } });
 
     // Si la section est déjà à l'écran au moment de l'install, on rafraîchit.
     try {
@@ -1927,21 +1927,21 @@
     }
 
     // getPracticeMaxTests neutralisé (le chrono est désormais le limiteur)
-    window.getPracticeMaxTests = function () { return 9999; };
+    rjInscrire("getPracticeMaxTests", { id: "18-weekend:getPracticeMaxTests", ordre: -3600, remplace: function (args, suite) { return 9999; } });
 
     // 3 séances d'essais pour la plupart des catégories (Karting : 2)
     if (!window._rjFplSessionsPatched) {
       window._rjFplSessionsPatched = true;
-      window.getPracticeMaxSessions = function () {
+      rjInscrire("getPracticeMaxSessions", { id: "18-weekend:getPracticeMaxSessions", ordre: -3600, remplace: function (args, suite) {
         var c = (typeof G !== "undefined" && G.cat) || "";
         return (c === "Karting Junior" || c === "Karting Senior") ? 2 : 3;
-      };
+      } });
     }
 
     // Remplacements
-    window.renderPracticeSection = function () { try { render(); } catch (e) { console.error("[13] render:", e); } };
-    window.doPracticeTest = function () { /* legacy — remplacé par le flux de relais */ var pr = ensureLive(); if (pr && !pr._live.onTrack) startRun(pr); };
-    window.doEndPracticeSession = function () { var pr = ensureLive(); if (pr) advanceSession(pr); };
+    rjInscrire("renderPracticeSection", { id: "18-weekend:renderPracticeSection:1", ordre: -3601, remplace: function (args, suite) { try { render(); } catch (e) { console.error("[13] render:", e); } } });
+    rjInscrire("doPracticeTest", { id: "18-weekend:doPracticeTest:1", ordre: -3801, remplace: function (args, suite) { /* legacy — remplacé par le flux de relais */ var pr = ensureLive(); if (pr && !pr._live.onTrack) startRun(pr); } });
+    rjInscrire("doEndPracticeSession", { id: "18-weekend:doEndPracticeSession:1", ordre: -3801, remplace: function (args, suite) { var pr = ensureLive(); if (pr) advanceSession(pr); } });
 
     // Premier rendu si la section est déjà visible
     try {
@@ -2297,7 +2297,7 @@
       // Course intermédiaire : on neutralise la clôture de semaine.
       var savedSemaine = (G && typeof G.semaine === 'number') ? G.semaine : null;
       var origTicks = window.runWeeklyTicks;
-      window.runWeeklyTicks = function () { /* différé jusqu'à la dernière course */ };
+      rjInscrire("runWeeklyTicks", { id: "18-weekend:runWeeklyTicks", ordre: -3600, remplace: function (args, suite) { /* différé jusqu'à la dernière course */ } });
       try {
         coeur();    // calcule pos/pts + push G.races (clôture neutralisée)
       } finally {
@@ -2330,8 +2330,8 @@
   function installPracticeReset() {
     if (fn('initRaceState') && !window.initRaceState._rjPracReset) {
       var origIRS = window.initRaceState;
-      window.initRaceState = function () {
-        var r = origIRS.apply(this, arguments);
+      rjInscrire("initRaceState", { id: "18-weekend:initRaceState", ordre: -3600, remplace: function (args, suite) {
+        var r = suite();
         try {
           if (fn('hasPracticeSystem') && window.hasPracticeSystem()) {
             var G = G_(), rs = window.RACE_STATE;
@@ -2347,7 +2347,7 @@
           }
         } catch (e) { /* no-op */ }
         return r;
-      };
+      } });
       window.initRaceState._rjPracReset = true;
     }
   }
@@ -2947,11 +2947,11 @@
     if (typeof window._qualiPickTiming !== "function") return false;
     if (window._qualiPickTiming._rj46) return true;
     _origPick = window._qualiPickTiming;
-    window._qualiPickTiming = function () {
-      var r = _origPick.apply(this, arguments);
+    rjInscrire("_qualiPickTiming", { id: "18-weekend:_qualiPickTiming", ordre: -3600, remplace: function (args, suite) {
+      var r = suite();
       try { habillerBouton(intitule()); } catch (e) {}
       return r;
-    };
+    } });
     window._qualiPickTiming._rj46 = true;
     return true;
   }
@@ -2960,15 +2960,15 @@
     if (typeof window.renderQualiSession !== "function") return false;
     if (window.renderQualiSession._rj46) return true;
     _origRender = window.renderQualiSession;
-    window.renderQualiSession = function () {
+    rjInscrire("renderQualiSession", { id: "18-weekend:renderQualiSession", ordre: -3600, remplace: function (args, suite) {
       try {
         var cle = clePhase();
         if (cle !== _dernierePhase) { reinitialiserSecteurs(); _dernierePhase = cle; }
       } catch (e) {}
-      var r = _origRender.apply(this, arguments);
+      var r = suite();
       try { habillerEnTete(); } catch (e) { console.warn("[46-qualif] en-tête :", e && e.message); }
       return r;
-    };
+    } });
     window.renderQualiSession._rj46 = true;
     return true;
   }
@@ -3175,7 +3175,12 @@
         return origSplit.apply(this, arguments);
       };
       fnSplit._rj69 = true;
-      window.splitLapIntoSectors = fnSplit;
+      rjInscrire("splitLapIntoSectors", { id: "18-weekend:splitLapIntoSectors", ordre: -3600, remplace: function (args, suite) {
+        // La photo doit être prise AVANT que l'appelant ne mette à jour les
+        // meilleurs secteurs avec le découpage optimiste.
+        try { photo = prendrePhoto(); } catch (e) {}
+        return suite();
+      } });
     }
 
     if (typeof window._qualiHotLapSequence === "function" && !window._qualiHotLapSequence._rj69) {
@@ -3197,7 +3202,23 @@
         return origSeq.call(this, lapTime, session, lap, totalLaps, suite);
       };
       fnSeq._rj69 = true;
-      window._qualiHotLapSequence = fnSeq;
+      rjInscrire("_qualiHotLapSequence", { id: "18-weekend:_qualiHotLapSequence", ordre: -3600, remplace: function (args, suite) {
+      var lapTime = args[0], session = args[1], lap = args[2], totalLaps = args[3], onDone = args[4];
+        var ph = photo;
+        var suite = function (finalTime) {
+          try {
+            if (ph && typeof finalTime === "number" && isFinite(finalTime)) {
+              restaurerPhoto(ph);
+              reattribuer(finalTime);
+            }
+          } catch (e) {
+            etat.erreur = String(e && e.message || e);
+            console.warn(TAG, e);
+          }
+          return onDone.apply(this, arguments);
+        };
+        return suite([lapTime, session, lap, totalLaps, suite]);
+      } });
     }
 
     return !!(origSplit && origSeq);

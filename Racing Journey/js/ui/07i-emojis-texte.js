@@ -182,12 +182,13 @@
     if (typeof window.showToast !== 'function') return;
     if (window.showToast._rjEmojiWrapped) return;
     var orig = window.showToast;
-    window.showToast = function(text) {
+    rjInscrire("showToast", { id: "07i-emojis-texte:showToast", ordre: -2800, remplace: function (args, suite) {
+      var text = args[0];
       try {
         if (typeof text === 'string') text = window._rjStripEmoji(text);
       } catch (e) {}
-      return orig.call(this, text);
-    };
+      return suite([text]);
+    } });
     window.showToast._rjEmojiWrapped = true;
   })();
 
@@ -197,7 +198,8 @@
     if (typeof window.pushMail !== 'function') return;
     if (window.pushMail._rjEmojiWrapped) return;
     var orig = window.pushMail;
-    window.pushMail = function(e) {
+    rjInscrire("pushMail", { id: "07i-emojis-texte:pushMail", ordre: -2800, remplace: function (args, suite) {
+      var e = args[0];
       if (e && typeof e === 'object') {
         try {
           if (typeof e.subject === 'string') e.subject = window._rjStripEmoji(e.subject);
@@ -213,8 +215,8 @@
           }
         } catch (err) { console.warn('[07] pushMail wrap failed:', err); }
       }
-      return orig.call(this, e);
-    };
+      return suite([e]);
+    } });
     window.pushMail._rjEmojiWrapped = true;
   })();
 
@@ -223,15 +225,16 @@
     if (typeof window._addFeedPost !== 'function') return;
     if (window._addFeedPost._rjEmojiWrapped) return;
     var orig = window._addFeedPost;
-    window._addFeedPost = function(post) {
+    rjInscrire("_addFeedPost", { id: "07i-emojis-texte:_addFeedPost", ordre: -2800, remplace: function (args, suite) {
+      var post = args[0];
       if (post && typeof post === 'object') {
         try {
           if (typeof post.body === 'string') post.body = window._rjEmojiToSvg(post.body);
           if (typeof post.author === 'string') post.author = window._rjStripEmoji(post.author);
         } catch (e) {}
       }
-      return orig.call(this, post);
-    };
+      return suite([post]);
+    } });
     window._addFeedPost._rjEmojiWrapped = true;
   })();
 

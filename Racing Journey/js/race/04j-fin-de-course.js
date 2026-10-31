@@ -33,12 +33,12 @@ function _rjForceReactivateRaceButton(raison) {
     
     var origFinalize = window.finalizeLiveRace;
     
-    window.finalizeLiveRace = function rjGuardedFinalize() {
+    rjInscrire("finalizeLiveRace", { id: "04j-fin-de-course:finalizeLiveRace", ordre: -800, remplace: function (args, suite) {
       var startedAt = Date.now();
       var caughtError = null;
       
       try {
-        return origFinalize.apply(this, arguments);
+        return suite();
       } catch(e) {
         caughtError = e;
         console.error("[RJ] finalizeLiveRace a planté :", e && e.message, e && e.stack);
@@ -78,7 +78,7 @@ function _rjForceReactivateRaceButton(raison) {
           }
         }
       }
-    };
+    } });
   }
   
   tryInstall();

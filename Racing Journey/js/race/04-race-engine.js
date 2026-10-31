@@ -653,7 +653,8 @@ function _getCircuitProfile(name) {
 
 // Retourne le profil d'une écurie pour une catégorie donnée.
 // F1 : profils explicites ; autres catégories : génération déterministe modérée (±0.2).
-function _getTeamProfile(team, cat) {
+function _getTeamProfile() { return rjAppeler("_getTeamProfile", __getTeamProfileCoeur, this, arguments); }
+function __getTeamProfileCoeur(team, cat) {
   if (!team || team === 'Indépendant') return [0, 0, 0, 0];
   if (cat === 'Formule 1' && _TEAM_PROFILES_F1[team]) return _TEAM_PROFILES_F1[team];
   // Génération procédurale stable
@@ -723,7 +724,8 @@ function getQualiElimCount(e) {
   return Math.max(0, t - r)
 }
 
-function qualiDriverTime(e, t, r, n, a) {
+function qualiDriverTime() { return rjAppeler("qualiDriverTime", _qualiDriverTimeCoeur, this, arguments); }
+function _qualiDriverTimeCoeur(e, t, r, n, a) {
   var baseRef = QUALI_STATE.baseRef;
   // Skill effect: skill in [0.4,1.0]. Mapping centered at 0.75 → 0% delta. Above → faster, below → slower.
   // Slope: each 0.10 above 0.75 = -0.7% lap time. So skill 0.85 → -0.7%, skill 1.0 → -1.75%.
@@ -1199,7 +1201,8 @@ function _resetQualiTyreForNewSeason() {
  * S'affiche uniquement pour les tours chauds du joueur (pas de reconnaissance).
  * La résolution est rapide — tap/click, pas de lecture longue.
  * ============================================================================ */
-function _qualiHotLapSequence(lapTime, session, lap, totalLaps, onDone) {
+function _qualiHotLapSequence() { return rjAppeler("_qualiHotLapSequence", __qualiHotLapSequenceCoeur, this, arguments); }
+function __qualiHotLapSequenceCoeur(lapTime, session, lap, totalLaps, onDone) {
   try {
     var circuit = QUALI_STATE.circuitName || "";
     var weather = (RACE_STATE && RACE_STATE.weather) || {
@@ -1501,7 +1504,8 @@ function _qualiWarmupTyres() {
 }
 
 // --- Calcul de l'impact pneus sur le chrono ---
-function _qualiTyreLapImpact() {
+function _qualiTyreLapImpact() { return rjAppeler("_qualiTyreLapImpact", __qualiTyreLapImpactCoeur, this, arguments); }
+function __qualiTyreLapImpactCoeur() {
   var cfg = QUALI_STATE._tyreConfig;
   var ts = QUALI_STATE._tyreState;
   if (!cfg || !ts) return 0;
@@ -1705,7 +1709,8 @@ function _renderTimingChoice(session) {
   return html;
 }
 
-function _qualiPickTiming(id) {
+function _qualiPickTiming() { return rjAppeler("_qualiPickTiming", __qualiPickTimingCoeur, this, arguments); }
+function __qualiPickTimingCoeur(id) {
   QUALI_STATE._timingChoice = id;
   QUALI_STATE._timingChosen = true;
   // Mettre à jour l'affichage
@@ -1723,7 +1728,8 @@ function _qualiPickTiming(id) {
 }
 
 // --- Rendu enrichi de la session ---
-function renderQualiSession() {
+function renderQualiSession() { return rjAppeler("renderQualiSession", _renderQualiSessionCoeur, this, arguments); }
+function _renderQualiSessionCoeur() {
   _rjUpdateBroadcastTitles();
   var e = QUALI_STATE.session;
   var t = QUALI_STATE.survived;
@@ -1792,7 +1798,8 @@ function driverBadge(e, t, r) {
   return a && !o ? '<span style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle;margin-right:5px;flex-shrink:0">' + ('<span style="display:inline-flex;width:' + r + "px;height:" + r + 'px;border-radius:2px;overflow:hidden;flex-shrink:0">' + TEAM_LOGOS[e].replace(/<svg([^>]*?)width="40" height="40"/, '<svg$1width="' + r + '" height="' + r + '"') + "</span>") + ('<span style="display:inline-flex;flex-shrink:0">' + flagSvg(i, n) + "</span>") + "</span>" : a ? '<span style="display:inline-flex;width:' + r + "px;height:" + r + 'px;border-radius:2px;overflow:hidden;vertical-align:middle;margin-right:5px;flex-shrink:0">' + TEAM_LOGOS[e].replace(/<svg([^>]*?)width="40" height="40"/, '<svg$1width="' + r + '" height="' + r + '"') + "</span>" : '<span style="display:inline-flex;vertical-align:middle;margin-right:5px;flex-shrink:0">' + flagSvg(i, r) + "</span>"
 }
 
-function renderTimingBoard(e, t, r) {
+function renderTimingBoard() { return rjAppeler("renderTimingBoard", _renderTimingBoardCoeur, this, arguments); }
+function _renderTimingBoardCoeur(e, t, r) {
   var n = QUALI_STATE.drivers,
     a = getQualiCutoff(e),
     i = t.slice().sort(function(e, t) {
@@ -2191,7 +2198,8 @@ function finishQuali(e, t) {
 }
 var CURRENT_EVT_IDX = 0;
 
-function showNextRaceEvent() {
+function showNextRaceEvent() { return rjAppeler("showNextRaceEvent", _showNextRaceEventCoeur, this, arguments); }
+function _showNextRaceEventCoeur() {
   try {
     var _p = (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE.drivers) ? LIVE_RACE.drivers.find(function(d) {
       return d.isPlayer
@@ -2253,7 +2261,8 @@ function _hideRaceEventModal() {
   e && (e.innerHTML = "", e.style.display = "none", e.parentNode && e.parentNode.removeChild(e)), void 0 !== LIVE_RACE && LIVE_RACE && (LIVE_RACE.paused = !1)
 }
 
-function resolveRaceEvt(e, t) {
+function resolveRaceEvt() { return rjAppeler("resolveRaceEvt", _resolveRaceEvtCoeur, this, arguments); }
+function _resolveRaceEvtCoeur(e, t) {
   var r = RACE_STATE.events[e];
   if (r) {
     var phaseMul = 1;
@@ -2544,7 +2553,8 @@ var LIVE_RACE = {
  * "push"    : pneus poussés — +0.18s/tour wearSec, +0.012 score/tour
  * "manage"  : gestion active — -30% dégradation, -0.008 score/tour (perte de rythme)
  * Le mode est appliqué dans _tickTyreWear et dans tickRace pour le score. */
-function _setTyreMode(mode) {
+function _setTyreMode() { return rjAppeler("_setTyreMode", __setTyreModeCoeur, this, arguments); }
+function __setTyreModeCoeur(mode) {
   if (!LIVE_RACE || LIVE_RACE.finished) return;
   var prev = LIVE_RACE._tyreMode || "normal";
   if (prev === mode) return;
@@ -4878,7 +4888,8 @@ function buildRaceCtx() {
   }
 }
 
-function _getEffectiveSkillFor(e) {
+function _getEffectiveSkillFor() { return rjAppeler("_getEffectiveSkillFor", __getEffectiveSkillForCoeur, this, arguments); }
+function __getEffectiveSkillForCoeur(e) {
   var t = G.substats || {},
     r = G.pilot && G.pilot.style ? G.pilot.style : "complet",
     n = 50;
@@ -5004,7 +5015,8 @@ function _getActionContextDelta(actionType, actionCtx) {
   return Math.max(-8, Math.min(8, d));
 }
 
-function _computeChoiceOutcomes(e, t, actionCtx) {
+function _computeChoiceOutcomes() { return rjAppeler("_computeChoiceOutcomes", __computeChoiceOutcomesCoeur, this, arguments); }
+function __computeChoiceOutcomesCoeur(e, t, actionCtx) {
   var skill = _getEffectiveSkillFor(t);
   var ctx = _getContextualRiskDelta();
   // Extraire la contribution mentale pour l'affichage
@@ -6562,7 +6574,8 @@ var CHOICE_RACE_EVENTS = [{
   }
 }];
 
-function tryTriggerChoiceRaceEvent() {
+function tryTriggerChoiceRaceEvent() { return rjAppeler("tryTriggerChoiceRaceEvent", _tryTriggerChoiceRaceEventCoeur, this, arguments); }
+function _tryTriggerChoiceRaceEventCoeur() {
   if (LIVE_RACE && !LIVE_RACE.finished && !LIVE_RACE.paused && ( // ===== DÉCLENCHEURS EVENTS DE CRISE =====
       (function() {
         try {
@@ -6869,7 +6882,8 @@ function _radioFlavor(p) {
   return p.lang[Math.floor(Math.random() * p.lang.length)]
 }
 
-function tryContextualRadio() {
+function tryContextualRadio() { return rjAppeler("tryContextualRadio", _tryContextualRadioCoeur, this, arguments); }
+function _tryContextualRadioCoeur() {
   try {
     if (!LIVE_RACE || LIVE_RACE.finished || LIVE_RACE.paused) return;
     LIVE_RACE._lastRadioLap = LIVE_RACE._lastRadioLap || -99;
@@ -6992,7 +7006,8 @@ function tryContextualRadio() {
 
 
 
-function buildLiveEventSchedule(e) {
+function buildLiveEventSchedule() { return rjAppeler("buildLiveEventSchedule", _buildLiveEventScheduleCoeur, this, arguments); }
+function _buildLiveEventScheduleCoeur(e) {
   var t = RACE_STATE.circuitData || {},
     r = RACE_STATE.weather || {
       id: "dry"
@@ -11245,7 +11260,8 @@ function _rivalIdxAtPos(e) {
   return t ? t.rivalIdx : null
 }
 
-function _riAhead(e) {
+function _riAhead() { return rjAppeler("_riAhead", __riAheadCoeur, this, arguments); }
+function __riAheadCoeur(e) {
   var t = _playerPos();
   if (t <= 1) return null;
   for (var r = e || 1, n = [], a = Math.max(1, t - r); a < t; a++) {
@@ -11255,7 +11271,8 @@ function _riAhead(e) {
   return n.length ? n[Math.floor(Math.random() * n.length)] : null
 }
 
-function _riBehind(e) {
+function _riBehind() { return rjAppeler("_riBehind", __riBehindCoeur, this, arguments); }
+function __riBehindCoeur(e) {
   var t = _playerPos(),
     r = _gridSize();
   if (t >= r) return null;
@@ -12189,7 +12206,8 @@ function getTeammateRival() {
   }) || null
 }
 
-function _getRoleDesc(e, t) {
+function _getRoleDesc() { return rjAppeler("_getRoleDesc", __getRoleDescCoeur, this, arguments); }
+function __getRoleDescCoeur(e, t) {
   var r = getTeammateRival(),
     n = r && r.name ? r.name.split(" ").pop() : "ton coéquipier";
   return "num1" === e ? "Pilote de référence de l'équipe · Priorité stratégie & développement" : "equal" === e ? "Pas de consignes d'équipe · Rivalité ouverte avec " + n : "Apprentissage & soutien · Coéquipier : " + n
@@ -12477,7 +12495,8 @@ function _sanitizeMentalAndTrust() {
   PILOT_MENTAL.streakBad = 0;
 }
 
-function evaluateSeasonTrust() {
+function evaluateSeasonTrust() { return rjAppeler("evaluateSeasonTrust", _evaluateSeasonTrustCoeur, this, arguments); }
+function _evaluateSeasonTrustCoeur() {
   if (!G.currentTeam || "Indépendant" === G.currentTeam) return {
     delta: 0,
     summary: []
@@ -13002,7 +13021,8 @@ function askEngineerStrat() {
   }
 }
 
-function confirmStrategy() {
+function confirmStrategy() { return rjAppeler("confirmStrategy", _confirmStrategyCoeur, this, arguments); }
+function _confirmStrategyCoeur() {
   _strategyEnsureInit();
   G.raceStrategy.confirmed = !0;
   if (typeof RACE_WEEKEND_STATE !== "undefined") RACE_WEEKEND_STATE.strategyDone = !0;
@@ -13032,7 +13052,8 @@ function _renderStopSquare(n, selected, onclick) {
   return '<div onclick="' + onclick + '" style="cursor:pointer;' + sel + ';border-radius:12px;padding:14px 6px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="font-family:var(--font-display);font-size:24px;font-weight:900;color:' + (selected ? "#F59E0B" : "var(--text)") + ';line-height:1">' + n + '</div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px">' + (n === 0 ? "Aucun" : (n + " arrêt" + (n > 1 ? "s" : ""))) + '</div>' + '</div>'
 }
 
-function renderStrategyScreen() {
+function renderStrategyScreen() { return rjAppeler("renderStrategyScreen", _renderStrategyScreenCoeur, this, arguments); }
+function _renderStrategyScreenCoeur() {
   var container = document.getElementById("strategy-screen-content");
   if (!container) return;
   _strategyEnsureInit();
@@ -13383,7 +13404,8 @@ function _applyPitPenaltyForTargetDrop(driver, placesLost, dur) {
   driver.penaltySec = (driver.penaltySec || 0) + neededPenalty
 }
 
-function _playerPit(forceFromEvent, chosenCompound) {
+function _playerPit() { return rjAppeler("_playerPit", __playerPitCoeur, this, arguments); }
+function __playerPitCoeur(forceFromEvent, chosenCompound) {
   if (!LIVE_RACE || !LIVE_RACE.drivers) return;
   if (LIVE_RACE.paused && !forceFromEvent) {
     if ("function" == typeof showToast) showToast("⏸ Termine d'abord l'événement");
@@ -14627,7 +14649,8 @@ function _evtTickTyre(d) {
      reason: string
    }
    Retourne un descriptif de ce qui a été appliqué pour le log. */
-function applyEventOutcome(d, outcome) {
+function applyEventOutcome() { return rjAppeler("applyEventOutcome", _applyEventOutcomeCoeur, this, arguments); }
+function _applyEventOutcomeCoeur(d, outcome) {
   if (!d || d.dnf || !outcome) return {
     summary: ""
   };
@@ -14824,7 +14847,8 @@ function _tyreLifePaceImpact(lifeRatio) {
   return 1.35 + 3.0 * (0.15 - lifeRatio) / 0.15; // <15% : falaise (jusqu'à -4.35s)
 }
 
-function _tickTyreWear(d) {
+function _tickTyreWear() { return rjAppeler("_tickTyreWear", __tickTyreWearCoeur, this, arguments); }
+function __tickTyreWearCoeur(d) {
   if (!d || d.dnf) return 0;
   // Init au premier appel
   if (typeof d._tyreLapsOnSet !== "number") d._tyreLapsOnSet = LIVE_RACE.cur || 1;
@@ -15011,14 +15035,8 @@ function _tryPlayerMechDNF() {
   }
 }
 
-// getSimSpeedMult : stub sécuritaire si non définie par l'environnement hôte
-if (typeof getSimSpeedMult !== "function") {
-  window.getSimSpeedMult = function() {
-    return 1;
-  };
-}
-
-function tickRace() {
+function tickRace() { return rjAppeler("tickRace", _tickRaceCoeur, this, arguments); }
+function _tickRaceCoeur() {
   if (!LIVE_RACE.finished) {
     _tryPlayerMechDNF();
     if (LIVE_RACE._mechStress > 0) LIVE_RACE._mechStress = Math.max(0, LIVE_RACE._mechStress - 0.1);
@@ -15588,7 +15606,8 @@ function updateLivePositions() {
 // Remplace : function renderLiveLeaderboard(){ ... }}
 // ET le bloc // Injection widget tyre life ...})();
 // Les deux sont fusionnés en une seule fonction propre.
-function renderLiveLeaderboard() {
+function renderLiveLeaderboard() { return rjAppeler("renderLiveLeaderboard", _renderLiveLeaderboardCoeur, this, arguments); }
+function _renderLiveLeaderboardCoeur() {
   var e = document.getElementById("live-leaderboard"),
     t = document.getElementById("race-bar"),
     r = document.getElementById("live-race-label"),
@@ -16014,7 +16033,8 @@ function renderLiveLeaderboard() {
   if (_oldTyre && _oldTyre.parentNode) _oldTyre.parentNode.removeChild(_oldTyre);
 }
 
-function showLiveEvent(e) {
+function showLiveEvent() { return rjAppeler("showLiveEvent", _showLiveEventCoeur, this, arguments); }
+function _showLiveEventCoeur(e) {
   // Fermer le mur des stands si ouvert
   var _pwm = document.getElementById('pitwall-modal');
   if (_pwm && _pwm.parentNode) _pwm.parentNode.removeChild(_pwm);
@@ -16374,7 +16394,8 @@ function _resolveLiveEventCoeur(e) {
   }
 }
 
-function finalizeLiveRace() {
+function finalizeLiveRace() { return rjAppeler("finalizeLiveRace", _finalizeLiveRaceCoeur, this, arguments); }
+function _finalizeLiveRaceCoeur() {
   try {
     if ("function" == typeof _hideRaceEventModal && _hideRaceEventModal(), void 0 !== RACE_STATE && RACE_STATE && (RACE_STATE.events = []), CURRENT_EVT_IDX = 0, LIVE_RACE && (LIVE_RACE.paused = !1, LIVE_RACE._tyreMode = "normal"), (function() {
         var btn = document.getElementById("pit-button-container");
@@ -18325,7 +18346,8 @@ function getTrainGain(e) {
   })
 }
 
-function renderTrainScreen() {
+function renderTrainScreen() { return rjAppeler("renderTrainScreen", _renderTrainScreenCoeur, this, arguments); }
+function _renderTrainScreenCoeur() {
   try {
     var e = document.getElementById("train-rating-bar");
     if (e) {
@@ -18917,7 +18939,8 @@ function _renderCalCoeur() {
   }
 }
 
-function resetRaceScreen() {
+function resetRaceScreen() { return rjAppeler("resetRaceScreen", _resetRaceScreenCoeur, this, arguments); }
+function _resetRaceScreenCoeur() {
   G.evtChoice = null, G.qualiPos = 0, G.raceLocked = !1, G.racePhase = "prep", applyRaceLockUI(), "function" == typeof resetRaceWeekend && resetRaceWeekend(), QUALI_STATE.chronoInterval && (clearInterval(QUALI_STATE.chronoInterval), QUALI_STATE.chronoInterval = null), QUALI_STATE.lapInterval && (clearInterval(QUALI_STATE.lapInterval), QUALI_STATE.lapInterval = null), QUALI_STATE.session = 0, QUALI_STATE.phase = "idle", rtab("prep", !0);
   var e = document.getElementById("race-btn");
   e && (e.disabled = !1, e.textContent = "Départ !");
@@ -18995,7 +19018,8 @@ function getConstructorChampion() {
   }
 }
 
-function showSeasonEnd() {
+function showSeasonEnd() { return rjAppeler("showSeasonEnd", _showSeasonEndCoeur, this, arguments); }
+function _showSeasonEndCoeur() {
   G.seasonOver = !0, "function" == typeof applyPreseasonObjectiveReward && applyPreseasonObjectiveReward();
   var e = [{
     name: (G.pilot.prenom ? G.pilot.prenom + " " : "") + G.pilot.nom,
@@ -19290,7 +19314,8 @@ function renderPathsVisual() {
   }
 }
 
-function buildTransferOffers() {
+function buildTransferOffers() { return rjAppeler("buildTransferOffers", _buildTransferOffersCoeur, this, arguments); }
+function _buildTransferOffersCoeur() {
   var e = CATEGORIES.indexOf(G.cat),
     t = getCatNextOptions(G.cat),
     r = [];
@@ -19953,7 +19978,8 @@ function renderSaveSlots() {
   }))
 }
 
-function showSaveMenu() {
+function showSaveMenu() { return rjAppeler("showSaveMenu", _showSaveMenuCoeur, this, arguments); }
+function _showSaveMenuCoeur() {
   var e = document.getElementById("save-menu-slots");
   if (e) {
     e.innerHTML = "", SAVE_KEYS.forEach(function(t, r) {
@@ -20358,7 +20384,8 @@ function getSponsorPool() {
   });
 }
 
-function ctab(e) {
+function ctab() { return rjAppeler("ctab", _ctabCoeur, this, arguments); }
+function _ctabCoeur(e) {
   if (["offres", "primes", "reseau"].forEach(function(t) {
       var r = document.getElementById("ct-" + t);
       r && (r.style.display = t === e ? "block" : "none")
@@ -20818,7 +20845,8 @@ function gYear() {
   return String(gameYear())
 }
 
-function saveSeasonToHistory() {
+function saveSeasonToHistory() { return rjAppeler("saveSeasonToHistory", _saveSeasonToHistoryCoeur, this, arguments); }
+function _saveSeasonToHistoryCoeur() {
   var e = [{
     pts: G.champPts,
     me: !0
@@ -20923,7 +20951,8 @@ function renderCareerHistory() {
   }
 }
 
-function renderPalmares() {
+function renderPalmares() { return rjAppeler("renderPalmares", _renderPalmaresCoeur, this, arguments); }
+function _renderPalmaresCoeur() {
   var e = document.getElementById("palmares-content");
   if (e) {
     var t = CAREER_HISTORY.slice(),
@@ -22144,7 +22173,8 @@ function renderTeamPerf() {
   /* === 4. WRAP resolveRaceEvt === */
   if (typeof GR.resolveRaceEvt === 'function') {
     var _origResolveRaceEvt = GR.resolveRaceEvt;
-    GR.resolveRaceEvt = function(eIdx, choiceIdx) {
+    rjInscrire("resolveRaceEvt", { id: "04-race-engine:resolveRaceEvt", ordre: -400, remplace: function (args, suite) {
+      var eIdx = args[0], choiceIdx = args[1];
       try {
         var evt = (typeof GR.RACE_STATE !== 'undefined' && GR.RACE_STATE && GR.RACE_STATE.events) ? GR.RACE_STATE.events[eIdx] : null;
         var chosen = evt && evt.choices ? evt.choices[choiceIdx] : null;
@@ -22154,18 +22184,19 @@ function renderTeamPerf() {
       } catch (e) {
         console.warn('resolveRaceEvt wrap:', e);
       }
-      return _origResolveRaceEvt.apply(this, arguments);
-    };
+      return suite();
+    } });
   }
 
   /* === 5. WRAP _riAhead / _riBehind — exclusion gap > 6s === */
   if (typeof GR._riAhead === 'function') {
     var _origRiAhead = GR._riAhead;
-    GR._riAhead = function(n) {
+    rjInscrire("_riAhead", { id: "04-race-engine:_riAhead", ordre: -400, remplace: function (args, suite) {
+      var n = args[0];
       try {
         var sorted = _aliveSorted();
         var p = _getPlayer();
-        if (!p || p.dnf) return _origRiAhead.apply(this, arguments);
+        if (!p || p.dnf) return suite();
         var idx = sorted.findIndex(function(d) {
           return d.isPlayer;
         });
@@ -22181,18 +22212,19 @@ function renderTeamPerf() {
         }
         return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null;
       } catch (e) {
-        return _origRiAhead.apply(this, arguments);
+        return suite();
       }
-    };
+    } });
   }
 
   if (typeof GR._riBehind === 'function') {
     var _origRiBehind = GR._riBehind;
-    GR._riBehind = function(n) {
+    rjInscrire("_riBehind", { id: "04-race-engine:_riBehind", ordre: -400, remplace: function (args, suite) {
+      var n = args[0];
       try {
         var sorted = _aliveSorted();
         var p = _getPlayer();
-        if (!p || p.dnf) return _origRiBehind.apply(this, arguments);
+        if (!p || p.dnf) return suite();
         var idx = sorted.findIndex(function(d) {
           return d.isPlayer;
         });
@@ -22208,9 +22240,9 @@ function renderTeamPerf() {
         }
         return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null;
       } catch (e) {
-        return _origRiBehind.apply(this, arguments);
+        return suite();
       }
-    };
+    } });
   }
 
   /* === 6. NORMALISATION DESC : remplacer gap fictif par gap réel === */
@@ -22246,13 +22278,14 @@ function renderTeamPerf() {
   /* === 7. WRAP showLiveEvent — normalisation + ligne contexte === */
   if (typeof GR.showLiveEvent === 'function') {
     var _origShowLive = GR.showLiveEvent;
-    GR.showLiveEvent = function(evt) {
+    rjInscrire("showLiveEvent", { id: "04-race-engine:showLiveEvent", ordre: -400, remplace: function (args, suite) {
+      var evt = args[0];
       try {
         evt = _normalizeLegacyEvent(evt);
       } catch (e) {
         console.warn('normalize:', e);
       }
-      var ret = _origShowLive.call(this, evt);
+      var ret = suite([evt]);
       try {
         var ctx = _evtBuildContext();
         if (!ctx) return ret;
@@ -22289,14 +22322,14 @@ function renderTeamPerf() {
         console.warn('context line v1:', e);
       }
       return ret;
-    };
+    } });
   }
 
   /* === 8. WRAP showNextRaceEvent — ligne contexte V2 === */
   if (typeof GR.showNextRaceEvent === 'function') {
     var _origShowNextRE = GR.showNextRaceEvent;
-    GR.showNextRaceEvent = function() {
-      var ret = _origShowNextRE.apply(this, arguments);
+    rjInscrire("showNextRaceEvent", { id: "04-race-engine:showNextRaceEvent", ordre: -400, remplace: function (args, suite) {
+      var ret = suite();
       try {
         var ctx = _evtBuildContext();
         if (!ctx) return ret;
@@ -22333,7 +22366,7 @@ function renderTeamPerf() {
         console.warn('context line v2:', e);
       }
       return ret;
-    };
+    } });
   }
 
   console.log('[event-system-patch] v2 loaded — pit auto-detect + gap-aware events + position context');

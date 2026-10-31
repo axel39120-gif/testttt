@@ -347,14 +347,15 @@
     return c;
   }
 
-  window._rj74Fermer = function () {
+  window.__rj74FermerCoeur = function () {
     var box = document.getElementById("rj74-ecran");
     if (box) box.classList.remove("on");
   };
+  window._rj74Fermer = function () { return rjAppeler("_rj74Fermer", window.__rj74FermerCoeur, this, arguments); };
   window._rj74Apercu = function () { return afficher(false); };
 
   /* ------------------------------------------------- fin volontaire --- */
-  window._rj74Terminer = function () {
+  window.__rj74TerminerCoeur = function () {
     var c = calculer();
     var msg = "Mettre fin à la carrière de ton pilote ?\n\n" +
               "Score actuel : " + nb(c.total) + " points de partie.\n" +
@@ -365,6 +366,7 @@
     afficher(false);
     return true;
   };
+  window._rj74Terminer = function () { return rjAppeler("_rj74Terminer", window.__rj74TerminerCoeur, this, arguments); };
 
   /* Bouton injecté dans les Paramètres, sans toucher au HTML. */
   function injecterBouton() {

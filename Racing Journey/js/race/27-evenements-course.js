@@ -773,9 +773,10 @@
     if (window._computeChoiceOutcomes._rj27risk) return true;
     var orig = window._computeChoiceOutcomes;
 
-    window._computeChoiceOutcomes = function (e, t, actionCtx) {
+    rjInscrire("_computeChoiceOutcomes", { id: "27-evenements-course:_computeChoiceOutcomes", ordre: -3800, remplace: function (args, suite) {
+      var e = args[0], t = args[1], actionCtx = args[2];
       var base;
-      try { base = orig.apply(this, arguments); } catch (err) { return orig.apply(this, arguments); }
+      try { base = suite(); } catch (err) { return suite(); }
       try {
         var meta = base && base._meta;
         if (!meta || typeof meta.totalDelta !== "number") return base;
@@ -803,7 +804,7 @@
       } catch (err) {
         return base;
       }
-    };
+    } });
     window._computeChoiceOutcomes._rj27risk = true;
     return true;
   }
@@ -832,7 +833,7 @@
 
     // 2) Enveloppe de la porte par tour → plafond strict + espacement
     var _origTry = window.tryTriggerChoiceRaceEvent;
-    window.tryTriggerChoiceRaceEvent = function () {
+    rjInscrire("tryTriggerChoiceRaceEvent", { id: "27-evenements-course:tryTriggerChoiceRaceEvent", ordre: -3800, remplace: function (args, suite) {
       try {
         if (!LIVE_RACE || LIVE_RACE.finished || LIVE_RACE.paused) return;
         if (neutralActive()) return; // pendant une neutralisation, 04m gère sa propre décision
@@ -840,7 +841,7 @@
 
         var before = LIVE_RACE.pendingEvent;
         var _evtLenBefore = (typeof RACE_STATE !== "undefined" && RACE_STATE.events) ? RACE_STATE.events.length : 0;
-        var ret = _origTry.apply(this, arguments);
+        var ret = suite();
 
         // Un événement a-t-il été armé (choix OU crise) ? → on le compte.
         // ATTENTION : les événements à CHOIX (tryTriggerChoiceRaceEvent → showNextRaceEvent)
@@ -859,9 +860,9 @@
         return ret;
       } catch (err) {
         console.warn(TAG + " (try):", err);
-        try { return _origTry.apply(this, arguments); } catch (_e) {}
+        try { return suite(); } catch (_e) {}
       }
-    };
+    } });
 
     // 3) Enveloppe de la résolution → effets relationnels (confiance) des consignes d'équipe
     var trustDelta = 0;

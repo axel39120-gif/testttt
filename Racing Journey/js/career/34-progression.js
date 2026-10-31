@@ -154,7 +154,8 @@
 
   function wrapGain() {
     _origGain = window.gainSubStat;
-    window.gainSubStat = function (key, val) {
+    rjInscrire("gainSubStat", { id: "34-progression:gainSubStat", ordre: -4200, remplace: function (args, suite) {
+      var key = args[0], val = args[1];
       try {
         var G = G_();
         if (G && G.training && (!G.training.pot || !Object.keys(G.training.pot).length)
@@ -177,7 +178,7 @@
         }
       } catch (e) {}
 
-      var r = _origGain.call(this, key, val);
+      var r = suite([key, val]);
 
       /* Re-clamp au potentiel individuel (l'original ne plafonne qu'au
          hard cap de catégorie). */
@@ -198,14 +199,15 @@
       } catch (e) {}
 
       return r;
-    };
+    } });
   }
 
   function wrapInit() {
     if (typeof window.initSubStats !== "function") return;
     _origInit = window.initSubStats;
-    window.initSubStats = function (style, trait) {
-      var subs = _origInit.call(this, style, trait);
+    rjInscrire("initSubStats", { id: "34-progression:initSubStats", ordre: -4200, remplace: function (args, suite) {
+      var style = args[0], trait = args[1];
+      var subs = suite([style, trait]);
       try {
         var tr = trainingObj();
         if (tr) {
@@ -215,7 +217,7 @@
         }
       } catch (e) {}
       return subs;
-    };
+    } });
   }
 
   /* Déclin d'intersaison — formule alignée sur _rjEvolveSkill (04o).
@@ -361,11 +363,12 @@
     if (typeof window.applyTrainingSpecialtiesToRace !== "function") return false;
     if (window.applyTrainingSpecialtiesToRace._rjTree) return true;
     _origApplySpec = window.applyTrainingSpecialtiesToRace;
-    window.applyTrainingSpecialtiesToRace = function (e, t, r, n) {
-      e = _origApplySpec.apply(this, arguments);   // applique les spécialités T1
+    rjInscrire("applyTrainingSpecialtiesToRace", { id: "34-progression:applyTrainingSpecialtiesToRace", ordre: -4200, remplace: function (args, suite) {
+      var e = args[0], t = args[1], r = args[2], n = args[3];
+      e = suite();   // applique les spécialités T1
       try { applyTreeBonuses(e, t, r, n); } catch (err) {}
       return e;
-    };
+    } });
     window.applyTrainingSpecialtiesToRace._rjTree = true;
     return true;
   }
@@ -548,11 +551,11 @@
     if (typeof window.renderTrainScreen !== "function") return false;
     if (window.renderTrainScreen._rjDev) return true;
     _origRTS = window.renderTrainScreen;
-    window.renderTrainScreen = function () {
-      var r = _origRTS.apply(this, arguments);
+    rjInscrire("renderTrainScreen", { id: "34-progression:renderTrainScreen", ordre: -4200, remplace: function (args, suite) {
+      var r = suite();
       try { injectDevSection(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderTrainScreen._rjDev = true;
     return true;
   }
@@ -909,11 +912,11 @@
     if (typeof window.renderTrainScreen !== "function") return false;
     if (window.renderTrainScreen._rjFocus) return true;
     _origRTS = window.renderTrainScreen;
-    window.renderTrainScreen = function () {
-      var r = _origRTS.apply(this, arguments);
+    rjInscrire("renderTrainScreen", { id: "34-progression:renderTrainScreen:1", ordre: -4201, remplace: function (args, suite) {
+      var r = suite();
       try { renderFocusUI(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderTrainScreen._rjFocus = true;
     return true;
   }

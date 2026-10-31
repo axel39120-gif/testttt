@@ -53,16 +53,16 @@
     if (window.calcPlayerRating._rjRebalanced) return true;
 
     var orig = window.calcPlayerRating;
-    window.calcPlayerRating = function rjCalcPlayerRatingRebalanced() {
+    rjInscrire("calcPlayerRating", { id: "04r-note-pilote:calcPlayerRating", ordre: -1100, remplace: function (args, suite) {
       var oldRating;
-      try { oldRating = orig.apply(this, arguments); }
+      try { oldRating = suite(); }
       catch (e) { return 50; }
       if (typeof oldRating !== "number") return oldRating;
 
       var cat = (typeof G !== "undefined" && G) ? G.cat : null;
       if (!cat || !REBALANCE_TABLE[cat]) return oldRating;
       return rebalanceSkill(oldRating, cat);
-    };
+    } });
     window.calcPlayerRating._rjRebalanced = true;
     console.log("[04r] calcPlayerRating wrappé (note joueur rebalancée)");
     return true;

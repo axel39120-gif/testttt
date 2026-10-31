@@ -435,7 +435,7 @@
       }
       if (window.negDoAction._rjNegPatched) return;
       var orig = window.negDoAction;
-      window.negDoAction = function(action) {
+      window._negDoActionCoeur = function(action) {
         // Si c'est une nouvelle action, on la traite via _negApplyAction
         if (NEG_NEW_ACTIONS[action]) {
           var offer = G.offers[NEG_IDX];
@@ -446,6 +446,7 @@
         }
         return orig.apply(this, arguments);
       };
+  window.negDoAction = function () { return rjAppeler("negDoAction", window._negDoActionCoeur, this, arguments); };
       window.negDoAction._rjNegPatched = true;
     }
     if (document.readyState === 'loading') {
@@ -464,7 +465,8 @@
       }
       if (window.signContract._rjNegPatched) return;
       var orig = window.signContract;
-      window.signContract = function(idx) {
+      rjInscrire("signContract", { id: "11-neg-patch:signContract", ordre: -1700, remplace: function (args, suite) {
+      var idx = args[0];
         var offer = G.offers && G.offers[idx];
         if (offer) {
           // Copier les nouvelles clauses sur G.pendingTransfer / G directement
@@ -478,8 +480,8 @@
             else delete G._negClauses[k];
           });
         }
-        return orig.apply(this, arguments);
-      };
+        return suite();
+      } });
       window.signContract._rjNegPatched = true;
     }
     if (document.readyState === 'loading') {
@@ -498,10 +500,10 @@
       }
       if (window.showSeasonEnd._rjNegPatched) return;
       var orig = window.showSeasonEnd;
-      window.showSeasonEnd = function() {
+      rjInscrire("showSeasonEnd", { id: "11-neg-patch:showSeasonEnd", ordre: -1700, remplace: function (args, suite) {
         // Calculer et appliquer les primes avant l'affichage
         var bonusReport = _rjApplySeasonBonuses();
-        var result = orig.apply(this, arguments);
+        var result = suite();
         // Injecter le rapport des primes dans le bilan de fin de saison
         if (bonusReport && bonusReport.length > 0) {
           setTimeout(function() {
@@ -509,7 +511,7 @@
           }, 200);
         }
         return result;
-      };
+      } });
       window.showSeasonEnd._rjNegPatched = true;
     }
     if (document.readyState === 'loading') {
@@ -1377,7 +1379,19 @@
     };
     fn._rjSign = true;
     wrapped.negDoAction = orig;
-    window.negDoAction = fn;
+    rjInscrire("negDoAction", { id: "11-neg-patch:negDoAction", ordre: -3600, remplace: function (args, suite) {
+      var action = args[0];
+      if (action === 'sign_now' && accordForce === null) {
+        var args = args, self = this;
+        animerAccord(function () {
+          // on laisse les mains jointes : accordForce n'est PAS remis à zéro
+          // ici, il le sera à la prochaine ouverture d'une négociation.
+          setTimeout(function () { suite(args); }, 300);
+        });
+        return;
+      }
+      return suite();
+    } });
     return true;
   }
 
@@ -1476,7 +1490,12 @@
       };
       fn._rjui = true;
       wrapped.negEnter = orig;
-      window.negEnter = fn;
+      rjInscrire("negEnter", { id: "11-neg-patch:negEnter", ordre: -3600, remplace: function (args, suite) {
+        accordForce = null;                     // nouvelle négociation : on repart à zéro
+        var r = suite();
+        try { negSnapshot = offerNow(); setTimeout(enhanceNeg, 0); } catch (e) {}
+        return r;
+      } });
     }
     if (a && b) {
       if (document.body) {

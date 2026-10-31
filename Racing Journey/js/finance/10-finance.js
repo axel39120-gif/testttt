@@ -586,7 +586,7 @@
   // Injectée dans l'onglet "Réseau" de S-contracts (renommé "Finances")
   // =========================================================================
 
-  window.renderFinancePage = function() {
+  window._renderFinancePageCoeur = function() {
     /* CORRECTIF — la page Finances écrivait dans « ct-reseau », le
        conteneur de l'onglet Réseau, vestige d'une version où l'onglet
        portait ce nom. Conséquence : après un passage par Finances, le
@@ -761,6 +761,7 @@
     html += '</div>'; // fin padding
     el.innerHTML = html;
   };
+  window.renderFinancePage = function () { return rjAppeler("renderFinancePage", window._renderFinancePageCoeur, this, arguments); };
 
   function _rjInvEffectLabel(inv) {
     var parts = [];
@@ -1012,7 +1013,8 @@
       if (typeof window.ctab !== 'function') { setTimeout(wrapCtab, 500); return; }
       if (window.ctab._rjFinanceWrapped) return;
       var orig = window.ctab;
-      window.ctab = function(tab) {
+      rjInscrire("ctab", { id: "10-finance:ctab", ordre: -1600, remplace: function (args, suite) {
+      var tab = args[0];
         // Gérer l'onglet finances manuellement
         if (tab === 'finances') {
           ['offres','primes','reseau','finances'].forEach(function(t) {
@@ -1030,9 +1032,9 @@
            contenu restait affiché sous les autres onglets. */
         var fin = document.getElementById('ct-finances');
         if (fin) fin.style.display = 'none';
-        var r = orig.apply(this, arguments);
+        var r = suite();
         return r;
-      };
+      } });
       window.ctab._rjFinanceWrapped = true;
     }
 

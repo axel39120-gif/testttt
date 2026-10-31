@@ -48,16 +48,16 @@
     if (window.renderVieperso._rjUserFixNoSub) return true;
 
     var orig = window.renderVieperso;
-    window.renderVieperso = function rjRenderViepersoNoSub() {
+    rjInscrire("renderVieperso", { id: "07e-vie-perso:renderVieperso", ordre: -2400, remplace: function (args, suite) {
       var r;
-      try { r = orig.apply(this, arguments); }
+      try { r = suite(); }
       catch (e) { console.warn('[07] renderVieperso orig:', e); }
       // Après le rendu : masque les sous-titres
       _hideRelationSubtitles();
       // Re-tentative async au cas où le DOM est mis à jour de manière différée
       setTimeout(_hideRelationSubtitles, 50);
       return r;
-    };
+    } });
     window.renderVieperso._rjUserFixNoSub = true;
     console.log('[07] renderVieperso wrapped (hide Parents/Amis/Coach sub-titles)');
     return true;

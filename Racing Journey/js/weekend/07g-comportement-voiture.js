@@ -333,14 +333,14 @@
     if (typeof window.renderAdvancedSetupUI !== 'function') return false;
     if (window.renderAdvancedSetupUI._rjUserFixBehavior) return true;
     var orig = window.renderAdvancedSetupUI;
-    window.renderAdvancedSetupUI = function rjRenderAdvancedSetupUIBeh() {
+    rjInscrire("renderAdvancedSetupUI", { id: "07g-comportement-voiture:renderAdvancedSetupUI", ordre: -2600, remplace: function (args, suite) {
       var r;
-      try { r = orig.apply(this, arguments); }
+      try { r = suite(); }
       catch (e) { console.warn('[07] renderAdvancedSetupUI orig:', e); }
       // Après le rendu original, on injecte/update le panneau
       try { _rjInjectBehaviorPanel(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderAdvancedSetupUI._rjUserFixBehavior = true;
     console.log('[07] renderAdvancedSetupUI wrapped (behavior gauges)');
     return true;
@@ -354,15 +354,15 @@
     if (typeof window.setAdvParam !== 'function') return false;
     if (window.setAdvParam._rjUserFixBehavior) return true;
     var orig = window.setAdvParam;
-    window.setAdvParam = function rjSetAdvParamBeh() {
+    rjInscrire("setAdvParam", { id: "07g-comportement-voiture:setAdvParam", ordre: -2600, remplace: function (args, suite) {
       var r;
-      try { r = orig.apply(this, arguments); }
+      try { r = suite(); }
       catch (e) { console.warn('[07] setAdvParam orig:', e); }
       // Update jauges (le re-render complet est déjà fait par l'orig,
       // mais notre wrap renderAdvancedSetupUI ré-injectera le panneau si besoin)
       try { _rjUpdateBehaviorPanel(); } catch (e) {}
       return r;
-    };
+    } });
     window.setAdvParam._rjUserFixBehavior = true;
     return true;
   }

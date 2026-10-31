@@ -439,11 +439,11 @@
     if (typeof window._rj74Fermer !== "function") return false;
     if (window._rj74Fermer._rj96) return true;
     _origFermer = window._rj74Fermer;
-    window._rj74Fermer = function () {
+    rjInscrire("_rj74Fermer", { id: "96-archives-parties:_rj74Fermer", ordre: -7000, remplace: function (args, suite) {
       /* « Fermer » ne masquait que l'écran : la partie restait ouverte et
          le bilan devenait inatteignable. Il clôt désormais pour de bon. */
       cloturer();
-    };
+    } });
     window._rj74Fermer._rj96 = true;
     return true;
   }

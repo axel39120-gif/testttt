@@ -343,9 +343,9 @@
     if (typeof window._psUpdateTotal !== 'function') return false;
     if (window._psUpdateTotal._rjUserFixPS) return true;
     var orig = window._psUpdateTotal;
-    window._psUpdateTotal = function rjPsUpdateTotalNew() {
+    rjInscrire("_psUpdateTotal", { id: "07f-pre-saison:_psUpdateTotal", ordre: -2500, remplace: function (args, suite) {
       var r;
-      try { r = orig.apply(this, arguments); } catch (e) {}
+      try { r = suite(); } catch (e) {}
       try {
         var b = window._presBudget || {};
         var total = (b.sim || 0) + (b.coach || 0) + (b.lifestyle || 0) + (b.savings || 0);
@@ -361,7 +361,7 @@
         }
       } catch (e) {}
       return r;
-    };
+    } });
     window._psUpdateTotal._rjUserFixPS = true;
     return true;
   }
@@ -424,15 +424,15 @@
     if (typeof window.renderPreseasonPlanning !== 'function') return false;
     if (window.renderPreseasonPlanning._rjUserFixRedesign) return true;
     var orig = window.renderPreseasonPlanning;
-    window.renderPreseasonPlanning = function rjRenderPreseasonPlanningNew() {
+    rjInscrire("renderPreseasonPlanning", { id: "07f-pre-saison:renderPreseasonPlanning", ordre: -2500, remplace: function (args, suite) {
       try {
         _injectPreseasonCSS();
         _renderPreseasonNew();
       } catch (e) {
         console.warn('[07] renderPreseasonPlanning new render err, fallback:', e);
-        try { return orig.apply(this, arguments); } catch (e2) {}
+        try { return suite(); } catch (e2) {}
       }
-    };
+    } });
     window.renderPreseasonPlanning._rjUserFixRedesign = true;
     console.log('[07] renderPreseasonPlanning redesigned (F1 DA)');
     return true;

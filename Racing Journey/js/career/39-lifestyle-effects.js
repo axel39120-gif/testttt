@@ -210,11 +210,11 @@
     if (typeof window.renderLsActivities !== "function") return false;
     if (window.renderLsActivities._rjLife) return true;
     _origRLA = window.renderLsActivities;
-    window.renderLsActivities = function () {
-      var r = _origRLA.apply(this, arguments);
+    rjInscrire("renderLsActivities", { id: "39-lifestyle-effects:renderLsActivities", ordre: -4400, remplace: function (args, suite) {
+      var r = suite();
       try { harmoniserCTAActivites(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderLsActivities._rjLife = true;
     return true;
   }
@@ -223,12 +223,12 @@
     if (typeof window.renderLifestyle !== "function") return false;
     if (window.renderLifestyle._rjLife) return true;
     _origRL = window.renderLifestyle;
-    window.renderLifestyle = function () {
-      var r = _origRL.apply(this, arguments);
+    rjInscrire("renderLifestyle", { id: "39-lifestyle-effects:renderLifestyle", ordre: -4400, remplace: function (args, suite) {
+      var r = suite();
       try { injectEffect(); } catch (e) {}
       try { harmoniserCTAActivites(); } catch (e) {}
       return r;
-    };
+    } });
     window.renderLifestyle._rjLife = true;
     return true;
   }

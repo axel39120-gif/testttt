@@ -490,17 +490,17 @@
     window._rjRadioRarityPatched = true;
 
     var orig = window.tryContextualRadio;
-    window.tryContextualRadio = function rjRareContextualRadio() {
+    rjInscrire("tryContextualRadio", { id: "08-radio-commentary:tryContextualRadio", ordre: -3300, remplace: function (args, suite) {
       try {
         if (!LIVE_RACE || LIVE_RACE.finished || LIVE_RACE.paused) return;
         LIVE_RACE._lastRadioLap = LIVE_RACE._lastRadioLap || -99;
         if (LIVE_RACE.cur - LIVE_RACE._lastRadioLap < 6) return;
         if (Math.random() > 0.22) return;
-        return orig.apply(this, arguments);
+        return suite();
       } catch (e) {
         console.warn('rjRareContextualRadio:', e);
       }
-    };
+    } });
     return true;
   }
 

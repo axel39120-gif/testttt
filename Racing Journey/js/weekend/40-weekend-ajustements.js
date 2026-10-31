@@ -51,12 +51,13 @@
     if (typeof window.renderAdvSlider !== "function") return false;
     if (window.renderAdvSlider._rjIcon) return true;
     _origAdvSlider = window.renderAdvSlider;
-    window.renderAdvSlider = function (label, type, key) {
-      var args = Array.prototype.slice.call(arguments);
+    rjInscrire("renderAdvSlider", { id: "40-weekend-ajustements:renderAdvSlider", ordre: -4500, remplace: function (args, suite) {
+      var label = args[0], type = args[1], key = args[2];
+      var args = Array.prototype.slice.call(args);
       var ic = advIcon(key);
       if (ic && typeof label === "string") args[0] = ic + label;
-      return _origAdvSlider.apply(this, args);
-    };
+      return suite(args);
+    } });
     window.renderAdvSlider._rjIcon = true;
     return true;
   }
@@ -315,7 +316,18 @@
       return r;
     };
     fn._rj43 = true;
-    window.initRaceState = fn;
+    rjInscrire("initRaceState", { id: "40-weekend-ajustements:initRaceState:1", ordre: -4501, remplace: function (args, suite) {
+      var r = suite();
+      try {
+        var enCourse = (typeof LIVE_RACE !== "undefined" && LIVE_RACE &&
+                        LIVE_RACE.total > 0 && !LIVE_RACE.finished && (LIVE_RACE.cur || 0) > 0);
+        if (!enCourse && typeof getCatLaps === "function" && typeof G !== "undefined" && G) {
+          var n = getCatLaps(G.cat);
+          if (typeof n === "number" && n > 0 && G.totalLaps !== n) G.totalLaps = n;
+        }
+      } catch (e) {}
+      return r;
+    } });
     return true;
   }
 
@@ -411,14 +423,11 @@
       return;
     }
     window._rjRaceSpeedInstalled = true;
-    var orig = window.getSimSpeedMult;
-    window._rjOrigSimSpeedMult = orig;
-    window.getSimSpeedMult = function () {
-      var base = orig ? orig.apply(this, arguments) : 1;
+    rjInscrire("getSimSpeedMult", { id: "49-course-ralentie", apres: function (base) {
       return inLiveRace() ? base * FACTOR : base;
-    };
+    } });
     window._rjRaceSpeedUninstall = function () {
-      if (window._rjOrigSimSpeedMult) window.getSimSpeedMult = window._rjOrigSimSpeedMult;
+      window.RJ_HOOKS.getSimSpeedMult = window.RJ_HOOKS.getSimSpeedMult.filter(function (h) { return h.id !== "49-course-ralentie"; });
       window._rjRaceSpeedInstalled = false;
       console.log("[49-race-speed] désinstallé");
     };
@@ -483,11 +492,11 @@
   function install() {
     if (typeof window.updateRaceTabsVisibility === "function" && !origUpdate) {
       origUpdate = window.updateRaceTabsVisibility;
-      window.updateRaceTabsVisibility = function () {
-        var r = origUpdate.apply(this, arguments);
+      rjInscrire("updateRaceTabsVisibility", { id: "40-weekend-ajustements:updateRaceTabsVisibility:1", ordre: -4501, remplace: function (args, suite) {
+        var r = suite();
         try { lockTabs(); } catch (e) {}
         return r;
-      };
+      } });
     }
     if (!origRtab) {
       origRtab = true;
@@ -732,7 +741,11 @@
     };
     fn._rj55 = true;
     wrapped.initRaceState = orig;
-    window.initRaceState = fn;
+    rjInscrire("initRaceState", { id: "40-weekend-ajustements:initRaceState:2", ordre: -4502, remplace: function (args, suite) {
+      var r = suite();
+      try { calibrateField(); } catch (e) {}
+      return r;
+    } });
     return true;
   }
 
@@ -884,7 +897,19 @@
     };
     fn._rj56 = true;
     wrapped.buildLiveEventSchedule = orig;
-    window.buildLiveEventSchedule = fn;
+    rjInscrire("buildLiveEventSchedule", { id: "40-weekend-ajustements:buildLiveEventSchedule", ordre: -4500, remplace: function (args, suite) {
+      var sched = suite();
+      try {
+        if (Object.prototype.toString.call(sched) === "[object Array]") {
+          var kept = sched.filter(function (ev) {
+            if (ev && ev.always && Math.random() < 0.6) return true; // imposés : largement conservés
+            return Math.random() < TUNING.eventFactor;
+          });
+          return kept;
+        }
+      } catch (e) {}
+      return sched;
+    } });
     return true;
   }
 
@@ -986,16 +1011,9 @@
   /* ------------------------------------------- D. week-end 50 % plus lent */
   var SPEED_FACTOR = 2;
   function installSpeed() {
-    if (typeof window.getSimSpeedMult !== "function") return false;
-    if (window.getSimSpeedMult._rj56) return true;
-    var orig = window.getSimSpeedMult;
-    var fn = function () {
-      var v = orig.apply(this, arguments);
+    rjInscrire("getSimSpeedMult", { id: "56-week-end-ralenti", apres: function (v) {
       return (typeof v === "number" ? v : 1.8) * SPEED_FACTOR;
-    };
-    fn._rj56 = true;
-    wrapped.getSimSpeedMult = orig;
-    window.getSimSpeedMult = fn;
+    } });
     return true;
   }
 
@@ -1098,7 +1116,24 @@
     };
     fn._rj76 = true;
     wrapped.qualiDriverTime = orig;
-    window.qualiDriverTime = fn;
+    rjInscrire("qualiDriverTime", { id: "40-weekend-ajustements:qualiDriverTime", ordre: -4500, remplace: function (args, suite) {
+      var pilote = args[0], session = args[1], tour = args[2], total = args[3], avancement = args[4];
+      var t = suite();
+      try {
+        if (pilote && pilote.isPlayer && typeof t === "number" && isFinite(t)) {
+          var d = delta();
+          if (d !== 0) {
+            var avant = t;
+            t = t * (1 + d);
+            etat.dernier = {
+              avant: +avant.toFixed(3), apres: +t.toFixed(3),
+              gain: +(t - avant).toFixed(3), delta: +(d * 100).toFixed(2)
+            };
+          }
+        }
+      } catch (e) {}
+      return t;
+    } });
     return true;
   }
 
@@ -1209,11 +1244,11 @@
     if (typeof window.updateRaceTabsVisibility !== "function") return false;
     if (window.updateRaceTabsVisibility._rj40etapes) return true;
     _orig = window.updateRaceTabsVisibility;
-    window.updateRaceTabsVisibility = function () {
-      var r = _orig.apply(this, arguments);
+    rjInscrire("updateRaceTabsVisibility", { id: "40-weekend-ajustements:updateRaceTabsVisibility:2", ordre: -4502, remplace: function (args, suite) {
+      var r = suite();
       try { appliquer(); } catch (e) { console.warn(TAG, e && e.message); }
       return r;
-    };
+    } });
     window.updateRaceTabsVisibility._rj40etapes = true;
     return true;
   }
@@ -1338,10 +1373,10 @@
     if (typeof window._renderAdvancedSetupUIInner !== "function") return false;
     if (window._renderAdvancedSetupUIInner._rj40zones) return true;
     _orig = window._renderAdvancedSetupUIInner;
-    window._renderAdvancedSetupUIInner = function () {
+    rjInscrire("_renderAdvancedSetupUIInner", { id: "40-weekend-ajustements:_renderAdvancedSetupUIInner", ordre: -4500, remplace: function (args, suite) {
       preparer();
-      return _orig.apply(this, arguments);
-    };
+      return suite();
+    } });
     window._renderAdvancedSetupUIInner._rj40zones = true;
     return true;
   }
@@ -1467,7 +1502,8 @@
     if (window._qualiHotLapSequence._rj40q) return true;
     _orig = window._qualiHotLapSequence;
 
-    window._qualiHotLapSequence = function (lapTime, session, lap, total, onDone) {
+    rjInscrire("_qualiHotLapSequence", { id: "40-weekend-ajustements:_qualiHotLapSequence:1", ordre: -4501, remplace: function (args, suite) {
+      var lapTime = args[0], session = args[1], lap = args[2], total = args[3], onDone = args[4];
       var rendu = false;
       var minuterie = null;
 
@@ -1486,14 +1522,14 @@
       }, DELAI);
 
       try {
-        _orig.call(this, lapTime, session, lap, total, function (t, d) {
+        suite([lapTime, session, lap, total, function (t, d) {
           cloturer((typeof t === "number") ? t : lapTime, d);
-        });
+        }]);
       } catch (e) {
         console.warn(TAG, "séquence :", e && e.message);
         cloturer(lapTime, 0);
       }
-    };
+    } });
     window._qualiHotLapSequence._rj40q = true;
     return true;
   }

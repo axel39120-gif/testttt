@@ -82,8 +82,8 @@
     if (typeof renderCareerDetail !== 'function') return;
     if (renderCareerDetail._rjTagged) return;
     var orig = renderCareerDetail;
-    window.renderCareerDetail = function rjRenderCareerDetailTagged() {
-      var r = orig.apply(this, arguments);
+    rjInscrire("renderCareerDetail", { id: "07h-stats-carriere:renderCareerDetail", ordre: -2700, remplace: function (args, suite) {
+      var r = suite();
       try {
         _rjTagCareerSeasonCards();
         var dd = document.getElementById('career-filter-dd');
@@ -98,7 +98,7 @@
         _rjApplyCareerSeasonFilter(current);
       } catch (e) {}
       return r;
-    };
+    } });
     window.renderCareerDetail._rjTagged = true;
   })();
 
@@ -106,11 +106,12 @@
     if (typeof filterCareerStats !== 'function') return;
     if (filterCareerStats._rjWrapped) return;
     var orig = filterCareerStats;
-    window.filterCareerStats = function rjFilterCareerStatsWrapped(cat) {
-      var r = orig.apply(this, arguments);
+    rjInscrire("filterCareerStats", { id: "07h-stats-carriere:filterCareerStats", ordre: -2700, remplace: function (args, suite) {
+      var cat = args[0];
+      var r = suite();
       try { _rjApplyCareerSeasonFilter(cat); } catch (e) {}
       return r;
-    };
+    } });
     window.filterCareerStats._rjWrapped = true;
   })();
 

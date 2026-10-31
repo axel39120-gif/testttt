@@ -45,11 +45,12 @@
     // Wrapper sur ptab si présent (changement d'onglet pilote)
     if (typeof window.ptab === 'function' && !window.ptab._rjF1StatsWrapped) {
       var orig = window.ptab;
-      window.ptab = function(tab) {
-        var r = orig.apply(this, arguments);
+      rjInscrire("ptab", { id: "07j-stats-f1:ptab", ordre: -2900, remplace: function (args, suite) {
+      var tab = args[0];
+        var r = suite();
         try { _rjHideF1StatsSection(); } catch (e) {}
         return r;
-      };
+      } });
       window.ptab._rjF1StatsWrapped = true;
     }
   })();

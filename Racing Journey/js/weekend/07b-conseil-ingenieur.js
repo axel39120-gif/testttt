@@ -24,7 +24,7 @@
     if (window.askEngineerHint._rjUserFixEnhanced) return true;
 
     var orig = window.askEngineerHint;
-    window.askEngineerHint = function rjAskEngineerHintEnhanced() {
+    rjInscrire("askEngineerHint", { id: "07b-conseil-ingenieur:askEngineerHint", ordre: -2100, remplace: function (args, suite) {
       // Snapshot avant
       var before = null;
       try {
@@ -35,7 +35,7 @@
 
       var result;
       try {
-        result = orig.apply(this, arguments);
+        result = suite();
       } catch (e) {
         console.warn('[07] askEngineerHint orig error:', e);
         return result;
@@ -81,7 +81,7 @@
       } catch (e) {}
 
       return result;
-    };
+    } });
     window.askEngineerHint._rjUserFixEnhanced = true;
     console.log('[07] askEngineerHint enhanced (visible cursor moves + highlights)');
     return true;
