@@ -400,16 +400,9 @@
         try { setTimeout(verifierAge, 300); } catch (e) {}
       } });
     }
-    if (typeof window.navTo === "function" && !window.navTo._rj74) {
-      var origNav = window.navTo;
-      var fnNav = function (id) {
-        var r = origNav.apply(this, arguments);
-        try { if (id === "S-settings") setTimeout(injecterBouton, 40); } catch (e) {}
-        return r;
-      };
-      fnNav._rj74 = true;
-      wrapped.navTo = origNav;
-      window.navTo = fnNav;
+    if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
+    if (!window.RJ_SCREEN_HOOKS.some(function (h) { return h && h.id === "74-reglages"; })) {
+      window.RJ_SCREEN_HOOKS.push({ id: "74-reglages", ecran: "S-settings", apres: function () { setTimeout(injecterBouton, 40); } });
     }
     return true;
   }

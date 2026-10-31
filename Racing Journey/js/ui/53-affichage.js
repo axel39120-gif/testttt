@@ -65,8 +65,6 @@
   var HOME = "S-home";       // écran d'accueil de carrière
   var MAX_QUEUE = 6;
   var queue = [];
-  var origPush = null;
-  var wrapped = {};
 
   function currentScreen() {
     try {
@@ -86,68 +84,39 @@
     if (queue.length > MAX_QUEUE) queue.shift();
   }
 
+  var actif = true;
+
   function flush() {
-    if (!origPush || !queue.length || !onHome()) return;
+    if (!queue.length || !onHome()) return;
     var pending = queue.slice();
     queue.length = 0;
     // léger décalage pour laisser l'accueil se dessiner, puis on espace les toasts
     pending.forEach(function (item, i) {
       setTimeout(function () {
-        try { origPush.apply(null, item.args); } catch (e) {}
+        try { window.pushHomeToast.apply(null, item.args); } catch (e) {}
       }, 400 + i * 220);
     });
   }
 
-  function installPush() {
-    if (typeof window.pushHomeToast !== "function") return false;
-    if (window.pushHomeToast._rj58) return true;
-    origPush = window.pushHomeToast;
-    var fn = function () {
-      var args = Array.prototype.slice.call(arguments);
-      if (onHome()) {
-        try { return origPush.apply(this, args); } catch (e) { return; }
-      }
-      enqueue(args);   // ailleurs : on garde pour plus tard
-    };
-    fn._rj58 = true;
-    window.pushHomeToast = fn;
-    return true;
-  }
-
-  // Vider la file dès que le joueur revient sur l'accueil.
-  function wrapNav(name) {
-    if (typeof window[name] !== "function" || window[name]._rj58) return false;
-    var orig = window[name];
-    var fn = function () {
-      var r = orig.apply(this, arguments);
-      try { if (onHome()) flush(); } catch (e) {}
-      return r;
-    };
-    fn._rj58 = true;
-    wrapped[name] = orig;
-    window[name] = fn;
-    return true;
-  }
-
-  var tries = 0;
-  function boot() {
-    var a = installPush();
-    var b = wrapNav("go");
-    var c = wrapNav("navTo");
-    wrapNav("refreshScreen");
-    if (a && b && c) {
-      if (onHome()) flush();
-      console.log("[58-toast-scope] actif — notifications limitées à l'accueil (file d'attente ailleurs)");
-      return;
+  /* Filtre de notification (86) : hors de l'accueil, on garde pour plus tard. */
+  if (!Array.isArray(window.RJ_TOAST_FILTERS)) window.RJ_TOAST_FILTERS = [];
+  window.RJ_TOAST_FILTERS.push({
+    id: "58-file",
+    filtre: function () {
+      if (!actif || onHome()) return;
+      enqueue([].slice.call(arguments));
+      return false;
     }
-    if (tries++ < 80) setTimeout(boot, 80);
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  });
+
+  /* Vider la file dès que le joueur revient sur l'accueil (go, navTo, refreshScreen). */
+  window.viderNotificationsEnAttente = function () { if (actif) flush(); };
+  if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
+  window.RJ_SCREEN_HOOKS.push({ id: "58-file", ecran: HOME, apres: function () { if (actif) flush(); } });
+  console.log("[58-toast-scope] actif — notifications limitées à l'accueil (file d'attente ailleurs)");
 
   window._rj58Uninstall = function () {
-    if (origPush) { window.pushHomeToast = origPush; origPush = null; }
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    actif = false;
     queue.length = 0;
     console.log("[58-toast-scope] désinstallé");
   };

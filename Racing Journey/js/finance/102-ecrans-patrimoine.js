@@ -373,27 +373,20 @@
    * 5. NAVIGATION
    * ================================================================== */
   function brancherNav() {
-    if (typeof window.navTo !== "function" || window.navTo._rj102) return false;
-    _orig.navTo = window.navTo;
-    window.navTo = function (id) {
-      if (id === "S-patrimoine") {
-        creerEcran();
-        var r = _orig.navTo.apply(this, arguments);
-        setTimeout(function () { window.pattab("comptes"); }, 40);
-        return r;
-      }
-      /* Quelque chose ouvre l'écran de l'agent directement — la création de
-         pilote, notamment, pour le choix du premier agent. On lui rend son
-         contenu avant l'affichage. */
-      if (id === "S-agent") {
-        placerAgent("ecran");
-        var ra = _orig.navTo.apply(this, arguments);
-        try { if (typeof window.renderAgentScreen === "function") window.renderAgentScreen(); } catch (e) {}
-        return ra;
-      }
-      return _orig.navTo.apply(this, arguments);
-    };
-    window.navTo._rj102 = true;
+    if (window.RJ_SCREEN_HOOKS.some(function (h) { return h && h.id === "102-ecran-patrimoine"; })) return true;
+    window.RJ_SCREEN_HOOKS.push({
+      id: "102-ecran-patrimoine", ecran: "S-patrimoine",
+      avant: function () { creerEcran(); },
+      apres: function () { setTimeout(function () { window.pattab("comptes"); }, 40); }
+    });
+    /* Quelque chose ouvre l'écran de l'agent directement — la création de
+       pilote, notamment, pour le choix du premier agent. On lui rend son
+       contenu avant l'affichage. */
+    window.RJ_SCREEN_HOOKS.push({
+      id: "102-ecran-agent", ecran: "S-agent",
+      avant: function () { placerAgent("ecran"); },
+      apres: function () { if (typeof window.renderAgentScreen === "function") window.renderAgentScreen(); }
+    });
     return true;
   }
 

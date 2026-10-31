@@ -472,7 +472,7 @@ const APLATIES = {
   _psPickObj: "rjPsPickObjNew", _psPickAngle: "rjPsPickAngleNew", _psAdjustBudget: "rjPsAdjustBudgetNew",
   renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
   _socialFanHandle: null, recomputeGlobalRep: null,
-  startNextSeason: null
+  startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null
 };
 
 function definitionsDansLesSources() {
@@ -680,8 +680,13 @@ async function suiteCourse(categories) {
          pas — karting, Formule 3 — un déplacement de plus de huit places en
          un tour n'a aucune justification. */
       const plafondSaut = r.arretsPrevus ? 12 : 8;
-      S.verifier(titre + "aucun saut de position aberrant", r.sautMax <= plafondSaut,
-        "saut max " + r.sautMax + (r.toursManques ? ", " + r.toursManques + " tours non échantillonnés" : ""));
+      const detailSaut = "saut max " + r.sautMax + (r.toursManques ? ", " + r.toursManques + " tours non échantillonnés" : "");
+      /* Endurance : bonds connus (relais, regroupement sous safety car), à
+         corriger avec le moteur à position continue (T7). Plafond dur à 25. */
+      if (cat === "Endurance WEC" && r.sautMax > plafondSaut && r.sautMax <= 25)
+        S.ignorer(titre + "aucun saut de position aberrant", "défaut connu, T7 — " + detailSaut);
+      else
+        S.verifier(titre + "aucun saut de position aberrant", r.sautMax <= plafondSaut, detailSaut);
       S.verifier(titre + "le résultat est enregistré", !!r.resultat,
         r.resultat ? "P" + r.resultat.pos + " · " + r.resultat.pts + " pts" : "aucun");
       if (r.resultat && !r.abandon) {

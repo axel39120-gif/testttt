@@ -726,16 +726,9 @@
     // Le bouton doit virer à l'or dès que la saison se termine, sans attendre
     // un rechargement : on surveille les retours sur l'accueil.
     try {
-      if (typeof window.navTo === "function" && !window.navTo._rj70) {
-        var origNav = window.navTo;
-        var fnNav = function () {
-          var r = origNav.apply(this, arguments);
-          try { setTimeout(majBouton, 20); } catch (e) {}
-          return r;
-        };
-        fnNav._rj70 = true;
-        wrapped.navTo = origNav;
-        window.navTo = fnNav;
+      if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
+      if (!window.RJ_SCREEN_HOOKS.some(function (h) { return h && h.id === "70-bouton"; })) {
+        window.RJ_SCREEN_HOOKS.push({ id: "70-bouton", ecran: "*", apres: function () { setTimeout(majBouton, 20); } });
       }
     } catch (e) {}
 

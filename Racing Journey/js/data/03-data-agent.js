@@ -9158,6 +9158,8 @@ function go(e) {
   if (_nav) _nav.classList.toggle("show", t.includes(e));
   if (typeof G !== "undefined" && G && G.moreOpen && typeof closeMore === "function") closeMore();
   if (typeof _scrollScreenTop === "function") _scrollScreenTop(e);
+  // Notifications gardées hors de l'accueil (53).
+  if (typeof viderNotificationsEnAttente === "function") viderNotificationsEnAttente();
 }
 
 function _scrollScreenTop(e) {
@@ -9173,6 +9175,13 @@ function _scrollScreenTop(e) {
 }
 
 function refreshScreen(e) {
+  if (typeof remplacementEcranDemande === "function" && remplacementEcranDemande(e)) return;
+  var r = _refreshScreenCoeur.apply(this, arguments);
+  if (typeof declencherHooksEcran === "function") declencherHooksEcran("apres", e);
+  return r;
+}
+
+function _refreshScreenCoeur(e) {
   if ("S-race" !== e) {
     var t = document.getElementById("race-event-modal");
     t && t.parentNode && t.parentNode.removeChild(t)
@@ -9265,7 +9274,23 @@ function applyRaceLockUI() {
   if (o) o.style.display = e ? "none" : "";
 }
 
+/* Navigation entre écrans. Les modules y réagissent par RJ_SCREEN_HOOKS
+   ({ id, ecran, avant(id), apres(id), redirige: [id, ni], ensuite(id) }),
+   jamais en enveloppant la fonction. */
 function navTo(e, t) {
+  var red = (typeof redirectionEcran === "function") ? redirectionEcran(e) : null;
+  if (red) {
+    var rr = navTo.apply(this, red.cible);
+    if (red.ensuite) { try { red.ensuite(e); } catch (err) { console.warn("[navTo] redirection :", err && err.message); } }
+    return rr;
+  }
+  if (typeof declencherHooksEcran === "function") declencherHooksEcran("avant", e);
+  var r = _navToCoeur.apply(this, arguments);
+  if (typeof declencherHooksEcran === "function") declencherHooksEcran("apres", e);
+  return r;
+}
+
+function _navToCoeur(e, t) {
   var _onRace = document.querySelector(".scr.on") && document.querySelector(".scr.on").id === "S-race";
   var _livePhase = typeof G !== "undefined" && G && (G.racePhase === "live" || G.racePhase === "quali");
   if (_onRace && _livePhase && "S-race" !== e) return;
@@ -15506,7 +15531,15 @@ function sendContactMessage(e, t) {
   r && ("cooldown" !== r.error ? openContactChat(e) : showToast("Déjà contacté cette semaine. Reviens dans " + r.weeksLeft + " sem."))
 }
 
-function pushHomeToast(label, text, color) {
+/* Les filtres RJ_TOAST_FILTERS (86) peuvent taire ou modifier une notification. */
+function pushHomeToast() {
+  var args = [].slice.call(arguments);
+  if (typeof filtrerNotification === "function") args = filtrerNotification(args);
+  if (!args) return;
+  return _pushHomeToastCoeur.apply(this, args);
+}
+
+function _pushHomeToastCoeur(label, text, color) {
   try {
     color = color || "#60A5FA";
     label = label || "";

@@ -192,26 +192,18 @@ function injecter() {
     if (carte) carte.remove();
 
     /* Toute navigation vers l'espace est redirigée vers l'onglet. */
-    if (typeof window.navTo === "function" && !window.navTo._rj93) {
-      var orig = window.navTo;
-      window.navTo = function (id) {
-        if (id === "S-arcs") {
-          var r = orig.call(this, "S-media", "ni-media");
-          try {
-            /* L'onglet s'appelle « evenements » côté code. */
-            if (typeof window.mtab === "function") window.mtab("evenements");
-          } catch (e) {}
+    if (!window.RJ_SCREEN_HOOKS.some(function (h) { return h && h.id === "93-arcs"; })) {
+      window.RJ_SCREEN_HOOKS.push({
+        id: "93-arcs", ecran: "S-arcs", redirige: ["S-media", "ni-media"],
+        ensuite: function () {
+          /* L'onglet s'appelle « evenements » côté code. */
+          if (typeof window.mtab === "function") window.mtab("evenements");
           setTimeout(injecter, 120);
-          return r;
         }
-        return orig.apply(this, arguments);
-      };
-      window.navTo._rj93 = true;
-      _origNav = orig;
+      });
     }
   }
 
-  var _origNav = null;
 
   function boot() {
     var essais = 0;
@@ -260,7 +252,6 @@ function injecter() {
 
     window._rj93 = { injecter: injecter };
     window._rj93Uninstall = function () {
-      if (_origNav) window.navTo = _origNav;
       if (_origRender) window.renderRepEvents = _origRender;
       var b = document.getElementById("rj93-arcs"); if (b) b.remove();
       var css = document.getElementById(CSS_ID); if (css) css.remove();

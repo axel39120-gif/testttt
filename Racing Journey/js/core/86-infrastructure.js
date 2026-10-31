@@ -186,52 +186,20 @@
     return args;
   }
 
-  var _origNav = null, _origRefresh = null, _origToast = null;
-
-  function installer() {
-    if (fn("navTo") && !window.navTo._rj88) {
-      _origNav = window.navTo;
-      window.navTo = function (id) {
-        declencher("avant", id);
-        var r = _origNav.apply(this, arguments);
-        try { declencher("apres", id); } catch (e) {}
-        return r;
-      };
-      window.navTo._rj88 = true;
+  /* Appelés directement par navTo, refreshScreen et pushHomeToast (03). */
+  window.declencherHooksEcran = declencher;
+  window.remplacementEcranDemande = remplacementDemande;
+  window.filtrerNotification = filtrerNotification;
+  window.redirectionEcran = function (id) {
+    for (var i = 0; i < window.RJ_SCREEN_HOOKS.length; i++) {
+      var h = window.RJ_SCREEN_HOOKS[i];
+      if (concerne(h, id) && Array.isArray(h.redirige)) return { cible: h.redirige, ensuite: h.ensuite };
     }
-    if (fn("refreshScreen") && !window.refreshScreen._rj88) {
-      _origRefresh = window.refreshScreen;
-      window.refreshScreen = function (id) {
-        if (remplacementDemande(id)) return;
-        var r = _origRefresh.apply(this, arguments);
-        try { declencher("apres", id); } catch (e) {}
-        return r;
-      };
-      window.refreshScreen._rj88 = true;
-    }
-    if (fn("pushHomeToast") && !window.pushHomeToast._rj88) {
-      _origToast = window.pushHomeToast;
-      window.pushHomeToast = function () {
-        var args = filtrerNotification([].slice.call(arguments));
-        if (!args) return;
-        return _origToast.apply(this, args);
-      };
-      window.pushHomeToast._rj88 = true;
-    }
-
-    return !!(window.navTo && window.navTo._rj88 &&
-              window.refreshScreen && window.refreshScreen._rj88);
-  }
+    return null;
+  };
 
   function boot() {
-    var essais = 0;
-    (function tenter() {
-      if (installer()) {
-        console.log(TAG, "actif — " + window.RJ_SCREEN_HOOKS.length + " réaction(s) d'écran inscrite(s)");
-        return;
-      }
-      if (essais++ < 80) setTimeout(tenter, 150);
-    })();
+    console.log(TAG, "actif — " + window.RJ_SCREEN_HOOKS.length + " réaction(s) d'écran inscrite(s)");
 
     window._rj88 = {
       reactions: function () {
@@ -239,9 +207,9 @@
       }
     };
     window._rj88Uninstall = function () {
-      if (_origNav) window.navTo = _origNav;
-      if (_origRefresh) window.refreshScreen = _origRefresh;
-      if (_origToast) window.pushHomeToast = _origToast;
+      /* navTo, refreshScreen et pushHomeToast testent leur présence. */
+      ["declencherHooksEcran", "remplacementEcranDemande", "filtrerNotification", "redirectionEcran"]
+        .forEach(function (n) { delete window[n]; });
       console.log(TAG, "désinstallé");
     };
   }

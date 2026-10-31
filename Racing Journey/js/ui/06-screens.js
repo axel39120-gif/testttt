@@ -624,17 +624,9 @@ if(typeof window!=='undefined'){
  }else{
   setTimeout(adjustHomeCompactness,80);
  }
- // Re-check sur navigation home
- setTimeout(function(){
-  if(typeof navTo==='function'){
-   var _origNavTo=navTo;
-   window.navTo=function(){
-    var r=_origNavTo.apply(this,arguments);
-    if(arguments[0]==='S-home'){setTimeout(adjustHomeCompactness,30);}
-    return r;
-   };
-  }
- },1000);
+ // Re-check sur navigation home (hook d'écran, 86)
+ if(!Array.isArray(window.RJ_SCREEN_HOOKS))window.RJ_SCREEN_HOOKS=[];
+ window.RJ_SCREEN_HOOKS.push({id:"06-accueil-compact",ecran:"S-home",apres:function(){setTimeout(adjustHomeCompactness,30);}});
  // Re-check après 1s pour les cas de chargement tardif
  setTimeout(adjustHomeCompactness,500);
  setTimeout(adjustHomeCompactness,1500);
@@ -671,16 +663,8 @@ if(typeof window!=='undefined'){
  setTimeout(adjustBottomNavClearance,500);
  setTimeout(adjustBottomNavClearance,1500);
  // Recalcul lors du show/hide de la nav (changement de page)
- setTimeout(function(){
-  if(typeof navTo==='function'){
-   var _origNT=navTo;
-   window.navTo=function(){
-    var r=_origNT.apply(this,arguments);
-    setTimeout(adjustBottomNavClearance,30);
-    return r;
-   };
-  }
- },1200);
+ if(!Array.isArray(window.RJ_SCREEN_HOOKS))window.RJ_SCREEN_HOOKS=[];
+ window.RJ_SCREEN_HOOKS.push({id:"06-barre-du-bas",ecran:"*",apres:function(){setTimeout(adjustBottomNavClearance,30);}});
 }
 
 
@@ -794,20 +778,12 @@ function renderPaddockPass(){
  }
 }
 
-// Hook into navTo to render shop when navigating to it
-if(typeof window!=='undefined'){
- setTimeout(function(){
-  if(typeof navTo==='function'){
-   var _origNT_shop=navTo;
-   window.navTo=function(){
-    var r=_origNT_shop.apply(this,arguments);
-    if(arguments[0]==='S-shop'){setTimeout(renderShop,30);}
-    if(arguments[0]==='S-paddockpass'){setTimeout(renderPaddockPass,30);}
-    return r;
-   };
-  }
- },1200);
-}
+// Rendu de la boutique et du paddock pass à l'ouverture de leur écran
+if(!Array.isArray(window.RJ_SCREEN_HOOKS))window.RJ_SCREEN_HOOKS=[];
+window.RJ_SCREEN_HOOKS.push({id:"06-boutique",ecran:["S-shop","S-paddockpass"],apres:function(id){
+ if(id==='S-shop'){setTimeout(renderShop,30);}
+ if(id==='S-paddockpass'){setTimeout(renderPaddockPass,30);}
+}});
 
 /* === DASHBOARD CIRCUIT DANS PRÉPARATION === */
 
