@@ -1048,7 +1048,7 @@ async function suitePaysage() {
         const nav = document.getElementById("main-nav"), bn = boite(nav);
         const ecrans = [...document.querySelectorAll(".scr[id^='S-']")].map(e => e.id)
           .filter(id => !/^S-(splash|create|display-setup|mode)$/.test(id));
-        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [] };
+        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], ongletsHaut: [] };
         for (const id of ecrans) {
           try { navTo(id, null); } catch (e) { continue; }
           await attendre(260);
@@ -1059,6 +1059,13 @@ async function suitePaysage() {
           if (railVisible && bs.left < bn.right - 1) res.chevauche.push(s.id);
           if ([...document.querySelectorAll(".scr")].filter(x => getComputedStyle(x).display !== "none").length > 1) res.plusieurs.push(s.id);
           res.bandeaux[s.id] = hdr ? Math.round(boite(hdr).height) : null;
+          /* La barre de ressources (HUD) reste en haut de chaque écran de jeu. */
+          const hud = document.getElementById("rj-hud");
+          if (!hud || getComputedStyle(hud).display === "none" || boite(hud).top > 1 || boite(hud).height > 60) res.sansHud.push(s.id);
+          /* Les onglets forment une colonne à gauche du contenu. */
+          const tabs = s.querySelector(":scope > .tabs");
+          if (tabs && sc && getComputedStyle(tabs).display !== "none" && !(boite(tabs).right <= boite(sc).left + 1 && boite(tabs).height > boite(tabs).width))
+            res.ongletsHaut.push(s.id);
           res.hauts[s.id] = sc ? Math.round(boite(sc).top) : null;
           /* Un élément rogné par un parent qui défile (onglets, rangée de
              filtres) ne déborde pas de l'écran. */
@@ -1071,17 +1078,37 @@ async function suitePaysage() {
           });
         }
         try { navTo("S-home", null); } catch (e) {}
+        await attendre(300);
+        /* Accueil : les tuiles tiennent sans défilement ; les pastilles
+           donnent la saison (points, victoires, podiums). */
+        const tuiles = document.querySelector("#S-home > .scroll");
+        res.accueil = {
+          defile: tuiles ? tuiles.scrollHeight - tuiles.clientHeight : null,
+          points: (document.getElementById("h-champ-pts") || {}).textContent,
+          victoires: (document.getElementById("h-wins") || {}).textContent,
+          forme: !!document.getElementById("h-forme")
+        };
+        /* Le HUD suit l'état du jeu. */
+        const avant = (document.getElementById("rj-hud") || {}).textContent || "";
+        G.budget += 2500000; updateUI();
+        res.hudSuit = ((document.getElementById("rj-hud") || {}).textContent || "") !== avant;
+        G.budget -= 2500000; updateUI();
         return res;
       });
       const h = viewport.height;
       S.verifier(nom + " : navigation en rail à gauche",
-        r.rail.gauche <= 1 && r.rail.hauteur >= h * 0.9 && r.rail.largeur <= 110, JSON.stringify(r.rail));
+        r.rail.gauche <= 1 && r.rail.hauteur >= h * 0.9 && r.rail.largeur <= 72, JSON.stringify(r.rail));
       S.verifier(nom + " : aucun écran sous le rail", r.chevauche.length === 0, r.chevauche.join(", "));
       S.verifier(nom + " : un seul écran affiché à la fois", r.plusieurs.length === 0, r.plusieurs.join(", "));
       const hauteurs = [...new Set(Object.values(r.bandeaux).filter(v => v !== null))];
       S.verifier(nom + " : même bandeau sur tous les écrans", hauteurs.length === 1, JSON.stringify(r.bandeaux));
       const bas = Object.entries(r.hauts).filter(([, t]) => t !== null && t > 64).map(([id, t]) => id + "@" + t);
       S.verifier(nom + " : le contenu commence sous un seul bandeau", bas.length === 0, bas.join(", "));
+      S.verifier(nom + " : HUD en haut de chaque écran", r.sansHud.length === 0, r.sansHud.join(", "));
+      S.verifier(nom + " : onglets en colonne à gauche", r.ongletsHaut.length === 0, r.ongletsHaut.join(", "));
+      S.verifier(nom + " : le HUD suit l'état du jeu", r.hudSuit === true);
+      S.verifier(nom + " : accueil — pastilles de saison et forme", r.accueil.points !== undefined && r.accueil.victoires !== undefined && r.accueil.forme, JSON.stringify(r.accueil));
+      if (viewport.height >= 400) S.verifier(nom + " : accueil sans défilement", r.accueil.defile !== null && r.accueil.defile <= 2, "dépasse de " + r.accueil.defile + " px");
       S.verifier(nom + " : rien ne déborde à droite", r.debords.length === 0, [...new Set(r.debords)].slice(0, 6).join(", "));
       S.verifier(nom + " : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
     } finally { await navigateur.close(); }

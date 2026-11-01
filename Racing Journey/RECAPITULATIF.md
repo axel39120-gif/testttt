@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v217**. Ce document décrit l'organisation du code après la
+Version **BUILD v218**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v217 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v218 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -33,7 +33,7 @@ Voir `tests/README.md` pour les suites, les options (`RJ_GRAINE`,
 ## Organisation du code
 
 ```
-css/         paysage (mise en page horizontale commune à tous les écrans)
+css/         paysage (mise en page de jeu mobile commune à tous les écrans)
 js/core/     00-hooks (points d'extension), 02 réglages, 04s sauvegarde,
              07k migrations, 86 registres
 js/data/     circuits, catégories, écuries, plateau de pilotes, notation
@@ -132,6 +132,25 @@ curseurs n'avaient plus d'effet) et le correctif de barre du bas d'index.html.
 
 La suite `paysage` vérifie chaque écran à trois tailles (667 × 375,
 932 × 430, 1180 × 820) ; toutes les suites tournent désormais en 932 × 430.
+
+### Présentation de jeu mobile
+
+- **HUD** (`js/ui/109-hud.js`) : saison et semaine, budget, réputation et
+  note du pilote en haut à droite de chaque écran, mis à jour après
+  `updateUI` et à chaque changement d'écran ; titre à gauche (bandeau de
+  44 px).
+- **Rail d'icônes** de 60 px (libellés gardés pour les lecteurs d'écran),
+  bouton Avancer au centre.
+- **Onglets en colonne** à gauche du contenu, comme les menus de jeu.
+- **Accueil** : à gauche la prochaine course, la saison (classement,
+  points, victoires, podiums), la forme (cinq derniers résultats), le
+  mental et un mini-classement (leader, voisins, écart) ; à droite les
+  tuiles, sans défilement.
+- Marges resserrées, retour au toucher (la cible s'enfonce), fondu entre
+  écrans, barres de défilement masquées.
+- **Plein écran** (`js/ui/110-plein-ecran.js`) : dans le navigateur d'un
+  téléphone, au premier toucher, avec verrouillage paysage (sans effet sur
+  iOS Safari ni sur ordinateur).
 
 ---
 

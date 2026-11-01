@@ -1,12 +1,14 @@
 /* =====================================================================
- * paysage.css — LE JEU À L'HORIZONTALE
+ * paysage.css — LE JEU À L'HORIZONTALE, PRÉSENTÉ COMME UN JEU MOBILE
  *
- * Une seule mise en page pour tous les écrans, sans changer le style :
- *   - la navigation devient un rail vertical à gauche ;
- *   - un seul bandeau en haut : titre à gauche, onglets à droite ;
- *   - le contenu se range en colonnes de la largeur d'un téléphone en
- *     portrait (les cartes gardent la taille pour laquelle elles ont été
- *     dessinées) ;
+ * Une seule mise en page pour tous les écrans, dans le style existant :
+ *   - un rail d'icônes à gauche (le bouton Avancer au centre) ;
+ *   - un bandeau en haut : titre à gauche, ressources à droite (HUD,
+ *     js/ui/109-hud.js) ;
+ *   - les onglets en colonne à gauche du contenu, comme les menus de jeu ;
+ *   - le contenu en colonnes de la largeur d'un téléphone en portrait (les
+ *     cartes gardent la taille pour laquelle elles ont été dessinées) ;
+ *   - retour au toucher, transition d'écran, barres de défilement masquées ;
  *   - en portrait, le jeu demande de tourner l'appareil.
  *
  * Chargé après styles.css. Les modules injectent leur CSS plus tard : les
@@ -14,11 +16,14 @@
  * =================================================================== */
 
 :root {
-  --rail: 76px;
+  --rail: 60px;
   --rail-g: env(safe-area-inset-left, 0px);
-  --bandeau: 52px;
-  --colonne: 360px;
+  --bandeau: 44px;
+  --hud: 330px;         /* place réservée aux ressources, à droite du bandeau */
+  --onglets: 118px;
+  --colonne: 340px;
 }
+@media (max-width: 720px) { :root { --hud: 250px; --onglets: 104px; } }
 
 /* --- Cadre : tout l'écran, plus de « téléphone » centré ---------------- */
 html, body { background: #0a0a0a; }
@@ -59,52 +64,91 @@ body { padding: 0 !important; }
 /* Création : même bandeau que les autres écrans. */
 #S-create > .apex-create-hdr { height: var(--bandeau) !important; min-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; }
 
-/* --- Rail de navigation ------------------------------------------------ */
+/* --- Rail d'icônes ------------------------------------------------------ */
 #main-nav.bnav, nav.bnav {
   position: fixed !important; z-index: 1000 !important;
   top: 0 !important; bottom: 0 !important; left: 0 !important; right: auto !important;
   width: calc(var(--rail) + var(--rail-g)) !important; height: auto !important;
-  padding: 8px 0 8px var(--rail-g) !important;
+  padding: 6px 0 6px var(--rail-g) !important;
   flex-direction: column !important; justify-content: space-evenly !important; align-items: center !important;
   border-top: 0 !important; border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 #main-nav .ni {
   width: 100% !important; height: auto !important; flex: 0 0 auto !important;
-  padding: 6px 2px !important;
+  padding: 10px 0 !important;
 }
-#main-nav .ni > span:last-child { font-size: 10px !important; }
-/* Repère de l'onglet actif : trait vertical à gauche plutôt qu'en haut. */
+#main-nav::before { display: none !important; }   /* liseré haut de l'ancienne barre */
+/* Libellés masqués à l'écran, gardés pour les lecteurs d'écran. */
+#main-nav .ni > span:not(:first-child) {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important;
+}
+/* Repère de l'onglet actif : trait vertical à gauche. */
 #main-nav .ni::before {
   top: 50% !important; left: 0 !important; transform: translateY(-50%) !important;
   width: 3px !important; height: 0 !important;
 }
-#main-nav .ni.on::before { height: 28px !important; }
+#main-nav .ni.on::before { height: 26px !important; }
 #main-nav #ni-cta-continue {
-  width: 56px !important; height: 56px !important; margin: 0 !important;
+  width: 48px !important; height: 48px !important; margin: 0 !important;
   transform: none !important; top: auto !important;
 }
 
-/* --- Bandeau : titre à gauche, onglets à droite ------------------------- */
+/* --- Bandeau : titre à gauche, ressources à droite ---------------------- */
 .scr > .hdr {
   height: var(--bandeau) !important; min-height: 0 !important; flex: 0 0 auto !important;
-  padding: 0 14px !important; margin: 0 !important; align-items: center !important;
+  padding: 0 calc(var(--hud) + 8px) 0 10px !important; margin: 0 !important; align-items: center !important;
 }
-.scr > .hdr .hdr-title { font-size: 17px !important; line-height: 1.15 !important; }
-.scr > .hdr .hdr-sub { font-size: 11px !important; line-height: 1.2 !important; }
-.scr:has(> .tabs) > .hdr { padding-right: calc(58% + 14px) !important; }
+.scr > .hdr > div { min-width: 0; }
+.scr > .hdr .hdr-title {
+  font-size: 15px !important; line-height: 1.15 !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.scr > .hdr .hdr-sub {
+  font-size: 10px !important; line-height: 1.2 !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+#rj-hud {
+  position: fixed; top: 0; right: env(safe-area-inset-right, 0px); z-index: 60;
+  height: var(--bandeau); display: flex; align-items: center; gap: 6px; padding: 0 10px;
+  pointer-events: none;
+}
+body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { display: none; }
+.rj-hud-chip {
+  font: 700 11px/1 var(--font-display); letter-spacing: .04em; white-space: nowrap;
+  padding: 6px 8px; border-radius: 6px;
+  background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+  color: var(--text, #e8e8ec);
+}
+.rj-hud-argent { color: var(--green, #00E676); }
+@media (max-width: 720px) { .rj-hud-chip[title="Réputation"] { display: none; } }
+
+/* --- Onglets en colonne, à gauche du contenu ---------------------------- */
+.scr.on:has(> .tabs) {
+  display: grid !important;
+  grid-template-columns: var(--onglets) minmax(0, 1fr);
+  grid-template-rows: var(--bandeau) minmax(0, 1fr);
+}
+.scr.on:has(> .tabs) > * { grid-column: 1 / -1; }
+.scr.on:has(> .tabs) > .hdr { grid-row: 1; }
+.scr.on:has(> .tabs) > .scroll { grid-column: 2; grid-row: 2; height: auto !important; min-height: 0; }
 .scr > .tabs {
-  position: absolute !important; top: 0 !important; right: 0 !important;
-  width: 58% !important; height: var(--bandeau) !important;
-  margin: 0 !important; z-index: 2; align-items: stretch !important;
-  border-bottom: 0 !important;
-  overflow-x: auto !important; scrollbar-width: none;
+  grid-column: 1 !important; grid-row: 2;
+  position: static !important; width: auto !important; height: auto !important; margin: 0 !important;
+  flex-direction: column !important; align-items: stretch !important; gap: 2px;
+  padding: 8px 0 !important; border-bottom: 0 !important;
+  border-right: 1px solid var(--border-hi, rgba(255, 255, 255, .1)) !important;
+  overflow-x: hidden !important; overflow-y: auto !important; scrollbar-width: none;
 }
 .scr > .tabs::-webkit-scrollbar { display: none; }
-/* Beaucoup d'onglets (week-end de course) : ils défilent au lieu de déborder. */
 .scr > .tabs > * {
-  align-items: center !important; justify-content: center !important;
-  flex: 1 0 auto !important; padding: 0 12px !important; white-space: nowrap !important;
+  flex: 0 0 auto !important; justify-content: flex-start !important; text-align: left !important;
+  padding: 11px 10px 11px 12px !important; white-space: normal !important; line-height: 1.25;
+  border-bottom: 0 !important; border-left: 2px solid transparent !important; border-radius: 0 !important;
 }
+.scr > .tabs > .on { border-left-color: var(--red, #FF1801) !important; background: rgba(255, 24, 1, .08) !important; }
+.scr > .tabs > *::after { display: none !important; }
 
 /* Tiroir « Plus » : s'ouvre à côté du rail, en bas. */
 #more-drawer {
@@ -114,10 +158,10 @@ body { padding: 0 !important; }
   max-height: calc(100% - 16px) !important; overflow-y: auto !important;
 }
 
-#rj-build-badge { left: auto !important; right: 8px !important; }
+#rj-build-badge { left: auto !important; right: 8px !important; top: auto !important; bottom: 8px !important; }
 
-/* Notifications en bas à droite : en haut, elles couvraient le bandeau. */
-/* Les trophées rejoignent les notifications, en bas à droite. */
+/* Notifications et trophées en bas à droite : en haut, ils couvraient le
+   bandeau. */
 #ach-unlock-stack {
   top: auto !important; bottom: 44px !important; left: auto !important; right: 12px !important;
   transform: none !important; width: min(360px, 45vw) !important;
@@ -128,38 +172,102 @@ body { padding: 0 !important; }
 }
 
 /* --- Contenu en colonnes ------------------------------------------------ */
-.scr > .scroll { padding: 12px 14px 16px !important; }
+.scr > .scroll { padding: 10px 12px 14px !important; scrollbar-width: none; }
+.scr > .scroll::-webkit-scrollbar { display: none; }
 /* Seul un conteneur d'au moins cinq éléments passe en colonnes : une carte
    posée directement dans la zone (en-tête d'entraînement…) reste entière. */
 .scr > .scroll > :has(> :nth-child(5)),
 .scr > .scroll > * > :only-child:has(> :nth-child(5)) {
-  column-width: var(--colonne); column-gap: 16px;
+  column-width: var(--colonne); column-gap: 12px;
 }
 .scr > .scroll > :has(> :nth-child(5)) > *,
 .scr > .scroll > * > :only-child:has(> :nth-child(5)) > * { break-inside: avoid; }
 .scr > .scroll .t-sec, .scr > .scroll .apex-sec { break-after: avoid; }
 
-/* Accueil : le résumé (pilote, prochaine course, chiffres) à gauche, les
-   tuiles d'action à droite. */
+/* --- Accueil -------------------------------------------------------------
+   Bandeau : le pilote à gauche, ressources à droite. Dessous, à gauche, la
+   prochaine course, la saison (classement, points, victoires, podiums), la
+   forme et le mental ; à droite, les tuiles, sans défilement. */
 #S-home.on {
   display: grid !important;
-  grid-template-columns: minmax(280px, 40%) minmax(0, 1fr);
+  grid-template-columns: max(270px, 38%) minmax(0, 1fr);
+  grid-template-rows: var(--bandeau);
   grid-auto-rows: min-content; align-content: start;
-  column-gap: 12px;
+  column-gap: 10px;
 }
-#S-home > * { grid-column: 1; }
+#S-home > * { grid-column: 1; margin-left: 10px !important; margin-right: 0 !important; }
+#S-home > .apex-cockpit-bg { margin: 0 !important; }
+#S-home > .apex-cockpit-hdr {
+  grid-column: 1 / -1; grid-row: 1; height: var(--bandeau);
+  margin: 0 !important; padding: 0 calc(var(--hud) + 8px) 0 10px !important;
+  display: flex; align-items: center;
+}
+#S-home .apex-cockpit-hdr-left { width: 100%; }
+#S-home #h-rating-box { display: none !important; }   /* la note est dans le HUD */
+#S-home > .apex-hero-race { margin-top: 6px !important; }
+#S-home > .apex-stats-rail { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; margin-top: 8px !important; }
+/* Zone des tuiles calée entre le bandeau et le bas de l'écran : sa hauteur
+   doit être fixe pour que les tuiles se la partagent sans défiler. */
 #S-home > .scroll {
-  grid-column: 2; grid-row: 1 / span 20;
-  height: 100% !important; max-height: 100%; align-self: stretch;
+  position: absolute !important; top: var(--bandeau); bottom: 0; right: 0;
+  left: calc(max(270px, 38%) + 10px); height: auto !important; margin: 0 !important;
+  display: flex; flex-direction: column; padding: 6px 10px 10px 0 !important;
 }
-#S-home .apex-stats-rail { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+#S-home > .scroll .apex-sec { flex: 0 0 auto; margin-top: 2px !important; margin-bottom: 4px !important; }
+#S-home > .scroll .apex-actions-grid {
+  flex: 1 1 0; min-height: 0; margin: 0 0 4px !important; padding: 0 !important;
+  grid-auto-rows: 1fr !important; gap: 6px !important;
+}
+#S-home > .scroll .apex-action-tile { min-height: 0 !important; height: auto !important; padding: 4px !important; }
+/* Petits téléphones : sans titres de section, les tuiles gardent leur libellé. */
+@media (max-height: 400px) {
+  #S-home > .scroll .apex-sec { display: none !important; }
+  #S-home > .scroll .apex-action-icon { width: 30px !important; height: 30px !important; margin-bottom: 2px !important; }
+  #S-home > .apex-hero-race { padding-top: 8px !important; padding-bottom: 8px !important; }
+}
+
+.apex-forme-row {
+  display: flex; align-items: center; gap: 4px; margin-top: 8px;
+  font: 700 10px/1 var(--font-display); letter-spacing: .04em;
+}
+.apex-forme-lbl { color: var(--muted, #80808a); text-transform: uppercase; margin-right: 4px; }
+.apex-forme-res {
+  padding: 4px 6px; border-radius: 4px; color: var(--text2, #b0b0bc);
+  background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+}
+.apex-forme-res.or { color: #F59E0B; border-color: #F59E0B66; }
+.apex-forme-res.argent { color: #D1D5DB; border-color: #D1D5DB55; }
+.apex-forme-res.bronze { color: #E8A87C; border-color: #E8A87C55; }
+.apex-forme-res.points { color: #34D399; border-color: #34D39944; }
+.apex-forme-res.ab { color: #ff2040; border-color: #ff204055; }
+.apex-forme-vide { color: var(--muted, #80808a); font-weight: 400; letter-spacing: 0; }
+
+/* Mini-classement : leader, voisins, écart. */
+.apex-champ-mini {
+  margin-top: 8px; padding: 6px 10px; border-radius: 10px; cursor: pointer;
+  background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+}
+.apex-champ-mini:empty { display: none; }
+.apex-champ-mini-lbl {
+  font: 700 9px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted, #80808a); margin: 2px 0 4px;
+}
+.apex-champ-mini-row {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto 52px; gap: 6px; align-items: center;
+  font-size: 11px; line-height: 1.9; color: var(--text2, #b0b0bc);
+}
+.apex-champ-mini-row .pos { font: 700 11px/1 var(--font-display); color: var(--muted, #80808a); }
+.apex-champ-mini-row .nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.apex-champ-mini-row .pts { font-weight: 700; color: var(--text, #e8e8ec); }
+.apex-champ-mini-row .ecart { text-align: right; font-size: 10px; color: var(--muted, #80808a); }
+.apex-champ-mini-row.moi .nom, .apex-champ-mini-row.moi .pos { color: var(--red3, #ff2040); font-weight: 700; }
 
 /* Course en direct : progression et mini-classement à gauche, fil du direct
    à droite (la vue du circuit prendra la gauche à l'étape 3). */
 @media (min-width: 820px) {
   #race-screen, .race-screen {
     display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: 14px; align-items: start;
+    column-gap: 12px; align-items: start;
   }
   #race-screen > *, .race-screen > * { margin-top: 0 !important; }
 }
@@ -177,6 +285,25 @@ body { padding: 0 !important; }
 #S-neg > .scroll > *,
 #S-save > .scroll > *,
 #S-create > .scroll > * { column-width: auto; max-width: 720px; margin-left: auto; margin-right: auto; }
+
+/* --- Sensations de jeu -------------------------------------------------- */
+/* Retour au toucher : la cible s'enfonce légèrement. Les voiles plein écran
+   (qui ferment une fenêtre au toucher) n'en ont pas. */
+button, .apex-action-tile, .tab, .ni, .apex-stat-pill, .apex-hero-race,
+[onclick]:not([id$="-overlay"]):not([id$="-modal"]):not([class*="overlay"]) {
+  transition: transform .09s ease-out, filter .09s ease-out;
+}
+button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .apex-hero-race:active,
+[onclick]:not([id$="-overlay"]):not([id$="-modal"]):not([class*="overlay"]):active {
+  transform: scale(.97); filter: brightness(1.15);
+}
+#main-nav #ni-cta-continue:active { transform: scale(.92) !important; }
+
+/* Changement d'écran : fondu court. */
+@keyframes rj-entree { from { opacity: 0; } }
+.screens > .scr.on { animation: rj-entree .16s ease-out; }
+.reduced-anim .screens > .scr.on { animation: none; }
+@media (prefers-reduced-motion: reduce) { .screens > .scr.on { animation: none; } }
 
 /* --- Portrait : tourner l'appareil -------------------------------------- */
 @media (orientation: portrait) {
