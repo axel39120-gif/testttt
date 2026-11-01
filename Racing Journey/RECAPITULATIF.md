@@ -35,6 +35,7 @@ Voir `tests/README.md` pour les suites, les options (`RJ_GRAINE`,
 ```
 css/         paysage (mise en page de jeu mobile commune à tous les écrans)
 js/core/     00-hooks (points d'extension), 02 réglages, 04s sauvegarde,
+             115 économie (barème réel, milieu familial),
              07k migrations, 86 registres
 js/data/     circuits, catégories, écuries, plateau de pilotes, notation
 js/race/     moteur (04), safety car, radio, évènements, décisions (107),
@@ -43,7 +44,7 @@ js/weekend/  week-end de course, en-tête, ajustements, ingénieur, réglages
 js/career/   progression, saison, fin de carrière, réserve, pré-saison,
              Super Licence (112), mercato (113), rêves et héritage (114)…
 js/social/   médias, conférences, réseaux sociaux, messagerie, réseau
-js/finance/  finances, négociation, sponsors, patrimoine
+js/finance/  finances, négociation (11, 117), sponsors, patrimoine
 js/ui/       écrans, icônes, affichage, badges, émojis, finitions
 js/dev/      sauvegarde de test (chargée seulement avec ?dev)
 ```
@@ -209,6 +210,32 @@ Trois chantiers choisis, dans l'ordre :
   Onglet Héritage du pilote.
 
 Suites `superlicence`, `mercato`, `heritage`.
+
+### Un baquet se gagne et se finance
+
+- **Économie réelle** (`js/core/115-economie.js`, source unique des
+  montants) : baquets F4 300–450 k€, FR 600–900 k€, F3 0,9–1,4 M€, F2
+  1,8–2,8 M€ ; salaires de F1 de 1 à 30 M€ ; WEC et IndyCar avec usines
+  salariées et équipes privées payantes ; sponsors ramenés aux montants
+  réels par catégorie. Les données d'écuries (`TEAM_OFFERS`) sont tirées du
+  barème par `tests/outils/bareme-ecuries.js` (rejouable). Milieu familial à
+  la création (budget de départ, soutien mensuel jusqu'à la Formula
+  Regional). Anciennes sauvegardes converties au chargement.
+- **Baquets limités et concurrence** (`js/career/116-baquets.js`) : places
+  libres par catégorie et par saison (F1 : 2 à 4) ; chaque offre oppose le
+  joueur à des pilotes du plateau (talent, argent, image) selon les
+  priorités de l'écurie ; soutien financier propre à chaque pilote ; apport
+  demandé par les écuries qui regardent l'argent ; académie qui prend le
+  baquet en charge ; prix payé un tiers à la signature, le reste sur huit mois.
+- **Négociation** (`js/finance/117-negociation.js`, sur la négociation de 06
+  et 11) : patience selon la marge sur le rival, sponsors engagés pour
+  baisser le prix, plan B signé en cas d'échec, résumé de l'offre avec prix,
+  échéancier, apport, priorités et rival.
+- **Régression corrigée** : la restructuration (b77fc20) avait supprimé les
+  fonctions de base de l'écran de négociation, qui levait une erreur à
+  l'ouverture ; restaurées, et le module 11 s'y inscrit par `rjInscrire`.
+
+Suites `economie`, `baquets`, `negociation`.
 
 ---
 
