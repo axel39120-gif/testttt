@@ -1266,6 +1266,69 @@ async function suiteCircuit() {
 }
 
 /* ==================================================================== *
+ * 8 quater. SUPER LICENCE FIA (module 112, étape 4)
+ *
+ * Points de licence par saison selon la catégorie et la place finale ;
+ * 40 points sur les trois dernières saisons et 18 ans pour un baquet de F1.
+ * Sans licence, une écurie de F1 ne peut proposer qu'un rôle de réserviste.
+ * ==================================================================== */
+async function suiteSuperLicence() {
+  S.suite("Super Licence");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const SL = window.RJSuperLicence;
+      if (!SL) return { api: false };
+      const histo = CAREER_HISTORY, age = G.age, cat = G.cat, saison = G.saison, fin = G.seasonOver;
+      const res = { api: true };
+      const saisonDe = (n, c, p) => ({ saison: n, cat: c, pos: p, pts: 0, races: 10 });
+      try {
+        res.bareme = [SL.points(saisonDe(1, "Formule 2", 1)), SL.points(saisonDe(1, "Formule 3", 1)), SL.points(saisonDe(1, "Formule 4", 8)), SL.points(saisonDe(1, "IndyCar", 2))];
+        G.cat = "Formule 3"; G.saison = 10; G.seasonOver = true; G.age = 18;
+        CAREER_HISTORY = [saisonDe(6, "Formule 2", 1), saisonDe(8, "Formule 4", 1), saisonDe(9, "Formula Regional", 2), saisonDe(10, "Formule 3", 3)];
+        const e = SL.etat();
+        res.fenetre = { points: e.points, saisons: e.saisons.map(x => x.saison).join(","), eligible: e.eligible };
+        G.age = 16; res.mineur = SL.etat().eligible;   // 17 ans à la saison suivante
+        G.age = 18;
+        CAREER_HISTORY = [saisonDe(9, "Formule 4", 1), saisonDe(10, "Formule 4", 2), saisonDe(10, "Formule 3", 1)];
+        res.maxParSaison = SL.etat().points;
+        CAREER_HISTORY = [saisonDe(9, "Formule 1", 18), saisonDe(10, "Formule 2", 15)];
+        res.retenue = SL.etat().eligible;
+
+        /* Le baquet de F1 dépend de la licence. */
+        const equipeF1 = (TEAMS_BY_CAT["Formule 1"] || [])[0];
+        CAREER_HISTORY = [saisonDe(10, "Formule 3", 9)];
+        const refus = buildOffer({ team: equipeF1, cat: "Formule 1", role: "num1", years: 2 });
+        CAREER_HISTORY = [saisonDe(9, "Formule 3", 1), saisonDe(10, "Formule 2", 2)];
+        const accord = buildOffer({ team: equipeF1, cat: "Formule 1", role: "num1", years: 2 });
+        CAREER_HISTORY = [];
+        const f2 = buildOffer({ team: (TEAMS_BY_CAT["Formule 2"] || [])[0], cat: "Formule 2", role: "num1", years: 1 });
+        res.offres = { refus: refus.role, marque: !!refus._superLicence, accord: accord.role, f2: f2.role };
+      } finally {
+        CAREER_HISTORY = histo; G.age = age; G.cat = cat; G.saison = saison; G.seasonOver = fin;
+      }
+      navTo("S-pilot", null); ptab("rep");
+      await new Promise(r => setTimeout(r, 300));
+      const carte = document.getElementById("rj112-carte");
+      res.carte = carte ? carte.textContent.replace(/\s+/g, " ").slice(0, 140) : null;
+      return res;
+    });
+    S.verifier("le module de Super Licence est installé", r.api);
+    if (!r.api) return;
+    S.verifier("barème : F2 P1 40, F3 P1 30, F4 P8 0, IndyCar P2 30", JSON.stringify(r.bareme) === "[40,30,0,30]", JSON.stringify(r.bareme));
+    S.verifier("seules les trois dernières saisons comptent", r.fenetre.points === 12 + 20 + 20 && r.fenetre.saisons === "8,9,10" && r.fenetre.eligible, JSON.stringify(r.fenetre));
+    S.verifier("18 ans minimum pour la F1", r.mineur === false);
+    S.verifier("une seule catégorie compte par saison (la meilleure)", r.maxParSaison === 12 + 30, String(r.maxParSaison));
+    S.verifier("avoir couru en F1 récemment garde la licence", r.retenue === true);
+    S.verifier("sans licence, une écurie de F1 propose un rôle de réserviste", r.offres.refus === "num3" && r.offres.marque, JSON.stringify(r.offres));
+    S.verifier("avec la licence, le baquet de F1 est proposé", r.offres.accord === "num1", JSON.stringify(r.offres));
+    S.verifier("les autres catégories ne demandent rien", r.offres.f2 === "num1", JSON.stringify(r.offres));
+    S.verifier("la licence s'affiche dans l'onglet Carrière du pilote", !!r.carte && /\/\s*40/.test(r.carte), r.carte || "absente");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1457,6 +1520,7 @@ const SUITES = {
   ui: suiteInterface,
   paysage: suitePaysage,
   circuit: suiteCircuit,
+  superlicence: suiteSuperLicence,
   decisions: suiteDecisions
 };
 

@@ -401,3 +401,26 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
     font: 600 18px/1.8 var(--font-body, sans-serif);
   }
 }
+
+/* --- Super Licence (js/career/112-super-licence.js) --------------------- */
+.rj112-carte {
+  margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; break-inside: avoid;
+  background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+}
+.rj112-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rj112-titre { font: 800 11px/1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: #60A5FA; }
+.rj112-statut {
+  font: 700 10px/1 var(--font-display); letter-spacing: .06em; padding: 5px 7px; border-radius: 5px;
+  color: var(--text2, #b0b0bc); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+}
+.rj112-statut.ok { color: #34D399; border-color: #34D39966; }
+.rj112-total { display: flex; align-items: baseline; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
+.rj112-total .n { font: 900 30px/1 var(--font-display); color: var(--white, #fff); }
+.rj112-total .sur { font: 800 13px/1 var(--font-display); color: var(--muted, #80808a); }
+.rj112-note { font-size: 11px; color: #34D399; margin-left: auto; }
+.rj112-barre { height: 6px; border-radius: 4px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+.rj112-barre > span { display: block; height: 100%; background: #60A5FA; border-radius: 4px; }
+.rj112-saisons { margin-top: 10px; font-size: 12px; color: var(--text2, #b0b0bc); }
+.rj112-saisons > div { display: flex; justify-content: space-between; padding: 4px 0; border-top: 1px solid var(--border, rgba(255, 255, 255, .04)); }
+.rj112-saisons b { color: #60A5FA; }
+.rj112-vide, .rj112-bareme { margin-top: 10px; font-size: 11px; line-height: 1.5; color: var(--muted, #80808a); }

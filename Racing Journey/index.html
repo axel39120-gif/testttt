@@ -180,6 +180,7 @@ window.addEventListener('error', function (e) {
 <script src="js/ui/109-hud.js?v219" defer></script>
 <script src="js/ui/110-plein-ecran.js?v219" defer></script>
 <script src="js/race/111-vue-circuit.js?v219" defer></script>
+<script src="js/career/112-super-licence.js?v219" defer></script>
 
 <script>
 /* ---- REPÈRE DE VERSION & AUTO-DIAGNOSTIC (inline : toujours à jour avec index.html) ---- */
@@ -237,7 +238,8 @@ window.addEventListener('error', function (e) {
     ["108 modèle de piste",        "_rj108Uninstall"],
     ["109 HUD",                    "_rj109Uninstall"],
     ["110 plein écran",            "_rj110Uninstall"],
-    ["111 course sur le circuit",  "_rj111Uninstall"]
+    ["111 course sur le circuit",  "_rj111Uninstall"],
+    ["112 Super Licence",          "_rj112Uninstall"]
   ];
   function verifier(){
     var absents = ATTENDUS.filter(function(m){ return typeof window[m[1]] !== "function"; });
