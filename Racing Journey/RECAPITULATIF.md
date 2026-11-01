@@ -235,6 +235,24 @@ Suites `superlicence`, `mercato`, `heritage`.
   fonctions de base de l'écran de négociation, qui levait une erreur à
   l'ouverture ; restaurées, et le module 11 s'y inscrit par `rjInscrire`.
 
+- **Le point de l'agent** : deux fois par saison, un message chiffré (baquets
+  libres dans la catégorie visée, écuries où tu es premier choix, ce qui
+  manque pour le baquet le moins cher, pistes : sponsors, académie, séries où
+  les usines paient).
+- **Remise au talent** : une écurie qui te choisit pour ton talent sans que tu
+  aies le budget baisse son prix (grandes écuries 70 %, baquet offert au
+  champion ; milieu de grille 40 % ; petites écuries : aucune).
+
+Équilibrage « réaliste », mesuré par `tests/outils/equilibrage-baquets.js`
+(chance d'au moins un baquet payable par intersaison, petit budget = 10 % du
+soutien médian) :
+
+| Vers | Champion | 3e | 6e | 6e + soutien moyen | 6e + gros soutien |
+|---|---|---|---|---|---|
+| F1 | 54 % | 7 % | 0 % | 6 % | 42 % |
+| F2 | 84 % | offres, à financer | 0 % | 49 % | 75 % |
+| F3 | 97 % | offres, à financer | 0 % | 98 % | 100 % |
+
 Suites `economie`, `baquets`, `negociation`.
 
 ---

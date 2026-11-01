@@ -97,7 +97,8 @@
   /* Ce que l'écurie regarde, selon son rang et la catégorie. */
   function priorites(cat, equipe, payant) {
     var p = rang(cat, equipe);
-    var argent = payant ? 0.25 + 0.35 * (1 - p) : 0.55 * Math.pow(1 - p, 1.5);
+    // Baquet payant : même les grandes écuries regardent l'argent, mais misent sur un talent.
+    var argent = payant ? 0.12 + 0.33 * (1 - p) : 0.55 * Math.pow(1 - p, 1.5);
     return { talent: 0.85 - argent, argent: argent, image: 0.15 };
   }
 
@@ -106,7 +107,9 @@
     var besoin = payant ? prixPlace(cat, offre) : (SOUTIEN_MEDIAN[cat] || 1e6) * 2;
     var w = priorites(cat, equipe, payant);
     var note = function (talent, argent, image) {
-      return w.talent * talent / 100 + w.argent * Math.min(1, argent / besoin) + w.image * image;
+      // Talent sur une échelle contrastée : de 50 à 95, l'écart entre 78 et 92 doit peser.
+      var t = Math.max(0, Math.min(1, (talent - 50) / 45));
+      return w.talent * t + w.argent * Math.min(1, argent / besoin) + w.image * image;
     };
     var P = G.driverPool || {}, viviers = [cat].concat(VIVIERS[cat] || []);
     var actifs = Object.keys(P).map(function (k) { return P[k]; })
@@ -119,7 +122,7 @@
       return { nom: d.name, talent: d.skill, argent: argent, score: note(d.skill, argent, 0.5) };
     });
     var bonusResultats = G.cat === cat || (VIVIERS[cat] || []).indexOf(G.cat) >= 0
-      ? (G.champPos === 1 ? 8 : G.champPos <= 3 ? 5 : G.champPos <= 5 ? 2 : 0) : 0;
+      ? (G.champPos === 1 ? 10 : G.champPos === 2 ? 7 : G.champPos === 3 ? 5 : G.champPos <= 5 ? 3 : 0) : 0;
     var talentJoueur = (typeof calcPlayerRating === "function" ? calcPlayerRating() : 60) + bonusResultats;
     var academie = typeof isAcademyAffiliate === "function" && isAcademyAffiliate(equipe, cat);
     var argentJoueur = academie && payant ? besoin : apportJoueur();
@@ -160,12 +163,69 @@
         adversaires: c.candidats.filter(function (x) { return !x.joueur; }).slice(0, 3)
           .map(function (x) { return { nom: x.nom, talent: x.talent, argent: x.argent }; }) };
       if (c.academie && o.cost > 0) { o._prixAvantAcademie = o.cost; o.cost = 0; }
+      // Choisi pour son talent sans en avoir les moyens : l'écurie baisse son prix
+      // (grandes écuries 70 %, offert au champion ; milieu de grille 40 % ; petites rien :
+      // elles vivent de cet argent).
+      else if (o.cost > 0 && apportJoueur() < o.cost) {
+        var remise = c.priorites.argent < 0.25 ? (G.champPos === 1 ? 1 : 0.7) : c.priorites.argent < 0.35 ? 0.4 : 0;   // le champion : baquet offert
+        if (remise) { o._remiseTalent = Math.round(o.cost * remise / 1e4) * 1e4; o.cost -= o._remiseTalent; }
+      }
       var apport = c.academie ? 0 : apportDemande(o.cat, o.team, c.priorites);
       if (apport > 0) { o._apport = apport; o.cost = (o.cost || 0) + apport; }
       plan[o.team]--;
       garde.push(o);
     });
     return garde;
+  }
+
+  /* --- Le point de l'agent, deux fois par saison -------------------------- */
+  function euros(n) {
+    return n >= 1e6 ? (n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " M€" : Math.round(n / 1e3) + " k€";
+  }
+
+  function conseil() {
+    var total = (typeof CAL_RACES !== "undefined" && CAL_RACES.length) || 10, faites = (G.races || []).length;
+    var vague = faites >= Math.floor(total * 0.8) ? 2 : faites >= Math.floor(total * 0.3) ? 1 : 0;
+    var E = etat();
+    E.conseils = E.conseils || [];
+    if (!vague || E.conseils.indexOf(vague) >= 0 || !G.agent || typeof pushMail !== "function") return null;
+    var suivantes = typeof getCatNextOptions === "function" ? getCatNextOptions(G.cat) : [];
+    var cible = suivantes.filter(function (c) { return TEAM_OFFERS[c]; })[0] || G.cat;
+    var plan = places(cible), libres = Object.keys(plan).filter(function (t) { return plan[t] > 0; });
+    if (!libres.length) return null;
+    E.conseils.push(vague);
+
+    var rangs = libres.map(function (t) {
+      var o = (TEAM_OFFERS[cible] || []).filter(function (x) { return x.team === t; })[0] || {};
+      return { equipe: t, prix: o.cost || 0, c: classer(cible, t, o) };
+    });
+    var premier = rangs.filter(function (r) { return r.c.rangJoueur === 1; });
+    var proche = rangs.filter(function (r) { return r.c.rangJoueur === 2; });
+    var argent = rangs.filter(function (r) { return r.c.rangJoueur > 1 && r.c.priorites.argent >= 0.3; });
+    var prixMin = Math.min.apply(null, rangs.map(function (r) { return r.prix; }).filter(function (p) { return p > 0; }).concat([Infinity]));
+    var capacite = apportJoueur();
+    var parent = G.agent.type === "parent";
+
+    var lignes = ["<strong>" + libres.length + " baquet(s)</strong> devraient se libérer en " + cible + " pour la saison prochaine."];
+    lignes.push(premier.length ? "Tu es aujourd'hui le premier choix chez <strong>" + premier.map(function (r) { return r.equipe; }).join(", ") + "</strong>."
+      : proche.length ? "Tu es dans la short-list chez <strong>" + proche.map(function (r) { return r.equipe; }).join(", ") + "</strong>, mais quelqu'un passe encore devant toi."
+      : "Pour l'instant, aucune écurie ne te place en tête de sa liste.");
+    if (isFinite(prixMin) && capacite < prixMin)
+      lignes.push("Le baquet le moins cher coûte <strong>" + euros(prixMin) + "</strong> ; avec ton budget et tes sponsors, tu peux mettre " + euros(capacite) + ". Il manque <strong>" + euros(prixMin - capacite) + "</strong>.");
+    if (argent.length)
+      lignes.push(argent.length + " écurie(s) regardent surtout l'argent apporté : de nouveaux sponsors changeraient la donne.");
+    if (typeof getPlayerAcademy === "function" && !getPlayerAcademy() && ["Formule 4", "Formula Regional", "Formule 3", "Formule 2"].indexOf(G.cat) >= 0)
+      lignes.push("Une académie de constructeur prendrait ton baquet en charge chez ses écuries partenaires : ça vaut le coup de candidater.");
+    if (cible === "Formule 1" && !premier.length)
+      lignes.push("Si la F1 se refuse, l'IndyCar, le WEC ou la Super Formula offrent des volants payés par les usines.");
+
+    return pushMail({
+      from: parent ? (G.agent.firstName || (G.agent.parentRole === "mother" ? "Maman" : "Papa")) : (G.agent.name || "Ton agent"),
+      role: "agent",
+      subject: "Le point sur le marché — " + cible,
+      body: (parent ? "Mon grand, j'ai fait le tour des écuries. " : "J'ai fait le tour des écuries. ") + lignes.join("<br><br>"),
+      actions: [{ label: "Compris", kind: "dismiss", responseBody: "Merci, je m'organise." }]
+    });
   }
 
   var avant = null;
@@ -176,6 +236,7 @@
     var gardees = filtrer(nouvelles);
     G.offers = avant.concat(gardees);
     avant = null;
+    try { conseil(); } catch (e) { console.warn(TAG, e && e.message); }
     var perdus = etat().perdus.filter(function (p) { return p.raison === "concurrence" && !p._annonce; });
     var marquant = perdus.sort(function (a, b) { return (b.argent || 0) - (a.argent || 0); })[0];
     if (marquant && typeof pushHomeToast === "function") {
@@ -228,7 +289,7 @@
           Object.keys(bloc.soutiens || {}).forEach(function (k) { if (G.driverPool && G.driverPool[k]) G.driverPool[k]._soutien = bloc.soutiens[k]; });
         }
       });
-    window.RJBaquets = { places: places, classer: classer, filtrer: filtrer, apportJoueur: apportJoueur, soutien: soutien, etat: etat };
+    window.RJBaquets = { places: places, classer: classer, filtrer: filtrer, apportJoueur: apportJoueur, soutien: soutien, etat: etat, conseil: conseil };
     window._rj116Uninstall = function () {
       rjDesinscrire(["116-baquets:"]);
       window.RJ_SAVE_HOOKS = window.RJ_SAVE_HOOKS.filter(function (h) { return !(h && h.cle === "baquets"); });

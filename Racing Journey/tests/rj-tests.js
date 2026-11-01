@@ -1577,6 +1577,15 @@ async function suiteBaquets() {
         signContract(0);
         res.signature = { paye: avant - G.budget, reste: G._baquets.echeancier && G._baquets.echeancier.reste };
         const b2 = G.budget; applyWeeklyIncome(4); res.prelevement = G._baquets.echeancier ? G._baquets.echeancier.reste : 0;
+
+        /* Le point de l'agent : un message par vague, avec les baquets libres. */
+        const courses = G.races, agent = G.agent;
+        G.agent = G.agent || { type: "pro", name: "Agent Test", skill: 50 };
+        G.cat = "Formule 3"; G._baquets = null; G.budget = 50e3; G.sponsors = [];
+        G.races = Array.from({ length: Math.ceil(((CAL_RACES || []).length || 10) * 0.4) }, () => ({ pos: 6 }));
+        const mail = B.conseil(), doublon = B.conseil();
+        res.conseil = { sujet: mail && mail.subject, texte: mail ? mail.body.replace(/<[^>]+>/g, "") : "", doublon: doublon };
+        G.races = courses; G.agent = agent;
       } finally {
         window.calcPlayerRating = calc;
         Object.assign(G, { budget: sauve.budget, sponsors: sauve.sponsors, offers: sauve.offers, _baquets: sauve.baquets, cat: sauve.cat, reputation: sauve.rep, champPos: sauve.pos });
@@ -1594,6 +1603,8 @@ async function suiteBaquets() {
     S.verifier("pas de place, pas d'offre ; une place gagnée donne une offre détaillée", r.filtre.n === 1 && r.filtre.annotee, JSON.stringify(r.filtre));
     S.verifier("une petite écurie de F1 demande un apport", r.apport > 0, String(r.apport));
     S.verifier("baquet payant : un tiers à la signature", Math.abs(r.signature.paye - 8e5) < 1e3 && Math.abs(r.signature.reste - 1.6e6) < 1e3, JSON.stringify(r.signature));
+    S.verifier("l'agent fait le point sur le marché, une fois par vague", /Le point sur le marché/.test(r.conseil.sujet || "") && /baquets? devraient se libérer|baquet.s. devraient/.test(r.conseil.texte) && r.conseil.doublon === null, JSON.stringify(r.conseil).slice(0, 220));
+    S.verifier("il chiffre ce qui manque pour le baquet le moins cher", /Il manque/.test(r.conseil.texte), r.conseil.texte.slice(0, 200));
     S.verifier("le reste se prélève chaque semaine", r.prelevement < r.signature.reste, r.signature.reste + " → " + r.prelevement);
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
