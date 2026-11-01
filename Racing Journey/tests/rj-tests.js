@@ -1024,6 +1024,79 @@ async function suiteInterface() {
 }
 
 /* ==================================================================== *
+ * 8 bis. PAYSAGE (étape 2)
+ *
+ * Le jeu se joue à l'horizontale. Chaque écran suit la même mise en page :
+ * rail de navigation à gauche, un seul bandeau en haut (titre, onglets),
+ * le contenu dessous. Vérifié à trois tailles ; en portrait, le jeu demande
+ * de tourner l'appareil.
+ * ==================================================================== */
+const TAILLES_PAYSAGE = [
+  ["petit téléphone", { width: 667, height: 375 }],
+  ["grand téléphone", { width: 932, height: 430 }],
+  ["tablette", { width: 1180, height: 820 }]
+];
+
+async function suitePaysage() {
+  S.suite("Paysage");
+  for (const [nom, viewport] of TAILLES_PAYSAGE) {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport });
+    try {
+      const r = await page.evaluate(async () => {
+        const attendre = ms => new Promise(res => setTimeout(res, ms));
+        const boite = e => e.getBoundingClientRect();
+        const nav = document.getElementById("main-nav"), bn = boite(nav);
+        const ecrans = [...document.querySelectorAll(".scr[id^='S-']")].map(e => e.id)
+          .filter(id => !/^S-(splash|create|display-setup|mode)$/.test(id));
+        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [] };
+        for (const id of ecrans) {
+          try { navTo(id, null); } catch (e) { continue; }
+          await attendre(260);
+          const s = document.querySelector(".scr.on"); if (!s || res.bandeaux[s.id] !== undefined) continue;
+          const bs = boite(s), hdr = s.querySelector(":scope > .hdr"), sc = s.querySelector(":scope > .scroll");
+          if (bs.left < bn.right - 1) res.chevauche.push(s.id);
+          if ([...document.querySelectorAll(".scr")].filter(x => getComputedStyle(x).display !== "none").length > 1) res.plusieurs.push(s.id);
+          res.bandeaux[s.id] = hdr ? Math.round(boite(hdr).height) : null;
+          res.hauts[s.id] = sc ? Math.round(boite(sc).top) : null;
+          /* Un élément rogné par un parent qui défile (onglets, rangée de
+             filtres) ne déborde pas de l'écran. */
+          const rogne = e => { for (let p = e.parentElement; p && p !== s; p = p.parentElement)
+            if (getComputedStyle(p).overflowX !== "visible" && boite(p).right <= innerWidth + 1) return true; return false; };
+          s.querySelectorAll("*").forEach(e => {
+            const b = boite(e);
+            if (b.width && b.height && b.right > innerWidth + 1 && getComputedStyle(e).position !== "fixed" && !rogne(e))
+              res.debords.push(s.id + " " + (e.id || String(e.className).split(" ")[0] || e.tagName));
+          });
+        }
+        try { navTo("S-home", null); } catch (e) {}
+        return res;
+      });
+      const h = viewport.height;
+      S.verifier(nom + " : navigation en rail à gauche",
+        r.rail.gauche <= 1 && r.rail.hauteur >= h * 0.9 && r.rail.largeur <= 110, JSON.stringify(r.rail));
+      S.verifier(nom + " : aucun écran sous le rail", r.chevauche.length === 0, r.chevauche.join(", "));
+      S.verifier(nom + " : un seul écran affiché à la fois", r.plusieurs.length === 0, r.plusieurs.join(", "));
+      const hauteurs = [...new Set(Object.values(r.bandeaux).filter(v => v !== null))];
+      S.verifier(nom + " : même bandeau sur tous les écrans", hauteurs.length === 1, JSON.stringify(r.bandeaux));
+      const bas = Object.entries(r.hauts).filter(([, t]) => t !== null && t > 64).map(([id, t]) => id + "@" + t);
+      S.verifier(nom + " : le contenu commence sous un seul bandeau", bas.length === 0, bas.join(", "));
+      S.verifier(nom + " : rien ne déborde à droite", r.debords.length === 0, [...new Set(r.debords)].slice(0, 6).join(", "));
+      S.verifier(nom + " : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+
+  const { navigateur, page } = await S.ouvrirJeu({ viewport: { width: 430, height: 932 } });
+  try {
+    const voile = await page.evaluate(() => {
+      const c = getComputedStyle(document.body, "::after");
+      return { contenu: c.content, position: c.position, largeur: parseFloat(c.width) };
+    });
+    S.verifier("portrait : le jeu demande de tourner l'appareil",
+      /tourne/i.test(voile.contenu) && voile.position === "fixed" && voile.largeur >= 400, JSON.stringify(voile));
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1213,6 +1286,7 @@ const SUITES = {
   "course-rapide": () => suiteCourse(["Formule 1"]),
   weekend: suiteWeekend,
   ui: suiteInterface,
+  paysage: suitePaysage,
   decisions: suiteDecisions
 };
 

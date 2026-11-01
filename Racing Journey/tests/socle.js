@@ -15,7 +15,7 @@ const path = require("path");
 
 const RACINE = path.resolve(__dirname, "..");
 const PORT = Number(process.env.RJ_PORT || 8123);
-const VIEWPORT = { width: 430, height: 932 };   // iPhone 16 Pro Max
+const VIEWPORT = { width: 932, height: 430 };   // iPhone 16 Pro Max, en paysage
 /* Le hasard du jeu est tiré d'une graine affichée en tête de rapport :
    un échec se rejoue à l'identique avec RJ_GRAINE=<graine>. */
 const GRAINE = Number(process.env.RJ_GRAINE) || (1 + Math.floor(Math.random() * 2147483646));
@@ -105,7 +105,7 @@ function conclusion() {
 async function ouvrirJeu(options) {
   options = options || {};
   const navigateur = await chromium.launch(process.env.RJ_CHANNEL ? { channel: process.env.RJ_CHANNEL } : {});
-  const contexte = await navigateur.newContext({ serviceWorkers: "block", viewport: VIEWPORT });
+  const contexte = await navigateur.newContext({ serviceWorkers: "block", viewport: options.viewport || VIEWPORT });
   /* mulberry32 : Math.random remplacé avant tout script du jeu. */
   await contexte.addInitScript(graine => {
     let a = graine >>> 0;

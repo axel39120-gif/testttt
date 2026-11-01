@@ -1,0 +1,191 @@
+/* =====================================================================
+ * paysage.css — LE JEU À L'HORIZONTALE
+ *
+ * Une seule mise en page pour tous les écrans, sans changer le style :
+ *   - la navigation devient un rail vertical à gauche ;
+ *   - un seul bandeau en haut : titre à gauche, onglets à droite ;
+ *   - le contenu se range en colonnes de la largeur d'un téléphone en
+ *     portrait (les cartes gardent la taille pour laquelle elles ont été
+ *     dessinées) ;
+ *   - en portrait, le jeu demande de tourner l'appareil.
+ *
+ * Chargé après styles.css. Les modules injectent leur CSS plus tard : les
+ * règles de cadre portent !important pour passer devant.
+ * =================================================================== */
+
+:root {
+  --rail: 76px;
+  --rail-g: env(safe-area-inset-left, 0px);
+  --bandeau: 52px;
+  --colonne: 360px;
+}
+
+/* --- Cadre : tout l'écran, plus de « téléphone » centré ---------------- */
+html, body { background: #0a0a0a; }
+body { padding: 0 !important; }
+#app {
+  width: 100% !important; max-width: none !important;
+  max-height: none !important; margin: 0 !important;
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+}
+.screens { padding: 0 !important; }
+.screens > .scr {
+  left: calc(var(--rail) + var(--rail-g)) !important;
+  right: 0 !important; width: auto !important;
+  padding-right: env(safe-area-inset-right, 0px);
+  border-radius: 0 !important;
+}
+
+/* Sans navigation (accueil du jeu, création) : l'écran prend toute la largeur. */
+.screens:has(> #main-nav:not(.show)) > .scr { left: 0 !important; }
+
+/* Écran titre : logo à gauche, nouvelle carrière et parties à droite. */
+#S-splash .apex-splash {
+  display: grid !important; height: 100%;
+  grid-template-columns: 1fr minmax(300px, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: center; column-gap: 24px; padding: 12px 24px !important;
+}
+#S-splash .apex-splash-hero { grid-column: 1; grid-row: 1 / 3; height: auto !important; }
+#S-splash .apex-splash-logo { width: min(240px, 52vh) !important; height: auto !important; }
+#S-splash .apex-splash-footer { grid-column: 1; grid-row: 3; padding: 0 !important; }
+#S-splash .apex-splash-cta-wrap { grid-column: 2; grid-row: 1; }
+#S-splash .apex-splash-resume { grid-column: 2; grid-row: 2 / 4; align-self: stretch; overflow-y: auto; }
+
+/* Choix du mode : les deux formules côte à côte. */
+#S-mode .rj80-wrap { max-width: 880px !important; }
+#rj80-liste { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: stretch; }
+#rj80-liste > * { margin: 0 !important; }
+
+/* Création : même bandeau que les autres écrans. */
+#S-create > .apex-create-hdr { height: var(--bandeau) !important; min-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+
+/* --- Rail de navigation ------------------------------------------------ */
+#main-nav.bnav, nav.bnav {
+  position: fixed !important; z-index: 1000 !important;
+  top: 0 !important; bottom: 0 !important; left: 0 !important; right: auto !important;
+  width: calc(var(--rail) + var(--rail-g)) !important; height: auto !important;
+  padding: 8px 0 8px var(--rail-g) !important;
+  flex-direction: column !important; justify-content: space-evenly !important; align-items: center !important;
+  border-top: 0 !important; border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+#main-nav .ni {
+  width: 100% !important; height: auto !important; flex: 0 0 auto !important;
+  padding: 6px 2px !important;
+}
+#main-nav .ni > span:last-child { font-size: 10px !important; }
+/* Repère de l'onglet actif : trait vertical à gauche plutôt qu'en haut. */
+#main-nav .ni::before {
+  top: 50% !important; left: 0 !important; transform: translateY(-50%) !important;
+  width: 3px !important; height: 0 !important;
+}
+#main-nav .ni.on::before { height: 28px !important; }
+#main-nav #ni-cta-continue {
+  width: 56px !important; height: 56px !important; margin: 0 !important;
+  transform: none !important; top: auto !important;
+}
+
+/* --- Bandeau : titre à gauche, onglets à droite ------------------------- */
+.scr > .hdr {
+  height: var(--bandeau) !important; min-height: 0 !important; flex: 0 0 auto !important;
+  padding: 0 14px !important; margin: 0 !important; align-items: center !important;
+}
+.scr > .hdr .hdr-title { font-size: 17px !important; line-height: 1.15 !important; }
+.scr > .hdr .hdr-sub { font-size: 11px !important; line-height: 1.2 !important; }
+.scr:has(> .tabs) > .hdr { padding-right: calc(58% + 14px) !important; }
+.scr > .tabs {
+  position: absolute !important; top: 0 !important; right: 0 !important;
+  width: 58% !important; height: var(--bandeau) !important;
+  margin: 0 !important; z-index: 2; align-items: stretch !important;
+  border-bottom: 0 !important;
+  overflow-x: auto !important; scrollbar-width: none;
+}
+.scr > .tabs::-webkit-scrollbar { display: none; }
+/* Beaucoup d'onglets (week-end de course) : ils défilent au lieu de déborder. */
+.scr > .tabs > * {
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  flex: 1 0 auto !important; padding: 0 12px !important; white-space: nowrap !important;
+}
+
+/* Tiroir « Plus » : s'ouvre à côté du rail, en bas. */
+#more-drawer {
+  position: fixed !important;
+  left: calc(var(--rail) + var(--rail-g) + 8px) !important; right: auto !important;
+  top: auto !important; bottom: 8px !important;
+  max-height: calc(100% - 16px) !important; overflow-y: auto !important;
+}
+
+#rj-build-badge { left: auto !important; right: 8px !important; }
+
+/* Notifications en bas à droite : en haut, elles couvraient le bandeau. */
+/* Les trophées rejoignent les notifications, en bas à droite. */
+#ach-unlock-stack {
+  top: auto !important; bottom: 44px !important; left: auto !important; right: 12px !important;
+  transform: none !important; width: min(360px, 45vw) !important;
+}
+#rj-toast-container {
+  top: auto !important; bottom: 44px !important; left: auto !important; right: 12px !important;
+  width: min(360px, 45vw) !important; padding: 0 !important; align-items: stretch !important;
+}
+
+/* --- Contenu en colonnes ------------------------------------------------ */
+.scr > .scroll { padding: 12px 14px 16px !important; }
+/* Seul un conteneur d'au moins cinq éléments passe en colonnes : une carte
+   posée directement dans la zone (en-tête d'entraînement…) reste entière. */
+.scr > .scroll > :has(> :nth-child(5)),
+.scr > .scroll > * > :only-child:has(> :nth-child(5)) {
+  column-width: var(--colonne); column-gap: 16px;
+}
+.scr > .scroll > :has(> :nth-child(5)) > *,
+.scr > .scroll > * > :only-child:has(> :nth-child(5)) > * { break-inside: avoid; }
+.scr > .scroll .t-sec, .scr > .scroll .apex-sec { break-after: avoid; }
+
+/* Accueil : le résumé (pilote, prochaine course, chiffres) à gauche, les
+   tuiles d'action à droite. */
+#S-home.on {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 40%) minmax(0, 1fr);
+  grid-auto-rows: min-content; align-content: start;
+  column-gap: 12px;
+}
+#S-home > * { grid-column: 1; }
+#S-home > .scroll {
+  grid-column: 2; grid-row: 1 / span 20;
+  height: 100% !important; max-height: 100%; align-self: stretch;
+}
+#S-home .apex-stats-rail { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+/* Course en direct : progression et mini-classement à gauche, fil du direct
+   à droite (la vue du circuit prendra la gauche à l'étape 3). */
+@media (min-width: 820px) {
+  #race-screen, .race-screen {
+    display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 14px; align-items: start;
+  }
+  #race-screen > *, .race-screen > * { margin-top: 0 !important; }
+}
+
+/* Fenêtres (événements, confirmations, profils…) : en paysage la hauteur
+   manque ; la carte tient dans l'écran et défile au besoin. */
+[id$="-modal"] > *, [id$="-overlay"] > *, [class*="-overlay"] > *, [class*="modal-card"] {
+  max-height: calc(100dvh - 16px) !important;
+  overflow-y: auto !important; overscroll-behavior: contain;
+}
+
+/* Écrans qui se lisent d'un fil, sur une seule colonne centrée. */
+#S-contact-thread > .scroll > *,
+#S-event > .scroll > *,
+#S-neg > .scroll > *,
+#S-save > .scroll > *,
+#S-create > .scroll > * { column-width: auto; max-width: 720px; margin-left: auto; margin-right: auto; }
+
+/* --- Portrait : tourner l'appareil -------------------------------------- */
+@media (orientation: portrait) {
+  body::after {
+    content: "↻  Tourne ton téléphone\A Racing Journey se joue à l'horizontale";
+    white-space: pre; text-align: center;
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    background: #0a0a0a; color: #fff;
+    font: 600 18px/1.8 var(--font-body, sans-serif);
+  }
+}
