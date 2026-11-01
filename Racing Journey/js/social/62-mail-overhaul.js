@@ -54,7 +54,7 @@
   var etat = { charge: true, installe: false, erreur: null, essais: 0 };
   window._rj62Uninstall = function () {
     try {
-      Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+      Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["62-mail-overhaul:"], k); });
       if (typeof WEEKLY_TICK_HOOKS !== "undefined" && WEEKLY_TICK_HOOKS) {
         for (var i = WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--) {
           if (WEEKLY_TICK_HOOKS[i] && WEEKLY_TICK_HOOKS[i].id === "rj62Mail") WEEKLY_TICK_HOOKS.splice(i, 1);

@@ -740,7 +740,7 @@
   else boot();
 
   window._rj70Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["70-fin-de-saison:"], k); });
     var st = document.getElementById("rj70-css");
     if (st && st.parentNode) st.parentNode.removeChild(st);
     var el = document.querySelector(".apex-hero-race");

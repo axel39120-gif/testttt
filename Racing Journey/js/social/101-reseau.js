@@ -626,7 +626,7 @@
       SEUILS: { appui: SEUIL_APPUI, spontane: SEUIL_SPONTANE, veto: SEUIL_VETO }
     };
     window._rj101Uninstall = function () {
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["101-reseau:"], k); });
       if (Array.isArray(window.RACE_POST_HOOKS)) {
         window.RACE_POST_HOOKS = window.RACE_POST_HOOKS.filter(function (h) { return !(h && h._rj101); });
       }

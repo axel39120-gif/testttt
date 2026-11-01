@@ -252,7 +252,7 @@ function injecter() {
 
     window._rj93 = { injecter: injecter };
     window._rj93Uninstall = function () {
-      if (_origRender) window.renderRepEvents = _origRender;
+      rjDesinscrire(["93-paddock-dans-evenements:"], "renderRepEvents");
       var b = document.getElementById("rj93-arcs"); if (b) b.remove();
       var css = document.getElementById(CSS_ID); if (css) css.remove();
       console.log(TAG, "désinstallé");

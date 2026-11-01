@@ -248,8 +248,8 @@
       happyNorm: happyNorm, renderEffectCard: renderEffectCard, injectEffect: injectEffect
     };
     window._rjLifeUninstall = function () {
-      if (_origRL) window.renderLifestyle = _origRL;
-      if (_origRLA) window.renderLsActivities = _origRLA;
+      rjDesinscrire(["39-lifestyle-effects:"], "renderLifestyle");
+      rjDesinscrire(["39-lifestyle-effects:"], "renderLsActivities");
       if (window.WEEKLY_TICK_HOOKS) {
         for (var i = window.WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--)
           if (window.WEEKLY_TICK_HOOKS[i] && window.WEEKLY_TICK_HOOKS[i].id === "lifestyleEffects") window.WEEKLY_TICK_HOOKS.splice(i, 1);

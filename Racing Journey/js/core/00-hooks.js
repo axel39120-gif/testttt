@@ -40,6 +40,19 @@ function rjInscrire(nom, hook) {
   }
 }
 
+/* Retire les hooks dont l'id commence par l'un des préfixes, sur `nom` ou
+   sur toutes les fonctions. C'est ainsi qu'un module se désinstalle : remettre
+   l'ancienne fonction effacerait aussi les hooks des autres modules. */
+function rjDesinscrire(prefixes, nom) {
+  prefixes = [].concat(prefixes);
+  (nom ? [nom] : Object.keys(window.RJ_HOOKS)).forEach(function (n) {
+    if (!window.RJ_HOOKS[n]) return;
+    window.RJ_HOOKS[n] = window.RJ_HOOKS[n].filter(function (h) {
+      return !(h && h.id && prefixes.some(function (p) { return h.id.indexOf(p) === 0; }));
+    });
+  });
+}
+
 function rjAppeler(nom, coeur, self, args) {
   var L = (window.RJ_HOOKS[nom] || [])
     .map(function (h, i) { return { h: h, i: i }; })

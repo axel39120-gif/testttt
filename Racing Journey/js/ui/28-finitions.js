@@ -212,7 +212,6 @@
 
     if (ready) {
       if (!rss._rjDedup) {
-        var orig = rss;
         rjInscrire("renderStrategyScreen", { id: "28-finitions:renderStrategyScreen", ordre: -3900, remplace: function (args, suite) {
           try {
             // L'écran/onglet de stratégie natif déclenche le modal complet 04p.
@@ -221,11 +220,10 @@
           } catch (e) {
             // En cas de souci, on retombe sur l'écran natif d'origine.
             console.warn('[23] redirection stratégie échouée, fallback natif :', e);
-            return orig.apply(this, args);
+            return suite();
           }
         } });
         window.renderStrategyScreen._rjDedup = true;
-        window.renderStrategyScreen._rjOrig = orig;
         console.log('[23] Écran stratégie natif redirigé vers le modal 04p — doublon supprimé.');
       }
       return true;

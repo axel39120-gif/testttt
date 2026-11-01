@@ -867,11 +867,11 @@
 
     window._rj80Uninstall = function () {
       try {
-        if (_origGoCreate) window.goCreate = _origGoCreate;
-        if (_origUpdate) window.updateCreUI = _origUpdate;
-        if (_origRecap) window.buildRecap = _origRecap;
-        if (_origNext) window.creNext = _origNext;
-        if (_origLaunch) window.launchGame = _origLaunch;
+        rjDesinscrire(["80-mode-de-jeu:"], "goCreate");
+        rjDesinscrire(["80-mode-de-jeu:"], "updateCreUI");
+        rjDesinscrire(["80-mode-de-jeu:"], "buildRecap");
+        rjDesinscrire(["80-mode-de-jeu:"], "creNext");
+        rjDesinscrire(["80-mode-de-jeu:"], "launchGame");
         if (window.WEEKLY_TICK_HOOKS) {
           for (var i = window.WEEKLY_TICK_HOOKS.length - 1; i >= 0; i--) {
             if (window.WEEKLY_TICK_HOOKS[i] && window.WEEKLY_TICK_HOOKS[i].id === "favoriteTeam") {

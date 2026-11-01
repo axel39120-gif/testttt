@@ -2350,11 +2350,11 @@
 
     window._rj79Uninstall = function () {
       try {
-        if (_origSign) window.signContract = _origSign;
-        if (_origOpenSched) window.openScheduledEvent = _origOpenSched;
-        if (_origSaveSeason) window.saveSeasonToHistory = _origSaveSeason;
-        if (_origPalmares) window.renderPalmares = _origPalmares;
-        if (_origChamp) window.renderChamp = _origChamp;
+        rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "signContract");
+        rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "openScheduledEvent");
+        rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "saveSeasonToHistory");
+        rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "renderPalmares");
+        rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "renderChamp");
         var bn = document.getElementById("rj79-champ-note"); if (bn && bn.parentNode) bn.parentNode.removeChild(bn);
         ["WEEKLY_TICK_HOOKS", "RACE_POST_HOOKS"].forEach(function (k) {
           if (!window[k]) return;

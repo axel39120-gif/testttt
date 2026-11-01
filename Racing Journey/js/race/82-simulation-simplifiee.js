@@ -79,8 +79,6 @@
       rjInscrire("_setTyreMode", { id: "82-simulation-simplifiee:_setTyreMode", ordre: -6100, remplace: function (args, suite) { var lr = LR(); if (lr) lr._tyreMode = "normal"; } });
       window._setTyreMode._rj82 = true;
     }
-    /* Les indicateurs d'usure n'ont plus rien à montrer. */
-    try { if (fn("_rjTyreVisualsUninstall")) window._rjTyreVisualsUninstall(); } catch (e) {}
   }
 
   /* ==================================================================
@@ -379,8 +377,8 @@
     };
 
     window._rj82Uninstall = function () {
-      if (_origConfirm) window.confirmStrategy = _origConfirm;
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      rjDesinscrire(["82-simulation-simplifiee:"], "confirmStrategy");
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["82-simulation-simplifiee:"], k); });
       try {
         var onglet = document.getElementById("race-tab-strat");
         if (onglet) onglet.style.display = "";

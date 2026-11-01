@@ -37,8 +37,7 @@
  * =================================================================== */
 (function () {
   "use strict";
-
-  var wrapped = {};
+
   var etat = { installe: false, erreur: null, photos: 0, poids: 0 };
   window._rj66Status = function () { return etat; };
 
@@ -1138,8 +1137,7 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 
-  window._rj66Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+  window._rj66Uninstall = function () {
     var st = document.getElementById("rj66-css");
     if (st && st.parentNode) st.parentNode.removeChild(st);
     console.log("[66-social] désinstallé");

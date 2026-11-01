@@ -341,7 +341,7 @@
   else boot();
 
   window._rj65Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["65-manual:"], k); });
     console.log("[65-manual] désinstallé");
   };
 })();

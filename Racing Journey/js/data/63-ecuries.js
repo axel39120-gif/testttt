@@ -618,7 +618,7 @@
   else boot();
 
   window._rj63Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["63-ecuries:"], k); });
     console.log("[63-team-identity] désinstallé");
   };
   window._rj63Apply = appliquerTout;   // utilisé après restauration d'une sauvegarde
@@ -891,7 +891,7 @@
   else boot();
 
   window._rj64Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { if (window[k]) window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["63-ecuries:"], k); });
     console.log("[64-team-profiles-evolution] désinstallé");
   };
   window._rj64Reglages = REGLAGES;

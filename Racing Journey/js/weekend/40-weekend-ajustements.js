@@ -75,7 +75,7 @@
     })();
     window._rjSetupIcons = { advIcon: advIcon, PATHS: PATHS };
     window._rjSetupIconsUninstall = function () {
-      if (_origAdvSlider) window.renderAdvSlider = _origAdvSlider;
+      rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], "renderAdvSlider");
       window._rjSetupIconsInstalled = false;
       console.log("[40-setup-icons] désinstallé");
     };
@@ -769,7 +769,7 @@
   else boot();
 
   window._rj55Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], k); });
     try {
       (G.rivals || []).forEach(function (r) {
         if (typeof r._rj55Before === "number") r.skill = r._rj55Before;
@@ -1034,7 +1034,7 @@
 
   window._rj56Uninstall = function () {
     obs.disconnect();
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], k); });
     console.log("[56-race-ux-tuning] désinstallé");
   };
   window._rj56Tuning = TUNING;
@@ -1146,7 +1146,7 @@
   else boot();
 
   window._rj76Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], k); });
     etat.installe = false;
     console.log(TAG + " désinstallé");
   };
@@ -1254,7 +1254,7 @@
 
   window._rj40Etapes = { appliquer: appliquer };
   window._rj40EtapesUninstall = function () {
-    if (_orig) window.updateRaceTabsVisibility = _orig;
+    rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], "updateRaceTabsVisibility");
     console.log(TAG, "désinstallé");
   };
 })();
@@ -1385,7 +1385,7 @@
   })();
 
   window._rj40ZonesUninstall = function () {
-    if (_orig) window._renderAdvancedSetupUIInner = _orig;
+    rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], "_renderAdvancedSetupUIInner");
   };
 })();
 
@@ -1534,7 +1534,7 @@
   })();
 
   window._rj40QualifUninstall = function () {
-    if (_orig) window._qualiHotLapSequence = _orig;
+    rjDesinscrire(["40-weekend-ajustements:","49-course-ralentie","56-week-end-ralenti"], "_qualiHotLapSequence");
   };
 })();
 

@@ -455,7 +455,7 @@
   window._rj78Uninstall = function () {
     Object.keys(wrapped).forEach(function (k) {
       if (k === "_obs" || k === "_obsEuro") { try { wrapped[k].disconnect(); } catch (e) {} return; }
-      window[k] = wrapped[k];
+      rjDesinscrire(["78-libelles-affichage:"], k);
     });
     etat.installe = false;
     console.log(TAG + " d\u00e9sinstall\u00e9");
@@ -536,11 +536,9 @@
     return modele.replace("{T}", esc(equipe));
   }
 
-  var _origBio = null;
 
   function installerBio() {
     if (!fn("generatePilotBio") || window.generatePilotBio._rj91) return false;
-    _origBio = window.generatePilotBio;
     rjInscrire("generatePilotBio", { id: "78-libelles-affichage:generatePilotBio", ordre: -4000, remplace: function (args, suite) {
       var texte = "";
       try { texte = suite() || ""; } catch (e) { texte = ""; }
@@ -771,11 +769,9 @@
     }
   }
 
-  var _origH2H = null;
 
   function installerH2H() {
     if (!fn("renderH2H") || window.renderH2H._rj91) return false;
-    _origH2H = window.renderH2H;
     rjInscrire("renderH2H", { id: "78-libelles-affichage:renderH2H", ordre: -4000, remplace: function (args, suite) {
       var r = suite();
       try { remplacerGraphique(); }
@@ -854,8 +850,10 @@
        dont il écrasait la désinstallation. */
     window._rj91Bio = { phrase: phraseEcurieDeCoeur, tableau: remplacerGraphique };
     window._rj91BioUninstall = function () {
-      if (_origBio) window.generatePilotBio = _origBio;
-      if (_origH2H) window.renderH2H = _origH2H;
+      // retirer nos hooks seulement : restaurer l'ancienne fonction effacerait ceux des autres modules
+      ["generatePilotBio", "renderH2H"].forEach(function (nom) {
+        window.RJ_HOOKS[nom] = (window.RJ_HOOKS[nom] || []).filter(function (h) { return h.id !== "78-libelles-affichage:" + nom; });
+      });
       var css = document.getElementById(CSS_ID);
       if (css && css.parentNode) css.parentNode.removeChild(css);
       console.log(TAG, "désinstallé");

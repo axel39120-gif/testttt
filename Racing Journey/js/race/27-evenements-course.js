@@ -885,7 +885,7 @@
         if (window._rjOriginalChoiceEvents) {
           window.CHOICE_RACE_EVENTS = window._rjOriginalChoiceEvents;
         }
-        window.tryTriggerChoiceRaceEvent = _origTry;
+        rjDesinscrire(["27-evenements-course:","27-consigne"], "tryTriggerChoiceRaceEvent");
         console.log(TAG + " : table et porte d'origine restaurées.");
       },
       events: window.CHOICE_RACE_EVENTS

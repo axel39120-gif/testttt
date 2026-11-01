@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v215**. Ce document décrit l'organisation du code après la
+Version **BUILD v216**. Ce document décrit l'organisation du code après la
 restructuration (étape 1), ce qui reste à faire, et comment reprendre.
 
 ---
@@ -10,7 +10,7 @@ restructuration (étape 1), ce qui reste à faire, et comment reprendre.
 Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et le dossier `js/` avec ses sous-dossiers.
 
-Le badge en bas à gauche doit afficher `BUILD v215 · OK`. S'il liste des
+Le badge en bas à gauche doit afficher `BUILD v216 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -53,7 +53,7 @@ s'inscrit à un registre, il ne l'enveloppe jamais :
 
 | Fonction | Registre | Moments |
 |---|---|---|
-| fonctions « extensibles » | `rjInscrire(nom, …)` (core/00-hooks) | avant, remplace(args, suite), apres, ordre |
+| fonctions « extensibles » | `rjInscrire(nom, …)`, `rjDesinscrire(prefixes, nom?)` (core/00-hooks) | avant, remplace(args, suite), apres, ordre |
 | `saveGame` / `loadSave` | `RJ_SAVE_HOOKS` | ecrire(G), lire(bloc, G) |
 | `startNextSeason` | `RJ_SEASON_HOOKS` | avant, apres, prioritaire |
 | `navTo`, `refreshScreen` | `RJ_SCREEN_HOOKS` | avant, apres, redirige + ensuite, remplace |
@@ -114,6 +114,10 @@ extensible, `rjInscrire` lui pose son répartiteur.
 - **Surveillances du DOM.** Il en reste 18 ; elles ne se réveillent plus au
   repos, mais l'arrondi global des décimales (ui/04q) reste un correctif
   d'affichage à remplacer par un formatage à la source (étape 2).
+- **Désinstalleurs de console** (`window._rjNNUninstall()`). Ils retirent
+  leurs hooks (`rjDesinscrire(prefixes, nom)`) sans toucher aux fonctions,
+  mais les drapeaux d'installation restent posés : on ne réinstalle pas un
+  module sans recharger la page.
 
 ## Étapes suivantes
 

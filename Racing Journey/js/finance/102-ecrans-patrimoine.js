@@ -402,7 +402,7 @@
 
     window._rj102 = { rendre: rendre, remanierAccueil: remanierAccueil, creerEcran: creerEcran };
     window._rj102Uninstall = function () {
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["102-ecrans-patrimoine:"], k); });
       var s = document.getElementById("S-patrimoine"); if (s) s.remove();
       var c = document.getElementById(CSS_ID); if (c) c.remove();
       console.log(TAG, "désinstallé");

@@ -602,7 +602,7 @@
 
   window._rjAutoFitScreen = function () { return applyDetected(true); };
   window._rj60Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["60-"], k); });
     window.removeEventListener("resize", onResize);
     window.removeEventListener("orientationchange", onResize);
     var a = document.getElementById("rj60-setup-btn"); if (a && a.parentNode) a.parentNode.removeChild(a);
@@ -701,7 +701,7 @@
 
   window._rj61Uninstall = function () {
     obs.disconnect();
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["61-"], k); });
     window.removeEventListener("resize", schedule);
     window.removeEventListener("orientationchange", schedule);
     var d = document.getElementById("more-drawer");
@@ -736,7 +736,6 @@
     zone: null,
     echelle: 1,
     auto: null,
-    neutralises: []
   };
   window._rj68Status = function () { return etat; };
 
@@ -1299,29 +1298,6 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Neutralisation des modules remplacés                                */
-  /* ------------------------------------------------------------------ */
-
-  function neutraliser() {
-    // 67 : logique intégrée ici, source unique désormais.
-    if (typeof window._rj67Uninstall === "function") {
-      try { window._rj67Uninstall(); etat.neutralises.push("67-safearea-fix"); } catch (e) {}
-    }
-    // 41 : compensait un symptôme par translateY sur l'écran actif.
-    if (typeof window._rjHeaderFixUninstall === "function") {
-      try { window._rjHeaderFixUninstall(); etat.neutralises.push("41-header-safearea-fix"); } catch (e) {}
-    }
-    // Nettoyage de tout translateY résiduel laissé par 41.
-    try {
-      var restes = document.querySelectorAll(".scr[data-rj-hfix]");
-      for (var i = 0; i < restes.length; i++) {
-        restes[i].style.transform = "";
-        restes[i].removeAttribute("data-rj-hfix");
-      }
-    } catch (e) {}
-  }
-
-  /* ------------------------------------------------------------------ */
   /* Démarrage                                                           */
   /* ------------------------------------------------------------------ */
 
@@ -1356,7 +1332,6 @@
       console.log(TAG, "ajustement automatique activé (installation antérieure)");
     }
 
-    neutraliser();
     injecterCorrectifs();
     interceptApplyAppSize();
     passe("boot");
@@ -1401,8 +1376,7 @@
                 " · écran " + vp.w + " × " + vp.h +
                 " · zone " + (z.w || "?") + " × " + (z.h || "?") +
                 " · marges " + JSON.stringify(etat.insetsEffectifs) +
-                " · " + etat.decision +
-                (etat.neutralises.length ? " · remplace " + etat.neutralises.join(", ") : ""));
+                " · " + etat.decision);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
@@ -1417,7 +1391,7 @@
   window._rj68Uninstall = function () {
     try {
       if (origApplyAppSize && window.applyAppSize && window.applyAppSize._rj68) {
-        window.applyAppSize = origApplyAppSize;
+        rjDesinscrire(["53-affichage:"], "applyAppSize");
       }
     } catch (e) {}
     for (var i = 0; i < ecouteurs.length; i++) {
@@ -1847,7 +1821,7 @@
     window._rj85Uninstall = function () {
       var css = document.getElementById(CSS_ID);
       if (css && css.parentNode) css.parentNode.removeChild(css);
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["85-"], k); });
       var d = document.querySelectorAll(".rj85-desc");
       for (var i = 0; i < d.length; i++) d[i].classList.remove("rj85-desc");
       console.log(TAG, "désinstallé");

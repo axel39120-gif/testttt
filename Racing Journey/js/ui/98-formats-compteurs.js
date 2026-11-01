@@ -87,7 +87,7 @@
 
     window._rj98 = { compact: compact };
     window._rj98Uninstall = function () {
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["98-formats-compteurs:"], k); });
       console.log(TAG, "désinstallé");
     };
   }

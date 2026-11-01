@@ -266,7 +266,7 @@
       programme: programme, convoqueCetteSemaine: convoqueCetteSemaine
     };
     window._rj99Uninstall = function () {
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["99-media-days:"], k); });
       console.log(TAG, "désinstallé");
     };
   }
@@ -356,7 +356,7 @@
   })();
 
   window._rj99CalUninstall = function () {
-    if (_orig) window.renderCal = _orig;
+    rjDesinscrire(["99-conferences"], "renderCal");
     var c = document.getElementById(CSS_ID); if (c) c.remove();
   };
 })();

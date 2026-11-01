@@ -41,8 +41,7 @@
   var TAG = "[74-fin-de-carriere]";
   var OR = "#E9B949";
   var AGE_MAX = 50;
-
-  var wrapped = {};
+
   var etat = { installe: false, points: null, terminee: false };
   window._rj74Status = function () { return etat; };
 
@@ -424,8 +423,7 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 
-  window._rj74Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+  window._rj74Uninstall = function () {
     ["rj74-css", "rj74-ecran", "rj74-quit"].forEach(function (id) {
       var e = document.getElementById(id);
       if (e && e.parentNode) e.parentNode.removeChild(e);

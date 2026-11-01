@@ -529,7 +529,7 @@
     };
 
     window._rj81Uninstall = function () {
-      if (_origUpdate) window.updateLivePositions = _origUpdate;
+      rjDesinscrire(["81-moteur-course:"], "updateLivePositions");
       console.log(TAG, "désinstallé");
     };
   }

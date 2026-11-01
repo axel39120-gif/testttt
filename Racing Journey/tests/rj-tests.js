@@ -567,6 +567,41 @@ async function suiteCouches() {
     S.verifier("notification hors accueil : gardée puis affichée au retour", notif.pendant === 0 && notif.apres === 1, JSON.stringify(notif));
     S.verifier("un changement de saison avance d'une saison", saison.saisons === 1 && saison.ans === 1,
       "+" + saison.saisons + " saison(s), +" + saison.ans + " an(s)");
+
+    /* Tour lancé en qualif : le hook de 18 masquait `suite` par une variable
+       locale, la séquence recevait un tableau et n'était jamais jouée. */
+    const qualif = await page.evaluate(() => {
+      let vu = null;
+      rjAppeler("_qualiHotLapSequence", (t, s, l, n, rappel) => { vu = [typeof t, typeof rappel]; }, null, [88.1, "Q1", 1, 3, () => {}]);
+      return vu;
+    });
+    S.verifier("tour lancé en qualif : la séquence reçoit le temps et le rappel",
+      JSON.stringify(qualif) === '["number","function"]', JSON.stringify(qualif));
+
+    /* Fin de carrière : 95 rappelait le répartiteur, donc sa propre
+       confirmation, sans jamais clore la partie. */
+    const fin = await page.evaluate(() => {
+      const avant = !!G._rjCarriereTerminee;
+      window._rj74Terminer();
+      const oui = document.getElementById("rj95-ok");
+      if (oui) oui.click();
+      const r = { avant, apres: !!G._rjCarriereTerminee, bouton: !!oui, rouverte: !!document.getElementById("rj95-ok") };
+      delete G._rjCarriereTerminee;
+      return r;
+    });
+    S.verifier("fin de carrière confirmée : la partie est close", !fin.avant && fin.apres && fin.bouton && !fin.rouverte, JSON.stringify(fin));
+
+    /* Un désinstalleur retire ses hooks ; il ne remet jamais une ancienne
+       fonction à la place du répartiteur (les hooks des autres modules
+       disparaîtraient avec). */
+    const desinst = await page.evaluate(() => {
+      const avant = Object.keys(RJ_HOOKS).filter(n => typeof window[n] === "function" &&
+        (window[n]._rjRepartiteur || String(window[n]).indexOf('rjAppeler("' + n + '"') >= 0));
+      Object.keys(window).filter(k => /^_rj\w*Uninstall$/.test(k) && typeof window[k] === "function")
+        .forEach(k => { try { window[k](); } catch (e) {} });
+      return avant.filter(n => !(window[n] && (window[n]._rjRepartiteur || String(window[n]).indexOf('rjAppeler("' + n + '"') >= 0)));
+    });
+    S.verifier("les désinstalleurs gardent tous les répartiteurs", desinst.length === 0, desinst.slice(0, 8).join(", "));
     S.verifier("aucune erreur au chargement", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }

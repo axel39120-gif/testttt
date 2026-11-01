@@ -1515,7 +1515,7 @@
 
   window._rjContractsUIUninstall = function () {
     sweepObs.disconnect();
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["11-neg-patch:"], k); });
     console.log('[11-neg-patch/UI] désinstallé (rechargez la page)');
   };
 })();

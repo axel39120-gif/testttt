@@ -309,8 +309,7 @@
   /* L'observateur ne rattrape pas tout : certaines tuiles sont réinjectées
      par d'autres modules après coup, hors du flux de mutations que nous
      voyons. Un balayage déterministe après chaque rendu d'écran ferme le
-     trou, sans observateur supplémentaire ni risque de boucle. */
-  var _wraps = [];
+     trou, sans observateur supplémentaire ni risque de boucle. */
   function wrapRendu(nom) {
     if (typeof window[nom] !== "function" || window[nom]._rj57btn) return;
     rjInscrire(nom, { id: "57-boutons-" + nom, ordre: -2450, apres: function () { nettoyerBoutons(document.body); } });
@@ -332,7 +331,7 @@
 
   window._rj57Uninstall = function () {
     obs.disconnect();
-    _wraps.forEach(function (w) { try { window[w.nom] = w.orig; } catch (e) {} });
+    rjDesinscrire("57-boutons-");
     console.log("[57-emoji-to-icons] désinstallé (rechargez la page)");
   };
 

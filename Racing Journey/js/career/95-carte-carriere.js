@@ -855,7 +855,7 @@
   function installer() {
     if (typeof window._rj74Terminer !== "function") return false;
     if (window._rj74Terminer._rj95) return true;
-    _orig74 = window._rj74Terminer;
+    _orig74 = window.__rj74TerminerCoeur;   // le cœur, pas le répartiteur : sinon terminer() repasse par notre hook
     /* Le bouton des Paramètres appelle _rj74Terminer : on l'intercepte pour
        présenter notre confirmation, puis on appelle l'original. */
     rjInscrire("_rj74Terminer", { id: "95-carte-carriere:_rj74Terminer", ordre: -6900, remplace: function (args, suite) {
@@ -863,7 +863,6 @@
       return true;
     } });
     window._rj74Terminer._rj95 = true;
-    window._rj74Terminer._origine = _orig74;
     return true;
   }
 
@@ -895,7 +894,7 @@
       confirmer: demanderConfirmation
     };
     window._rj95Uninstall = function () {
-      if (_orig74) window._rj74Terminer = _orig74;
+      RJ_HOOKS._rj74Terminer = (RJ_HOOKS._rj74Terminer || []).filter(function (h) { return h.id !== "95-carte-carriere:_rj74Terminer"; });
       if (window._rj95Observer) { window._rj95Observer.disconnect(); delete window._rj95Observer; }
       var sec = document.getElementById("rj95-saisons"); if (sec) sec.remove();
       fermer();

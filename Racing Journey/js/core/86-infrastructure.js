@@ -289,7 +289,7 @@
       classement: function () { return window.RJ_LEADERBOARD_HOOKS.map(function (h) { return h.id; }); }
     };
     window._rj89Uninstall = function () {
-      if (_origClassement) window.renderLiveLeaderboard = _origClassement;
+      rjDesinscrire(["86-infrastructure:"], "renderLiveLeaderboard");
       console.log(TAG, "désinstallé");
     };
   }

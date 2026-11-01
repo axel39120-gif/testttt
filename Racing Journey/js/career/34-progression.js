@@ -584,11 +584,11 @@
       branchLevel: branchLevel, awardDevPoints: awardDevPoints, TREE: TREE
     };
     window._rjProgUninstall = function () {
-      if (_origGain) window.gainSubStat = _origGain;
-      if (_origInit) window.initSubStats = _origInit;
-      if (_origNext) window.startNextSeason = _origNext;
-      if (_origRTS) window.renderTrainScreen = _origRTS;
-      if (_origApplySpec) window.applyTrainingSpecialtiesToRace = _origApplySpec;
+      rjDesinscrire(["34-progression:"], "gainSubStat");
+      rjDesinscrire(["34-progression:"], "initSubStats");
+      window.RJ_SEASON_HOOKS = (window.RJ_SEASON_HOOKS || []).filter(function (h) { return h.id !== "34-progression-depth"; });
+      rjDesinscrire(["34-progression:"], "renderTrainScreen");
+      rjDesinscrire(["34-progression:"], "applyTrainingSpecialtiesToRace");
       var sec = document.getElementById("rj-dev-section"); if (sec && sec.parentNode) sec.parentNode.removeChild(sec);
       window._rjProgInstalled = false;
       console.log("[34-progression-depth] désinstallé");
@@ -912,7 +912,7 @@
     if (typeof window.renderTrainScreen !== "function") return false;
     if (window.renderTrainScreen._rjFocus) return true;
     _origRTS = window.renderTrainScreen;
-    rjInscrire("renderTrainScreen", { id: "34-progression:renderTrainScreen:1", ordre: -4201, remplace: function (args, suite) {
+    rjInscrire("renderTrainScreen", { id: "34-entrainement:renderTrainScreen", ordre: -4201, remplace: function (args, suite) {
       var r = suite();
       try { renderFocusUI(); } catch (e) {}
       return r;
@@ -943,8 +943,8 @@
       ageMult: ageMult, coachActive: coachActive
     };
     window._rjTrainUninstall = function () {
-      if (_origRTS) window.renderTrainScreen = _origRTS;
-      if (_origNextSeason) window.startNextSeason = _origNextSeason;
+      rjDesinscrire(["34-entrainement:"], "renderTrainScreen");
+      window.RJ_SEASON_HOOKS = (window.RJ_SEASON_HOOKS || []).filter(function (h) { return h.id !== "38-training-rework"; });
       var s = document.getElementById("rj-focus-css"); if (s && s.parentNode) s.parentNode.removeChild(s);
       window._rjTrainInstalled = false;
       console.log("[38-training-rework] désinstallé");
@@ -1239,7 +1239,7 @@
     return out;
   };
   window._rj71Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["34-progression:"], k); });
     etat.installe = false;
     console.log(TAG + " désinstallé");
   };

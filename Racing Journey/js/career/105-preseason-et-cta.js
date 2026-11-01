@@ -208,7 +208,7 @@
       planFait: planFait, teinter: teinter, TEINTES: TEINTES
     };
     window._rj105Uninstall = function () {
-      Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+      Object.keys(_orig).forEach(function (k) { rjDesinscrire(["105-preseason-et-cta:"], k); });
       var c = document.getElementById(CSS_ID); if (c) c.remove();
       console.log(TAG, "désinstallé");
     };

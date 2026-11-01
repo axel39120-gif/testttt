@@ -428,7 +428,7 @@
 
   window._rj75Coef = function (style, axe) { return coef(style, axe, contexte()); };
   window._rj75Uninstall = function () {
-    Object.keys(wrapped).forEach(function (k) { window[k] = wrapped[k]; });
+    Object.keys(wrapped).forEach(function (k) { rjDesinscrire(["75-styles-contextuels:"], k); });
     ["rj75-css", "rj75-box"].forEach(function (id) {
       var e = document.getElementById(id);
       if (e && e.parentNode) e.parentNode.removeChild(e);

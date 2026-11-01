@@ -2301,7 +2301,7 @@
       try {
         coeur();    // calcule pos/pts + push G.races (clôture neutralisée)
       } finally {
-        window.runWeeklyTicks = origTicks;
+        rjDesinscrire(["18-weekend:","18-calendrier"], "runWeeklyTicks");
         if (savedSemaine != null && G) G.semaine = savedSemaine;  // annule l'avancement de semaine
       }
 
@@ -2988,8 +2988,8 @@
   }
 
   window._rjFpQualifShortcutUninstall = function () {
-    if (_origRender) window.renderQualiSession = _origRender;
-    if (_origPick) window._qualiPickTiming = _origPick;
+    rjDesinscrire(["18-weekend:","18-calendrier"], "renderQualiSession");
+    rjDesinscrire(["18-weekend:","18-calendrier"], "_qualiPickTiming");
     obs.disconnect();
     var b = document.getElementById(BTN_ID);
     if (b && b.parentNode) b.parentNode.removeChild(b);
@@ -3185,27 +3185,10 @@
 
     if (typeof window._qualiHotLapSequence === "function" && !window._qualiHotLapSequence._rj69) {
       origSeq = window._qualiHotLapSequence;
-      var fnSeq = function (lapTime, session, lap, totalLaps, onDone) {
-        var ph = photo;
-        var suite = function (finalTime) {
-          try {
-            if (ph && typeof finalTime === "number" && isFinite(finalTime)) {
-              restaurerPhoto(ph);
-              reattribuer(finalTime);
-            }
-          } catch (e) {
-            etat.erreur = String(e && e.message || e);
-            console.warn(TAG, e);
-          }
-          return onDone.apply(this, arguments);
-        };
-        return origSeq.call(this, lapTime, session, lap, totalLaps, suite);
-      };
-      fnSeq._rj69 = true;
       rjInscrire("_qualiHotLapSequence", { id: "18-weekend:_qualiHotLapSequence", ordre: -3600, remplace: function (args, suite) {
-      var lapTime = args[0], session = args[1], lap = args[2], totalLaps = args[3], onDone = args[4];
+        var lapTime = args[0], session = args[1], lap = args[2], totalLaps = args[3], onDone = args[4];
         var ph = photo;
-        var suite = function (finalTime) {
+        var rappel = function (finalTime) {
           try {
             if (ph && typeof finalTime === "number" && isFinite(finalTime)) {
               restaurerPhoto(ph);
@@ -3217,7 +3200,7 @@
           }
           return onDone.apply(this, arguments);
         };
-        return suite([lapTime, session, lap, totalLaps, suite]);
+        return suite([lapTime, session, lap, totalLaps, rappel]);
       } });
     }
 
@@ -3732,7 +3715,7 @@
     window._rj84Uninstall = function () {
       try {
         fermer();
-        Object.keys(_orig).forEach(function (k) { window[k] = _orig[k]; });
+        Object.keys(_orig).forEach(function (k) { rjDesinscrire(["18-weekend:","18-calendrier"], k); });
         ["setup-mode-advanced", "rj84-feuille-temps", "live-leaderboard"].forEach(function (id) {
           var b = document.getElementById(id);
           if (b) b.style.display = "";

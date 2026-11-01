@@ -268,7 +268,7 @@
 
     window._rj83 = { rendre: rendre, famille: function (f) { if (f) { familleActive = f; rendre(); } return familleActive; } };
     window._rj83Uninstall = function () {
-      if (_orig) window.renderSponsorsNew = _orig;
+      rjDesinscrire(["83-sponsors-compact:"], "renderSponsorsNew");
       var css = document.getElementById(CSS_ID);
       if (css && css.parentNode) css.parentNode.removeChild(css);
       if (fn("renderSponsorsNew")) window.renderSponsorsNew();
