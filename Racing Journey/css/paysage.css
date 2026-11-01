@@ -102,7 +102,7 @@ body { padding: 0 !important; }
 .scr > .tabs::-webkit-scrollbar { display: none; }
 /* Beaucoup d'onglets (week-end de course) : ils défilent au lieu de déborder. */
 .scr > .tabs > * {
-  display: flex !important; align-items: center !important; justify-content: center !important;
+  align-items: center !important; justify-content: center !important;
   flex: 1 0 auto !important; padding: 0 12px !important; white-space: nowrap !important;
 }
 

@@ -1,16 +1,18 @@
 # Racing Journey — état du projet
 
-Version **BUILD v216**. Ce document décrit l'organisation du code après la
-restructuration (étape 1), ce qui reste à faire, et comment reprendre.
+Version **BUILD v217**. Ce document décrit l'organisation du code après la
+restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
+à faire, et comment reprendre.
 
 ---
 
 ## Déployer
 
 Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
-`manifest.json`, `_headers`, et le dossier `js/` avec ses sous-dossiers.
+`manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
+sous-dossiers.
 
-Le badge en bas à gauche doit afficher `BUILD v216 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v217 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -19,7 +21,7 @@ modules manquants, un fichier n'a pas été copié.
 ## Vérifier
 
 ```bash
-node tests/rj-tests.js          # ~200 vérifications, quelques minutes
+node tests/rj-tests.js          # ~225 vérifications, quelques minutes
 node tests/couverture.js        # rapport de structure (fonctions, couches)
 ```
 
@@ -31,6 +33,7 @@ Voir `tests/README.md` pour les suites, les options (`RJ_GRAINE`,
 ## Organisation du code
 
 ```
+css/         paysage (mise en page horizontale commune à tous les écrans)
 js/core/     00-hooks (points d'extension), 02 réglages, 04s sauvegarde,
              07k migrations, 86 registres
 js/data/     circuits, catégories, écuries, plateau de pilotes, notation
@@ -103,6 +106,33 @@ extensible, `rjInscrire` lui pose son répartiteur.
 - Les filets de fin de course levaient une erreur au lieu de rendre la main.
 - En endurance, le joueur sautait jusqu'à 13 places d'un tour à l'autre.
 
+## Étape 2 (paysage) — ce qui a été fait
+
+Le design est inchangé ; seule la mise en page passe à l'horizontale, la
+même pour chaque écran (`css/paysage.css`) :
+
+- navigation en **rail vertical** à gauche (repère actif à gauche) ;
+- un **bandeau unique** de 52 px : titre à gauche, onglets à droite (ils
+  défilent s'ils sont nombreux, comme au week-end de course) ;
+- contenu en **colonnes de la largeur d'un téléphone en portrait** : un
+  conteneur d'au moins cinq éléments se répartit sur deux colonnes dès
+  que la place le permet, une carte isolée reste entière ; les écrans qui
+  se lisent d'un fil (création, messagerie, événement, négociation,
+  sauvegarde) gardent une colonne centrée ;
+- accueil, écran titre, choix du mode, course en direct et résultats en
+  deux colonnes ;
+- notifications et trophées en bas à droite, tiroir « Plus » à côté du
+  rail, fenêtres plafonnées à la hauteur de l'écran ;
+- en portrait, un écran demande de tourner l'appareil ; le manifeste
+  déclare `landscape`.
+
+Retiré : la taille d'écran automatique (60), le placement du tiroir au-dessus
+de la barre du bas (61), la section « Affichage » des Paramètres (ses
+curseurs n'avaient plus d'effet) et le correctif de barre du bas d'index.html.
+
+La suite `paysage` vérifie chaque écran à trois tailles (667 × 375,
+932 × 430, 1180 × 820) ; toutes les suites tournent désormais en 932 × 430.
+
 ---
 
 ## Reste à faire
@@ -111,9 +141,15 @@ extensible, `rjInscrire` lui pose son répartiteur.
   par tour) ; le modèle de piste en dérive une position continue. Faire
   piloter les positions par la distance parcourue est une évolution
   possible de l'étape 3.
-- **Surveillances du DOM.** Il en reste 18 ; elles ne se réveillent plus au
+- **Surveillances du DOM.** Il en reste 17 ; elles ne se réveillent plus au
   repos, mais l'arrondi global des décimales (ui/04q) reste un correctif
-  d'affichage à remplacer par un formatage à la source (étape 2).
+  d'affichage à remplacer par un formatage à la source.
+- **Taille de l'app.** Le module 68 (ui/53-affichage) calcule encore une
+  « zone » et une mise à l'échelle (désactivée) héritées du cadre portrait ;
+  seul son relevé des zones sûres (encoche) sert encore. L'écran
+  `S-display-setup` et `APP_SIZE_BOUNDS` ne sont plus utilisés.
+- **Pas encore essayé sur un vrai téléphone** : encoche sur le côté,
+  barre d'adresse du navigateur en paysage.
 - **Désinstalleurs de console** (`window._rjNNUninstall()`). Ils retirent
   leurs hooks (`rjDesinscrire(prefixes, nom)`) sans toucher aux fonctions,
   mais les drapeaux d'installation restent posés : on ne réinstalle pas un
@@ -121,7 +157,6 @@ extensible, `rjInscrire` lui pose son répartiteur.
 
 ## Étapes suivantes
 
-2. Passage en paysage et nouvelle direction artistique, adaptée au support.
 3. Vue de course en direct (tracés SVG déjà présents dans
    `getCircuitData(circuit).path`, positions dans `RJModelePiste.etat()`).
 4. Approfondissement de la simulation de carrière.

@@ -966,10 +966,10 @@ async function suiteInterface() {
   S.suite("Interface");
   const { navigateur, page, journal } = await S.ouvrirJeu();
   try {
-    /* Repères de hauteur : on veille à ne pas régresser. */
+    /* Repères de hauteur, en écrans paysage (932 × 430) : on veille à ne pas régresser. */
     const seuils = [
-      ["S-home", null, 1.05], ["S-sponsors", null, 1.30],
-      ["S-champ", null, 1.70], ["S-pilot", null, 1.50],
+      ["S-home", null, 1.05], ["S-sponsors", null, 1.70],
+      ["S-champ", null, 2.80], ["S-pilot", null, 2.40],
       ["S-contracts", null, 1.20], ["S-media", null, 1.20]
     ];
     for (const [id, avant, plafond] of seuils) {
@@ -1054,7 +1054,9 @@ async function suitePaysage() {
           await attendre(260);
           const s = document.querySelector(".scr.on"); if (!s || res.bandeaux[s.id] !== undefined) continue;
           const bs = boite(s), hdr = s.querySelector(":scope > .hdr"), sc = s.querySelector(":scope > .scroll");
-          if (bs.left < bn.right - 1) res.chevauche.push(s.id);
+          /* Certains écrans masquent la navigation : ils prennent alors toute la largeur. */
+          const railVisible = getComputedStyle(nav).display !== "none" && nav.classList.contains("show");
+          if (railVisible && bs.left < bn.right - 1) res.chevauche.push(s.id);
           if ([...document.querySelectorAll(".scr")].filter(x => getComputedStyle(x).display !== "none").length > 1) res.plusieurs.push(s.id);
           res.bandeaux[s.id] = hdr ? Math.round(boite(hdr).height) : null;
           res.hauts[s.id] = sc ? Math.round(boite(sc).top) : null;

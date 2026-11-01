@@ -49,7 +49,8 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `endurance` | six courses d'endurance : plus grand saut de places par course (défaut connu signalé, à corriger avec le nouveau moteur) |
 | `weekend` | stratégie retirée du parcours et inatteignable, réglages dans la préparation, feuille de temps en fenêtre |
 | `decisions` | décisions en course, mini-classement, chien de garde |
-| `ui` | hauteurs d'écran sous leurs seuils, absence d'icônes dans les boutons d'action, navigation sans erreur |
+| `ui` | hauteurs d'écran sous leurs seuils (en écrans paysage), absence d'icônes dans les boutons d'action, navigation sans erreur |
+| `paysage` | à trois tailles : rail à gauche, un seul écran affiché, même bandeau partout, contenu sous le bandeau, rien ne déborde ; écran « tourne ton téléphone » en portrait |
 
 ## Lire un échec
 
