@@ -116,6 +116,8 @@ async function suiteCreation() {
       await page.evaluate(() => {
         const v = document.getElementById("p-birthcity");
         if (v && !v.value) { v.value = "Lyon"; v.dispatchEvent(new Event("input", { bubbles: true })); }
+        const aisee = [...document.querySelectorAll(".rj115-milieu")][2];
+        if (window.creStep === 2 && aisee) aisee.click();
         creNext();
       });
       await page.waitForTimeout(400);
@@ -127,12 +129,15 @@ async function suiteCreation() {
       ecran: [...document.querySelectorAll(".scr.on")].map(s => s.id).join(","),
       categorie: G.cat,
       mode: G._gameMode,
-      ecurieDeCoeur: G._favTeam
+      ecurieDeCoeur: G._favTeam,
+      milieu: G._milieu,
+      budget: G.budget
     }));
     S.verifier("la carrière démarre", lance.ecran && lance.ecran !== "S-create", lance.ecran);
     S.verifier("la catégorie de départ est posée", !!lance.categorie, lance.categorie);
     S.verifier("le mode de jeu est enregistré", !!lance.mode, lance.mode);
     S.verifier("l'écurie de cœur est enregistrée", lance.ecurieDeCoeur === "Ferrari", lance.ecurieDeCoeur);
+    S.verifier("le milieu familial fixe le budget de départ", lance.milieu === "aisee" && lance.budget >= 600000, lance.milieu + " · " + lance.budget);
     S.verifier("aucune erreur pendant la création", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -1469,6 +1474,58 @@ async function suiteHeritage() {
 }
 
 /* ==================================================================== *
+ * 8 septies. ÉCONOMIE AUX VRAIS ORDRES DE GRANDEUR (module 115)
+ * ==================================================================== */
+async function suiteEconomie() {
+  S.suite("Économie");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(() => {
+      if (!window.RJEconomie) return { api: false };
+      const res = { api: true };
+      const fourchette = (cat, champ, mult) => {
+        const v = (TEAM_OFFERS[cat] || []).map(o => (o[champ] || 0) * (mult || 1)).filter(x => x > 0);
+        return v.length ? [Math.min(...v), Math.max(...v)] : null;
+      };
+      res.baquets = { f4: fourchette("Formule 4", "cost"), f3: fourchette("Formule 3", "cost"), f2: fourchette("Formule 2", "cost") };
+      res.f1 = fourchette("Formule 1", "salary", 12);
+
+      const cat = G.cat, rep = G.reputation, budget = G.budget, milieu = G._milieu, revenu = G.revenue;
+      try {
+        const top3 = c => { G.cat = c; const cap = getRepCap();
+          return getSponsorPool().filter(x => x.repReq <= cap).map(x => x.fee).sort((a, b) => b - a).slice(0, 3).reduce((a, b) => a + b, 0) * 12; };
+        res.sponsors = { f4: top3("Formule 4"), f3: top3("Formule 3"), f2: top3("Formule 2"), f1: top3("Formule 1") };
+
+        G.cat = "Formule 4";
+        const semaine = m => { G._milieu = m; G.budget = 1e6; applyWeeklyIncome(1); return G.budget - 1e6; };
+        res.soutien = semaine("modeste") - semaine(null);
+        G.cat = "Formule 3";
+        res.soutienF3 = semaine("modeste") - semaine(null);
+
+        const crochet = window.RJ_SAVE_HOOKS.find(h => h.cle === "economie");
+        G.cat = "Formule 2"; G.sponsors = [{ id: "x", fee: 142000 }]; G.revenue = 150000;
+        crochet.lire(null, G);
+        res.conversion = { fee: G.sponsors[0].fee, revenu: G.revenue };
+      } finally { G.cat = cat; G.reputation = rep; G.budget = budget; G._milieu = milieu; G.revenue = revenu; }
+      return res;
+    });
+    S.verifier("le module d'économie est installé", r.api);
+    if (!r.api) return;
+    const dans = (v, a, b) => !!v && v[0] >= a && v[1] <= b;
+    S.verifier("baquet de F4 entre 300 et 450 k€", dans(r.baquets.f4, 3e5, 4.5e5), JSON.stringify(r.baquets.f4));
+    S.verifier("baquet de F3 entre 0,9 et 1,4 M€", dans(r.baquets.f3, 9e5, 1.4e6), JSON.stringify(r.baquets.f3));
+    S.verifier("baquet de F2 entre 1,8 et 2,8 M€", dans(r.baquets.f2, 1.8e6, 2.8e6), JSON.stringify(r.baquets.f2));
+    S.verifier("salaire de F1 entre 1 et 30 M€ par an", dans(r.f1, 0.99e6, 30e6), JSON.stringify(r.f1));
+    S.verifier("sponsors : F4 ≤ 250 k€, F3 ≤ 1,2 M€, F2 ≤ 2,5 M€, F1 ≤ 25 M€ par an (trois meilleurs)",
+      r.sponsors.f4 <= 2.5e5 && r.sponsors.f3 <= 1.2e6 && r.sponsors.f2 <= 2.5e6 && r.sponsors.f1 <= 25e6 && r.sponsors.f1 > 5e6, JSON.stringify(r.sponsors));
+    S.verifier("le soutien familial se verse chaque semaine en formule de promotion", r.soutien === 500, String(r.soutien));
+    S.verifier("le soutien familial s'arrête au-delà de la Formula Regional", r.soutienF3 === 0, String(r.soutienF3));
+    S.verifier("une ancienne sauvegarde voit ses sponsors remis à l'échelle", r.conversion.fee < 142000 && r.conversion.revenu < 150000, JSON.stringify(r.conversion));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1663,6 +1720,7 @@ const SUITES = {
   superlicence: suiteSuperLicence,
   mercato: suiteMercato,
   heritage: suiteHeritage,
+  economie: suiteEconomie,
   decisions: suiteDecisions
 };
 
