@@ -1526,6 +1526,80 @@ async function suiteEconomie() {
 }
 
 /* ==================================================================== *
+ * 8 octies. BAQUETS LIMITÉS, CONCURRENCE, APPORT (module 116)
+ * ==================================================================== */
+async function suiteBaquets() {
+  S.suite("Baquets et concurrence");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(() => {
+      const B = window.RJBaquets;
+      if (!B) return { api: false };
+      const res = { api: true };
+      const sauve = { budget: G.budget, sponsors: G.sponsors, offers: G.offers, baquets: G._baquets, cat: G.cat, rep: G.reputation, pos: G.champPos };
+      const calc = window.calcPlayerRating;
+      try {
+        G._baquets = null;
+        const plan = B.places("Formule 1"), total = Object.values(plan).reduce((a, b) => a + b, 0);
+        res.places = { total, max: Math.max(...Object.values(plan)) };
+        res.memePlan = B.places("Formule 1") === plan;
+
+        const d = Object.values(G.driverPool).find(x => !x.retired);
+        res.soutienFixe = B.soutien(d, d.cat) === B.soutien(d, d.cat);
+
+        const f1 = TEAM_OFFERS["Formule 1"].slice().sort((a, b) => b.repReq - a.repReq);
+        const haut = f1[0].team, bas = f1[f1.length - 1].team;
+        G.cat = "Formule 2"; G.champPos = 1; G.reputation = 80;
+        window.calcPlayerRating = () => 97; G.budget = 0; G.sponsors = [];
+        res.prodigeChezLesGrands = B.classer("Formule 1", haut, { cost: 0 }).rangJoueur;
+        window.calcPlayerRating = () => 72; G.champPos = 6;
+        res.moyenSansArgentEnBas = B.classer("Formule 1", bas, { cost: 0 }).rangJoueur;
+        G.budget = 40e6;
+        res.moyenAvecArgentEnBas = B.classer("Formule 1", bas, { cost: 0 }).rangJoueur;
+
+        /* Filtrage : écurie sans place = pas d'offre ; place gagnée = offre annotée. */
+        G._baquets = { saison: G.saison, places: { "Formule 1": { [haut]: 0, [bas]: 1 } }, perdus: [], echeancier: null };
+        window.calcPlayerRating = () => 99; G.champPos = 1; G.budget = 40e6;
+        const gardees = B.filtrer([{ team: haut, cat: "Formule 1", cost: 0 }, { team: bas, cat: "Formule 1", cost: 0 }]);
+        res.filtre = { n: gardees.length, equipe: gardees[0] && gardees[0].team, annotee: !!(gardees[0] && gardees[0]._concurrence) };
+
+        /* Apport demandé par une petite écurie de F1 à un pilote moyen. */
+        G._baquets = { saison: G.saison, places: { "Formule 1": { [bas]: 1 } }, perdus: [], echeancier: null };
+        window.calcPlayerRating = () => 80; G.budget = 60e6;
+        const o = B.filtrer([{ team: bas, cat: "Formule 1", cost: 0 }])[0];
+        res.apport = o ? o._apport || 0 : -1;
+
+        /* Paiement échelonné : un tiers à la signature, le reste chaque semaine. */
+        G._baquets = { saison: G.saison, places: {}, perdus: [], echeancier: null };
+        G.budget = 3e6;
+        G.offers = [buildOffer({ team: TEAM_OFFERS["Formule 2"][0].team, cat: "Formule 2", cost: 2.4e6, salary: 0, role: "num2", years: 1 })];
+        const avant = G.budget;
+        signContract(0);
+        res.signature = { paye: avant - G.budget, reste: G._baquets.echeancier && G._baquets.echeancier.reste };
+        const b2 = G.budget; applyWeeklyIncome(4); res.prelevement = G._baquets.echeancier ? G._baquets.echeancier.reste : 0;
+      } finally {
+        window.calcPlayerRating = calc;
+        Object.assign(G, { budget: sauve.budget, sponsors: sauve.sponsors, offers: sauve.offers, _baquets: sauve.baquets, cat: sauve.cat, reputation: sauve.rep, champPos: sauve.pos });
+      }
+      return res;
+    });
+    S.verifier("le module des baquets est installé", r.api);
+    if (!r.api) return;
+    S.verifier("F1 : 2 à 4 baquets libres, deux au plus par écurie", r.places.total >= 2 && r.places.total <= 4 && r.places.max <= 2, JSON.stringify(r.places));
+    S.verifier("les places d'une saison ne changent pas d'un appel à l'autre", r.memePlan);
+    S.verifier("le soutien d'un pilote du plateau est tiré une fois pour toutes", r.soutienFixe);
+    S.verifier("un prodige est le premier choix d'une grande écurie", r.prodigeChezLesGrands === 1, String(r.prodigeChezLesGrands));
+    S.verifier("sans argent, un pilote moyen n'est pas le premier choix d'une petite écurie", r.moyenSansArgentEnBas > 1, String(r.moyenSansArgentEnBas));
+    S.verifier("avec un gros apport, le même pilote passe devant", r.moyenAvecArgentEnBas < r.moyenSansArgentEnBas, r.moyenSansArgentEnBas + " → " + r.moyenAvecArgentEnBas);
+    S.verifier("pas de place, pas d'offre ; une place gagnée donne une offre détaillée", r.filtre.n === 1 && r.filtre.annotee, JSON.stringify(r.filtre));
+    S.verifier("une petite écurie de F1 demande un apport", r.apport > 0, String(r.apport));
+    S.verifier("baquet payant : un tiers à la signature", Math.abs(r.signature.paye - 8e5) < 1e3 && Math.abs(r.signature.reste - 1.6e6) < 1e3, JSON.stringify(r.signature));
+    S.verifier("le reste se prélève chaque semaine", r.prelevement < r.signature.reste, r.signature.reste + " → " + r.prelevement);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1721,6 +1795,7 @@ const SUITES = {
   mercato: suiteMercato,
   heritage: suiteHeritage,
   economie: suiteEconomie,
+  baquets: suiteBaquets,
   decisions: suiteDecisions
 };
 
