@@ -1329,6 +1329,70 @@ async function suiteSuperLicence() {
 }
 
 /* ==================================================================== *
+ * 8 quinquies. MERCATO VIVANT (module 113, étape 4)
+ *
+ * Les mouvements de pilotes existaient sans se voir. En fin de saison, le
+ * module relève retraites, promotions, descentes et arrivées ; en cours de
+ * saison, il lance des rumeurs fondées sur le plateau, confirmées ou
+ * démenties à l'intersaison. Tout se lit dans Championnat › Mercato.
+ * ==================================================================== */
+async function suiteMercato() {
+  S.suite("Mercato");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const M = window.RJMercato;
+      if (!M) return { api: false };
+      const res = { api: true };
+      /* Rumeurs : à partir des deux tiers de la saison, une fois par saison. */
+      const total = (CAL_RACES || []).length || 10;
+      const courses = G.races;
+      G.races = Array.from({ length: Math.ceil(total * 0.7) }, (_, i) => ({ pos: 5, nom: "Manche " + (i + 1) }));
+      const avant = (G._mercato && G._mercato.rumeurs || []).length;
+      M.rumeurs(); M.rumeurs();
+      const rum = G._mercato.rumeurs.filter(x => x.saison === G.saison);
+      res.rumeurs = { nouvelles: rum.length, doublons: G._mercato.rumeurs.length - avant - rum.length,
+        fondees: rum.every(x => !x.id || (G.driverPool[x.id] && G.driverPool[x.id].name === x.nom)) };
+      G.races = courses;
+
+      /* Intersaison : relevé fidèle des mouvements du plateau. */
+      const avantPool = {};
+      Object.keys(G.driverPool).forEach(id => { const d = G.driverPool[id]; avantPool[id] = { cat: d.cat, retired: d.retired }; });
+      _handleDriverMovements();
+      const bilan = G._mercato.intersaisons[0];
+      const retraites = Object.keys(G.driverPool).filter(id => avantPool[id] && !avantPool[id].retired && G.driverPool[id].retired).length;
+      const changements = Object.keys(G.driverPool).filter(id => avantPool[id] && !G.driverPool[id].retired && avantPool[id].cat !== G.driverPool[id].cat).length;
+      res.bilan = { saison: bilan && bilan.saison === G.saison, retraites: bilan ? bilan.retraites.length : -1, attendu: retraites,
+        mouvements: bilan ? bilan.promotions.length + bilan.descentes.length + bilan.lateraux.length : -1, changements };
+      res.verdicts = G._mercato.rumeurs.filter(x => x.saison === G.saison && x.type !== "joueur").every(x => x.statut === "confirmée" || x.statut === "démentie");
+
+      /* Sauvegarde : le mercato suit la partie. */
+      const crochet = window.RJ_SAVE_HOOKS.find(h => h.cle === "mercato");
+      const bloc = crochet ? JSON.parse(JSON.stringify(crochet.ecrire(G))) : null;
+      const copie = G._mercato; G._mercato = null;
+      if (crochet) crochet.lire(bloc, G);
+      res.sauvegarde = !!G._mercato && G._mercato.intersaisons.length === copie.intersaisons.length && G._mercato.rumeurs.length === copie.rumeurs.length;
+
+      navTo("S-champ", null); chtab("mercato");
+      await new Promise(r => setTimeout(r, 300));
+      const p = document.getElementById("cht-mercato");
+      res.onglet = p ? { visible: getComputedStyle(p).display !== "none", texte: p.textContent.replace(/\s+/g, " ").slice(0, 160) } : null;
+      return res;
+    });
+    S.verifier("le module de mercato est installé", r.api);
+    if (!r.api) return;
+    S.verifier("des rumeurs naissent aux deux tiers de la saison, une fois", r.rumeurs.nouvelles >= 2 && r.rumeurs.doublons === 0, JSON.stringify(r.rumeurs));
+    S.verifier("les rumeurs portent sur de vrais pilotes du plateau", r.rumeurs.fondees);
+    S.verifier("l'intersaison relève toutes les retraites", r.bilan.saison && r.bilan.retraites === r.bilan.attendu, JSON.stringify(r.bilan));
+    S.verifier("l'intersaison relève tous les changements de catégorie", r.bilan.mouvements === r.bilan.changements, JSON.stringify(r.bilan));
+    S.verifier("chaque rumeur est confirmée ou démentie à l'intersaison", r.verdicts);
+    S.verifier("le mercato est sauvegardé avec la partie", r.sauvegarde);
+    S.verifier("l'onglet Mercato s'affiche au Championnat", !!r.onglet && r.onglet.visible && /rumeur|retraite|promu|intersaison/i.test(r.onglet.texte), JSON.stringify(r.onglet));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1521,6 +1585,7 @@ const SUITES = {
   paysage: suitePaysage,
   circuit: suiteCircuit,
   superlicence: suiteSuperLicence,
+  mercato: suiteMercato,
   decisions: suiteDecisions
 };
 

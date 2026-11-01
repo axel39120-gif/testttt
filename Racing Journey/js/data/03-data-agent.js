@@ -9446,12 +9446,12 @@ function goToSplash() {
 }
 
 function chtab(e) {
-  ["classement", "constructeurs", "ecuries", "h2h"].forEach(function(t) {
+  ["classement", "constructeurs", "ecuries", "h2h", "mercato"].forEach(function(t) {
     var r = document.getElementById("cht-" + t);
     r && (r.style.display = t === e ? "block" : "none")
   }), document.querySelectorAll("#S-champ .tab").forEach(function(t) {
     t.classList.toggle("on", t.getAttribute("data-tab") === e)
-  }), "classement" === e && renderChamp(), "ecuries" === e && (initTeamRatings(G.cat, G.saison), renderTeamPerf()), "constructeurs" === e && renderConstructeurs(), "h2h" === e && "function" == typeof renderH2H && renderH2H()
+  }), "classement" === e && renderChamp(), "ecuries" === e && (initTeamRatings(G.cat, G.saison), renderTeamPerf()), "constructeurs" === e && renderConstructeurs(), "h2h" === e && "function" == typeof renderH2H && renderH2H(), "mercato" === e && "function" == typeof renderMercato && renderMercato()
 }
 
 function ptab() { return rjAppeler("ptab", _ptabCoeur, this, arguments); }

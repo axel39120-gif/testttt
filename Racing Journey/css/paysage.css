@@ -424,3 +424,34 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 .rj112-saisons > div { display: flex; justify-content: space-between; padding: 4px 0; border-top: 1px solid var(--border, rgba(255, 255, 255, .04)); }
 .rj112-saisons b { color: #60A5FA; }
 .rj112-vide, .rj112-bareme { margin-top: 10px; font-size: 11px; line-height: 1.5; color: var(--muted, #80808a); }
+
+/* --- Mercato (js/career/113-mercato.js) ---------------------------------- */
+.rj113-entete {
+  margin: 4px 0 10px; font: 800 11px/1 var(--font-display); letter-spacing: .16em;
+  text-transform: uppercase; color: #A78BFA; break-after: avoid;
+}
+.rj113-bloc {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; break-inside: avoid;
+  background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+}
+.rj113-titre {
+  font: 700 10px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted, #80808a); margin-bottom: 6px;
+}
+.rj113-ligne {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; line-height: 1.4;
+  color: var(--text2, #b0b0bc); border-top: 1px solid var(--border, rgba(255, 255, 255, .04));
+}
+.rj113-ligne b { color: var(--text, #e8e8ec); }
+.rj113-texte { flex: 1; }
+.rj113-statut {
+  flex: 0 0 auto; font: 700 9px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase;
+  padding: 4px 6px; border-radius: 4px; color: #A78BFA; border: 1px solid #A78BFA55;
+}
+.rj113-statut.ok { color: #34D399; border-color: #34D39955; }
+.rj113-statut.non { color: var(--muted, #80808a); border-color: var(--border-hi, rgba(255, 255, 255, .1)); }
+.rj113-plus, .rj113-vide { font-size: 11px; color: var(--muted, #80808a); padding-top: 6px; }
+.rj113-alerte {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 12px; break-inside: avoid;
+  color: #FFC107; background: rgba(255, 193, 7, .06); border: 1px solid rgba(255, 193, 7, .3);
+}
