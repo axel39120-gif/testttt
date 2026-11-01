@@ -1393,6 +1393,82 @@ async function suiteMercato() {
 }
 
 /* ==================================================================== *
+ * 8 sexies. RÊVES DE CARRIÈRE ET HÉRITAGE (module 114, étape 4)
+ *
+ * Le joueur choisit jusqu'à trois rêves (Triple Couronne, champion du
+ * monde…) ; leur progression se calcule sur l'historique, une réussite est
+ * célébrée et conservée. L'onglet Héritage montre aussi la frise de carrière.
+ * ==================================================================== */
+async function suiteHeritage() {
+  S.suite("Rêves et héritage");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const H = window.RJHeritage;
+      if (!H) return { api: false };
+      const res = { api: true, catalogue: H.catalogue().length };
+      const histo = CAREER_HISTORY, courses = G.races, cat = G.cat, saison = G.saison, bonheur = G.happiness, reves = G._reves;
+      const course = (circuit, pos) => ({ circuit, pos });
+      const saisonDe = (n, c, p, details, extra) => Object.assign({ saison: n, cat: c, pos: p, races: details.length, wins: details.filter(d => d.pos === 1).length, age: 20 + n, team: "Écurie A", raceDetails: details }, extra || {});
+      try {
+        G._reves = null;
+        ["triple_couronne", "champion_monde", "roi_monaco"].forEach(id => H.choisir(id));
+        res.limite = H.choisir("dynastie") === false && H.actifs().length === 3;
+
+        G.saison = 5; G.cat = "IndyCar";
+        CAREER_HISTORY = [
+          saisonDe(2, "Formule 1", 3, [course("Monaco", 1), course("Silverstone", 2)]),
+          saisonDe(3, "Karting Senior", 1, [course("GP Monaco Kart", 1)]),
+          saisonDe(4, "IndyCar", 2, [course("Indianapolis 500", 1)])
+        ];
+        G.races = [course("Long Beach", 4)];
+        res.triple = H.progression("triple_couronne");
+        res.monaco = H.progression("roi_monaco");
+
+        /* Fin de saison : la saison courante entre dans l'historique, sans compter deux fois. */
+        CAREER_HISTORY.push(saisonDe(5, "IndyCar", 4, G.races.slice()));
+        res.sansDoublon = H.progression("roi_monaco").actuel === res.monaco.actuel;
+
+        G.saison = 6; G.cat = "Endurance WEC"; G.races = [course("24h Le Mans", 1)];
+        G.happiness = 50; const avant = G.happiness;
+        H.verifier();
+        res.accompli = (G._reves.accomplis || []).some(a => a.id === "triple_couronne" && a.saison === 6);
+        res.retire = H.actifs().indexOf("triple_couronne") < 0;
+        res.recompense = G.happiness > avant;
+        H.verifier();
+        res.uneFois = G._reves.accomplis.filter(a => a.id === "triple_couronne").length === 1;
+
+        const crochet = window.RJ_SAVE_HOOKS.find(h => h.cle === "reves");
+        const bloc = crochet ? JSON.parse(JSON.stringify(crochet.ecrire(G))) : null;
+        const copie = JSON.stringify(G._reves); G._reves = null;
+        if (crochet) crochet.lire(bloc, G);
+        res.sauvegarde = JSON.stringify(G._reves) === copie;
+
+        navTo("S-pilot", null); ptab("heritage");
+        await new Promise(r => setTimeout(r, 300));
+        const p = document.getElementById("pt-heritage");
+        res.onglet = p ? { visible: getComputedStyle(p).display !== "none",
+          saisons: p.querySelectorAll(".rj114-saison").length, reves: p.querySelectorAll(".rj114-reve").length } : null;
+      } finally {
+        CAREER_HISTORY = histo; G.races = courses; G.cat = cat; G.saison = saison; G.happiness = bonheur; G._reves = reves;
+      }
+      return res;
+    });
+    S.verifier("le module des rêves est installé", r.api);
+    if (!r.api) return;
+    S.verifier("un catalogue d'au moins six rêves", r.catalogue >= 6, String(r.catalogue));
+    S.verifier("trois rêves au plus en même temps", r.limite);
+    S.verifier("Triple Couronne : Monaco en F1 et Indy 500 comptent, pas Monaco en karting", r.triple.actuel === 2 && r.triple.cible === 3, JSON.stringify(r.triple));
+    S.verifier("une course n'est jamais comptée deux fois en fin de saison", r.sansDoublon, JSON.stringify(r.monaco));
+    S.verifier("un rêve réalisé est célébré et conservé", r.accompli && r.retire && r.recompense, JSON.stringify(r));
+    S.verifier("un rêve n'est célébré qu'une fois", r.uneFois);
+    S.verifier("les rêves sont sauvegardés avec la partie", r.sauvegarde);
+    S.verifier("l'onglet Héritage montre les rêves et la frise", !!r.onglet && r.onglet.visible && r.onglet.saisons === 5 && r.onglet.reves >= 2, JSON.stringify(r.onglet));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1586,6 +1662,7 @@ const SUITES = {
   circuit: suiteCircuit,
   superlicence: suiteSuperLicence,
   mercato: suiteMercato,
+  heritage: suiteHeritage,
   decisions: suiteDecisions
 };
 

@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v219**. Ce document décrit l'organisation du code après la
+Version **BUILD v220**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v219 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v220 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -40,7 +40,8 @@ js/data/     circuits, catégories, écuries, plateau de pilotes, notation
 js/race/     moteur (04), safety car, radio, évènements, décisions (107),
              modèle de piste (108), course sur le circuit (111), fin de course (04j)
 js/weekend/  week-end de course, en-tête, ajustements, ingénieur, réglages
-js/career/   progression, saison, fin de carrière, réserve, pré-saison…
+js/career/   progression, saison, fin de carrière, réserve, pré-saison,
+             Super Licence (112), mercato (113), rêves et héritage (114)…
 js/social/   médias, conférences, réseaux sociaux, messagerie, réseau
 js/finance/  finances, négociation, sponsors, patrimoine
 js/ui/       écrans, icônes, affichage, badges, émojis, finitions
@@ -183,6 +184,32 @@ Mise en page : le circuit occupe la colonne de gauche sur toute la hauteur ;
 Suite `circuit` : tracé, un point par voiture, pas de recul, durée des
 dépassements, stand, abandon, arrêt et reprise de l'animation.
 
+## Étape 4 (simulation de carrière) — ce qui a été fait
+
+Trois chantiers choisis, dans l'ordre :
+
+- **Super Licence FIA** (`js/career/112-super-licence.js`) : points par
+  saison selon la catégorie et la place finale (barème inspiré de la FIA),
+  sur les trois dernières saisons, une catégorie par saison ; 40 points et
+  18 ans pour un baquet de F1, licence conservée après une saison de F1.
+  Sans licence, une écurie de F1 ne propose qu'un rôle de réserviste (règle
+  appliquée dans `buildOffer`, par où passent toutes les offres). Carte dans
+  l'onglet Carrière du pilote, bilan à chaque fin de saison. Calculée depuis
+  `CAREER_HISTORY` : rien de plus à sauvegarder.
+- **Mercato vivant** (`js/career/113-mercato.js`) : rumeurs aux deux tiers
+  de la saison (vétérans de F1, espoirs de F2, le joueur s'il brille),
+  confirmées ou démenties ; relevé de l'intersaison (retraites, promotions,
+  descentes, changements de série, recrues), arrivées et transferts sur la
+  grille du joueur, nouveau règlement. Onglet Championnat › Mercato.
+- **Rêves et héritage** (`js/career/114-heritage.js`) : jusqu'à trois rêves
+  choisis parmi huit (champion du monde, Triple Couronne Monaco-Indy-Le Mans,
+  roi de Monaco, légende de l'endurance, couronné partout, prodige, une vie
+  une écurie, dynastie), progression calculée sur la carrière, réussite
+  célébrée (bonheur +10) et conservée ; frise de carrière saison par saison.
+  Onglet Héritage du pilote.
+
+Suites `superlicence`, `mercato`, `heritage`.
+
 ---
 
 ## Reste à faire
@@ -205,6 +232,9 @@ dépassements, stand, abandon, arrêt et reprise de l'animation.
   mais les drapeaux d'installation restent posés : on ne réinstalle pas un
   module sans recharger la page.
 
-## Étapes suivantes
+## Pistes suivantes
 
-4. Approfondissement de la simulation de carrière.
+- Développement des voitures en cours de saison (évolutions, essais
+  privés, retours du pilote), écarté au choix de l'étape 4.
+- Rumeurs de transfert entre écuries (le plateau ne déplace aujourd'hui les
+  pilotes qu'entre catégories ; les écuries sont réattribuées à la volée).

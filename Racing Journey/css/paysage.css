@@ -455,3 +455,45 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
   margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 12px; break-inside: avoid;
   color: #FFC107; background: rgba(255, 193, 7, .06); border: 1px solid rgba(255, 193, 7, .3);
 }
+
+/* --- Rêves et héritage (js/career/114-heritage.js) ----------------------- */
+.rj114-bloc { margin: 0 0 12px; break-inside: avoid; }
+/* Les cartes de rêves deux par ligne ; titres et frise sur toute la largeur. */
+.rj114-bloc:not(.rj114-frise) { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); column-gap: 10px; align-items: start; }
+.rj114-bloc > .rj114-titre, .rj114-bloc > .rj114-vide { grid-column: 1 / -1; }
+.rj114-titre {
+  margin: 2px 0 8px; font: 800 11px/1 var(--font-display); letter-spacing: .16em;
+  text-transform: uppercase; color: #F59E0B;
+}
+.rj114-reve {
+  margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; break-inside: avoid;
+  background: var(--bg3, #0e0e12); border: 1px solid #F59E0B55;
+}
+.rj114-reve.libre { border-color: var(--border-hi, rgba(255, 255, 255, .1)); }
+.rj114-reve.accompli { border-color: #F59E0B; background: rgba(245, 158, 11, .06); }
+.rj114-reve-tete { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text, #e8e8ec); }
+.rj114-reve-tete span { font: 700 11px/1.4 var(--font-display); color: #F59E0B; white-space: nowrap; }
+.rj114-reve-desc { margin: 4px 0 8px; font-size: 11px; line-height: 1.45; color: var(--muted, #80808a); }
+.rj114-barre { height: 5px; border-radius: 4px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+.rj114-barre > span { display: block; height: 100%; background: #F59E0B; border-radius: 4px; }
+.rj114-choisir, .rj114-lien {
+  margin-top: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer;
+  font: 700 10px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase;
+}
+.rj114-choisir { color: #0a0a0a; background: #F59E0B; border: 0; }
+.rj114-lien { color: var(--muted, #80808a); background: none; border: 1px solid var(--border-hi, rgba(255, 255, 255, .1)); }
+.rj114-vide { font-size: 12px; color: var(--muted, #80808a); padding: 4px 0 8px; }
+.rj114-saison { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border, rgba(255, 255, 255, .04)); break-inside: avoid; }
+.rj114-saison.titre .rj114-annee { color: #F59E0B; border-color: #F59E0B; }
+.rj114-annee {
+  flex: 0 0 34px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font: 800 10px/1 var(--font-display); color: var(--text2, #b0b0bc);
+  border: 1px solid var(--border-hi, rgba(255, 255, 255, .1)); border-radius: 6px;
+}
+.rj114-detail { font-size: 12px; color: var(--text2, #b0b0bc); line-height: 1.5; }
+.rj114-detail b { color: var(--text, #e8e8ec); }
+.rj114-marques { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.rj114-marques span {
+  font: 700 9px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 6px; border-radius: 4px; color: #F59E0B; border: 1px solid #F59E0B55;
+}

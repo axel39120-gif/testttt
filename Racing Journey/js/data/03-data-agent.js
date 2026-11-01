@@ -9456,12 +9456,12 @@ function chtab(e) {
 
 function ptab() { return rjAppeler("ptab", _ptabCoeur, this, arguments); }
 function _ptabCoeur(e) {
-  if (["stats", "rep", "relations", "academy"].forEach(function(t) {
+  if (["stats", "rep", "relations", "academy", "heritage"].forEach(function(t) {
       var r = document.getElementById("pt-" + t);
       r && (r.style.display = t === e ? "block" : "none")
     }), document.querySelectorAll("#S-pilot .tab").forEach(function(t) {
       t.classList.toggle("on", t.getAttribute("data-tab") === e)
-    }), updateUI(), "stats" === e && renderPilot(), "rep" === e && ("function" == typeof renderRepProfil && renderRepProfil(), "function" == typeof renderCareerHistory && renderCareerHistory(), "function" == typeof renderF1Stats)) {
+    }), updateUI(), "heritage" === e && "function" == typeof renderHeritage && renderHeritage(), "stats" === e && renderPilot(), "rep" === e && ("function" == typeof renderRepProfil && renderRepProfil(), "function" == typeof renderCareerHistory && renderCareerHistory(), "function" == typeof renderF1Stats)) {
     var t = document.getElementById("f1stats-section"),
       r = "Formule 1" === G.cat || (CAREER_HISTORY || []).some(function(e) {
         return "Formule 1" === e.cat
