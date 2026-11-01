@@ -1080,6 +1080,128 @@ function computeInitialPatience(offer, idx){
  return Math.max(20, Math.min(100, p));
 }
 
+function _negActionPatienceCost(action, intensity){
+ // intensity from 1 (light) to 3 (aggressive)
+ var costs = {
+  // Financial
+  cut_cost_10: 6, cut_cost_25: 14, cut_cost_50: 28,
+  up_salary_10: 5, up_salary_25: 12, up_salary_50: 25,
+  up_bonus_win: 8, up_bonus_podium: 6,
+  // Contractual  
+  duration_extend: 7, duration_shorten: 5,
+  ask_n1: 22, ask_veto: 18, ask_release: 15,
+  // Leverage
+  use_other_offer: 8, bring_sponsor: 5, agent_intervene: 10,
+  // Pressure
+  walk_away_bluff: 30,
+  request_24h: 4
+ };
+ return costs[action] || 10;
+}
+
+function _negComputeAcceptance(state, offer, action, params){
+ // Base chance from remaining patience
+ var pat = state.patience;
+ var base = pat / 100; // 0-1
+ // Action ambition modifier
+ var modifiers = {
+  cut_cost_10: 0.10, cut_cost_25: -0.05, cut_cost_50: -0.30,
+  up_salary_10: 0.08, up_salary_25: -0.05, up_salary_50: -0.25,
+  up_bonus_win: 0.0, up_bonus_podium: 0.05,
+  duration_extend: 0.05, duration_shorten: -0.10,
+  ask_n1: -0.30, ask_veto: -0.25, ask_release: -0.15
+ };
+ var mod = modifiers[action] || 0;
+ var chance = base + mod;
+ 
+ // Agent skill subtle boost
+ var agentBoost = (G.agent && G.agent.type !== "parent") ? (G.agent.skill || 30) / 800 : 0;
+ chance += agentBoost;
+ 
+ // Reputation soft boost on chance
+ chance += (G.reputation || 0) / 600;
+ 
+ // Already used same action twice → harder
+ if(state.usedActions[action] && state.usedActions[action] >= 2) chance -= 0.15;
+ 
+ return Math.max(0.05, Math.min(0.92, chance));
+}
+
+function _negApplyAction(state, offer, action, params){
+ state.usedActions[action] = (state.usedActions[action] || 0) + 1;
+ var cost = _negActionPatienceCost(action);
+ state.patience -= cost;
+ state.lastActionCost = cost;
+ 
+ var chance = _negComputeAcceptance(state, offer, action, params);
+ state.lastChance = Math.round(chance * 100);
+ var success = Math.random() < chance;
+ state.lastSuccess = success;
+ 
+ if(success){
+  // Apply the action's contract changes
+  switch(action){
+   case "cut_cost_10": offer.cCost = Math.max(0, Math.round((offer.cCost!=null?offer.cCost:offer.cost) * 0.90 / 500) * 500); break;
+   case "cut_cost_25": offer.cCost = Math.max(0, Math.round((offer.cCost!=null?offer.cCost:offer.cost) * 0.75 / 500) * 500); break;
+   case "cut_cost_50": offer.cCost = Math.max(0, Math.round((offer.cCost!=null?offer.cCost:offer.cost) * 0.50 / 500) * 500); break;
+   case "up_salary_10": offer.cSalary = Math.round(((offer.cSalary!=null?offer.cSalary:offer.salary) * 1.10) / 100) * 100; break;
+   case "up_salary_25": offer.cSalary = Math.round(((offer.cSalary!=null?offer.cSalary:offer.salary) * 1.25) / 100) * 100; break;
+   case "up_salary_50": offer.cSalary = Math.round(((offer.cSalary!=null?offer.cSalary:offer.salary) * 1.50) / 100) * 100; break;
+   case "up_bonus_win": offer.cBonus = Math.round(((offer.cBonus!=null?offer.cBonus:offer.bonusWin) * 1.30) / 500) * 500; break;
+   case "up_bonus_podium": offer.cBonusPodium = Math.round((offer.cBonusPodium!=null?offer.cBonusPodium:offer.bonusPodium) * 1.30 / 100) * 100; break;
+   case "duration_extend": offer.cDuration = Math.min(4, (offer.cDuration!=null?offer.cDuration:offer.duration) + 1); break;
+   case "duration_shorten": offer.cDuration = Math.max(1, (offer.cDuration!=null?offer.cDuration:offer.duration) - 1); break;
+   case "ask_n1": offer.cRole = "num1"; break;
+   case "ask_veto": offer.cVeto = true; break;
+   case "ask_release": offer.cReleaseClause = true; break;
+  }
+ }
+ 
+ // Build feedback message
+ var msgs = _negBuildFeedback(action, success, state, offer);
+ state.lastMsg = msgs.headline;
+ state.lastDetail = msgs.detail;
+ state.history.push({action:action, success:success, patience:state.patience, msg:msgs.headline});
+ 
+ // Check end conditions
+ if(state.patience <= 0){
+  state.status = "expired";
+  state.lastDetail += " L'écurie met fin à la discussion.";
+ }
+ return state;
+}
+
+function _negBuildFeedback(action, success, state, offer){
+ var actionLabels = {
+  cut_cost_10: success ? "Apport réduit de 10%" : "Apport refusé (-10%)",
+  cut_cost_25: success ? "Apport réduit de 25%" : "Apport refusé (-25%)",
+  cut_cost_50: success ? "Apport réduit de moitié" : "Apport refusé (-50%)",
+  up_salary_10: success ? "Salaire +10%" : "Salaire +10% refusé",
+  up_salary_25: success ? "Salaire +25%" : "Salaire +25% refusé",
+  up_salary_50: success ? "Salaire +50%" : "Salaire +50% refusé",
+  up_bonus_win: success ? "Bonus victoire +30%" : "Bonus victoire refusé",
+  up_bonus_podium: success ? "Bonus podium +30%" : "Bonus podium refusé",
+  duration_extend: success ? "Durée +1 an accordée" : "Allongement refusé",
+  duration_shorten: success ? "Contrat raccourci accepté" : "Raccourcissement refusé",
+  ask_n1: success ? "Statut N°1 accordé" : "Refus du statut N°1",
+  ask_veto: success ? "Veto coéquipier accepté" : "Veto refusé",
+  ask_release: success ? "Clause libération acceptée" : "Clause libération refusée"
+ };
+ var headline = actionLabels[action] || (success ? "Accepté" : "Refusé");
+ var detail = "";
+ if(success){
+  if(state.patience > 60) detail = "L'écurie reste très ouverte. Tu peux continuer à pousser.";
+  else if(state.patience > 30) detail = "Ils acceptent, mais leur patience s'amenuise.";
+  else detail = "Ils acceptent du bout des lèvres. Attention à ne pas les pousser trop loin.";
+ } else {
+  if(state.patience > 50) detail = "Refus poli. Tu peux essayer autre chose.";
+  else if(state.patience > 20) detail = "Refus ferme. Le ton se tend.";
+  else detail = "Refus catégorique. Ils sont à bout.";
+ }
+ return {headline:headline, detail:detail};
+}
+
+
 function _negResolveLeverage(state, offer, lever){
  var success, headline, detail;
  if(lever === "use_other_offer"){
@@ -1223,6 +1345,51 @@ function _negStart(idx){
  offer.negOk = false;
 }
 
+function negDoAction(action){
+ var offer = G.offers[NEG_IDX];
+ if(!offer || !NEG_STATE || NEG_STATE.status !== "active") return;
+ if(["use_other_offer","bring_sponsor","agent_intervene"].indexOf(action) >= 0){
+  _negResolveLeverage(NEG_STATE, offer, action);
+ } else if(action === "walk_away_bluff"){
+  _negResolveWalkAway(NEG_STATE, offer);
+ } else if(action === "sign_now"){
+  _negSignBaseTerms(NEG_STATE, offer);
+ } else {
+  _negApplyAction(NEG_STATE, offer, action);
+ }
+ renderNegScreen();
+}
+
+function _negSummaryHTML(offer){
+ var cost = offer.cCost!=null ? offer.cCost : offer.cost;
+ var salary = offer.cSalary!=null ? offer.cSalary : offer.salary;
+ var bonusW = offer.cBonus!=null ? offer.cBonus : offer.bonusWin;
+ var bonusP = offer.cBonusPodium!=null ? offer.cBonusPodium : offer.bonusPodium;
+ var dur = offer.cDuration!=null ? offer.cDuration : offer.duration;
+ var role = offer.cRole || offer.role || "num2";
+ var roleLabel = role === "num1" ? "N°1" : role === "equal" ? "Égaux" : "N°2";
+ var roleColor = role === "num1" ? "#FBBF24" : role === "equal" ? "#34D399" : "var(--text2)";
+ 
+ var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+ html += '<div class="neg-stat"><div class="neg-stat-label">Apport</div><div class="neg-stat-value" style="color:' + (cost === 0 ? '#34D399' : (cost < offer.cost ? '#34D399' : 'var(--text)')) + '">' + (cost === 0 ? "Gratuit" : "−" + cost.toLocaleString("fr-FR") + " €") + '</div></div>';
+ html += '<div class="neg-stat"><div class="neg-stat-label">Salaire</div><div class="neg-stat-value" style="color:' + (salary > offer.salary ? '#34D399' : 'var(--text)') + '">+' + salary.toLocaleString("fr-FR") + ' €/mois</div></div>';
+ html += '<div class="neg-stat"><div class="neg-stat-label">Bonus V</div><div class="neg-stat-value" style="color:' + (bonusW > offer.bonusWin ? '#34D399' : 'var(--text)') + '">+' + bonusW.toLocaleString("fr-FR") + ' €</div></div>';
+ html += '<div class="neg-stat"><div class="neg-stat-label">Bonus P</div><div class="neg-stat-value" style="color:' + (bonusP > offer.bonusPodium ? '#34D399' : 'var(--text)') + '">+' + bonusP.toLocaleString("fr-FR") + ' €</div></div>';
+ html += '<div class="neg-stat"><div class="neg-stat-label">Durée</div><div class="neg-stat-value">' + dur + ' an' + (dur > 1 ? 's' : '') + '</div></div>';
+ html += '<div class="neg-stat"><div class="neg-stat-label">Statut</div><div class="neg-stat-value" style="color:' + roleColor + '">' + roleLabel + '</div></div>';
+ html += '</div>';
+ // Special clauses
+ var clauses = [];
+ if(offer.cVeto) clauses.push(" Veto coéquipier");
+ if(offer.cReleaseClause) clauses.push(" Clause libération");
+ if(offer.cSponsorBonus) clauses.push(" Sponsor +" + offer.cSponsorBonus.toLocaleString("fr-FR") + " €");
+ if(clauses.length > 0){
+  html += '<div style="margin-top:10px;padding:8px 10px;background:rgba(168,85,247,0.08);border-left:2px solid #A855F7;border-radius:6px;font-size:11px;color:#C4A8F4">' + clauses.join(" · ") + '</div>';
+ }
+ return html;
+}
+
+
 function _negPatienceBarHTML(state){
  var pct = Math.max(0, Math.min(100, state.patience));
  var color, label;
@@ -1257,6 +1424,52 @@ function _negActionBtn(action, label, sub, opts){
  html += '</button>';
  return html;
 }
+
+function _negActionsListHTML(state, offer){
+ var html = '';
+ var used = state.usedActions;
+ // Section: Finances
+ html += '<div class="neg-section-title">'+renderIcon('money',14,'#F59E0B')+' Finances</div>';
+ html += '<div class="neg-actions-grid">';
+ html += _negActionBtn("cut_cost_10", "Réduire apport −10%", "Demande modeste", {iconColor:"#34D399"});
+ html += _negActionBtn("cut_cost_25", "Réduire apport −25%", "Demande standard", {iconColor:"#60A5FA"});
+ html += _negActionBtn("cut_cost_50", "Réduire apport de moitié", "Demande agressive", {iconColor:"#F59E0B"});
+ html += _negActionBtn("up_salary_10", "Salaire +10%", "Demande modeste", {iconColor:"#34D399"});
+ html += _negActionBtn("up_salary_25", "Salaire +25%", "Demande standard", {iconColor:"#60A5FA"});
+ html += _negActionBtn("up_salary_50", "Salaire +50%", "Demande agressive", {iconColor:"#F59E0B"});
+ html += _negActionBtn("up_bonus_win", "Bonus victoire +30%", "Si tu gagnes", {iconColor:"#FBBF24"});
+ html += _negActionBtn("up_bonus_podium", "Bonus podium +30%", "Plus de chances de toucher", {iconColor:"#FBBF24"});
+ html += '</div>';
+ // Section: Contractuel
+ html += '<div class="neg-section-title">'+renderIcon('contrats',14,'#A78BFA')+' Contractuel</div>';
+ html += '<div class="neg-actions-grid">';
+ var dur = offer.cDuration!=null ? offer.cDuration : offer.duration;
+ html += _negActionBtn("duration_extend", "Allonger durée +1 an", "Sécurité long terme", {iconColor:"#A855F7", disabled: dur >= 4});
+ html += _negActionBtn("duration_shorten", "Raccourcir −1 an", "Plus de flexibilité", {iconColor:"#A855F7", disabled: dur <= 1});
+ html += _negActionBtn("ask_n1", "Demander statut N°1", "Très exigeant", {iconColor:"#FBBF24", disabled: offer.cRole === "num1" || (offer.role === "num1" && !offer.cRole)});
+ html += _negActionBtn("ask_veto", "Veto coéquipier", "Imposer ta voix", {iconColor:"#EF4444", disabled: !!offer.cVeto});
+ html += _negActionBtn("ask_release", "Clause libération", "Si top 5 → libre", {iconColor:"#22D3EE", disabled: !!offer.cReleaseClause});
+ html += '</div>';
+ // Section: Leviers
+ html += '<div class="neg-section-title">'+renderIcon('paddock_pass',14,'#A78BFA')+' Leviers stratégiques</div>';
+ html += '<div class="neg-actions-grid">';
+ var others = _negCountOtherOffers(NEG_IDX);
+ var leverDescOther = others >= 1 ? "(" + others + " offre" + (others > 1 ? "s" : "") + " concurrente" + (others > 1 ? "s" : "") + ")" : "Bluff possible";
+ html += _negActionBtn("use_other_offer", "« J\'ai une autre offre »", leverDescOther, {iconColor:"#22D3EE", disabled: !!used.use_other_offer});
+ html += _negActionBtn("bring_sponsor", "« J\'apporte un sponsor »", "Selon ta réputation", {iconColor:"#A855F7", disabled: !!used.bring_sponsor});
+ var agentLabel = (G.agent && G.agent.type !== "parent") ? "Faire intervenir l\'agent" : "Agent indisponible";
+ html += _negActionBtn("agent_intervene", agentLabel, (G.agent && G.agent.type !== "parent") ? "Skill: " + (G.agent.skill || 30) : "Pas d\'agent pro", {iconColor:"#F472B6", disabled: !!used.agent_intervene || !G.agent || G.agent.type === "parent"});
+ html += _negActionBtn("walk_away_bluff", "Walking away (bluff)", "Très risqué — gros gain", {iconColor:"#EF4444", disabled: !!used.walk_away_bluff});
+ html += '</div>';
+ // Section: Décision finale
+ html += '<div class="neg-section-title">'+renderIcon('handshake',14,'#34D399')+' Décision</div>';
+ html += '<div class="neg-actions-grid">';
+ html += '<button class="neg-action-btn" onclick="negDoAction(\'sign_now\')" style="border-color:#34D399;background:linear-gradient(180deg,rgba(52,211,153,0.10),rgba(52,211,153,0.04))"><div class="neg-action-stripe" style="background:#34D399"></div><div class="neg-action-body"><div class="neg-action-label" style="color:#34D399">Signer aux conditions actuelles</div><div class="neg-action-sub">Termine la négociation</div></div></button>';
+ html += '<button class="neg-action-btn" onclick="closeNeg()" style="border-color:var(--border)"><div class="neg-action-stripe" style="background:var(--text3)"></div><div class="neg-action-body"><div class="neg-action-label" style="color:var(--text2)">Quitter sans signer</div><div class="neg-action-sub">L\'offre reste valide</div></div></button>';
+ html += '</div>';
+ return html;
+}
+
 
 function _negFeedbackHTML(state){
  if(!state.lastMsg) return '';

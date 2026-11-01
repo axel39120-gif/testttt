@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v220**. Ce document décrit l'organisation du code après la
+Version **BUILD v221**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v220 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v221 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`

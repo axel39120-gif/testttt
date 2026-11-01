@@ -167,129 +167,54 @@
   };
 
   // =========================================================================
-  // B. PATCH _negActionPatienceCost — ajouter les coûts des nouvelles actions
+  // B à G. LES NOUVELLES ACTIONS DANS LA NÉGOCIATION (06)
+  // Coût en patience, chance d'acceptation, résolution, résumé de l'offre,
+  // boutons et routage : chaque fonction de la négociation reçoit un hook.
   // =========================================================================
 
-  (function _rjPatchPatienceCost() {
-    function doPatch() {
-      if (typeof window._negActionPatienceCost !== 'function') {
-        setTimeout(doPatch, 400); return;
-      }
-      if (window._negActionPatienceCost._rjNegPatched) return;
-      var orig = window._negActionPatienceCost;
-      window._negActionPatienceCost = function(action) {
-        var def = NEG_NEW_ACTIONS[action];
-        if (def) return def.patienceCost;
-        return orig.apply(this, arguments);
-      };
-      window._negActionPatienceCost._rjNegPatched = true;
+  function _rjNegNouvelle(action) { return !!NEG_NEW_ACTIONS[action]; }
+
+  function _rjNegChance(state, offer, action) {
+    var def = NEG_NEW_ACTIONS[action];
+    var base = state.patience / 100;
+    var mod = def.acceptanceMod || 0;
+    var agentBoost = (G.agent && G.agent.type !== 'parent') ? (G.agent.skill || 30) / 800 : 0;
+    var repBoost = (G.reputation || 0) / 600;
+    var chance = base + mod + agentBoost + repBoost;
+    if (state.usedActions[action] && state.usedActions[action] >= 2) chance -= 0.15;
+    return Math.max(0.05, Math.min(0.92, chance));
+  }
+
+  function _rjNegAppliquer(state, offer, action) {
+    var def = NEG_NEW_ACTIONS[action];
+    state.usedActions[action] = (state.usedActions[action] || 0) + 1;
+    var cost = def.patienceCost;
+    state.patience -= cost;
+    state.lastActionCost = cost;
+    var chance = _negComputeAcceptance(state, offer, action);
+    state.lastChance = Math.round(chance * 100);
+    var success = Math.random() < chance;
+    state.lastSuccess = success;
+    if (success) { try { def.apply(offer); } catch (e) {} }
+    state.lastMsg = success ? def.labelSuccess : def.labelFail;
+    var pat = state.patience;
+    if (success) {
+      state.lastDetail = pat > 60 ? "L'écurie reste très ouverte. Tu peux continuer à pousser."
+        : pat > 30 ? "Ils acceptent, mais leur patience s'amenuise."
+        : 'Ils acceptent du bout des lèvres. Attention à ne pas les pousser trop loin.';
+    } else {
+      state.lastDetail = pat > 50 ? 'Refus poli. Tu peux essayer autre chose.'
+        : pat > 20 ? 'Refus ferme. Le ton se tend.' : 'Refus catégorique. Ils sont à bout.';
     }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doPatch);
-    } else { doPatch(); }
-  })();
-
-  // =========================================================================
-  // C. PATCH _negComputeAcceptance — ajouter les modificateurs
-  // =========================================================================
-
-  (function _rjPatchAcceptance() {
-    function doPatch() {
-      if (typeof window._negComputeAcceptance !== 'function') {
-        setTimeout(doPatch, 400); return;
-      }
-      if (window._negComputeAcceptance._rjNegPatched) return;
-      var orig = window._negComputeAcceptance;
-      window._negComputeAcceptance = function(state, offer, action, params) {
-        var def = NEG_NEW_ACTIONS[action];
-        if (def) {
-          var pat = state.patience;
-          var base = pat / 100;
-          var mod = def.acceptanceMod || 0;
-          var agentBoost = (typeof G !== 'undefined' && G.agent && G.agent.type !== 'parent')
-            ? (G.agent.skill || 30) / 800 : 0;
-          var repBoost = (typeof G !== 'undefined') ? (G.reputation || 0) / 600 : 0;
-          var chance = base + mod + agentBoost + repBoost;
-          if (state.usedActions[action] && state.usedActions[action] >= 2) chance -= 0.15;
-          return Math.max(0.05, Math.min(0.92, chance));
-        }
-        return orig.apply(this, arguments);
-      };
-      window._negComputeAcceptance._rjNegPatched = true;
+    state.history.push({ action: action, success: success, patience: pat, msg: state.lastMsg });
+    if (state.patience <= 0) {
+      state.status = 'expired';
+      state.lastDetail += " L'écurie met fin à la discussion.";
     }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doPatch);
-    } else { doPatch(); }
-  })();
+    return state;
+  }
 
-  // =========================================================================
-  // D. PATCH _negApplyAction — traiter les nouvelles actions
-  // =========================================================================
-
-  (function _rjPatchApplyAction() {
-    function doPatch() {
-      if (typeof window._negApplyAction !== 'function') {
-        setTimeout(doPatch, 400); return;
-      }
-      if (window._negApplyAction._rjNegPatched) return;
-      var orig = window._negApplyAction;
-      window._negApplyAction = function(state, offer, action, params) {
-        var def = NEG_NEW_ACTIONS[action];
-        if (def) {
-          state.usedActions[action] = (state.usedActions[action] || 0) + 1;
-          var cost = def.patienceCost;
-          state.patience -= cost;
-          state.lastActionCost = cost;
-          var chance = window._negComputeAcceptance(state, offer, action, params);
-          state.lastChance = Math.round(chance * 100);
-          var success = Math.random() < chance;
-          state.lastSuccess = success;
-          if (success) {
-            try { def.apply(offer); } catch(e) {}
-          }
-          state.lastMsg = success ? def.labelSuccess : def.labelFail;
-          var pat = state.patience;
-          if (success) {
-            state.lastDetail = pat > 60
-              ? 'L\'écurie reste très ouverte. Tu peux continuer à pousser.'
-              : pat > 30
-                ? 'Ils acceptent, mais leur patience s\'amenuise.'
-                : 'Ils acceptent du bout des lèvres. Attention à ne pas les pousser trop loin.';
-          } else {
-            state.lastDetail = pat > 50
-              ? 'Refus poli. Tu peux essayer autre chose.'
-              : pat > 20 ? 'Refus ferme. Le ton se tend.' : 'Refus catégorique. Ils sont à bout.';
-          }
-          state.history.push({ action: action, success: success, patience: pat, msg: state.lastMsg });
-          if (state.patience <= 0) {
-            state.status = 'expired';
-            state.lastDetail += ' L\'écurie met fin à la discussion.';
-          }
-          return state;
-        }
-        return orig.apply(this, arguments);
-      };
-      window._negApplyAction._rjNegPatched = true;
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doPatch);
-    } else { doPatch(); }
-  })();
-
-  // =========================================================================
-  // E. PATCH _negSummaryHTML — afficher les nouvelles clauses & primes
-  // =========================================================================
-
-  (function _rjPatchSummaryHTML() {
-    function doPatch() {
-      if (typeof window._negSummaryHTML !== 'function') {
-        setTimeout(doPatch, 400); return;
-      }
-      if (window._negSummaryHTML._rjNegPatched) return;
-      var orig = window._negSummaryHTML;
-      window._negSummaryHTML = function(offer) {
-        var html = orig.apply(this, arguments);
-
+  function _rjNegResume(html, offer) {
         // Primes négociées
         var primes = [];
         var clauses = [];
@@ -334,28 +259,9 @@
         }
 
         return html;
-      };
-      window._negSummaryHTML._rjNegPatched = true;
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doPatch);
-    } else { doPatch(); }
-  })();
+  }
 
-  // =========================================================================
-  // F. PATCH _negActionsListHTML — injecter 2 nouvelles sections
-  // =========================================================================
-
-  (function _rjPatchActionsListHTML() {
-    function doPatch() {
-      if (typeof window._negActionsListHTML !== 'function') {
-        setTimeout(doPatch, 400); return;
-      }
-      if (window._negActionsListHTML._rjNegPatched) return;
-      var orig = window._negActionsListHTML;
-      window._negActionsListHTML = function(state, offer) {
-        var html = orig.apply(this, arguments);
-
+  function _rjNegSections(html, offer) {
         // Injecter avant la section "Décision finale" (qui est à la fin)
         var decisionIdx = html.lastIndexOf('<div class="neg-section-title">');
         if (decisionIdx < 0) decisionIdx = html.length;
@@ -395,13 +301,7 @@
         newHtml += '</div>';
 
         return html.slice(0, decisionIdx) + newHtml + html.slice(decisionIdx);
-      };
-      window._negActionsListHTML._rjNegPatched = true;
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doPatch);
-    } else { doPatch(); }
-  })();
+  }
 
   // Helper : bouton d'action compatible avec le style existant
   function _rjNegActionBtn(action, label, sub, opts) {
@@ -424,35 +324,26 @@
     return html;
   }
 
-  // =========================================================================
-  // G. PATCH negDoAction — router les nouvelles actions
-  // =========================================================================
-
-  (function _rjPatchNegDoAction() {
-    function doPatch() {
-      if (typeof window.negDoAction !== 'function') {
-        setTimeout(doPatch, 400); return;
-      }
-      if (window.negDoAction._rjNegPatched) return;
-      var orig = window.negDoAction;
-      window._negDoActionCoeur = function(action) {
-        // Si c'est une nouvelle action, on la traite via _negApplyAction
-        if (NEG_NEW_ACTIONS[action]) {
-          var offer = G.offers[NEG_IDX];
-          if (!offer || !NEG_STATE || NEG_STATE.status !== 'active') return;
-          window._negApplyAction(NEG_STATE, offer, action);
-          if (typeof renderNegScreen === 'function') renderNegScreen();
-          return;
-        }
-        return orig.apply(this, arguments);
-      };
-  window.negDoAction = function () { return rjAppeler("negDoAction", window._negDoActionCoeur, this, arguments); };
-      window.negDoAction._rjNegPatched = true;
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', doPatch);
-    } else { doPatch(); }
-  })();
+  rjInscrire("_negActionPatienceCost", { id: "11-neg-patch:cout", remplace: function (args, suite) {
+    var def = NEG_NEW_ACTIONS[args[0]];
+    return def ? def.patienceCost : suite();
+  } });
+  rjInscrire("_negComputeAcceptance", { id: "11-neg-patch:acceptation", remplace: function (args, suite) {
+    return _rjNegNouvelle(args[2]) ? _rjNegChance(args[0], args[1], args[2]) : suite();
+  } });
+  rjInscrire("_negApplyAction", { id: "11-neg-patch:action", remplace: function (args, suite) {
+    return _rjNegNouvelle(args[2]) ? _rjNegAppliquer(args[0], args[1], args[2]) : suite();
+  } });
+  rjInscrire("_negSummaryHTML", { id: "11-neg-patch:resume", apres: function (html, args) { return _rjNegResume(html, args[0]); } });
+  rjInscrire("_negActionsListHTML", { id: "11-neg-patch:sections", apres: function (html, args) { return _rjNegSections(html, args[1]); } });
+  rjInscrire("negDoAction", { id: "11-neg-patch:routage", remplace: function (args, suite) {
+    var action = args[0];
+    if (!_rjNegNouvelle(action)) return suite();
+    var offer = G.offers[NEG_IDX];
+    if (!offer || !NEG_STATE || NEG_STATE.status !== 'active') return;
+    _negApplyAction(NEG_STATE, offer, action);
+    if (typeof renderNegScreen === 'function') renderNegScreen();
+  } });
 
   // =========================================================================
   // H. APPLICATION DES NOUVELLES CLAUSES À LA SIGNATURE (signContract)
@@ -771,7 +662,7 @@
 // [N4] CORRECTIF : _negBuildFeedback — couvrir les nouvelles actions
 // ---------------------------------------------------------------------------
 // L'original ne connaît pas les 8 actions ajoutées par ce module →
-// feedback générique. On wrappe pour injecter les labels spécifiques.
+// feedback générique. Un hook donne leurs libellés.
 // ===========================================================================
 (function _rjFixNegBuildFeedback() {
   var NEW_LABELS = {
@@ -785,31 +676,19 @@
     'clause_no_dump':         { ok: 'Clause anti-remplacement accordée ✓',    ko: 'Clause anti-remplacement refusée' }
   };
 
-  function doFix() {
-    if (typeof window._negBuildFeedback !== 'function') { setTimeout(doFix, 400); return; }
-    if (window._negBuildFeedback._rjNegFixed) return;
-    var orig = window._negBuildFeedback;
-    window._negBuildFeedback = function(action, success, state, offer) {
-      var lbl = NEW_LABELS[action];
-      if (lbl) {
-        var headline = success ? lbl.ok : lbl.ko;
-        var pat = state.patience;
-        var detail = success
-          ? (pat > 60 ? "L'écurie reste très ouverte. Tu peux continuer à pousser."
-              : pat > 30 ? "Ils acceptent, mais leur patience s'amenuise."
-              : "Ils acceptent du bout des lèvres. Attention.")
-          : (pat > 50 ? "Refus poli. Tu peux essayer autre chose."
-              : pat > 20 ? "Refus ferme. Le ton se tend." : "Refus catégorique. Ils sont à bout.");
-        return { headline: headline, detail: detail };
-      }
-      return orig.apply(this, arguments);
-    };
-    window._negBuildFeedback._rjNegFixed = true;
-    console.log('[11-neg-patch] _negBuildFeedback étendu aux nouvelles actions');
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', doFix);
-  } else { doFix(); }
+  rjInscrire("_negBuildFeedback", { id: "11-neg-patch:retour", remplace: function (args, suite) {
+    var action = args[0], success = args[1], state = args[2];
+    var lbl = NEW_LABELS[action];
+    if (!lbl) return suite();
+    var pat = state.patience;
+    var detail = success
+      ? (pat > 60 ? "L'écurie reste très ouverte. Tu peux continuer à pousser."
+          : pat > 30 ? "Ils acceptent, mais leur patience s'amenuise."
+          : "Ils acceptent du bout des lèvres. Attention.")
+      : (pat > 50 ? "Refus poli. Tu peux essayer autre chose."
+          : pat > 20 ? "Refus ferme. Le ton se tend." : "Refus catégorique. Ils sont à bout.");
+    return { headline: success ? lbl.ok : lbl.ko, detail: detail };
+  } });
 })();
 
 /* ===========================================================================

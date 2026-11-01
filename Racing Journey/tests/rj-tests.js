@@ -1600,6 +1600,69 @@ async function suiteBaquets() {
 }
 
 /* ==================================================================== *
+ * 8 nonies. NÉGOCIATION : ARGENT ET CONCURRENCE (module 117)
+ * ==================================================================== */
+async function suiteNegociation() {
+  S.suite("Négociation");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      if (!window.RJNegociation) return { api: false };
+      const res = { api: true };
+      const sauve = { offers: G.offers, sponsors: G.sponsors, random: Math.random };
+      try {
+        const modele = TEAM_OFFERS["Formule 2"][0];
+        const base = Object.assign(buildOffer({ team: modele.team, cat: "Formule 2", cost: 2e6, salary: 0, bonusWin: modele.bonusWin, bonusPodium: modele.bonusPodium, duration: 1, expire: 6, role: "num2" }), { cost: 2e6 });
+        /* L'écran de négociation s'ouvre, avec les actions de base et celles du module 11. */
+        G.offers = [Object.assign({}, base)];
+        negEnter(0);
+        await new Promise(r => setTimeout(r, 300));
+        const opts = document.getElementById("neg-options");
+        res.ecran = { ouvert: document.getElementById("S-neg").classList.contains("on"),
+          base: !!opts && /Réduire apport/.test(opts.textContent), clauses: !!opts && /Prime championnat pilotes/.test(opts.textContent) };
+        Math.random = () => 0.01;
+        negDoAction("bonus_fastest_lap");
+        res.clause = !!G.offers[0].cBonusFastestLap;
+        Math.random = sauve.random;
+        G.offers = [Object.assign({}, base)];
+        const neutre = computeInitialPatience(G.offers[0], 0);
+        G.offers[0]._concurrence = { marge: 0.02, rival: { nom: "Rival Serré", talent: 80, argent: 3e6 }, priorites: { talent: 0.5, argent: 0.35, image: 0.15 } };
+        const serre = computeInitialPatience(G.offers[0], 0);
+        G.offers[0]._concurrence.marge = 0.3;
+        const large = computeInitialPatience(G.offers[0], 0);
+        res.patience = { neutre, serre, large };
+
+        G.sponsors = [{ id: "s", fee: 100000 }];
+        G.offers[0]._concurrence.marge = 0.02;
+        NEG_IDX = 0; _negStart(0); NEG_STATE.patience = 80;
+        Math.random = () => 0.01;
+        negDoAction("bring_sponsor");
+        res.sponsor = G.offers[0].cCost;
+        negDoAction("bring_sponsor");
+        res.secondeFois = G.offers[0].cCost;
+        res.resume = _negSummaryHTML(G.offers[0]).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+        Math.random = () => 0.99;
+        negDoAction("walk_away_bluff");
+        res.planB = { statut: NEG_STATE.status, perdue: !!G.offers[0].expired };
+      } finally { G.offers = sauve.offers; G.sponsors = sauve.sponsors; Math.random = sauve.random; NEG_STATE = null; }
+      return res;
+    });
+    S.verifier("le module de négociation est installé", r.api);
+    if (!r.api) return;
+    S.verifier("l'écran de négociation s'ouvre avec ses actions et les clauses du module 11", r.ecran.ouvert && r.ecran.base && r.ecran.clauses, JSON.stringify(r.ecran));
+    S.verifier("une clause du module 11 se négocie", r.clause);
+    S.verifier("un rival qui te talonne rend l'écurie moins patiente", r.patience.serre < r.patience.neutre, JSON.stringify(r.patience));
+    S.verifier("une large avance la rend plus patiente", r.patience.large > r.patience.neutre, JSON.stringify(r.patience));
+    S.verifier("apporter tes sponsors réduit le prix du baquet (une demi-saison de revenus)", r.sponsor === 2e6 - 6e5, String(r.sponsor));
+    S.verifier("on n'engage ses sponsors qu'une fois", r.secondeFois === r.sponsor, String(r.secondeFois));
+    S.verifier("le résumé montre le prix, l'échéancier et le rival", /Prix du baquet/.test(r.resume) && /huit mois/.test(r.resume) && /Rival Serré/.test(r.resume), r.resume.slice(0, 200));
+    S.verifier("une négociation ratée laisse la place au rival", r.planB.statut === "walked_away" && r.planB.perdue, JSON.stringify(r.planB));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1796,6 +1859,7 @@ const SUITES = {
   heritage: suiteHeritage,
   economie: suiteEconomie,
   baquets: suiteBaquets,
+  negociation: suiteNegociation,
   decisions: suiteDecisions
 };
 

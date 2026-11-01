@@ -153,7 +153,10 @@
           atout: premier && premier.argent >= c.besoin && c.priorites.argent >= 0.3 ? "argent" : "talent", argent: premier && premier.argent });
         return;
       }
+      var moi = c.candidats.filter(function (x) { return x.joueur; })[0];
       o._concurrence = { rang: c.rangJoueur, priorites: c.priorites, academie: c.academie,
+        marge: premier && moi.score > 0 ? (moi.score - premier.score) / moi.score : 1,   // < 0 : deuxième, sauvé par le désistement du premier
+        rival: premier ? { nom: premier.nom, talent: premier.talent, argent: premier.argent } : null,
         adversaires: c.candidats.filter(function (x) { return !x.joueur; }).slice(0, 3)
           .map(function (x) { return { nom: x.nom, talent: x.talent, argent: x.argent }; }) };
       if (c.academie && o.cost > 0) { o._prixAvantAcademie = o.cost; o.cost = 0; }
