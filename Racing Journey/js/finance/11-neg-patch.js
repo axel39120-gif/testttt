@@ -862,6 +862,7 @@
     colorCache[team] = best;
     return best;
   }
+  window.couleurEcurie = teamColor;   // aussi pour la vue du circuit (111)
 
   function rgba(hex, a) {
     if (!hex) return 'rgba(255,255,255,' + a + ')';

@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v218**. Ce document décrit l'organisation du code après la
+Version **BUILD v219**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v218 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v219 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -38,7 +38,7 @@ js/core/     00-hooks (points d'extension), 02 réglages, 04s sauvegarde,
              07k migrations, 86 registres
 js/data/     circuits, catégories, écuries, plateau de pilotes, notation
 js/race/     moteur (04), safety car, radio, évènements, décisions (107),
-             modèle de piste (108), fin de course (04j)
+             modèle de piste (108), course sur le circuit (111), fin de course (04j)
 js/weekend/  week-end de course, en-tête, ajustements, ingénieur, réglages
 js/career/   progression, saison, fin de carrière, réserve, pré-saison…
 js/social/   médias, conférences, réseaux sociaux, messagerie, réseau
@@ -162,14 +162,35 @@ La suite `paysage` vérifie chaque écran à trois tailles (667 × 375,
   jamais posés (grand compteur de tours, barre, masquage de la barre en
   double et des indicateurs de pneus) : corrigé.
 
+## Étape 3 (course en direct) — ce qui a été fait
+
+`js/race/111-vue-circuit.js` : pendant la course, l'écran montre le tracé du
+circuit couru (`getCircuitData().path`, 70 circuits) et un point par voiture
+aux couleurs de son écurie (`couleurEcurie`, exposée par 11) :
+
+- les points avancent en continu d'après `RJModelePiste.etat()` (108),
+  lissés et **sans jamais reculer** ; chaque voiture se cale derrière celle
+  classée devant elle, si bien qu'un dépassement ne se voit que lorsque le
+  classement change, et dure moins d'1,2 s ;
+- passage au stand dans la case « STAND » (visible au moins 1,2 s),
+  disparition à l'abandon, autres catégories en plus petit (endurance),
+  badge SC/VSC pendant une neutralisation, le joueur cerclé avec sa position ;
+- l'animation ne tourne que course à l'écran : arrêt au drapeau, hors de
+  l'écran de course ou application en arrière-plan, reprise au retour.
+
+Mise en page : le circuit occupe la colonne de gauche sur toute la hauteur ;
+à droite, la progression (tour, voisins, écarts) puis le fil du direct.
+Suite `circuit` : tracé, un point par voiture, pas de recul, durée des
+dépassements, stand, abandon, arrêt et reprise de l'animation.
+
 ---
 
 ## Reste à faire
 
 - **Moteur.** Les positions restent calculées au score (bridées à ±2 places
-  par tour) ; le modèle de piste en dérive une position continue. Faire
-  piloter les positions par la distance parcourue est une évolution
-  possible de l'étape 3.
+  par tour) ; le modèle de piste et la vue du circuit en dérivent une
+  position continue. Faire piloter les positions par la distance parcourue
+  reste possible.
 - **Surveillances du DOM.** Il en reste 17 ; elles ne se réveillent plus au
   repos, mais l'arrondi global des décimales (ui/04q) reste un correctif
   d'affichage à remplacer par un formatage à la source.
@@ -186,6 +207,4 @@ La suite `paysage` vérifie chaque écran à trois tailles (667 × 375,
 
 ## Étapes suivantes
 
-3. Vue de course en direct (tracés SVG déjà présents dans
-   `getCircuitData(circuit).path`, positions dans `RJModelePiste.etat()`).
 4. Approfondissement de la simulation de carrière.

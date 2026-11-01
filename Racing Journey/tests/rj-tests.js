@@ -1139,6 +1139,133 @@ async function suitePaysage() {
 }
 
 /* ==================================================================== *
+ * 8 ter. COURSE EN DIRECT SUR LE CIRCUIT (module 111, étape 3)
+ *
+ * Pendant la course, le tracé du circuit et un point par voiture : ils
+ * avancent sans jamais reculer, suivent le classement, passent au stand,
+ * disparaissent à l'abandon. L'animation ne tourne que course à l'écran.
+ * ==================================================================== */
+async function suiteCircuit() {
+  S.suite("Course en direct sur le circuit");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const depart = await page.evaluate(async () => {
+      SETTINGS.simSpeed = "normal";
+      window.CAL_RACES = []; buildCalendar();
+      G.semaine = 6; G.seasonOver = false;
+      CAL_RACES.forEach(c => { c.done = c.week < 6; c.result = null; });
+      const course = getNextRace();
+      RACE_STATE.circuit = course.name;
+      RACE_STATE.circuitData = getCircuitData(course.name);
+      RACE_STATE.weather = generateWeather(0);
+      RACE_STATE.qualiPos = 6;
+      G.totalLaps = 20;
+      if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+      window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+      try { confirmStrategy(); } catch (e) {}
+      if (!LIVE_RACE.total) runRaceLive();
+      navTo("S-race", null);
+      try { rtab("course"); } catch (e) {}
+      await new Promise(r => setTimeout(r, 2500));
+      const trace = document.querySelector("#rj111-carte path.rj111-piste");
+      const carte = document.getElementById("rj111-carte");
+      const b = carte ? carte.getBoundingClientRect() : null;
+      return {
+        api: !!window.RJVueCircuit,
+        trace: !!trace && trace.getAttribute("d") === getCircuitData(course.name).path,
+        points: document.querySelectorAll("#rj111-carte .rj111-voiture:not([hidden])").length,
+        enCourse: LIVE_RACE.drivers.filter(d => !d.dnf).length,
+        actif: window.RJVueCircuit ? RJVueCircuit.actif() : false,
+        cadre: b ? { haut: Math.round(b.top), bas: Math.round(b.bottom), larg: Math.round(b.width), haut2: Math.round(b.height) } : null
+      };
+    });
+    S.verifier("la vue du circuit est installée", depart.api);
+    if (!depart.api) return;
+    S.verifier("le tracé est celui du circuit couru", depart.trace);
+    S.verifier("un point par voiture en course", depart.points === depart.enCourse && depart.points > 1, depart.points + " / " + depart.enCourse);
+    S.verifier("l'animation tourne pendant la course", depart.actif);
+    S.verifier("la carte tient dans l'écran", !!depart.cadre && depart.cadre.bas <= 430 && depart.cadre.haut2 >= 140, JSON.stringify(depart.cadre));
+
+    /* Les points avancent, sans jamais reculer (hors passage au stand). */
+    const suivi = await page.evaluate(async () => {
+      const avant = {}; let recul = 0, mesures = 0;
+      for (let i = 0; i < 50; i++) {
+        RJVueCircuit.etat().voitures.forEach(v => {
+          if (avant[v.nom] !== undefined && !v.stand) { mesures++; if (v.distance < avant[v.nom] - 1e-6) recul++; }
+          avant[v.nom] = v.distance;
+        });
+        await new Promise(r => setTimeout(r, 80));
+      }
+      return { recul, mesures };
+    });
+    S.verifier("les voitures ne reculent jamais", suivi.recul === 0 && suivi.mesures > 100, JSON.stringify(suivi));
+
+    /* L'ordre des points suit le classement. Quand le classement change,
+       la voiture qui passe devant double l'autre à l'écran : l'inversion
+       dure le temps du dépassement, jamais plus d'1,2 s. */
+    const ordre = await page.evaluate(async () => {
+      const duree = {}; let plusLongue = 0, depassements = 0;
+      for (let i = 0; i < 40; i++) {
+        const V = RJVueCircuit.etat().voitures.filter(v => !v.stand && !v.autreCategorie).sort((a, b) => a.pos - b.pos);
+        const vues = {};
+        for (let k = 1; k < V.length; k++) if (V[k].distance > V[k - 1].distance + 1e-6) {
+          const cle = V[k - 1].nom + ">" + V[k].nom; vues[cle] = true;
+          if (!duree[cle]) depassements++;
+          duree[cle] = (duree[cle] || 0) + 1; plusLongue = Math.max(plusLongue, duree[cle]);
+        }
+        Object.keys(duree).forEach(c => { if (!vues[c]) delete duree[c]; });
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return { depassements, plusLongueMs: plusLongue * 100 };
+    });
+    S.verifier("un dépassement à l'écran dure moins d'1,2 s", ordre.plusLongueMs <= 1200, JSON.stringify(ordre));
+
+    /* Passage au stand : le point rejoint la case des stands. */
+    const stand = await page.evaluate(async () => {
+      LIVE_RACE.paused = true;   // le tour ne doit pas changer pendant la mesure
+      const d = LIVE_RACE.drivers.find(x => !x.isPlayer && !x.dnf);
+      d._lastPitLap = LIVE_RACE.cur;
+      await new Promise(r => setTimeout(r, 400));
+      const v = RJVueCircuit.etat().voitures.find(x => x.nom === d.name);
+      const c = RJVueCircuit.etat().stand;
+      LIVE_RACE.paused = false;
+      return { auStand: !!(v && v.stand), dansLaCase: !!(v && c && Math.abs(v.x - c.x) <= c.w / 2 + 1 && Math.abs(v.y - c.y) <= c.h / 2 + 1) };
+    });
+    S.verifier("un arrêt au stand se voit dans la case des stands", stand.auStand && stand.dansLaCase, JSON.stringify(stand));
+
+    /* Abandon : le point disparaît. */
+    const abandon = await page.evaluate(async () => {
+      const d = LIVE_RACE.drivers.filter(x => !x.isPlayer && !x.dnf).pop();
+      d.dnf = true;
+      await new Promise(r => setTimeout(r, 300));
+      return !RJVueCircuit.etat().voitures.some(v => v.nom === d.name);
+    });
+    S.verifier("une voiture qui abandonne disparaît de la piste", abandon);
+
+    /* Sobriété : l'animation s'arrête hors de l'écran de course, reprend au retour. */
+    const sobre = await page.evaluate(async () => {
+      navTo("S-home", null); await new Promise(r => setTimeout(r, 400));
+      const ailleurs = RJVueCircuit.actif();
+      navTo("S-race", null); try { rtab("course"); } catch (e) {}
+      await new Promise(r => setTimeout(r, 400));
+      return { ailleurs, retour: RJVueCircuit.actif() };
+    });
+    S.verifier("l'animation s'arrête hors de l'écran de course", sobre.ailleurs === false, JSON.stringify(sobre));
+    S.verifier("l'animation reprend au retour sur la course", sobre.retour === true, JSON.stringify(sobre));
+
+    const fin = await page.evaluate(async () => {
+      SETTINGS.simSpeed = "instant";
+      for (let i = 0; i < 300 && !LIVE_RACE.finished; i++) await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 600));
+      return { finie: LIVE_RACE.finished, actif: RJVueCircuit.actif() };
+    });
+    S.verifier("l'animation s'arrête au drapeau à damier", fin.finie && fin.actif === false, JSON.stringify(fin));
+    S.verifier("aucune erreur pendant la course", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1329,6 +1456,7 @@ const SUITES = {
   weekend: suiteWeekend,
   ui: suiteInterface,
   paysage: suitePaysage,
+  circuit: suiteCircuit,
   decisions: suiteDecisions
 };
 

@@ -48,6 +48,7 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `course-rapide` | la même chose sur la seule Formule 1, pour une vérification en une minute |
 | `endurance` | six courses d'endurance : plus grand saut de places par course (défaut connu signalé, à corriger avec le nouveau moteur) |
 | `weekend` | stratégie retirée du parcours et inatteignable, réglages dans la préparation, feuille de temps en fenêtre |
+| `circuit` | course en direct sur le tracé : bon circuit, un point par voiture, jamais de recul, dépassements de moins d'1,2 s, stand, abandon, animation arrêtée hors écran et au drapeau |
 | `decisions` | décisions en course, mini-classement, chien de garde |
 | `ui` | hauteurs d'écran sous leurs seuils (en écrans paysage), absence d'icônes dans les boutons d'action, navigation sans erreur |
 | `paysage` | à trois tailles : rail d'icônes à gauche, un seul écran affiché, même bandeau partout, HUD en haut de chaque écran et à jour, onglets en colonne, même gouttière partout, accueil sans défilement avec saison et forme, rien ne déborde ; écran « tourne ton téléphone » en portrait |
