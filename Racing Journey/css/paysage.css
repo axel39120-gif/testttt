@@ -172,7 +172,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 }
 
 /* --- Contenu en colonnes ------------------------------------------------ */
-.scr > .scroll { padding: 10px 12px 14px !important; scrollbar-width: none; }
+.scr > .scroll { padding: 12px 14px 16px !important; scrollbar-width: none; }
 .scr > .scroll::-webkit-scrollbar { display: none; }
 /* Seul un conteneur d'au moins cinq éléments passe en colonnes : une carte
    posée directement dans la zone (en-tête d'entraînement…) reste entière. */
@@ -183,6 +183,47 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 .scr > .scroll > :has(> :nth-child(5)) > *,
 .scr > .scroll > * > :only-child:has(> :nth-child(5)) > * { break-inside: avoid; }
 .scr > .scroll .t-sec, .scr > .scroll .apex-sec { break-after: avoid; }
+
+/* --- Gouttière unique ----------------------------------------------------
+   En portrait, chaque bloc portait sa propre marge latérale (14 ou 16 px,
+   parfois davantage) : en colonnes, les cartes ne s'alignaient plus d'un
+   écran à l'autre. La zone de contenu donne désormais seule la gouttière
+   (14 px) et l'écart entre colonnes ; les blocs s'alignent sur ses bords et
+   prennent toute la largeur de leur colonne. */
+/* Blocs connus, à toute profondeur ; marges écrites en ligne, seulement
+   sur les trois premiers niveaux (plus bas, on est à l'intérieur d'une
+   carte et ses marges lui appartiennent). */
+.scr > .scroll :is(
+  .t-sec, .card, .sec-lbl, .btn, .mg,
+  .stat-hero, #pilot-rating-card, #hist-table, #train-rating-bar, .train-hero, .rjdev,
+  .cal-current-month, .cal-other-month, .cal-other-months-title,
+  .rj83-row, .rj83-fams, .rj83-sub, .agent-choice-card, .agent-choice-intro,
+  .rj-ps-hero, .rj-ps-budget-card, .rj-ps-cta-wrap,
+  #race-conditions, #auto-setup-banner, #tr-paths-visual
+),
+:where(.scr > .scroll, .scr > .scroll > *, .scr > .scroll > * > *) > :is(
+  [style*="margin:0 14px"], [style*="margin:0 16px"],
+  [style*="margin:"][style*="px 14px"], [style*="margin:"][style*="px 16px"], [style*="margin:16px"]
+) {
+  margin-left: 0 !important; margin-right: 0 !important;
+}
+.scr > .scroll :is(.stat-hero, #pilot-rating-card, .agent-choice-card, .train-hero) { max-width: none !important; width: auto !important; }
+/* Enveloppes transparentes qui portaient la gouttière en marge intérieure. */
+.scr > .scroll :is(
+  .mg, .rjf, .rj-ps-section, .rj-ps-obj-grid, .rj-ps-angle-grid, .agent-choice-intro,
+  .rj83-fams, .rj83-sub, .pant-tabs, .pant-tab-header, .pant-cards-list,
+  #settings-container, #pilot-rating-card, #rep-axes, #rep-unlocks, #md-log, #pp-actions
+),
+:where(.scr > .scroll, .scr > .scroll > *, .scr > .scroll > * > *) > :is(
+  [style*="padding:0 16px"], [style*="padding:0 14px"]
+),
+/* Simples enveloppes (ni classe, ni fond, ni bordure) dont le remplissage
+   faisait office de gouttière ; une carte, elle, a un fond ou une bordure. */
+:where(.scr > .scroll, .scr > .scroll > *, .scr > .scroll > * > *) > div:not([class]):is(
+  [style*="padding:12px 14px"], [style*="padding:12px 16px"], [style*="padding:14px 16px"], [style*="padding:16px"]
+):not([style*="background"]):not([style*="border"]) {
+  padding-left: 0 !important; padding-right: 0 !important;
+}
 
 /* --- Accueil -------------------------------------------------------------
    Bandeau : le pilote à gauche, ressources à droite. Dessous, à gauche, la
@@ -279,12 +320,25 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   overflow-y: auto !important; overscroll-behavior: contain;
 }
 
-/* Écrans qui se lisent d'un fil, sur une seule colonne centrée. */
+/* Écrans qui se lisent d'un fil, ou faits d'une poignée de cartes : une
+   seule colonne centrée de 720 px, plutôt que des cartes étirées sur toute
+   la largeur. */
 #S-contact-thread > .scroll > *,
 #S-event > .scroll > *,
 #S-neg > .scroll > *,
 #S-save > .scroll > *,
-#S-create > .scroll > * { column-width: auto; max-width: 720px; margin-left: auto; margin-right: auto; }
+#S-create > .scroll > *,
+#S-agent > .scroll > *,
+#S-shop > .scroll > *,
+#S-paddockpass > .scroll > *,
+#S-mediaday > .scroll > *,
+#S-pantheon > .scroll > * {
+  column-width: auto !important; max-width: 720px; margin-left: auto !important; margin-right: auto !important;
+}
+/* Choix de l'agent : les deux propositions côte à côte. */
+#S-agent :has(> .agent-choice-card) { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+#S-agent .agent-choice-card { margin: 0 !important; }
+#S-agent :has(> .agent-choice-card) > :not(.agent-choice-card) { grid-column: 1 / -1; }
 
 /* --- Sensations de jeu -------------------------------------------------- */
 /* Retour au toucher : la cible s'enfonce légèrement. Les voiles plein écran

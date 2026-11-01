@@ -1048,7 +1048,7 @@ async function suitePaysage() {
         const nav = document.getElementById("main-nav"), bn = boite(nav);
         const ecrans = [...document.querySelectorAll(".scr[id^='S-']")].map(e => e.id)
           .filter(id => !/^S-(splash|create|display-setup|mode)$/.test(id));
-        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], ongletsHaut: [] };
+        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], ongletsHaut: [], gouttieres: {} };
         for (const id of ecrans) {
           try { navTo(id, null); } catch (e) { continue; }
           await attendre(260);
@@ -1067,6 +1067,18 @@ async function suitePaysage() {
           if (tabs && sc && getComputedStyle(tabs).display !== "none" && !(boite(tabs).right <= boite(sc).left + 1 && boite(tabs).height > boite(tabs).width))
             res.ongletsHaut.push(s.id);
           res.hauts[s.id] = sc ? Math.round(boite(sc).top) : null;
+          /* Gouttière unique : les cartes du premier niveau s'alignent sur le
+             bord du contenu (écrans en colonnes), sans marge héritée du portrait. */
+          if (sc && !/^S-(contact-thread|event|neg|save|agent|shop|paddockpass|mediaday|pantheon)$/.test(s.id)) {
+            const bsc = boite(sc), csc = getComputedStyle(sc), x0 = bsc.left + parseFloat(csc.paddingLeft);
+            const estCarte = e => { const c = getComputedStyle(e); return (c.backgroundColor !== "rgba(0, 0, 0, 0)" || c.borderTopWidth !== "0px") && e.offsetHeight > 24 && e.offsetWidth > 140; };
+            const ecarts = [];
+            const visite = (e, d) => { if (d > 4) return; for (const c of e.children) { if (!c.offsetHeight) continue;
+              if (estCarte(c)) { const b = boite(c); if (b.left - x0 < 60) ecarts.push(Math.round(b.left - x0)); } else visite(c, d + 1); } };
+            visite(sc, 0);
+            const dec = ecarts.filter(v => v > 2);
+            if (dec.length) res.gouttieres[s.id] = [...new Set(dec)].join("/");
+          }
           /* Un élément rogné par un parent qui défile (onglets, rangée de
              filtres) ne déborde pas de l'écran. */
           const rogne = e => { for (let p = e.parentElement; p && p !== s; p = p.parentElement)
@@ -1104,6 +1116,7 @@ async function suitePaysage() {
       S.verifier(nom + " : même bandeau sur tous les écrans", hauteurs.length === 1, JSON.stringify(r.bandeaux));
       const bas = Object.entries(r.hauts).filter(([, t]) => t !== null && t > 64).map(([id, t]) => id + "@" + t);
       S.verifier(nom + " : le contenu commence sous un seul bandeau", bas.length === 0, bas.join(", "));
+      S.verifier(nom + " : même gouttière sur tous les écrans", Object.keys(r.gouttieres).length === 0, JSON.stringify(r.gouttieres));
       S.verifier(nom + " : HUD en haut de chaque écran", r.sansHud.length === 0, r.sansHud.join(", "));
       S.verifier(nom + " : onglets en colonne à gauche", r.ongletsHaut.length === 0, r.ongletsHaut.join(", "));
       S.verifier(nom + " : le HUD suit l'état du jeu", r.hudSuit === true);

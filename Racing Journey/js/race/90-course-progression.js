@@ -27,7 +27,7 @@
   "use strict";
 
   var TAG = "[90-course]";
-  var CSS_ID = "rj90-css";
+  var CSS_ID = "rj90-progression-css";   // distinct de l'ancienne gouttière, qui avait pris le même id
 
   function fn(n) { return typeof window[n] === "function"; }
   function LR() { return (typeof window.LIVE_RACE !== "undefined") ? window.LIVE_RACE : null; }

@@ -151,6 +151,16 @@ La suite `paysage` vérifie chaque écran à trois tailles (667 × 375,
 - **Plein écran** (`js/ui/110-plein-ecran.js`) : dans le navigateur d'un
   téléphone, au premier toucher, avec verrouillage paysage (sans effet sur
   iOS Safari ni sur ordinateur).
+- **Gouttière unique** : la zone de contenu donne seule la marge latérale
+  (14 px) et l'écart entre colonnes ; les marges héritées du portrait
+  (classes connues, marges écrites en ligne sur les trois premiers
+  niveaux, simples enveloppes sans fond) sont neutralisées. Les écrans faits
+  d'une poignée de cartes (agent, boutique, Paddock Pass, journée médias,
+  panthéon) passent sur la colonne centrée de 720 px.
+- Retiré : la gouttière portrait (91), remplacée. Elle partageait l'id de
+  style de la progression de course (90), dont les styles n'étaient donc
+  jamais posés (grand compteur de tours, barre, masquage de la barre en
+  double et des indicateurs de pneus) : corrigé.
 
 ---
 
