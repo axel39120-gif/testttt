@@ -15048,18 +15048,37 @@ function dureeTourCourse() {
   }
 }
 
+/* Le dernier tour se rejoue encore en direct (108) quand le moteur l'a
+   calculé : le drapeau tombe une fois ce tour fini à l'écran. */
+function drapeauApresDernierTour(lr) {
+  lr._drapeau = true;
+  (function attendre() {
+    if (LIVE_RACE !== lr || lr.finished) return;
+    if (lr.paused) { lr._dernierTour += 200; return setTimeout(attendre, 200); }   // la pause suspend aussi ce tour
+    var reste = dureeTourCourse() - (Date.now() - (lr._dernierTour || 0));
+    if (reste > 0) return setTimeout(attendre, Math.max(20, reste));
+    lr.finished = true;
+    renderLiveLeaderboard();
+    setTimeout(finalizeLiveRace, 600);
+  })();
+}
+
 function tickRace() { return rjAppeler("tickRace", _tickRaceCoeur, this, arguments); }
 function _tickRaceCoeur() {
   if (!LIVE_RACE.finished) {
     _tryPlayerMechDNF();
     if (LIVE_RACE._mechStress > 0) LIVE_RACE._mechStress = Math.max(0, LIVE_RACE._mechStress - 0.1);
     // La boucle se réveille à pas régulier et n'avance d'un tour qu'une fois
-    // la durée voulue écoulée ; une pause suspend le décompte.
+    // la durée voulue écoulée ; une pause suspend le décompte, sans le remettre
+    // à zéro : le tour rejoué en direct (108) reprend là où il s'était arrêté.
     var t = Math.max(20, Math.min(100, Math.round(dureeTourCourse() / 4)));
-    LIVE_RACE._dernierTour = Date.now();
+    LIVE_RACE._dernierTour = LIVE_RACE._dernierPas = Date.now();
     LIVE_RACE.interval = setInterval(function() {
       try {
-        if (LIVE_RACE.paused) { LIVE_RACE._dernierTour = Date.now(); return; }
+        var maintenant = Date.now();
+        if (LIVE_RACE.paused) LIVE_RACE._dernierTour += maintenant - LIVE_RACE._dernierPas;
+        LIVE_RACE._dernierPas = maintenant;
+        if (LIVE_RACE.paused) return;
         if (Date.now() - LIVE_RACE._dernierTour < dureeTourCourse()) return;
         LIVE_RACE._dernierTour = Date.now();
         LIVE_RACE.cur = Math.min(LIVE_RACE.cur + 1, LIVE_RACE.total);
@@ -15527,7 +15546,7 @@ function _tickRaceCoeur() {
               console.warn("setup radio:", _e)
             }
           })()
-        })()), renderLiveLeaderboard(), renderLiveNewsFeed(), LIVE_RACE.cur >= LIVE_RACE.total && (clearInterval(LIVE_RACE.interval), LIVE_RACE.finished = !0, setTimeout(finalizeLiveRace, 600))
+        })()), renderLiveLeaderboard(), renderLiveNewsFeed(), LIVE_RACE.cur >= LIVE_RACE.total && (clearInterval(LIVE_RACE.interval), drapeauApresDernierTour(LIVE_RACE))
       } catch (e) {
         console.error("Erreur tickRace:", e && e.message, e && e.stack), clearInterval(LIVE_RACE.interval), LIVE_RACE.finished = !0, LIVE_RACE.paused = !1, "function" == typeof _hideRaceEventModal && _hideRaceEventModal(), setTimeout(finalizeLiveRace, 300)
       }

@@ -655,7 +655,11 @@ async function suitePiste() {
           const P = window.__piste; P.releves++;
           const vivantes = e.voitures.filter(v => !v.abandon);
           if (!e.voitures.some(v => v.joueur)) P.joueur++;
-          vivantes.forEach(v => { if (!(v.distance >= 0 && v.distance <= e.tour + 1)) P.bornes++; if (v.auStand) P.stand++; });
+          vivantes.forEach(v => { if (!(v.distance >= -0.1 && v.distance <= e.tour + 1)) P.bornes++; });
+          /* Le tour qui vient de se calculer se rejoue ensuite à l'écran : on le parcourt. */
+          for (let f = 0; f <= 1; f += 0.04) {
+            RJModelePiste.etat(Date.now() + f * dureeTourCourse()).voitures.forEach(v => { if (v.auStand) P.stand++; });
+          }
           /* Dans la catégorie du joueur, la position affichée suit la distance. */
           const L = vivantes.filter(v => !v.autreCategorie).sort((a, b) => a.pos - b.pos);
           for (let i = 1; i < L.length; i++) if (L[i].distance > L[i - 1].distance + 1e-9) { P.ordre++; break; }
@@ -1252,16 +1256,18 @@ async function suiteCircuit() {
     });
     S.verifier("un dépassement à l'écran dure moins d'1,2 s", ordre.plusLongueMs <= 1200, JSON.stringify(ordre));
 
-    /* Passage au stand : le point rejoint la case des stands. */
+    /* Passage au stand : la voiture qui s'arrête au prochain tour rejoint la case des stands. */
     const stand = await page.evaluate(async () => {
-      LIVE_RACE.paused = true;   // le tour ne doit pas changer pendant la mesure
-      const d = LIVE_RACE.drivers.find(x => !x.isPlayer && !x.dnf);
-      d._lastPitLap = LIVE_RACE.cur;
-      await new Promise(r => setTimeout(r, 400));
-      const v = RJVueCircuit.etat().voitures.find(x => x.nom === d.name);
-      const c = RJVueCircuit.etat().stand;
-      LIVE_RACE.paused = false;
-      return { auStand: !!(v && v.stand), dansLaCase: !!(v && c && Math.abs(v.x - c.x) <= c.w / 2 + 1 && Math.abs(v.y - c.y) <= c.h / 2 + 1) };
+      const d = LIVE_RACE.drivers.filter(x => !x.isPlayer && !x.dnf).sort((a, b) => a.pos - b.pos)[0];
+      d._lastPitLap = LIVE_RACE.cur + 1;
+      const fin = Date.now() + 3 * dureeTourCourse();
+      while (Date.now() < fin) {
+        const v = RJVueCircuit.etat().voitures.find(x => x.nom === d.name);
+        const c = RJVueCircuit.etat().stand;
+        if (v && v.stand) return { auStand: true, dansLaCase: !!(c && Math.abs(v.x - c.x) <= c.w / 2 + 1 && Math.abs(v.y - c.y) <= c.h / 2 + 1) };
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return { auStand: false, dansLaCase: false };
     });
     S.verifier("un arrêt au stand se voit dans la case des stands", stand.auStand && stand.dansLaCase, JSON.stringify(stand));
 
@@ -1840,8 +1846,10 @@ async function suiteDecisions() {
           const v = RJ107.voisins(lr);
           if (!v.joueur || v.joueur.dnf) return;
           window.__rj107Sonde.lus++;
+          /* Le mini-classement montre la position sur la piste à cet instant (108). */
+          const j = RJModelePiste.etat().voitures.find(x => x.joueur);
           const pos = mini[0].querySelector(".rj107-moi .rj107-pos");
-          if (!pos || pos.textContent !== "P" + v.joueur.pos) window.__rj107Sonde.incoherents++;
+          if (!pos || !j || pos.textContent !== "P" + j.pos) window.__rj107Sonde.incoherents++;
           /* L'arrondi global (04q) agit après coup : on relit au tick suivant. */
           setTimeout(() => mini[0].querySelectorAll(".rj107-ecart").forEach(e => {
             if (e.textContent && !/\d,\d s$/.test(e.textContent)) window.__rj107Sonde.ecartsArrondis++;

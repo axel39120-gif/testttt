@@ -202,6 +202,25 @@ dépassements, stand, abandon, arrêt et reprise de l'animation.
   (position, écurie, écart) à gauche du tracé, masquée sous 800 px ; damier,
   secteurs, limites de piste. Test de fluidité dans la suite `circuit`.
 
+### Course en temps réel (v222)
+
+Le moteur résout toujours la course tour par tour ; `js/race/108-modele-piste.js`
+la rejoue en continu, comme un match de Football Manager :
+
+- à chaque tour calculé, chaque voiture reçoit son instant de passage sur la
+  ligne (temps du leader + écart, dans l'ordre du classement) ; un arrêt au
+  stand devient une immobilisation dans l'allée des stands ;
+- l'écran a **un tour de retard** sur le moteur : il rejoue le tour dont il
+  connaît déjà l'arrivée. Positions, classement et écarts sont exacts à chaque
+  instant, et égaux à ceux du moteur à chaque passage de ligne ;
+- avant le départ, les feux s'allument un à un ; le drapeau tombe quand le
+  dernier tour est fini **à l'écran** (`drapeauApresDernierTour`, 04) ;
+- une pause (décision en course) fige l'horloge sans la remettre à zéro ;
+- la tour de classement (111), le mini-classement (107, via `RJ_FRAME_HOOKS`)
+  et la barre de progression (90) suivent le direct ; le récit d'un tour
+  (fil « Direct », 08) paraît quand ce tour se termine à l'écran, la radio
+  reste immédiate.
+
 ## Étape 4 (simulation de carrière) — ce qui a été fait
 
 Trois chantiers choisis, dans l'ordre :

@@ -33,7 +33,7 @@
   var CSS_ID = "rj107-css";
   var PLAFOND = 4;
   var ESPACEMENT = 3;
-  var REGISTRES = ["RJ_LAP_HOOKS", "RJ_RACE_START_HOOKS", "RJ_LEADERBOARD_HOOKS"];
+  var REGISTRES = ["RJ_LAP_HOOKS", "RJ_RACE_START_HOOKS", "RJ_LEADERBOARD_HOOKS", "RJ_FRAME_HOOKS"];
 
   function LR() { return (typeof LIVE_RACE !== "undefined" && LIVE_RACE) ? LIVE_RACE : null; }
 
@@ -216,11 +216,27 @@
   // Le moteur peut donner un écart nul entre deux voitures distinctes : jamais « 0,0 s ».
   function sec(x) { return Math.max(0.1, x).toFixed(1).replace(".", ",") + " s"; }
 
-  function majMini() {
+  /* Les voisins tels qu'ils roulent à cet instant (course rejouée en temps
+     réel, 108) ; à défaut, ceux du dernier tour calculé. */
+  function voisinsEnDirect(lr, e) {
+    e = e || (window.RJModelePiste && RJModelePiste.etat());
+    if (!e) return voisins(lr);
+    var L = e.voitures.filter(function (v) { return !v.abandon && !v.autreCategorie; })
+      .sort(function (a, b) { return a.pos - b.pos; });
+    var i = L.findIndex(function (v) { return v.joueur; });
+    if (i < 0) return voisins(lr);
+    var ligne = function (v) { return v && { pos: v.pos, name: v.nom, ecart: v.ecart }; };
+    var j = ligne(L[i]), av = ligne(L[i - 1]), ar = ligne(L[i + 1]);
+    var joueur = voisins(lr).joueur;
+    return { joueur: joueur && { pos: j.pos, name: joueur.name, dnf: joueur.dnf }, devant: av, derriere: ar,
+      ecartDevant: av && Math.max(0, j.ecart - av.ecart), ecartDerriere: ar && Math.max(0, ar.ecart - j.ecart) };
+  }
+
+  function majMini(e) {
     var bloc = document.getElementById("rj90-progression");
     var lr = LR();
     var mini = document.getElementById("rj107-mini");
-    var v = voisins(lr);
+    var v = voisinsEnDirect(lr, e);
     if (!bloc || !lr || lr.finished || !v.joueur || v.joueur.dnf) { if (mini) mini.style.display = "none"; return; }
     if (!mini) {
       injecterCSS();
@@ -250,6 +266,7 @@
     inscrire("RJ_RACE_START_HOOKS", { id: ID, apres: function (lr) { try { auDepart(lr); } catch (e) { console.warn(TAG, e && e.message); } } });
     inscrire("RJ_LAP_HOOKS", { id: ID, run: aChaqueTour });
     inscrire("RJ_LEADERBOARD_HOOKS", { id: ID, apres: function () { try { majMini(); } catch (e) { console.warn(TAG, e && e.message); } } });
+    inscrire("RJ_FRAME_HOOKS", { id: ID, run: majMini });
 
     window.RJ107 = { voisins: voisins, choixDuMoment: choixDuMoment, evenement: evenement };
     window._rj107Uninstall = function () {

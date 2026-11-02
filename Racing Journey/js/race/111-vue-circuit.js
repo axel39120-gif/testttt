@@ -8,12 +8,11 @@
  * La voiture du joueur est plus grande, cerclée de blanc, avec sa position.
  *
  * POSITIONS
- * RJModelePiste.etat() (108) donne la distance cible de chaque voiture en
- * tours ; elle saute à chaque tour, quand le moteur recalcule les écarts.
- * Chaque voiture roule donc à l'allure réelle d'un tour (dureeTourCourse, 04)
- * et se corrige en douceur vers sa cible : jamais d'arrêt net, jamais de
- * recul. Quand le classement change, celle qui passe pousse et l'autre lève
- * le pied : le dépassement se fait en roulant. Course en pause : tout s'arrête.
+ * RJModelePiste.etat() (108) rejoue la course en temps réel : distance,
+ * classement sur la piste et écart de chaque voiture à cet instant. La vue
+ * les dessine telles quelles ; avant le départ, les feux s'allument.
+ * Quatre fois par seconde, les modules inscrits dans RJ_FRAME_HOOKS
+ * ({ id, run(etat) }) reçoivent le même état (mini-classement de 107).
  *
  * SOBRIÉTÉ
  * L'animation (requestAnimationFrame) ne tourne que si une course est en
@@ -30,10 +29,10 @@
 
   var TAG = "[111-circuit]";
   var NS = "http://www.w3.org/2000/svg";
-  var ARRET_MIN = 1200;    // un passage au stand reste visible au moins 1,2 s
   var vue = null;          // carte construite pour un circuit
   var voitures = {};       // nom → { el, d, stand, x, y, pos, autre }
   var boucle = 0, dernier = 0;
+  if (!Array.isArray(window.RJ_FRAME_HOOKS)) window.RJ_FRAME_HOOKS = [];
 
   function LR() { return (typeof window.LIVE_RACE !== "undefined") ? window.LIVE_RACE : null; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -139,24 +138,25 @@
     return !!(ecran && ecran.classList.contains("on") && c && c.offsetParent !== null && document.visibilityState !== "hidden");
   }
 
-  var TAU = 1.2;                 // une erreur de position se résorbe en ~1,2 s
-  var MIN = 0.3, MAX = 2.5;      // bornes de l'allure, en multiples de l'allure normale
-
   function abrege(nom) {
     var mots = String(nom || "").trim().split(/\s+/);
     return (mots[mots.length - 1] || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "???";
   }
 
+  /* Tour de classement : l'ordre sur la piste à cet instant (108). */
   function majTourDeClassement(lr, e) {
-    var vivants = lr.drivers.filter(function (d) { return !d.dnf; }).sort(function (a, b) { return a.pos - b.pos; });
-    var tempsTour = e.tempsTour || 90, precedent = 0;
-    vue.tour.innerHTML = vivants.map(function (d) {
-      // Les écarts ne décroissent jamais en descendant le classement.
-      var gap = precedent = d.pos === 1 ? 0 : Math.max(d.gap || 0, precedent + 0.1);
-      var ecart = d.pos === 1 ? "Leader" : gap >= tempsTour ? "+" + Math.floor(gap / tempsTour) + " T" : "+" + gap.toFixed(1);
-      return '<li class="' + (d.isPlayer ? "moi" : "") + (d._mc ? " autre" : "") + '"><span class="p">' + d.pos + "</span>" +
-        '<span class="c" style="background:' + couleur(d.team, d.name) + '"></span>' +
-        '<span class="n">' + esc(d.isPlayer ? "TOI" : abrege(d.name)) + '</span><span class="e">' + ecart + "</span></li>";
+    var parNom = {};
+    lr.drivers.forEach(function (d) { parNom[d.name] = d; });
+    var vivants = e.voitures.filter(function (v) { return !v.abandon; })
+      .sort(function (a, b) { return (a.autreCategorie - b.autreCategorie) || (a.pos - b.pos); });
+    vue.tour.innerHTML = vivants.map(function (v, i) {
+      var d = parNom[v.nom] || {};
+      var tete = i === 0 || vivants[i - 1].autreCategorie !== v.autreCategorie;
+      var ecart = tete ? "Leader"
+        : v.ecart >= e.tempsTour ? "+" + Math.floor(v.ecart / e.tempsTour) + " T" : "+" + Math.max(0.1, v.ecart).toFixed(1);
+      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + '"><span class="p">' + v.pos + "</span>" +
+        '<span class="c" style="background:' + couleur(d.team, v.nom) + '"></span>' +
+        '<span class="n">' + esc(v.joueur ? "TOI" : abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? "STAND" : ecart) + "</span></li>";
     }).join("");
   }
 
@@ -169,48 +169,23 @@
     if (!visible()) return;   // hors écran : on s'arrête (et le tracé ne se mesure pas caché)
     if (!vue || vue.circuit !== circuit || !c.contains(vue.svg)) vue = construire(c, circuit);
     if (!vue) return;
-
-    var dt = dernier ? Math.min(0.25, (t - dernier) / 1000) : 0;
     dernier = t;
-    // Allure normale : un tour en la durée réelle d'un tour de course (04).
-    var allure = lr.paused ? 0 : 1000 / (typeof dureeTourCourse === "function" ? dureeTourCourse() : 4500);
-    var presents = {}, joueur = null, enPiste = [];
-    e.voitures.forEach(function (v, i) {
-      var d = lr.drivers[i];
+
+    var parNom = {};
+    lr.drivers.forEach(function (d) { parNom[d.name] = d; });
+    var presents = {}, joueur = null;
+    e.voitures.forEach(function (v) {
       if (v.abandon || v.distance === null) return;
-      var cle = v.nom || (v.joueur ? "joueur" : "#" + i);
+      var cle = v.nom;
       presents[cle] = true;
       var r = voitures[cle];
       if (!r) {
-        r = voitures[cle] = { d: v.distance, el: silhouette(v.joueur, v.autreCategorie, couleur(d && d.team, cle)) };
+        var d = parNom[cle];
+        r = voitures[cle] = { el: silhouette(v.joueur, v.autreCategorie, couleur(d && d.team, cle)) };
         vue.groupe.appendChild(r.el);
       }
-      if (v.auStand && !r.stand) r.standJusqua = t + ARRET_MIN;
-      r.pos = v.pos; r.stand = v.auStand || t < (r.standJusqua || 0); r.autre = v.autreCategorie;
-      r.cible = v.distance; r.cede = r.pousse = false;
+      r.d = v.distance; r.pos = v.pos; r.stand = v.auStand; r.autre = v.autreCategorie;
       if (v.joueur) joueur = r;
-      enPiste.push(r);
-    });
-
-    /* Dans chaque catégorie, dans l'ordre du classement : si une voiture
-       classée derrière est physiquement devant, celle qui doit passer pousse et
-       l'autre lève le pied. Un dépassement ne se voit que lorsque le
-       classement change, et se fait en roulant, sans arrêt net. */
-    enPiste.sort(function (a, b) { return (a.autre - b.autre) || (a.pos - b.pos); });
-    for (var k = 1; k < enPiste.length; k++) {
-      var devant = enPiste[k - 1], derriere = enPiste[k];
-      if (devant.autre !== derriere.autre || devant.stand || derriere.stand) continue;
-      if (derriere.d > devant.d - 0.004) { devant.pousse = true; derriere.cede = true; }
-    }
-    enPiste.forEach(function (r) {
-      if (e.fini) { r.d = Math.max(r.d, r.cible); }
-      else {
-        var v = allure + (r.cible - r.d) / TAU;
-        if (r.pousse) v = Math.max(v, 2.2 * allure);
-        if (r.cede) v = Math.min(v, 0.6 * allure);
-        v = Math.max(MIN * allure, Math.min(MAX * allure, v));
-        r.d += v * dt;                                   // v ≥ 0 : jamais de recul
-      }
       var lg = vue.longueur, ici = (((r.d % 1) + 1) % 1) * lg;
       var p = r.stand ? vue.stand : vue.piste.getPointAtLength(ici);
       var q = r.stand ? { x: p.x + 1, y: p.y } : vue.piste.getPointAtLength(Math.min(lg, ici + 0.8));
@@ -228,10 +203,15 @@
       vue.etiquette.setAttribute("y", (joueur.y - 3.5).toFixed(2));
       vue.etiquette.textContent = "P" + joueur.pos;
     }
-    if (t - vue.majTour > 300 || e.fini) { vue.majTour = t; majTourDeClassement(lr, e); }
+    if (t - vue.majTour > 250 || e.fini) {
+      vue.majTour = t;
+      majTourDeClassement(lr, e);
+      (window.RJ_FRAME_HOOKS || []).forEach(function (h) { try { h.run(e); } catch (x) { console.warn(TAG, h.id, x && x.message); } });
+    }
     var n = lr._rjNeutral && lr._rjNeutral.active ? lr._rjNeutral : null;
-    vue.neutre.hidden = !n;
-    if (n) vue.neutre.textContent = String(n.type || "SC").toUpperCase();
+    vue.neutre.hidden = !n && !e.feux;
+    if (e.feux) vue.neutre.innerHTML = '<span class="rj111-feux">' + [1, 2, 3, 4, 5].map(function (i) { return "<i" + (i <= e.feux ? ' class="on"' : "") + "></i>"; }).join("") + "</span>";
+    else if (n) vue.neutre.textContent = String(n.type || "SC").toUpperCase();
 
     if (!e.fini) boucle = requestAnimationFrame(image);
   }

@@ -133,7 +133,11 @@
     var tt = document.getElementById("rj90-total");
     if (tt) tt.textContent = "/ " + total;
     var barre = document.querySelector("#rj90-barre > span");
-    if (barre) barre.style.width = Math.round(part * 100) + "%";
+    // La barre glisse jusqu’à la fin du tour pendant qu’il se rejoue en direct (108).
+    if (barre) {
+      barre.style.transition = lr.finished ? "none" : "width " + (typeof dureeTourCourse === "function" ? dureeTourCourse() : 0) + "ms linear";
+      barre.style.width = (part * 100).toFixed(1) + "%";
+    }
     var etat = document.getElementById("rj90-etat");
 
     placerRadio();
