@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v229**. Ce document décrit l'organisation du code après la
+Version **BUILD v230**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v229 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v230 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -326,6 +326,12 @@ et ergonomique en paysage.
   comblent les vides, ou forment une rangée en bas sans colonnes. Toucher un
   widget mène à l'écran concerné. Les durées de contrat suivent la lecture de
   l'écran Contrats (4 semaines par mois, 48 par saison).
+- **Accueil : forme et championnat** (v230) : la forme et le mental dans un
+  même cadre ; le championnat dans une carte avec un sélecteur Pilotes /
+  Écuries (s'il y a un championnat des écuries, `TEAMS_BY_CAT`), podium or,
+  argent, bronze, liseré aux couleurs de l'écurie, ta ligne en avant (109).
+  Écrans bas : trois lignes, et sous 400 px les pastilles de saison
+  s'effacent (classement et points sont au championnat).
 - **Angles** (v226) : un seul arrondi, `--r` (6 px), pour les cartes,
   boutons et blocs de tout le jeu ; `--r2` et `--r3` le suivent. Les arrondis
   de 8 à 18 px écrits en dur dans styles.css et les modules sont passés à
