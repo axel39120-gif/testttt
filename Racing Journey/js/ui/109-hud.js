@@ -76,27 +76,71 @@
       '<span class="apex-forme-vide">Aucune course cette saison</span>');
   }
 
-  /* Mini-classement : au plus quatre lignes, écart au leader. Même calcul que
-     l'écran Championnat (renderChamp). */
+  /* Mini-classement : au plus quatre lignes, écart au leader. Deux vues
+     quand la catégorie a un championnat des écuries : Pilotes (même calcul
+     que l'écran Championnat, renderChamp) et Écuries (points des pilotes de
+     chaque écurie, comme renderConstructeurs). Un sélecteur dans l'en-tête
+     bascule de l'une à l'autre sans changer la hauteur du bloc. */
+  var vueClassement = "pilotes";
+
+  function couleur(equipe) {
+    var c = equipe && typeof window.couleurEcurie === "function" ? window.couleurEcurie(equipe) : null;
+    return c || "rgba(255,255,255,.18)";
+  }
+
+  function lignesPilotes() {
+    var moi = { nom: (G.pilot.prenom ? G.pilot.prenom + " " : "") + G.pilot.nom, pts: G.champPts || 0, moi: true,
+                equipe: G.currentTeam && G.currentTeam !== "Indépendant" ? G.currentTeam : null };
+    return [moi].concat(G.rivals.map(function (r) { return { nom: r.name, pts: r.pts || 0, equipe: r.team || null }; }))
+      .sort(function (a, b) { return b.pts - a.pts; });
+  }
+
+  function lignesEcuries() {
+    var equipes = (typeof TEAMS_BY_CAT !== "undefined" && TEAMS_BY_CAT[G.cat]) || [];
+    if (equipes.length < 2) return null;
+    var pts = {};
+    equipes.forEach(function (e) { pts[e] = 0; });
+    if (G.currentTeam && pts[G.currentTeam] !== undefined) pts[G.currentTeam] += G.champPts || 0;
+    G.rivals.forEach(function (r) { if (r.team && pts[r.team] !== undefined) pts[r.team] += r.pts || 0; });
+    return equipes.map(function (e) { return { nom: e, pts: pts[e], moi: e === G.currentTeam, equipe: e }; })
+      .sort(function (a, b) { return b.pts - a.pts; });
+  }
+
   function majClassement() {
     var boite = document.getElementById("h-champ-mini");
     if (!boite || !G.pilot || !Array.isArray(G.rivals)) return;
-    var moi = { nom: (G.pilot.prenom ? G.pilot.prenom + " " : "") + G.pilot.nom, pts: G.champPts || 0, moi: true };
-    var L = [moi].concat(G.rivals.map(function (r) { return { nom: r.name, pts: r.pts || 0 }; }))
-      .sort(function (a, b) { return b.pts - a.pts; });
-    var i = L.indexOf(moi);
-    /* En tête du championnat : les trois premiers ; sinon le leader et tes voisins. */
+    var ecuries = lignesEcuries();
+    if (!ecuries) vueClassement = "pilotes";
+    var L = vueClassement === "ecuries" ? ecuries : lignesPilotes();
+    var i = L.findIndex(function (p) { return p.moi; });
+    /* En tête (ou absent) : les quatre premiers ; sinon le leader et tes voisins. */
     var rangs = (i <= 1 ? [0, 1, 2, 3] : [0, i - 1, i, i + 1])
       .filter(function (k, n, t) { return k >= 0 && k < L.length && t.indexOf(k) === n; }).slice(0, 4);
-    var tete = L[0].pts;
-    boite.innerHTML = '<div class="apex-champ-mini-lbl">Championnat</div>' + rangs.map(function (k) {
-      var p = L[k];
-      return '<div class="apex-champ-mini-row' + (p.moi ? " moi" : "") + '">' +
-        '<span class="pos">' + (k + 1) + "</span>" +
-        '<span class="nom">' + esc(p.nom) + "</span>" +
-        '<span class="pts">' + esc(p.pts) + " pts</span>" +
-        '<span class="ecart">' + (k === 0 ? "Leader" : "−" + (tete - p.pts)) + "</span></div>";
-    }).join("");
+    var tete = L.length ? L[0].pts : 0;
+    var selecteur = ecuries ? '<span class="apex-champ-mini-seg">' +
+      ["pilotes", "ecuries"].map(function (v) {
+        return '<button type="button" data-vue="' + v + '"' + (v === vueClassement ? ' class="on"' : "") + ">" + (v === "pilotes" ? "Pilotes" : "Écuries") + "</button>";
+      }).join("") + "</span>" : "";
+    boite.innerHTML = '<div class="apex-champ-mini-tete"><span class="apex-champ-mini-lbl">Championnat</span>' + selecteur + "</div>" +
+      rangs.map(function (k) {
+        var p = L[k];
+        return '<div class="apex-champ-mini-row' + (p.moi ? " moi" : "") + (k < 3 ? " podium p" + (k + 1) : "") + '">' +
+          '<span class="pos">' + (k + 1) + "</span>" +
+          '<span class="barre" style="background:' + esc(couleur(p.equipe)) + '"></span>' +
+          '<span class="nom">' + esc(p.nom) + "</span>" +
+          '<span class="pts">' + esc(p.pts) + " pts</span>" +
+          '<span class="ecart">' + (k === 0 ? "Leader" : "−" + (tete - p.pts)) + "</span></div>";
+      }).join("");
+    if (!boite._rjSelecteur) {
+      boite._rjSelecteur = true;
+      boite.addEventListener("click", function (e) {
+        var b = e.target && e.target.closest && e.target.closest("[data-vue]");
+        if (!b) return;
+        e.stopPropagation();                     // le bloc entier ouvre l'écran Championnat
+        vueClassement = b.getAttribute("data-vue");
+        majClassement();
+      }, true);
+    }
   }
 
   function maj() {

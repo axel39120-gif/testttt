@@ -1115,6 +1115,12 @@ async function suitePaysage() {
           victoires: (document.getElementById("h-wins") || {}).textContent,
           forme: !!document.getElementById("h-forme")
         };
+        /* Championnat de l'accueil : la vue Écuries liste les écuries de la
+           catégorie, et basculer ne quitte pas l'accueil. */
+        const sel = document.querySelector("#h-champ-mini [data-vue='ecuries']");
+        if (sel) sel.click();
+        res.ecuries = !sel ? null : (TEAMS_BY_CAT[G.cat] || []).indexOf(((document.querySelector("#h-champ-mini .apex-champ-mini-row .nom") || {}).textContent || "")) >= 0
+          && (document.querySelector(".scr.on") || {}).id === "S-home";
         /* Le HUD suit l'état du jeu. */
         const avant = (document.getElementById("rj-hud") || {}).textContent || "";
         G.budget += 2500000; updateUI();
@@ -1136,6 +1142,7 @@ async function suitePaysage() {
       S.verifier(nom + " : onglets dans le bandeau, entre titre et HUD", r.ongletsHors.length === 0, r.ongletsHors.join(", "));
       S.verifier(nom + " : rail présent sur les écrans de consultation", r.sansRail.length === 0, r.sansRail.join(", "));
       S.verifier(nom + " : le HUD suit l'état du jeu", r.hudSuit === true);
+      S.verifier(nom + " : accueil — classement des écuries au sélecteur", r.ecuries !== false, String(r.ecuries));
       S.verifier(nom + " : accueil — pastilles de saison et forme", r.accueil.points !== undefined && r.accueil.victoires !== undefined && r.accueil.forme, JSON.stringify(r.accueil));
       if (viewport.height >= 400) S.verifier(nom + " : accueil sans défilement", r.accueil.defile !== null && r.accueil.defile <= 2, "dépasse de " + r.accueil.defile + " px");
       S.verifier(nom + " : rien ne déborde à droite", r.debords.length === 0, [...new Set(r.debords)].slice(0, 6).join(", "));
