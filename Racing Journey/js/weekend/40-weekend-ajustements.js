@@ -554,66 +554,14 @@
     }
   }
 
-  // ------------------- C. alignement du rythme du joueur sur son niveau réel
-  // Le score de course du joueur reçoit un "bonus de catégorie" (0,040 en
-  // Karting Junior, jusqu'à 0,420 en F1) dont les rivaux n'ont AUCUN
-  // équivalent (leur terme de catégorie vaut 0,02 × rang de catégorie).
-  // Résultat mesuré : note réelle du débutant 0,4725 (sous la moyenne rivale
-  // 0,4833, cohérent avec sa qualif) mais score de course 0,5108 -> il roule
-  // comme un top 3 alors qu'il se qualifie au milieu. On retire cet écart
-  // pour que la grille et le rythme racontent la même histoire.
-  var CAT_BONUS = {
-    "Karting Junior": .040, "Karting Senior": .100, "Formule 4": .180,
-    "Formula Regional": .260, "Formule 3": .300, "Formule 2": .360,
-    "Formule 1": .420, "Super Formula": .340, "Endurance WEC": .340, "IndyCar": .300
-  };
-  var CAT_IDX = {
-    "Karting Junior": 0, "Karting Senior": 1, "Formule 4": 2, "Formula Regional": 3,
-    "Formule 3": 4, "Formule 2": 5, "Formule 1": 6, "Super Formula": 4,
-    "Endurance WEC": 4, "IndyCar": 5
-  };
-
+  // ------------------- C. variance de rythme du joueur
+  // La note du joueur suit désormais la formule des rivaux (runRaceLive, 04) :
+  // l'ancien recalage sur le peloton, qui comptait sa voiture deux fois, n'a
+  // plus lieu d'être. Reste à borner sa variance de rythme sur celle du peloton.
   function alignPlayerPace() {
     try {
       var p = playerDriver();
       if (!p || p._rj55Aligned) return;
-      var cb = CAT_BONUS[G.cat];
-      if (typeof cb !== "number") { p._rj55Aligned = true; return; }
-      var exp = Math.min(0.05, (G.races ? G.races.length : 0) * 0.002);
-      var catCorr = (cb - exp) - 0.02 * (CAT_IDX[G.cat] || 0);
-
-      var others = (LIVE_RACE.drivers || []).filter(function (d) { return !d.isPlayer; });
-      if (!others.length) { p._rj55Aligned = true; return; }
-
-      // Niveau réel du joueur, sur la même échelle que le "skill" des rivaux.
-      var rating = (typeof computeRacePerformanceScore === "function")
-        ? computeRacePerformanceScore() : null;
-      if (typeof rating !== "number") { p._rj55Aligned = true; return; }
-
-      // Ancrage sur le peloton RÉELLEMENT construit pour cette course : on
-      // compare les notes (échelle skill) et les scores de course effectifs,
-      // car les rivaux perdent eux aussi quelques centièmes en route.
-      var sumR = 0, nR = 0;
-      (G.rivals || []).forEach(function (r) {
-        if (typeof r.skill === "number") { sumR += r.skill / 100; nR++; }
-      });
-      var sumB = 0, nB = 0;
-      others.forEach(function (d) {
-        if (typeof d.baseScore === "number") { sumB += d.baseScore; nB++; }
-      });
-      if (!nR || !nB) { p._rj55Aligned = true; return; }
-      var fieldRating = sumR / nR;
-      var fieldBase = sumB / nB;
-
-      // Ce que les bonus contextuels (réglages, stratégie, forme, grille…)
-      // apportent au joueur : on le conserve, c'est le levier de jeu.
-      var context = p.baseScore - rating - catCorr;
-
-      // Le joueur se place par rapport au peloton selon son écart de niveau réel.
-      var target = fieldBase + (rating - fieldRating) + context;
-      // Sans plafond haut : la note est recalée au départ avec tout le plateau (81, « 81-echelle »).
-      if (typeof p.baseScore === "number") p.baseScore = Math.max(.03, target);
-      if (typeof p.score === "number") p.score = Math.max(.03, target);
 
       // Variance de rythme : le joueur oscillait ~1,4x plus que les rivaux.
       // Sur un plateau de 20, la plus grosse variance gagne trop souvent (on

@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v228**. Ce document décrit l'organisation du code après la
+Version **BUILD v229**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v228 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v229 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -399,9 +399,44 @@ qualification. Corrigé :
 - **Talents de la saison fixés dès la qualification** (`startQual`, 04k) : la
   première qualification de la saison ne court plus avec les anciens talents.
 
-Restent (audit) : pneus de qualification appliqués au seul joueur, course
-sans chronomètre (écarts tirés de la note, dépassements uniformes, départ
-figé), essais libres sans rivaux.
+### La course au chronomètre (v229)
+
+`js/race/81-moteur-course.js` est réécrit. Chaque pilote a un temps cumulé ;
+à chaque tour :
+
+- **temps au tour** = référence du circuit × (1 − 0,03 × (note − note
+  moyenne)), plus un aléa selon la régularité (la note porte talent, voiture,
+  pluie, forme, événements) ;
+- **arrêt au stand** : sa durée s'ajoute au temps ;
+- **départ** : décalage de la place sur la grille et temps de réaction, avec
+  des dépassements plus faciles au premier tour ;
+- **dépassement** : rattraper ne suffit pas, il faut une avance de rythme au
+  moins égale au seuil du circuit (facilité `overtake` de getCircuitData :
+  Monaco ≈ 1 s/tour, Monza ≈ 0,25 s/tour) ; sinon la voiture reste dans l'air
+  sale, 0,3 à 0,8 s derrière ;
+- **safety car / drapeau rouge** : regroupement derrière le leader ; **VSC** :
+  tout le monde ralentit d'autant, sans dépasser.
+
+Classement = ordre des temps cumulés ; écarts en vraies secondes, jusqu'aux
+tours de retard ; au drapeau, `_finalizeOfficialOrder` lit ces temps (au lieu
+de « 1,2 s par place »). Un déplacement imposé (moments décisifs, 106) est
+traduit en temps. Retirés : le tri par note bridé à ±2 places, le mélange
+note/grille au départ (la qualification dictait 70 % du rythme).
+
+La note du joueur suit la formule des rivaux (04, runRaceLive) plus ses
+leviers de jeu (réglages, rôle, ingénieur, bonheur, forme) : plus de bonus de
+catégorie (écrit deux fois), de rattrapage depuis le fond de grille ni de
+stratégie ; son talent sous la pluie joue aussi en course. Le module 55 ne
+fait plus que borner sa variance.
+
+Suite `chronometre` : écarts qui se creusent, écarts croissants avec la
+position, dépassements en piste, départ qui peut changer l'ordre, voiture
+rapide partie dernière qui remonte, lente partie en pole qui recule, Monaco
+plus dur que Monza.
+
+Restent (audit) : pneus de qualification appliqués au seul joueur, essais
+libres sans rivaux, pas d'usure de pneus ni de carburant (rythme constant sur
+un relais), stratégies des rivaux toutes identiques.
 
 ## Pistes suivantes
 
