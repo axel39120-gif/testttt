@@ -1064,7 +1064,7 @@
     var css = [
       /* --- salle de presse -------------------------------------------- */
       "#rj100{--acc:#FF1801;padding:0 0 26px}",
-      ".rj100-salle{position:relative;margin:12px 16px 0;padding:16px 15px 15px;border-radius:16px;overflow:hidden;" +
+      ".rj100-salle{position:relative;margin:12px 16px 0;padding:16px 15px 15px;border-radius:var(--r);overflow:hidden;" +
         "background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.015));" +
         "border:1px solid var(--border-hi,rgba(255,255,255,.14))}",
       ".rj100-salle::before{content:'';position:absolute;inset:0;pointer-events:none;" +
@@ -1077,7 +1077,7 @@
 
       /* --- bandeau journaliste ---------------------------------------- */
       ".rj100-jrn{display:flex;align-items:center;gap:11px;margin-bottom:13px}",
-      ".rj100-ini{width:40px;height:40px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;" +
+      ".rj100-ini{width:40px;height:40px;border-radius:var(--r);flex-shrink:0;display:flex;align-items:center;" +
         "justify-content:center;font-family:var(--font-display);font-size:14px;font-weight:900;color:#0d0d12;" +
         "background:var(--acc);letter-spacing:.02em}",
       ".rj100-qui{flex:1;min-width:0}",
@@ -1106,7 +1106,7 @@
       ".rj100-reps{display:flex;flex-direction:column;gap:8px;padding:0 16px}",
       ".rj100-rep{display:flex;width:100%;padding:12px 14px;cursor:pointer;text-align:left;" +
         "background:var(--bg3,#16161d);border:1px solid rgba(255,255,255,.10);border-left:3px solid var(--t);" +
-        "border-radius:11px;font-family:inherit;transition:transform .12s ease,border-color .12s ease}",
+        "border-radius:var(--r);font-family:inherit;transition:transform .12s ease,border-color .12s ease}",
       ".rj100-rep:active{transform:scale(.99)}",
       ".rj100-rep .co{flex:1;min-width:0;display:block}",
       ".rj100-rep .at{display:block;font-family:var(--font-display);font-size:9px;font-weight:800;" +
@@ -1118,7 +1118,7 @@
       ".rj100-rep.pick{border-color:var(--t);background:color-mix(in srgb,var(--t) 10%,var(--bg3,#16161d))}",
 
       /* --- retour après réponse ---------------------------------------- */
-      ".rj100-ret{margin:12px 16px 0;padding:13px 14px;border-radius:12px;" +
+      ".rj100-ret{margin:12px 16px 0;padding:13px 14px;border-radius:var(--r);" +
         "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10)}",
       ".rj100-ret .t{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.14em;" +
         "text-transform:uppercase;color:var(--acc);margin-bottom:6px}",
@@ -1130,14 +1130,14 @@
       ".rj100-eff .dn{color:#F87171;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.32)}",
 
       ".rj100-act{padding:16px}",
-      ".rj100-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;" +
+      ".rj100-btn{width:100%;padding:14px;border:none;border-radius:var(--r);cursor:pointer;" +
         "font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}",
       ".rj100-btn.go{background:var(--acc);color:#fff}",
       ".rj100-btn.fin{background:rgba(255,255,255,.07);color:var(--soft,#aeb6c6);border:1px solid rgba(255,255,255,.14)}",
 
       /* --- bilan -------------------------------------------------------- */
       ".rj100-bilan{margin:12px 16px 0}",
-      ".rj100-bl{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;margin-bottom:7px;" +
+      ".rj100-bl{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:var(--r);margin-bottom:7px;" +
         "background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09)}",
       ".rj100-bl .q{flex:1;min-width:0;font-size:11.5px;color:var(--muted,#8b93a7);" +
         "overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
@@ -1435,7 +1435,7 @@
   function injecterCSSPresse() {
     if (document.getElementById(CSS_PRESSE)) return;
     var css = [
-      ".rj100-art{margin:0 16px 8px;padding:12px 13px;border-radius:12px;" +
+      ".rj100-art{margin:0 16px 8px;padding:12px 13px;border-radius:var(--r);" +
         "background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);" +
         "border-left:3px solid var(--t,#A78BFA)}",
       ".rj100-art .h{display:flex;align-items:center;gap:7px;margin-bottom:6px}",

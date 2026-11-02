@@ -349,7 +349,7 @@ function _showFreePracticePopup(onDone) {
   overlay.id = "fp-popup-overlay";
   overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9500;display:flex;align-items:center;justify-content:center;padding:18px";
   var card = document.createElement("div");
-  card.style.cssText = "background:var(--surface,#16161D);border:1px solid var(--border,#2A2A35);border-radius:14px;padding:18px 16px 14px;max-width:400px;width:100%;box-shadow:0 12px 38px rgba(0,0,0,0.65);max-height:90vh;overflow-y:auto";
+  card.style.cssText = "background:var(--surface,#16161D);border:1px solid var(--border,#2A2A35);border-radius:var(--r);padding:18px 16px 14px;max-width:400px;width:100%;box-shadow:0 12px 38px rgba(0,0,0,0.65);max-height:90vh;overflow-y:auto";
   var titleHTML = '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:#60A5FA;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px">' + renderIcon('analyse_donnees', 14, '#60A5FA') + ' Essais libres (optionnel)</div>';
   titleHTML += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px">Sur quoi tu te concentres ?</div>';
   titleHTML += '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">Une bonne séance = un bonus pour le week-end. Un mauvais run = un petit malus.</div>';
@@ -359,7 +359,7 @@ function _showFreePracticePopup(onDone) {
     var skillPct = Math.round(obj.skill * 100);
     var skillColor = obj.skill > 0.65 ? "#34D399" : obj.skill > 0.45 ? "#F59E0B" : "#EF4444";
     var skillTxt = obj.skill > 0.65 ? "Bon niveau" : obj.skill > 0.45 ? "Niveau moyen" : "Niveau faible";
-    choicesHTML += '<button data-objid="' + obj.id + '" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;background:var(--surface2,#1F1F2A);border:1px solid var(--border,#2A2A35);border-radius:9px;cursor:pointer;font-family:inherit">';
+    choicesHTML += '<button data-objid="' + obj.id + '" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;background:var(--surface2,#1F1F2A);border:1px solid var(--border,#2A2A35);border-radius:var(--r);cursor:pointer;font-family:inherit">';
     choicesHTML += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:18px">' + obj.icon + '</span><span style="font-size:13px;font-weight:700;color:var(--text)">' + obj.label + '</span></div>';
     choicesHTML += '<div style="font-size:10.5px;color:var(--text3);line-height:1.4;margin-bottom:4px">' + obj.desc + '</div>';
     choicesHTML += '<div style="font-size:10px;color:' + skillColor + ';font-family:var(--font-display);letter-spacing:.04em;font-weight:700">' + skillTxt + ' · ' + obj.stat + ' ' + skillPct + '%</div>';
@@ -451,11 +451,11 @@ function _showFreePracticeResult(obj, outcome, bonus, onDone) {
   overlay.id = "fp-result-overlay";
   overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9500;display:flex;align-items:center;justify-content:center;padding:18px";
   var card = document.createElement("div");
-  card.style.cssText = "background:var(--surface,#16161D);border:1px solid " + colors[outcome] + ";border-top:3px solid " + colors[outcome] + ";border-radius:14px;padding:18px 16px 14px;max-width:380px;width:100%;box-shadow:0 12px 38px rgba(0,0,0,0.65)";
+  card.style.cssText = "background:var(--surface,#16161D);border:1px solid " + colors[outcome] + ";border-top:3px solid " + colors[outcome] + ";border-radius:var(--r);padding:18px 16px 14px;max-width:380px;width:100%;box-shadow:0 12px 38px rgba(0,0,0,0.65)";
   card.innerHTML = '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + colors[outcome] + ';letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px">' + icons[outcome] + ' ' + labels[outcome] + '</div>' +
     '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">' + obj.icon + ' ' + obj.label + '</div>' +
     '<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px">Bonus week-end : <strong style="color:' + colors[outcome] + '">' + bonusDesc + '</strong></div>' +
-    '<button id="fp-result-ok" style="display:block;width:100%;padding:10px 14px;background:var(--surface2,#1F1F2A);border:1px solid var(--border,#2A2A35);border-radius:8px;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.04em">Continuer →</button>';
+    '<button id="fp-result-ok" style="display:block;width:100%;padding:10px 14px;background:var(--surface2,#1F1F2A);border:1px solid var(--border,#2A2A35);border-radius:var(--r);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.04em">Continuer →</button>';
   overlay.appendChild(card);
   document.body.appendChild(overlay);
   var okBtn = card.querySelector("#fp-result-ok");
@@ -880,7 +880,7 @@ function _showQualiPlayerLapModal(driver, session, lap, totalLaps, lapTime, sect
   var sessLabel = "Q" + session;
   var lapTypeLabel = lap === 1 ? "OUT LAP" : lap === totalLaps ? "PUSH LAP" : "FAST LAP";
   // Build modal HTML
-  var html = '<div style="background:linear-gradient(180deg,#0a0a0a 0%,#0d0d12 100%);border:1px solid #1a1a24;border-left:3px solid #FF1801;border-radius:12px;max-width:430px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,24,1,.12)">';
+  var html = '<div style="background:linear-gradient(180deg,#0a0a0a 0%,#0d0d12 100%);border:1px solid #1a1a24;border-left:3px solid #FF1801;border-radius:var(--r);max-width:430px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,24,1,.12)">';
   // Header
   html += '<div style="padding:10px 14px;background:linear-gradient(135deg,rgba(255,24,1,.10),transparent);border-bottom:1px solid rgba(255,24,1,.18);display:flex;justify-content:space-between;align-items:center">';
   html += '<div style="display:flex;align-items:center;gap:8px">';
@@ -1001,7 +1001,7 @@ function _showQualiPlayerLapModal(driver, session, lap, totalLaps, lapTime, sect
         deltaHtml += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#34D399;letter-spacing:.14em;text-transform:uppercase">▲ Premier tour chrono</div>';
         deltaHtml += '</div>';
       }
-      deltaHtml += '<button onclick="_closeQualiPlayerLapModal()" style="width:100%;padding:11px;background:linear-gradient(135deg,#FF1801 0%,#B00500 100%);border:none;color:#fff;border-radius:8px;font-family:var(--font-display);font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">Continuer</button>';
+      deltaHtml += '<button onclick="_closeQualiPlayerLapModal()" style="width:100%;padding:11px;background:linear-gradient(135deg,#FF1801 0%,#B00500 100%);border:none;color:#fff;border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">Continuer</button>';
       footer.innerHTML = deltaHtml;
     }
   }, animDuration);
@@ -1429,13 +1429,13 @@ function __qualiHotLapSequenceCoeur(lapTime, session, lap, totalLaps, onDone) {
 
       var choicesHtml = "";
       step.choices.forEach(function(c, ci) {
-        choicesHtml += '<button onclick="_qualiSeqChoice(' + ci + ')" style="width:100%;padding:12px 14px;margin-bottom:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent">';
+        choicesHtml += '<button onclick="_qualiSeqChoice(' + ci + ')" style="width:100%;padding:12px 14px;margin-bottom:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:var(--r);color:var(--text);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent">';
         choicesHtml += '<span style="font-size:11px;padding:3px 7px;background:' + c.color + '22;color:' + c.color + ';border:1px solid ' + c.color + '55;border-radius:5px;font-family:var(--font-display);font-weight:700;letter-spacing:.04em;white-space:nowrap">' + c.deltaLabel + '</span>';
         choicesHtml += '<div style="flex:1"><div>' + c.text + '</div><div style="font-size:11px;color:var(--text3);margin-top:2px">' + c.note + '</div></div>';
         choicesHtml += '</button>';
       });
 
-      modal.innerHTML = '<div style="max-width:400px;width:100%;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-top:3px solid #FF1801;border-radius:14px;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.7)">' +
+      modal.innerHTML = '<div style="max-width:400px;width:100%;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-top:3px solid #FF1801;border-radius:var(--r);padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.7)">' +
         '<div style="text-align:center;margin-bottom:14px">' + progress + '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
         '<span style="font-size:24px">' + step.icon + '</span>' +
@@ -1617,7 +1617,7 @@ function _renderQualiTyreIndicator() {
   var tempPct = Math.max(0, Math.min(100, (temp - cfg.tempMin) / tempRange * 100));
   var optMinPct = (optMin - cfg.tempMin) / tempRange * 100;
   var optMaxPct = (optMax - cfg.tempMin) / tempRange * 100;
-  var html = '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;padding:10px 12px;margin-bottom:10px">';
+  var html = '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:10px 12px;margin-bottom:10px">';
   html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Pneus · ' + cfg.compound + '</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
   // Température
@@ -1692,12 +1692,12 @@ function _renderTimingChoice(session) {
   var weather = RACE_STATE.weather || {
     id: "dry"
   };
-  var html = '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;padding:12px 14px;margin-bottom:12px">';
+  var html = '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Stratégie de sortie — Q' + session + '</div>';
   html += '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.4">Quand veux-tu sortir en piste ? Le moment impacte l\'état de la piste, tes pneus et le nombre de tentatives.</div>';
   QUALI_TIMING_OPTIONS.forEach(function(opt) {
     var isRiskyAndWet = opt.riskMeteo && (weather.id === "wet" || weather.id === "storm" || weather.id === "cloudy");
-    html += '<button onclick="_qualiPickTiming(\'' + opt.id + '\')" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:inherit">';
+    html += '<button onclick="_qualiPickTiming(\'' + opt.id + '\')" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-family:inherit">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:16px">' + opt.icon + '</span><span style="font-size:13px;font-weight:700;color:var(--text)">' + opt.label + '</span>';
     if (isRiskyAndWet) html += '<span style="font-size:9px;color:#F59E0B;font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin-left:auto">⚠ RISQUE MÉTÉO</span>';
     if (opt.lapBonus > 0) html += '<span style="font-size:9px;color:#34D399;font-family:var(--font-display);font-weight:800;letter-spacing:.06em;margin-left:auto">+' + opt.lapBonus.toFixed(1) + 's grip</span>';
@@ -1721,7 +1721,7 @@ function __qualiPickTimingCoeur(id) {
       return o.id === id;
     });
     var atemptsExtra = chosen ? chosen.attempts : 0;
-    zone.innerHTML = '<div style="margin-bottom:8px;padding:8px 10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:8px;font-size:11px;color:#34D399">' +
+    zone.innerHTML = '<div style="margin-bottom:8px;padding:8px 10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:var(--r);font-size:11px;color:#34D399">' +
       chosen.icon + ' <strong>' + chosen.label + '</strong> — ' + chosen.desc +
       '</div>' +
       '<button class="btn btn-prim" onclick="runQualiSession()">' + svgPlay(16) + 'Lancer Q' + QUALI_STATE.session + '</button>';
@@ -1785,7 +1785,7 @@ function renderChronoBar(e, t, r) {
       i, o = e % 60,
       s = Math.floor(e / 60) + ":" + (o < 10 ? "0" : "") + o,
       l = a > 33 ? "var(--teal,#34D399)" : a > 15 ? "var(--amber)" : "var(--red)";
-    n.innerHTML = '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;padding:7px 12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Temps restant — Q' + r + '</span><span style="font-size:16px;font-weight:900;color:' + l + ';font-variant-numeric:tabular-nums">' + s + '</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:' + a + "%;background:" + l + ';border-radius:2px;transition:width .9s linear"></div></div></div>'
+    n.innerHTML = '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:7px 12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Temps restant — Q' + r + '</span><span style="font-size:16px;font-weight:900;color:' + l + ';font-variant-numeric:tabular-nums">' + s + '</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:' + a + "%;background:" + l + ';border-radius:2px;transition:width .9s linear"></div></div></div>'
   }
 }
 
@@ -2252,7 +2252,7 @@ function _showNextRaceEventCoeur() {
         var l = t.trustDelta > 0 ? "#34D399" : "#EF4444";
         n.push('<span style="font-size:10px;color:' + l + ';font-family:var(--font-display);letter-spacing:.04em">' + (t.trustDelta > 0 ? "+" : "") + t.trustDelta + " confiance écurie</span>")
       }
-      t.rivalryDelta && n.push('<span style="font-size:10px;color:#A78BFA;font-family:var(--font-display);letter-spacing:.04em">+' + t.rivalryDelta + " rivalité</span>"), t.mods && t.mods.rivalIdx && void 0 !== t.mods.rivalIdx.idx && G.rivals && G.rivals[t.mods.rivalIdx.idx] && n.push('<span style="font-size:10px;color:#60A5FA;font-family:var(--font-display);letter-spacing:.04em">Affecte ' + G.rivals[t.mods.rivalIdx.idx].name + "</span>"), o += '<button onclick="resolveRaceEvt(' + RACE_STATE.events.indexOf(e) + "," + r + ')" style="padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;line-height:1.35;-webkit-tap-highlight-color:transparent;transition:background .14s">' + t.text + (n.length ? '<div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap">' + n.join("") + "</div>" : "") + "</button>"
+      t.rivalryDelta && n.push('<span style="font-size:10px;color:#A78BFA;font-family:var(--font-display);letter-spacing:.04em">+' + t.rivalryDelta + " rivalité</span>"), t.mods && t.mods.rivalIdx && void 0 !== t.mods.rivalIdx.idx && G.rivals && G.rivals[t.mods.rivalIdx.idx] && n.push('<span style="font-size:10px;color:#60A5FA;font-family:var(--font-display);letter-spacing:.04em">Affecte ' + G.rivals[t.mods.rivalIdx.idx].name + "</span>"), o += '<button onclick="resolveRaceEvt(' + RACE_STATE.events.indexOf(e) + "," + r + ')" style="padding:12px 14px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;line-height:1.35;-webkit-tap-highlight-color:transparent;transition:background .14s">' + t.text + (n.length ? '<div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap">' + n.join("") + "</div>" : "") + "</button>"
     }), o += "</div>", o += "</div>", o += "</div>", t.innerHTML = o
   } else _hideRaceEventModal()
 }
@@ -11678,7 +11678,7 @@ function renderRivalriesPage() {
         return !e.active
       }),
       a = "";
-    a += '<div style="margin:12px 14px 0;padding:14px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:12px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Rivalités</div></div><div style="font-size:12px;color:var(--text2);line-height:1.5">Les rivalités naissent de l\'histoire. Un pilote qui te bat souvent, un accrochage, des duels serrés — chaque rivalité colore la saison et influence tes courses.</div></div>', 0 === r.length ? a += '<div class="t-sec">Aucune rivalité active</div><div style="margin:0 14px 12px;padding:18px 16px;background:var(--surface2);border:1px dashed var(--border);border-radius:12px;text-align:center;color:var(--text3);font-size:13px">Les rivalités émergeront avec tes premières courses.</div>' : (a += '<div class="t-sec">Rivalités actives · ' + r.length + "</div>", a += '<div style="margin:0 14px 12px;display:flex;flex-direction:column;gap:10px">', r.forEach(function(e) {
+    a += '<div style="margin:12px 14px 0;padding:14px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Rivalités</div></div><div style="font-size:12px;color:var(--text2);line-height:1.5">Les rivalités naissent de l\'histoire. Un pilote qui te bat souvent, un accrochage, des duels serrés — chaque rivalité colore la saison et influence tes courses.</div></div>', 0 === r.length ? a += '<div class="t-sec">Aucune rivalité active</div><div style="margin:0 14px 12px;padding:18px 16px;background:var(--surface2);border:1px dashed var(--border);border-radius:var(--r);text-align:center;color:var(--text3);font-size:13px">Les rivalités émergeront avec tes premières courses.</div>' : (a += '<div class="t-sec">Rivalités actives · ' + r.length + "</div>", a += '<div style="margin:0 14px 12px;display:flex;flex-direction:column;gap:10px">', r.forEach(function(e) {
       a += _renderRivalryCard(e, !0)
     }), a += "</div>"), n.length > 0 && (a += '<div class="t-sec">Apaisées · ' + n.length + "</div>", a += '<div style="margin:0 14px 12px;display:flex;flex-direction:column;gap:8px;opacity:.7">', n.slice(0, 5).forEach(function(e) {
       a += _renderRivalryCard(e, !1)
@@ -11702,7 +11702,7 @@ function _renderRivalryCard(e, t) {
     l = "";
   s && (l = "Saison " + s.saison + " · Manche " + s.manche, s.note && (l += " — " + s.note));
   var c = e.cat && e.cat !== G.cat ? '<span style="margin-left:6px;padding:1px 5px;background:rgba(255,255,255,0.06);border-radius:3px;font-size:9px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase">' + e.cat + "</span>" : "";
-  return '<div style="padding:14px 16px;background:var(--surface2);border:1px solid ' + r.color + "33;border-left:3px solid " + r.color + ';border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px"><div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;flex-wrap:wrap;gap:6px">' + _ppEscSafe(e.name) + c + "</div>" + (e.team ? '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + _ppEscSafe(e.team) + "</div>" : "") + '</div><div style="flex-shrink:0;text-align:right"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:' + r.color + "22;border:1px solid " + r.color + "55;border-radius:4px;font-family:var(--font-display);font-size:10px;font-weight:800;color:" + r.color + ';letter-spacing:.06em;text-transform:uppercase"><span style="font-size:12px">' + r.icon + "</span>" + r.label + '</span><div style="margin-top:4px">' + a + '</div></div></div><div style="display:flex;gap:12px;padding:8px 0 0;border-top:1px solid var(--border);font-size:11px;color:var(--text2)"><div><strong style="color:var(--text)">' + (n.wins || 0) + '</strong><span style="color:var(--text3)">devant</span></div><div><strong style="color:var(--text)">' + (n.losses || 0) + '</strong><span style="color:var(--text3)">derrière</span></div>' + (n.contacts > 0 ? '<div><strong style="color:#EF4444">' + n.contacts + '</strong><span style="color:var(--text3)">contact' + (n.contacts > 1 ? "s" : "") + "</span></div>" : "") + '<div style="margin-left:auto;color:var(--text3)">' + o + " évt.</div></div>" + (l ? '<div style="margin-top:6px;font-size:11px;color:var(--text3);font-style:italic">Dernier : ' + _ppEscSafe(l) + "</div>" : "") + "</div>"
+  return '<div style="padding:14px 16px;background:var(--surface2);border:1px solid ' + r.color + "33;border-left:3px solid " + r.color + ';border-radius:var(--r)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px"><div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;flex-wrap:wrap;gap:6px">' + _ppEscSafe(e.name) + c + "</div>" + (e.team ? '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + _ppEscSafe(e.team) + "</div>" : "") + '</div><div style="flex-shrink:0;text-align:right"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:' + r.color + "22;border:1px solid " + r.color + "55;border-radius:4px;font-family:var(--font-display);font-size:10px;font-weight:800;color:" + r.color + ';letter-spacing:.06em;text-transform:uppercase"><span style="font-size:12px">' + r.icon + "</span>" + r.label + '</span><div style="margin-top:4px">' + a + '</div></div></div><div style="display:flex;gap:12px;padding:8px 0 0;border-top:1px solid var(--border);font-size:11px;color:var(--text2)"><div><strong style="color:var(--text)">' + (n.wins || 0) + '</strong><span style="color:var(--text3)">devant</span></div><div><strong style="color:var(--text)">' + (n.losses || 0) + '</strong><span style="color:var(--text3)">derrière</span></div>' + (n.contacts > 0 ? '<div><strong style="color:#EF4444">' + n.contacts + '</strong><span style="color:var(--text3)">contact' + (n.contacts > 1 ? "s" : "") + "</span></div>" : "") + '<div style="margin-left:auto;color:var(--text3)">' + o + " évt.</div></div>" + (l ? '<div style="margin-top:6px;font-size:11px;color:var(--text3);font-style:italic">Dernier : ' + _ppEscSafe(l) + "</div>" : "") + "</div>"
 }
 
 function _ppEscSafe(e) {
@@ -12155,7 +12155,7 @@ function renderRaceObjective() {
     var lbl = pressLabels[obj.pressureLvl];
     var html = '<div style="background:linear-gradient(135deg,' + col + '14 0%,' + col + '06 100%);border:1px solid ' + col + '40;border-left:3px solid ' + col + ';border-radius:0 10px 10px 0;padding:12px 14px">';
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">';
-    html += '<div style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:' + col + '24;color:' + col + ';flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + col + ';letter-spacing:.14em;text-transform:uppercase">Objectif course</span></div>';
+    html += '<div style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--r);background:' + col + '24;color:' + col + ';flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + col + ';letter-spacing:.14em;text-transform:uppercase">Objectif course</span></div>';
     html += '<span style="font-family:var(--font-display);font-size:9.5px;font-weight:700;color:' + col + ';background:' + col + '14;border:1px solid ' + col + '40;padding:2px 8px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase">' + lbl + '</span>';
     html += '</div>';
     html += '<div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Vise <span style="color:' + col + '">P' + obj.suggestedPos + '</span> ou mieux</div>';
@@ -12628,7 +12628,7 @@ function renderTrustObjectives(e) {
       }
       a += "</div>";
       var g = G.currentTeam && TEAM_LOGOS[G.currentTeam] ? '<span style="display:inline-flex;width:26px;height:26px;border-radius:4px;overflow:hidden;flex-shrink:0;background:#0a0a12">' + TEAM_LOGOS[G.currentTeam].replace('width="40" height="40"', 'width="26" height="26"') + "</span>" : "";
-      if (a += '<div style="margin:0 14px 12px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface2);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:' + r.color + '"></div><div style="padding:14px 16px 12px 18px;background:linear-gradient(180deg,' + r.color + '15 0%,transparent 100%)"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Confiance</span><span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#fff;background:' + r.color + ';padding:3px 8px;border-radius:5px;letter-spacing:.08em;text-transform:uppercase">' + r.label + '</span></div><div style="display:flex;align-items:center;gap:8px;margin-top:8px">' + g + '<div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--white);line-height:1.1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + G.currentTeam + '</div></div><div style="font-size:12px;color:var(--text3);margin-top:6px;line-height:1.4">' + r.msg + '</div></div><div style="text-align:center;flex-shrink:0;position:relative;min-width:56px"><div style="position:absolute;inset:-4px -6px;background:radial-gradient(circle,' + r.color + '26 0%,transparent 70%);pointer-events:none"></div><div style="font-family:var(--font-display);font-size:28px;font-weight:900;color:' + r.color + ';line-height:1;letter-spacing:-.01em;position:relative">' + n + '</div><div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;position:relative">/ 100</div></div></div><div style="margin-top:10px;background:#1e293b;border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;width:' + n + "%;background:" + r.color + ';border-radius:3px;transition:width .4s"></div></div></div></div>', a += '<div class="t-sec">Objectifs de saison</div>', TEAM_TRUST.objectives.length) {
+      if (a += '<div style="margin:0 14px 12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:' + r.color + '"></div><div style="padding:14px 16px 12px 18px;background:linear-gradient(180deg,' + r.color + '15 0%,transparent 100%)"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Confiance</span><span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#fff;background:' + r.color + ';padding:3px 8px;border-radius:5px;letter-spacing:.08em;text-transform:uppercase">' + r.label + '</span></div><div style="display:flex;align-items:center;gap:8px;margin-top:8px">' + g + '<div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--white);line-height:1.1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + G.currentTeam + '</div></div><div style="font-size:12px;color:var(--text3);margin-top:6px;line-height:1.4">' + r.msg + '</div></div><div style="text-align:center;flex-shrink:0;position:relative;min-width:56px"><div style="position:absolute;inset:-4px -6px;background:radial-gradient(circle,' + r.color + '26 0%,transparent 70%);pointer-events:none"></div><div style="font-family:var(--font-display);font-size:28px;font-weight:900;color:' + r.color + ';line-height:1;letter-spacing:-.01em;position:relative">' + n + '</div><div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;position:relative">/ 100</div></div></div><div style="margin-top:10px;background:#1e293b;border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;width:' + n + "%;background:" + r.color + ';border-radius:3px;transition:width .4s"></div></div></div></div>', a += '<div class="t-sec">Objectifs de saison</div>', TEAM_TRUST.objectives.length) {
         var h = (TEAM_TRUST.objectives || []).filter(function(e) {
             return "main" === e.type
           }),
@@ -12638,18 +12638,18 @@ function renderTrustObjectives(e) {
         h.length && (a += '<div style="padding:0 16px 4px"><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Obligatoires</div>', h.forEach(function(e) {
           var t = e.done ? "#4ADE80" : e.failed ? "#EF4444" : "var(--text2)",
             r = e.done ? "" : e.failed ? "" : "○";
-          a += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;margin-bottom:6px"><span style="font-size:16px;color:' + t + ';flex-shrink:0;line-height:1.2">' + r + '</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:' + t + '">' + e.title + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + e.desc + '</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:#4ADE80">+' + e.reward + " conf.</div>" + (e.penalty ? '<div style="font-size:11px;color:#EF4444">' + e.penalty + " conf.</div>" : "") + "</div></div>"
+          a += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);margin-bottom:6px"><span style="font-size:16px;color:' + t + ';flex-shrink:0;line-height:1.2">' + r + '</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:' + t + '">' + e.title + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + e.desc + '</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:#4ADE80">+' + e.reward + " conf.</div>" + (e.penalty ? '<div style="font-size:11px;color:#EF4444">' + e.penalty + " conf.</div>" : "") + "</div></div>"
         }), a += "</div>"), v.length && (a += '<div class="t-sec">Bonus de performance</div><div style="padding:0 16px 4px">', v.forEach(function(e) {
           var t = e.done ? "#4ADE80" : e.failed ? "#EF4444" : "var(--amber)",
             r = e.done ? "" : e.failed ? "" : "";
-          a += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:10px;margin-bottom:6px"><span style="font-size:16px;color:' + t + ';flex-shrink:0;line-height:1.2">' + r + '</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:' + t + '">' + e.title + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + e.desc + '</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:#4ADE80">+' + e.reward + " conf.</div></div></div>"
+          a += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);margin-bottom:6px"><span style="font-size:16px;color:' + t + ';flex-shrink:0;line-height:1.2">' + r + '</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:' + t + '">' + e.title + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + e.desc + '</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:#4ADE80">+' + e.reward + " conf.</div></div></div>"
         }), a += "</div>")
       } else a += '<div style="padding:14px 16px;font-size:13px;color:var(--text3)">Aucun objectif fixé pour cette saison.</div>';
       var x = TEAM_TRUST.contextual;
       if (x && !x.expired) {
         a += '<div class="t-sec">Défi en cours</div><div style="padding:0 16px 16px">';
         var y = x.done ? "#4ADE80" : "#818cf8";
-        a += '<div style="padding:12px 14px;background:var(--surface2);border:1px solid ' + y + ';border-radius:10px"><div style="font-size:13px;font-weight:700;color:' + y + ';margin-bottom:4px"> ' + x.title + (x.done ? " — Réussi !" : "") + ' </div><div style="font-size:12px;color:var(--text3)">' + x.desc + '</div><div style="margin-top:6px;font-size:11px"><span style="color:#4ADE80">Réussite : +' + x.reward + " conf.</span>" + (x.penalty ? '  <span style="color:#EF4444">Echec : ' + x.penalty + " conf.</span>" : "") + "</div></div>", a += "</div>"
+        a += '<div style="padding:12px 14px;background:var(--surface2);border:1px solid ' + y + ';border-radius:var(--r)"><div style="font-size:13px;font-weight:700;color:' + y + ';margin-bottom:4px"> ' + x.title + (x.done ? " — Réussi !" : "") + ' </div><div style="font-size:12px;color:var(--text3)">' + x.desc + '</div><div style="margin-top:6px;font-size:11px"><span style="color:#4ADE80">Réussite : +' + x.reward + " conf.</span>" + (x.penalty ? '  <span style="color:#EF4444">Echec : ' + x.penalty + " conf.</span>" : "") + "</div></div>", a += "</div>"
       }
       var b = TEAM_TRUST.history.slice(-6).reverse();
       b.length && (a += '<div class="t-sec">Historique récent</div><div style="padding:0 16px 20px">', b.forEach(function(e) {
@@ -13038,19 +13038,19 @@ function _renderTyreSquare(key, selected, onclick) {
   var info = TYRE_COMPOUND_INFO[key];
   if (!info) return "";
   var sel = selected ? 'border:3px solid ' + info.border + ';box-shadow:0 0 0 2px rgba(255,255,255,0.15), 0 4px 12px ' + info.border + '66' : 'border:2px solid ' + info.border + '77';
-  return '<div onclick="' + onclick + '" style="cursor:pointer;background:' + info.bg + ';' + sel + ';border-radius:14px;padding:12px 8px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="width:50px;height:50px;margin:0 auto;background:' + info.color + ';border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #00000033;box-shadow:inset 0 -4px 8px rgba(0,0,0,0.25)"><span style="font-family:var(--font-display);font-size:22px;font-weight:900;color:' + info.text + ';letter-spacing:0;line-height:1">' + info.short + '</span></div>' + '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:var(--text);letter-spacing:.06em;text-transform:uppercase;margin-top:8px">' + info.label + '</div>' + '<div style="font-size:9px;color:var(--text3);margin-top:2px">' + info.pace + '</div>' + '</div>'
+  return '<div onclick="' + onclick + '" style="cursor:pointer;background:' + info.bg + ';' + sel + ';border-radius:var(--r);padding:12px 8px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="width:50px;height:50px;margin:0 auto;background:' + info.color + ';border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #00000033;box-shadow:inset 0 -4px 8px rgba(0,0,0,0.25)"><span style="font-family:var(--font-display);font-size:22px;font-weight:900;color:' + info.text + ';letter-spacing:0;line-height:1">' + info.short + '</span></div>' + '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:var(--text);letter-spacing:.06em;text-transform:uppercase;margin-top:8px">' + info.label + '</div>' + '<div style="font-size:9px;color:var(--text3);margin-top:2px">' + info.pace + '</div>' + '</div>'
 }
 
 function _renderStratLevelSquare(key, selected, onclick) {
   var info = STRAT_LEVELS[key];
   if (!info) return "";
   var sel = selected ? 'border:3px solid ' + info.color + ';box-shadow:0 0 0 2px rgba(255,255,255,0.15), 0 4px 14px ' + info.color + '55' : 'border:2px solid ' + info.color + '55';
-  return '<div onclick="' + onclick + '" style="cursor:pointer;background:' + info.bg + ';' + sel + ';border-radius:14px;padding:12px 10px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="font-size:24px;line-height:1;margin-bottom:4px">' + info.icon + '</div>' + '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + info.color + ';letter-spacing:.08em;text-transform:uppercase">' + info.label + '</div>' + '<div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.35;min-height:28px">' + info.desc + '</div>' + '</div>'
+  return '<div onclick="' + onclick + '" style="cursor:pointer;background:' + info.bg + ';' + sel + ';border-radius:var(--r);padding:12px 10px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="font-size:24px;line-height:1;margin-bottom:4px">' + info.icon + '</div>' + '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + info.color + ';letter-spacing:.08em;text-transform:uppercase">' + info.label + '</div>' + '<div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.35;min-height:28px">' + info.desc + '</div>' + '</div>'
 }
 
 function _renderStopSquare(n, selected, onclick) {
   var sel = selected ? 'border:3px solid #F59E0B;background:rgba(245,158,11,0.18);box-shadow:0 0 0 2px rgba(255,255,255,0.15)' : 'border:2px solid var(--border-hi);background:var(--surface2)';
-  return '<div onclick="' + onclick + '" style="cursor:pointer;' + sel + ';border-radius:12px;padding:14px 6px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="font-family:var(--font-display);font-size:24px;font-weight:900;color:' + (selected ? "#F59E0B" : "var(--text)") + ';line-height:1">' + n + '</div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px">' + (n === 0 ? "Aucun" : (n + " arrêt" + (n > 1 ? "s" : ""))) + '</div>' + '</div>'
+  return '<div onclick="' + onclick + '" style="cursor:pointer;' + sel + ';border-radius:var(--r);padding:14px 6px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="font-family:var(--font-display);font-size:24px;font-weight:900;color:' + (selected ? "#F59E0B" : "var(--text)") + ';line-height:1">' + n + '</div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px">' + (n === 0 ? "Aucun" : (n + " arrêt" + (n > 1 ? "s" : ""))) + '</div>' + '</div>'
 }
 
 function renderStrategyScreen() { return rjAppeler("renderStrategyScreen", _renderStrategyScreenCoeur, this, arguments); }
@@ -13064,7 +13064,7 @@ function _renderStrategyScreenCoeur() {
     if (!_mm2) {
       _mm2 = document.createElement("div");
       _mm2.id = "strat-mismatch-warn";
-      _mm2.style.cssText = "margin:8px 14px 0;padding:8px 12px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.30);border-left:3px solid #F97316;border-radius:8px;display:flex;align-items:center;gap:8px";
+      _mm2.style.cssText = "margin:8px 14px 0;padding:8px 12px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.30);border-left:3px solid #F97316;border-radius:var(--r);display:flex;align-items:center;gap:8px";
       _mm2.innerHTML = '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#F97316;letter-spacing:.08em"> RAPPEL</span><span style="font-size:11px;color:var(--text2)">Setup mal adapté la dernière fois sur ce circuit. Revérifie l\'alignement.</span>';
       if (container.parentNode) container.parentNode.insertBefore(_mm2, container)
     }
@@ -13096,7 +13096,7 @@ function _renderStrategyScreenCoeur() {
       _bt = "var(--text3)";
       _bd = "P" + _qp + " — Position de course. Stratégie équilibrée."
     }
-    _badge.style.cssText = "margin:6px 14px 0;padding:8px 12px;background:" + _bc + ";border:1px solid " + _bt + "44;border-left:3px solid " + _bt + ";border-radius:8px;display:flex;align-items:center;gap:8px";
+    _badge.style.cssText = "margin:6px 14px 0;padding:8px 12px;background:" + _bc + ";border:1px solid " + _bt + "44;border-left:3px solid " + _bt + ";border-radius:var(--r);display:flex;align-items:center;gap:8px";
     _badge.innerHTML = '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:' + _bt + ';letter-spacing:.08em"> GRILLE</span><span style="font-size:11px;color:var(--text2)">' + _bd + '</span>';
     if (container && container.parentNode) container.parentNode.insertBefore(_badge, container);
   })();
@@ -13112,7 +13112,7 @@ function _renderStrategyScreenCoeur() {
   var availCompounds = _strategyAvailableCompounds();
   var html = '';
   html += '<div style="padding:0 16px 16px">';
-  html += '<div style="margin:12px 0 14px;padding:14px 16px;background:linear-gradient(135deg,rgba(232,16,48,0.10),transparent);border:1px solid var(--border-hi);border-left:3px solid var(--red2);border-radius:14px">';
+  html += '<div style="margin:12px 0 14px;padding:14px 16px;background:linear-gradient(135deg,rgba(232,16,48,0.10),transparent);border:1px solid var(--border-hi);border-left:3px solid var(--red2);border-radius:var(--r)">';
   html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--red3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px">Stratégie de course</div>';
   html += '<div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--white);line-height:1.2;margin-bottom:6px">' + (circuit || "Grand Prix").toUpperCase() + '</div>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--text2)">';
@@ -13120,11 +13120,11 @@ function _renderStrategyScreenCoeur() {
   if (qPos > 0) html += '<span style="padding:3px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:5px">Grille : P' + qPos + '</span>';
   html += '<span style="padding:3px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:5px">' + (G.cat || "") + '</span>';
   html += '</div></div>';
-  html += '<button onclick="askEngineerStrat()" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 14px;background:linear-gradient(135deg,rgba(96,165,250,0.10) 0%,rgba(167,139,250,0.08) 100%);border:1px solid rgba(96,165,250,0.30);border-radius:10px;color:#60A5FA;font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-bottom:14px">';
+  html += '<button onclick="askEngineerStrat()" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 14px;background:linear-gradient(135deg,rgba(96,165,250,0.10) 0%,rgba(167,139,250,0.08) 100%);border:1px solid rgba(96,165,250,0.30);border-radius:var(--r);color:#60A5FA;font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-bottom:14px">';
   html += '<span style="font-size:16px">' + renderIcon('moteur', 14, '#9CA3AF') + '</span><span>Demander à l\'ingénieur</span><span style="margin-left:auto;font-size:9px;color:var(--text3);font-weight:600">Plan complet</span>';
   html += '</button>';
   if (hasCompound) {
-    html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:12px;overflow:hidden;margin-bottom:12px">';
+    html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);overflow:hidden;margin-bottom:12px">';
     html += '<div style="padding:11px 14px;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Composé de départ</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Choisis ton pneu pour le premier relais</div></div>';
     html += '<div style="display:grid;grid-template-columns:repeat(' + (availCompounds.length <= 3 ? availCompounds.length : 3) + ',1fr);gap:8px;padding:14px">';
     availCompounds.forEach(function(c) {
@@ -13138,7 +13138,7 @@ function _renderStrategyScreenCoeur() {
     var stopOpts = [];
     for (var k = minS; k <= maxS; k++) stopOpts.push(k);
     if (stopOpts.length > 1) {
-      html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:12px;overflow:hidden;margin-bottom:12px">';
+      html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);overflow:hidden;margin-bottom:12px">';
       html += '<div style="padding:11px 14px;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Plan de relais</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Nombre d\'arrêts au stand prévus</div></div>';
       html += '<div style="display:grid;grid-template-columns:repeat(' + Math.min(stopOpts.length, 4) + ',1fr);gap:8px;padding:14px">';
       stopOpts.forEach(function(n) {
@@ -13147,7 +13147,7 @@ function _renderStrategyScreenCoeur() {
       html += '</div></div>';
     }
   }
-  html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:12px;overflow:hidden;margin-bottom:12px">';
+  html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);overflow:hidden;margin-bottom:12px">';
   html += '<div style="padding:11px 14px;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Approche course</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Mentalité globale pour cette course</div></div>';
   html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px">';
   ["attack", "manage", "defend", "gamble"].forEach(function(p) {
@@ -13156,7 +13156,7 @@ function _renderStrategyScreenCoeur() {
   html += '</div></div>';
   if (weather.id === "cloudy" || weather.id === "dry" || weather.id === "hot") {
     var ws = s.weatherStance || "ignore";
-    html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:12px;overflow:hidden;margin-bottom:12px">';
+    html += '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);overflow:hidden;margin-bottom:12px">';
     html += '<div style="padding:11px 14px;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Stratégie météo</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Anticiper un changement de temps ?</div></div>';
     html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px">';
     var weatherOpts = [{
@@ -13175,11 +13175,11 @@ function _renderStrategyScreenCoeur() {
     weatherOpts.forEach(function(w) {
       var sel = ws === w.key;
       var s2 = sel ? 'border:3px solid ' + w.color + ';background:' + w.color + '18' : 'border:2px solid ' + w.color + '55;background:var(--surface2)';
-      html += '<div onclick="setStrategyWeatherStance(\'' + w.key + '\')" style="cursor:pointer;' + s2 + ';border-radius:12px;padding:12px 10px;text-align:center;-webkit-tap-highlight-color:transparent"><div style="font-size:22px;line-height:1;margin-bottom:4px">' + w.icon + '</div><div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + w.color + ';letter-spacing:.06em;text-transform:uppercase">' + w.label + '</div><div style="font-size:9.5px;color:var(--text3);margin-top:4px;line-height:1.3">' + w.desc + '</div></div>'
+      html += '<div onclick="setStrategyWeatherStance(\'' + w.key + '\')" style="cursor:pointer;' + s2 + ';border-radius:var(--r);padding:12px 10px;text-align:center;-webkit-tap-highlight-color:transparent"><div style="font-size:22px;line-height:1;margin-bottom:4px">' + w.icon + '</div><div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + w.color + ';letter-spacing:.06em;text-transform:uppercase">' + w.label + '</div><div style="font-size:9.5px;color:var(--text3);margin-top:4px;line-height:1.3">' + w.desc + '</div></div>'
     });
     html += '</div></div>';
   }
-  html += '<button onclick="confirmStrategy()" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF1801 0%,#C8102E 100%);color:#fff;border:none;border-radius:12px;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 14px rgba(232,16,48,0.30)">Confirmer la stratégie · Aller en course</button>';
+  html += '<button onclick="confirmStrategy()" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF1801 0%,#C8102E 100%);color:#fff;border:none;border-radius:var(--r);font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 14px rgba(232,16,48,0.30)">Confirmer la stratégie · Aller en course</button>';
   html += '</div>';
   container.innerHTML = html;
 }
@@ -13511,7 +13511,7 @@ function _showCompoundPopup() {
   var suggested = (typeof _suggestedCompound === "function") ? _suggestedCompound() : "medium";
   var compounds = ["soft", "medium", "hard", "wet"];
   var card = document.createElement("div");
-  card.style.cssText = "background:var(--surface,#16161D);border:1px solid var(--border,#2A2A35);border-radius:14px;padding:18px 16px 14px;max-width:380px;width:100%;box-shadow:0 12px 38px rgba(0,0,0,0.65)";
+  card.style.cssText = "background:var(--surface,#16161D);border:1px solid var(--border,#2A2A35);border-radius:var(--r);padding:18px 16px 14px;max-width:380px;width:100%;box-shadow:0 12px 38px rgba(0,0,0,0.65)";
   var titleHTML = '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:#F59E0B;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px">' + renderIcon('moteur', 14, '#9CA3AF') + ' Arrêt au stand</div>';
   titleHTML += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px">Choisis tes pneus</div>';
   titleHTML += '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">Météo : ' + (weather === "wet" || weather === "storm" ? " pluie" : weather === "hot" ? " chaud" : " sec") + ' · Tour ' + LIVE_RACE.cur + '/' + LIVE_RACE.total + '</div>';
@@ -13524,7 +13524,7 @@ function _showCompoundPopup() {
     var bgGrad = isSuggested ? "linear-gradient(180deg,rgba(52,211,153,0.15) 0%,rgba(52,211,153,0.06) 100%)" : "var(--surface2,#1F1F2A)";
     var border = isSuggested ? "1.5px solid #34D399" : "1px solid var(--border,#2A2A35)";
     var sugBadge = isSuggested ? '<span style="display:inline-block;margin-left:6px;padding:1px 5px;background:#34D399;color:#0a0510;border-radius:3px;font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Conseillé</span>' : "";
-    choicesHTML += '<button data-compound="' + comp + '" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;background:' + bgGrad + ';border:' + border + ';border-radius:9px;cursor:pointer;font-family:inherit">';
+    choicesHTML += '<button data-compound="' + comp + '" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;background:' + bgGrad + ';border:' + border + ';border-radius:var(--r);cursor:pointer;font-family:inherit">';
     choicesHTML += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:18px">' + eff.icon + '</span><span style="font-size:13px;font-weight:700;color:var(--text)">' + eff.label.replace(/ \(mauvais\).*$/, "") + '</span>' + sugBadge + '</div>';
     choicesHTML += '<div style="font-size:10.5px;color:var(--text3);line-height:1.4">' + paceTxt + ' · ' + wearTxt + '</div>';
     choicesHTML += '</button>';
@@ -13951,7 +13951,7 @@ function renderPitWall() {
     var lapStr = 'Tour ' + lap + ' / ' + total;
 
     // Header
-    var html = '<div style="width:100%;max-width:480px;max-height:88vh;background:linear-gradient(180deg,var(--bg3,#151520) 0%,var(--bg2,#111118) 100%);border:1px solid var(--border-hi,rgba(255,255,255,0.12));border-radius:16px 16px 0 0;overflow:hidden;display:flex;flex-direction:column">';
+    var html = '<div style="width:100%;max-width:480px;max-height:88vh;background:linear-gradient(180deg,var(--bg3,#151520) 0%,var(--bg2,#111118) 100%);border:1px solid var(--border-hi,rgba(255,255,255,0.12));border-radius:var(--r) 16px 0 0;overflow:hidden;display:flex;flex-direction:column">';
 
     // Header row
     html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0">';
@@ -13996,7 +13996,7 @@ function renderPitWall() {
         var border = isSugg ? '1.5px solid var(--green,#34D399)' : '1px solid var(--border,rgba(255,255,255,0.10))';
         var textC = ci.text || (comp === 'hard' ? '#111' : '#fff');
 
-        html += '<div onclick="_pwSelectCompound(this,\'' + comp + '\')" data-compound="' + comp + '" style="flex:1;padding:8px 6px 7px;border-radius:9px;border:' + border + ';background:' + bg + ';cursor:pointer;text-align:center;position:relative">';
+        html += '<div onclick="_pwSelectCompound(this,\'' + comp + '\')" data-compound="' + comp + '" style="flex:1;padding:8px 6px 7px;border-radius:var(--r);border:' + border + ';background:' + bg + ';cursor:pointer;text-align:center;position:relative">';
         if (isSugg) html += '<div style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:var(--green,#34D399);color:#0a0510;font-size:7px;font-weight:800;padding:1px 6px;border-radius:3px;letter-spacing:.04em;white-space:nowrap">Conseillé</div>';
         html += '<div style="width:16px;height:16px;border-radius:50%;background:' + ci.color + ';margin:4px auto 5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:' + textC + ';border:1px solid rgba(255,255,255,0.15)">' + (ci.short || 'M') + '</div>';
         html += '<div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.2">' + (ci.label || comp) + '</div>';
@@ -14008,7 +14008,7 @@ function renderPitWall() {
 
       // Simulation de position
       if (simNow || simIn3 || simStay) {
-        html += '<div style="margin:0 14px 10px;background:var(--surface2,rgba(255,255,255,0.03));border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:9px;overflow:hidden">';
+        html += '<div style="margin:0 14px 10px;background:var(--surface2,rgba(255,255,255,0.03));border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:var(--r);overflow:hidden">';
         html += '<div style="font-family:var(--font-display);font-size:8px;font-weight:800;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:7px 12px 5px;border-bottom:1px solid rgba(255,255,255,0.05)">Simulation de position</div>';
         if (simNow) {
           var posColor0 = simNow.places > 2 ? 'var(--red,#EF4444)' : simNow.places > 0 ? 'var(--amber,#F59E0B)' : 'var(--green,#34D399)';
@@ -14051,7 +14051,7 @@ function renderPitWall() {
       var pitBorder = pitInWindow ? 'none' : '1px solid var(--border)';
       if (canPit) {
         html += '<div style="padding:0 14px 12px">';
-        html += '<button id="pw-pit-btn" style="width:100%;padding:11px;background:' + pitBg + ';color:' + pitColor + ';border:' + pitBorder + ';border-radius:9px;font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;cursor:pointer"> Rentrer aux stands — Pit stop</button>';
+        html += '<button id="pw-pit-btn" style="width:100%;padding:11px;background:' + pitBg + ';color:' + pitColor + ';border:' + pitBorder + ';border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;cursor:pointer"> Rentrer aux stands — Pit stop</button>';
         html += '</div>';
       }
     }
@@ -14061,7 +14061,7 @@ function renderPitWall() {
 
     // Radio
     if (radioMsg) {
-      html += '<div style="margin:8px 14px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.18);border-left:3px solid var(--green,#34D399);border-radius:8px;padding:8px 10px 8px 10px">';
+      html += '<div style="margin:8px 14px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.18);border-left:3px solid var(--green,#34D399);border-radius:var(--r);padding:8px 10px 8px 10px">';
       html += '<div style="font-family:var(--font-display);font-size:8px;font-weight:800;color:var(--green,#34D399);letter-spacing:.10em;text-transform:uppercase;margin-bottom:4px">Radio ingénieur</div>';
       html += '<div style="font-size:12px;color:var(--text);line-height:1.5">"' + radioMsg + '"</div>';
       html += '</div>';
@@ -14392,7 +14392,7 @@ function renderPitButton() {
         _mds.onclick = function() {
           if (typeof renderPitWall === 'function') renderPitWall();
         };
-        _mds.style.cssText = 'position:fixed;bottom:148px;left:14px;z-index:8000;padding:8px 10px;background:linear-gradient(180deg,rgba(15,25,45,0.95),rgba(8,15,30,0.95));color:#60A5FA;border:1px solid rgba(96,165,250,0.4);border-radius:9px;font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.4)';
+        _mds.style.cssText = 'position:fixed;bottom:148px;left:14px;z-index:8000;padding:8px 10px;background:linear-gradient(180deg,rgba(15,25,45,0.95),rgba(8,15,30,0.95));color:#60A5FA;border:1px solid rgba(96,165,250,0.4);border-radius:var(--r);font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.4)';
         _mds.innerHTML = ' Mur';
         _lb.appendChild(_mds);
       }
@@ -14421,7 +14421,7 @@ function renderPitButton() {
     }) || {}).pos : "-" + status.estimatedPlacesLost + " pl. estimées";
     subLabel += " · " + dropTxt
   }
-  var btn = '<button onclick="_playerPit()" ' + (status.canPit ? "" : 'disabled') + ' style="padding:11px 16px;background:' + bgColor + ';color:' + textColor + ';border:1px solid rgba(255,255,255,0.25);border-radius:10px;font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:' + (status.canPit ? "pointer" : "not-allowed") + ';box-shadow:0 4px 12px rgba(0,0,0,0.4);' + (status.canPit ? "" : "opacity:0.5") + '">' + label + '</button>';
+  var btn = '<button onclick="_playerPit()" ' + (status.canPit ? "" : 'disabled') + ' style="padding:11px 16px;background:' + bgColor + ';color:' + textColor + ';border:1px solid rgba(255,255,255,0.25);border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:' + (status.canPit ? "pointer" : "not-allowed") + ';box-shadow:0 4px 12px rgba(0,0,0,0.4);' + (status.canPit ? "" : "opacity:0.5") + '">' + label + '</button>';
   btn += '<div style="font-size:9.5px;color:var(--text3);background:var(--surface2);padding:3px 7px;border-radius:5px;border:1px solid var(--border);text-align:right">' + subLabel + '</div>';
   btnContainer.innerHTML = btn;
   // Bouton mode pneus — gauche de l'écran, symétrique au bouton pit
@@ -14471,7 +14471,7 @@ function renderPitButton() {
     _modes.forEach(function(m) {
       var _active = _curMode === m.id;
       var _activeStyle = _active ? ';box-shadow:0 0 0 1.5px ' + m.color + ',0 2px 8px rgba(0,0,0,0.4)' : '';
-      _tmRow += '<button onclick="_setTyreMode(&quot;"+m.id+"&quot;)" style="padding:8px 10px;background:' + (_active ? m.bg : 'rgba(20,20,28,0.85)') + ';color:' + (_active ? m.color : '#6B7280') + ';border:1px solid ' + (_active ? m.border : 'rgba(255,255,255,0.08)') + ';border-radius:9px;font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.04em;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent' + _activeStyle + '">' + m.icon + ' ' + m.label + '</button>';
+      _tmRow += '<button onclick="_setTyreMode(&quot;"+m.id+"&quot;)" style="padding:8px 10px;background:' + (_active ? m.bg : 'rgba(20,20,28,0.85)') + ';color:' + (_active ? m.color : '#6B7280') + ';border:1px solid ' + (_active ? m.border : 'rgba(255,255,255,0.08)') + ';border-radius:var(--r);font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.04em;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent' + _activeStyle + '">' + m.icon + ' ' + m.label + '</button>';
     });
     _tmRow += '</div>';
     // Sous-label contextuel
@@ -15941,7 +15941,7 @@ function _renderLiveLeaderboardCoeur() {
     m += '<div style="display:flex;gap:5px;padding:6px 10px;border-bottom:1px solid var(--border)">';
     if (_ahead) {
       var _aGap = (_p.gap != null && _ahead.gap != null) ? Math.abs(_p.gap - _ahead.gap).toFixed(1) + "s" : "—";
-      m += '<div style="flex:1;background:var(--teal-bg,rgba(52,211,153,0.07));border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:5px 8px;min-width:0">' +
+      m += '<div style="flex:1;background:var(--teal-bg,rgba(52,211,153,0.07));border:1px solid rgba(52,211,153,0.2);border-radius:var(--r);padding:5px 8px;min-width:0">' +
         '<div style="font-size:8px;color:var(--green);font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">▲ Devant</div>' +
         '<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (_ahead.name || "").split(" ").pop() + '</div>' +
         '<div style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--green)">–' + _aGap + '</div>' +
@@ -15950,14 +15950,14 @@ function _renderLiveLeaderboardCoeur() {
     if (_activeRival) {
       var _rvDiff = (_activeRival.gap != null && _p.gap != null) ? (_activeRival.gap - _p.gap) : null;
       var _rvRelGap = _rvDiff !== null ? ((_rvDiff > 0 ? "+" : "") + _rvDiff.toFixed(1) + "s") : "P" + _activeRival.pos;
-      m += '<div style="flex:1;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-left:3px solid ' + _rivalColor + ';border-radius:8px;padding:5px 7px;min-width:0">' +
+      m += '<div style="flex:1;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-left:3px solid ' + _rivalColor + ';border-radius:var(--r);padding:5px 7px;min-width:0">' +
         '<div style="font-size:8px;color:' + _rivalColor + ';font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">' + _rivalIcon + ' Rival</div>' +
         '<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (_activeRival.name || "").split(" ").pop() + '</div>' +
         '<div style="font-family:var(--font-display);font-size:12px;font-weight:700;color:' + _rivalColor + '">' + _rvRelGap + '</div>' +
         '</div>';
     }
     if (_hasPit && _pitHtml && !_isSprintM) {
-      m += '<div style="flex:1;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.18);border-radius:8px;padding:5px 8px;min-width:0;text-align:center">' +
+      m += '<div style="flex:1;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.18);border-radius:var(--r);padding:5px 8px;min-width:0;text-align:center">' +
         '<div style="font-size:8px;color:' + _pitColor + ';font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">Pit</div>' +
         _pitHtml +
         '</div>';
@@ -16122,7 +16122,7 @@ function _showLiveEventCoeur(e) {
   var html = '';
 
   // === CARD PRINCIPALE ===
-  html += '<div style="background:linear-gradient(180deg,#0e0e14 0%,#080810 100%);border-top:2px solid ' + accentColor + ';border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);border-radius:16px 16px 0 0;max-width:460px;width:100%;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.03);padding-bottom:env(safe-area-inset-bottom,0px)">';
+  html += '<div style="background:linear-gradient(180deg,#0e0e14 0%,#080810 100%);border-top:2px solid ' + accentColor + ';border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);border-radius:var(--r) 16px 0 0;max-width:460px;width:100%;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.03);padding-bottom:env(safe-area-inset-bottom,0px)">';
 
   // === BARRE BROADCAST ===
   html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:' + accentBg + ';border-bottom:1px solid ' + accentBorder + '">';
@@ -16186,10 +16186,10 @@ function _showLiveEventCoeur(e) {
       indicatorLabel = "~ Incertain";
     }
 
-    html += '<button onclick="resolveLiveEvent(' + idx + ')" style="width:100%;text-align:left;padding:11px 13px;background:' + btnBg + ';border:1px solid ' + btnBorder + ';border-radius:10px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:border-color .12s;position:relative;overflow:hidden">';
+    html += '<button onclick="resolveLiveEvent(' + idx + ')" style="width:100%;text-align:left;padding:11px 13px;background:' + btnBg + ';border:1px solid ' + btnBorder + ';border-radius:var(--r);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:border-color .12s;position:relative;overflow:hidden">';
     // Accent gauche
     if (btnBorderAccent !== btnBorder) {
-      html += '<div style="position:absolute;top:0;left:0;width:3px;height:100%;background:' + btnBorderAccent + ';border-radius:10px 0 0 10px"></div>';
+      html += '<div style="position:absolute;top:0;left:0;width:3px;height:100%;background:' + btnBorderAccent + ';border-radius:var(--r) 0 0 10px"></div>';
     }
     // Texte
     html += '<div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.92);line-height:1.4;padding-left:' + (btnBorderAccent !== btnBorder ? '10px' : '0') + '">' + (choice.text || choice.label || "") + '</div>';
@@ -16740,7 +16740,7 @@ function showWeekendRecap() {
     var tmEndMarker = tmPts.length > 0 ? '<circle cx="' + tmPts[tmPts.length - 1].x.toFixed(1) + '" cy="' + tmPts[tmPts.length - 1].y.toFixed(1) + '" r="2.5" fill="#22D3EE" opacity="0.85"/>' : "";
     var tmPathSvg = tmPathD ? '<path d="' + tmPathD + '" stroke="#22D3EE" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3,2" opacity="0.7"/>' : "";
     var pathLength = pts.length * 60;
-    var svg = '<svg id="rj-recap-svg" viewBox="0 0 ' + w + ' ' + svgH + '" width="100%" style="display:block;background:rgba(0,0,0,0.4);border-radius:10px">' + lines + phaseSegs + pitMarkers + tmPathSvg + '<path d="' + pathD + '" stroke="#FF1801" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + pathLength + '" stroke-dashoffset="' + pathLength + '" style="animation:rj-recap-draw 1.6s cubic-bezier(.4,0,.2,1) forwards"/>' + startMarker + tmEndMarker + posMarker + '</svg>';
+    var svg = '<svg id="rj-recap-svg" viewBox="0 0 ' + w + ' ' + svgH + '" width="100%" style="display:block;background:rgba(0,0,0,0.4);border-radius:var(--r)">' + lines + phaseSegs + pitMarkers + tmPathSvg + '<path d="' + pathD + '" stroke="#FF1801" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + pathLength + '" stroke-dashoffset="' + pathLength + '" style="animation:rj-recap-draw 1.6s cubic-bezier(.4,0,.2,1) forwards"/>' + startMarker + tmEndMarker + posMarker + '</svg>';
     var legendHtml = hasTeammate ? '<div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--text2)"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:2px;background:#FF1801;border-radius:1px"></span>Toi</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:2px;background:#22D3EE;border-image:repeating-linear-gradient(90deg,#22D3EE 0 3px,transparent 3px 5px) 1"></span>Coéquipier</span>' + (pitLaps.length > 0 ? '<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;background:#FBBF24;border-radius:50%"></span>Pit stop</span>' : "") + '</div>' : (pitLaps.length > 0 ? '<div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--text2)"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;background:#FBBF24;border-radius:50%"></span>Pit stop</span></div>' : "");
     var bestSecs = p && p.bestSectors ? p.bestSectors : [];
     var bestSecsHtml = "";
@@ -16752,7 +16752,7 @@ function showWeekendRecap() {
       });
       bestSecsHtml += '</div>'
     }
-    var advancedStatsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">' + '<div style="padding:9px 10px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.20);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#34D399;letter-spacing:.14em">DÉPASS. ↑</div><div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#34D399;margin-top:2px">+' + overtakesMade + '</div></div>' + '<div style="padding:9px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.20);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#EF4444;letter-spacing:.14em">PERDUES ↓</div><div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#EF4444;margin-top:2px">−' + overtakesLost + '</div></div>' + (timeInP1 > 0 ? '<div style="padding:9px 10px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.20);border-radius:8px;text-align:center;grid-column:span 2"><div style="font-family:var(--font-display);font-size:8.5px;color:#F59E0B;letter-spacing:.14em">TEMPS EN TÊTE</div><div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#F59E0B;margin-top:2px">' + timeInP1 + ' tour' + (timeInP1 > 1 ? "s" : "") + '</div></div>' : "") + (pitLaps.length > 0 ? '<div style="padding:9px 10px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.20);border-radius:8px;text-align:center;grid-column:span 2"><div style="font-family:var(--font-display);font-size:8.5px;color:#FBBF24;letter-spacing:.14em">PIT STOPS</div><div style="font-family:var(--font-display);font-size:13px;font-weight:800;color:#FBBF24;margin-top:2px">' + pitLaps.length + ' arrêt' + (pitLaps.length > 1 ? "s" : "") + ' (T' + pitLaps.join(", T") + ')</div></div>' : "") + '</div>';
+    var advancedStatsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">' + '<div style="padding:9px 10px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.20);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#34D399;letter-spacing:.14em">DÉPASS. ↑</div><div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#34D399;margin-top:2px">+' + overtakesMade + '</div></div>' + '<div style="padding:9px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.20);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#EF4444;letter-spacing:.14em">PERDUES ↓</div><div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#EF4444;margin-top:2px">−' + overtakesLost + '</div></div>' + (timeInP1 > 0 ? '<div style="padding:9px 10px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.20);border-radius:var(--r);text-align:center;grid-column:span 2"><div style="font-family:var(--font-display);font-size:8.5px;color:#F59E0B;letter-spacing:.14em">TEMPS EN TÊTE</div><div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:#F59E0B;margin-top:2px">' + timeInP1 + ' tour' + (timeInP1 > 1 ? "s" : "") + '</div></div>' : "") + (pitLaps.length > 0 ? '<div style="padding:9px 10px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.20);border-radius:var(--r);text-align:center;grid-column:span 2"><div style="font-family:var(--font-display);font-size:8.5px;color:#FBBF24;letter-spacing:.14em">PIT STOPS</div><div style="font-family:var(--font-display);font-size:13px;font-weight:800;color:#FBBF24;margin-top:2px">' + pitLaps.length + ' arrêt' + (pitLaps.length > 1 ? "s" : "") + ' (T' + pitLaps.join(", T") + ')</div></div>' : "") + '</div>';
     var keyEvents = "";
     try {
       var log = (typeof RACE_STATE !== "undefined" && RACE_STATE.eventsLog) || [];
@@ -16770,8 +16770,8 @@ function showWeekendRecap() {
     var pCol = p && !p.dnf ? (p.pos === 1 ? "#F59E0B" : p.pos <= 3 ? "#FBBF24" : p.pos <= 10 ? "#34D399" : "#9CA3AF") : "#EF4444";
     var card = document.createElement("div");
     card.id = "rj-recap-card";
-    card.style.cssText = "max-width:380px;width:100%;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:18px;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.7);max-height:90vh;overflow-y:auto;animation:apex-modal-slide-in .3s cubic-bezier(.2,.7,.3,1)";
-    card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--red3);letter-spacing:.18em;text-transform:uppercase">Récap week-end</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px;line-height:1.1">' + (G.cat || "Course") + '</div></div><div style="display:flex;gap:6px"><button onclick="exportRecapAsImage(event)" title="Partager / Exporter" style="background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.30);color:#22D3EE;font-size:14px;cursor:pointer;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button><button onclick="closeWeekendRecap()" style="background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px">×</button></div></div>' + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px"><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">QUALI</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">P' + quali + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid ' + pCol + '40;border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:' + pCol + ';letter-spacing:.12em">FINAL</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + pCol + ';margin-top:2px">' + (typeof finalPos === "number" ? "P" + finalPos : finalPos) + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">DELTA</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + deltaColor + ';margin-top:2px">' + deltaStr + '</div></div></div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px">Évolution position par tour</div>' + svg + '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:6px;font-family:monospace"><span>Tour 1</span><span>Tour ' + totalLaps + '</span></div>' + legendHtml + (bestPos !== null ? '<div style="display:flex;gap:10px;margin-top:10px"><div style="flex:1;padding:8px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#34D399;letter-spacing:.12em">MEILLEURE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#34D399;margin-top:2px">P' + bestPos + '</div></div><div style="flex:1;padding:8px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.20);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#EF4444;letter-spacing:.12em">PIRE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#EF4444;margin-top:2px">P' + worstPos + '</div></div></div>' : "") + advancedStatsHtml + (bestSecsHtml ? '<div style="margin-top:12px"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px">Meilleurs secteurs</div>' + bestSecsHtml + '</div>' : "") + keyEvents + '<button onclick="closeWeekendRecap()" style="display:block;width:100%;margin-top:14px;padding:12px;background:var(--red2);border:none;border-radius:10px;color:#fff;font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Fermer</button>';
+    card.style.cssText = "max-width:380px;width:100%;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.7);max-height:90vh;overflow-y:auto;animation:apex-modal-slide-in .3s cubic-bezier(.2,.7,.3,1)";
+    card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--red3);letter-spacing:.18em;text-transform:uppercase">Récap week-end</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px;line-height:1.1">' + (G.cat || "Course") + '</div></div><div style="display:flex;gap:6px"><button onclick="exportRecapAsImage(event)" title="Partager / Exporter" style="background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.30);color:#22D3EE;font-size:14px;cursor:pointer;width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button><button onclick="closeWeekendRecap()" style="background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px">×</button></div></div>' + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px"><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">QUALI</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">P' + quali + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid ' + pCol + '40;border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:' + pCol + ';letter-spacing:.12em">FINAL</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + pCol + ';margin-top:2px">' + (typeof finalPos === "number" ? "P" + finalPos : finalPos) + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">DELTA</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + deltaColor + ';margin-top:2px">' + deltaStr + '</div></div></div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px">Évolution position par tour</div>' + svg + '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:6px;font-family:monospace"><span>Tour 1</span><span>Tour ' + totalLaps + '</span></div>' + legendHtml + (bestPos !== null ? '<div style="display:flex;gap:10px;margin-top:10px"><div style="flex:1;padding:8px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#34D399;letter-spacing:.12em">MEILLEURE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#34D399;margin-top:2px">P' + bestPos + '</div></div><div style="flex:1;padding:8px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.20);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#EF4444;letter-spacing:.12em">PIRE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#EF4444;margin-top:2px">P' + worstPos + '</div></div></div>' : "") + advancedStatsHtml + (bestSecsHtml ? '<div style="margin-top:12px"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px">Meilleurs secteurs</div>' + bestSecsHtml + '</div>' : "") + keyEvents + '<button onclick="closeWeekendRecap()" style="display:block;width:100%;margin-top:14px;padding:12px;background:var(--red2);border:none;border-radius:var(--r);color:#fff;font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Fermer</button>';
     ov.appendChild(card);
     ov.addEventListener("click", function(e) {
       if (e.target === ov) closeWeekendRecap()
@@ -17609,7 +17609,7 @@ function _buildMoralWidget() {
     }
 
     function buildBlock(title, value, color, label, hist) {
-      var h = "<div style='padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px'>";
+      var h = "<div style='padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--r)'>";
       h += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px'>";
       h += "<div style='font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.15em;text-transform:uppercase'>" + title + "</div>";
       h += "<div style='display:flex;align-items:baseline;gap:3px'>";
@@ -17628,7 +17628,7 @@ function _buildMoralWidget() {
     cols += buildBlock("Mental", mental, mColor, mLabel, mHist);
     if (hasTeam) cols += buildBlock("Confiance", trust, tColor, tLabel, tHist);
     cols += "</div>";
-    var mmLine = "<div style='margin:0 14px 4px;display:flex;align-items:center;gap:8px;padding:7px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px'>";
+    var mmLine = "<div style='margin:0 14px 4px;display:flex;align-items:center;gap:8px;padding:7px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r)'>";
     mmLine += "<span style='font-size:14px'>" + mmD.icon + "</span>";
     mmLine += "<div style='flex:1'><div style='font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.15em;text-transform:uppercase'>Momentum</div>";
     mmLine += "<div style='font-size:11px;font-weight:600;color:" + mmD.color + "'>" + mmD.label + "</div></div>";
@@ -18041,8 +18041,8 @@ function buildResultScreen(e, t, r, n, a) {
           var lapHist = (LIVE_RACE && LIVE_RACE._lapHistory) || [];
           if (lapHist.length >= 2) {
             var btn = document.createElement("button");
-            btn.style.cssText = "display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:0 14px 10px;padding:10px 12px;background:linear-gradient(135deg,rgba(96,165,250,0.12) 0%,rgba(168,85,247,0.10) 100%);border:1px solid rgba(96,165,250,0.30);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:transform .12s,border-color .15s";
-            btn.innerHTML = '<span style="display:inline-flex;width:34px;height:34px;border-radius:8px;background:rgba(96,165,250,0.18);border:1px solid rgba(96,165,250,0.35);color:#60A5FA;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.2"><span style="display:inline-flex;vertical-align:-2px;margin-right:6px;color:#60A5FA"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Voir le récap visuel</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Évolution position, secteurs, moments-clés</div></div><span style="color:var(--text3);font-size:18px;flex-shrink:0">›</span>';
+            btn.style.cssText = "display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:0 14px 10px;padding:10px 12px;background:linear-gradient(135deg,rgba(96,165,250,0.12) 0%,rgba(168,85,247,0.10) 100%);border:1px solid rgba(96,165,250,0.30);border-radius:var(--r);color:var(--text);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:transform .12s,border-color .15s";
+            btn.innerHTML = '<span style="display:inline-flex;width:34px;height:34px;border-radius:var(--r);background:rgba(96,165,250,0.18);border:1px solid rgba(96,165,250,0.35);color:#60A5FA;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.2"><span style="display:inline-flex;vertical-align:-2px;margin-right:6px;color:#60A5FA"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Voir le récap visuel</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Évolution position, secteurs, moments-clés</div></div><span style="color:var(--text3);font-size:18px;flex-shrink:0">›</span>';
             btn.addEventListener("click", function() {
               if (typeof showWeekendRecap === "function") showWeekendRecap()
             });
@@ -18097,7 +18097,7 @@ function buildResultScreen(e, t, r, n, a) {
     if (b) {
       var A = b.delta > 0,
         w = document.createElement("div");
-      w.style.cssText = "margin:0 16px 12px;padding:12px 14px;border:1px solid " + (A ? "var(--teal,#34D399)" : "var(--red-light)") + ";border-radius:12px;background:" + (A ? "#0a2620" : "#1a0808");
+      w.style.cssText = "margin:0 16px 12px;padding:12px 14px;border:1px solid " + (A ? "var(--teal,#34D399)" : "var(--red-light)") + ";border-radius:var(--r);background:" + (A ? "#0a2620" : "#1a0808");
       var M = A ? "▲" : "▼",
         E = Math.abs(b.delta),
         T = A ? E >= 3 ? "Gros paquet aéro" : E >= 2 ? "Mise à jour voiture" : "Évolution technique" : E >= 3 ? "Régression fiabilité" : "Légère perte de performance",
@@ -18111,7 +18111,7 @@ function buildResultScreen(e, t, r, n, a) {
         R = getTeamSeasonDelta(G.currentTeam);
       if (Math.abs(R) >= 2 && !b) {
         var P = document.createElement("div");
-        P.style.cssText = "margin:0 16px 12px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);display:flex;align-items:center;gap:8px";
+        P.style.cssText = "margin:0 16px 12px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);display:flex;align-items:center;gap:8px";
         var F = R > 0 ? "▲" : "▼",
           B = R > 0 ? "var(--teal,#34D399)" : "var(--red-light)";
         P.innerHTML = '<span style="color:' + B + ';font-weight:700">' + F + '</span><span style="font-size:12px;color:var(--text3)">Voiture ' + G.currentTeam + " : " + L + '/100 <span style="color:' + B + '">(' + (R > 0 ? "+" : "") + R + " depuis le début de saison)</span></span>", i.appendChild(P)
@@ -18475,7 +18475,7 @@ function _renderTrainScreenCoeur() {
           }
           var _color = _overCap.length > 0 ? "#EF4444" : "#F59E0B";
           var _bg = _overCap.length > 0 ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)";
-          e.innerHTML += '<div style="margin:10px 12px 4px;padding:11px 13px;background:' + _bg + ';border:1px solid ' + _color + '44;border-left:3px solid ' + _color + ';border-radius:8px">' + _txt + '</div>';
+          e.innerHTML += '<div style="margin:10px 12px 4px;padding:11px 13px;background:' + _bg + ';border:1px solid ' + _color + '44;border-left:3px solid ' + _color + ';border-radius:var(--r)">' + _txt + '</div>';
         }
       }
     } catch (_capErr) {
@@ -19283,11 +19283,11 @@ function _showSeasonEndCoeur() {
       L = document.getElementById("se-unlock"),
       S;
     if (L)
-      if (G.pendingTransfer && G.pendingTransfer.cat && getCatNextOptions(G.cat).indexOf(G.pendingTransfer.cat) >= 0) L.innerHTML = '<div style="padding:14px;border:1px solid rgba(232,16,48,.3);border-radius:12px;background:#0A2620"><div style="font-size:13px;font-weight:700;color:var(--teal,#34D399);margin-bottom:4px">Promotion confirmée !</div><div style="font-size:12px;color:var(--text2)">Tu rejoins <strong>' + G.pendingTransfer.team + "</strong> en <strong>" + G.pendingTransfer.cat + "</strong> la saison prochaine.</div></div>";
+      if (G.pendingTransfer && G.pendingTransfer.cat && getCatNextOptions(G.cat).indexOf(G.pendingTransfer.cat) >= 0) L.innerHTML = '<div style="padding:14px;border:1px solid rgba(232,16,48,.3);border-radius:var(--r);background:#0A2620"><div style="font-size:13px;font-weight:700;color:var(--teal,#34D399);margin-bottom:4px">Promotion confirmée !</div><div style="font-size:12px;color:var(--text2)">Tu rejoins <strong>' + G.pendingTransfer.team + "</strong> en <strong>" + G.pendingTransfer.cat + "</strong> la saison prochaine.</div></div>";
       else if (t <= 3 && getCatNextOptions(G.cat).length > 0) {
       var C = getCatNextOptions(G.cat),
         R = G.currentTeam && "Indépendant" !== G.currentTeam;
-      L.innerHTML = R ? '<div style="padding:14px;border:1px solid rgba(232,16,48,.3);border-radius:12px;background:#0A2620"><div style="font-size:13px;font-weight:700;color:var(--teal,#34D399);margin-bottom:4px">Promotion disponible</div><div style="font-size:12px;color:var(--text2)">Tu peux monter. Confirme via la période des transferts.</div></div>' : '<div style="padding:14px;border:1px solid var(--amber);border-radius:12px;background:#1a1000"><div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px">Résultat suffisant pour monter</div><div style="font-size:12px;color:var(--text2)">Signe un contrat en ' + (C[0] || G.cat) + " dans la fenêtre de transferts.</div></div>"
+      L.innerHTML = R ? '<div style="padding:14px;border:1px solid rgba(232,16,48,.3);border-radius:var(--r);background:#0A2620"><div style="font-size:13px;font-weight:700;color:var(--teal,#34D399);margin-bottom:4px">Promotion disponible</div><div style="font-size:12px;color:var(--text2)">Tu peux monter. Confirme via la période des transferts.</div></div>' : '<div style="padding:14px;border:1px solid var(--amber);border-radius:var(--r);background:#1a1000"><div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px">Résultat suffisant pour monter</div><div style="font-size:12px;color:var(--text2)">Signe un contrat en ' + (C[0] || G.cat) + " dans la fenêtre de transferts.</div></div>"
     } else L.innerHTML = "";
     var P = evaluateSeasonTrust(),
       F = document.getElementById("se-trust-summary");
@@ -19295,10 +19295,10 @@ function _showSeasonEndCoeur() {
       if (G.currentTeam && "Indépendant" !== G.currentTeam) {
         var B = getTrustConsequences(),
           I = '<div style="padding:0 16px 4px">';
-        I += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">', I += '<span style="font-size:12px;color:var(--text3)">' + G.currentTeam + "</span>", I += '<span style="font-size:13px;font-weight:700;color:' + B.color + '">' + TEAM_TRUST.value + "/100</span></div>", I += '<div style="background:#1e293b;border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px">', I += '<div style="height:100%;width:' + TEAM_TRUST.value + "%;background:" + B.color + ';border-radius:4px"></div></div>', I += '<div style="font-size:12px;padding:8px 10px;border:1px solid ' + B.color + "44;border-radius:8px;background:" + B.color + "11;color:" + B.color + ';margin-bottom:8px">' + B.msg + "</div>", P.summary && P.summary.length && P.summary.forEach(function(e) {
+        I += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">', I += '<span style="font-size:12px;color:var(--text3)">' + G.currentTeam + "</span>", I += '<span style="font-size:13px;font-weight:700;color:' + B.color + '">' + TEAM_TRUST.value + "/100</span></div>", I += '<div style="background:#1e293b;border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px">', I += '<div style="height:100%;width:' + TEAM_TRUST.value + "%;background:" + B.color + ';border-radius:4px"></div></div>', I += '<div style="font-size:12px;padding:8px 10px;border:1px solid ' + B.color + "44;border-radius:var(--r);background:" + B.color + "11;color:" + B.color + ';margin-bottom:8px">' + B.msg + "</div>", P.summary && P.summary.length && P.summary.forEach(function(e) {
           var t = e.success ? "#4ADE80" : "#EF4444";
           I += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">', I += '<span style="font-size:12px;color:' + t + '">' + e.text + "</span>", I += '<span style="font-size:12px;font-weight:700;color:' + t + '">' + (e.delta >= 0 ? "+" : "") + e.delta + "</span></div>"
-        }), TEAM_TRUST.value < 25 ? I += '<div style="margin-top:8px;padding:10px;background:#1a0000;border:1px solid #EF4444;border-radius:8px;font-size:12px;color:#EF4444">⚠ Confiance critique — le renouvellement de contrat est sérieusement compromis.</div>' : TEAM_TRUST.value >= 75 && (I += '<div style="margin-top:8px;padding:10px;background:#001a0a;border:1px solid #4ADE80;border-radius:8px;font-size:12px;color:#4ADE80">✓ Excellente saison — l\'écurie te proposera un renouvellement avantageux.</div>'), I += "</div>", F.innerHTML = I
+        }), TEAM_TRUST.value < 25 ? I += '<div style="margin-top:8px;padding:10px;background:#1a0000;border:1px solid #EF4444;border-radius:var(--r);font-size:12px;color:#EF4444">⚠ Confiance critique — le renouvellement de contrat est sérieusement compromis.</div>' : TEAM_TRUST.value >= 75 && (I += '<div style="margin-top:8px;padding:10px;background:#001a0a;border:1px solid #4ADE80;border-radius:var(--r);font-size:12px;color:#4ADE80">✓ Excellente saison — l\'écurie te proposera un renouvellement avantageux.</div>'), I += "</div>", F.innerHTML = I
       } else F.innerHTML = "<div style=\"padding:12px 16px;font-size:13px;color:var(--text3)\">Pilote indépendant — pas d'objectifs d'écurie.</div>";
     var O = document.getElementById("se-sub");
     O && (O.textContent = G.cat + " — " + gYear() + " terminée"), document.querySelectorAll(".scr").forEach(function(e) {
@@ -19451,7 +19451,7 @@ function _buildTransferOffersCoeur() {
     }), r.forEach(function(e) {
       var t = G.reputation >= (e.repReq || 0),
         r = document.createElement("div");
-      r.style.cssText = "margin:6px 16px;padding:14px;border:1px solid " + (e.promotion ? "var(--teal,#34D399)" : "var(--border)") + ";border-radius:12px;background:var(--surface2)";
+      r.style.cssText = "margin:6px 16px;padding:14px;border:1px solid " + (e.promotion ? "var(--teal,#34D399)" : "var(--border)") + ";border-radius:var(--r);background:var(--surface2)";
       var n = Number(e.budget) || 0,
         a = n >= 0 ? "+" + n.toLocaleString("fr-FR") + " e/mois" : Math.abs(n).toLocaleString("fr-FR") + " e a payer",
         i = e.dur && e.dur > 1 ? " — " + e.dur + " saisons" : "",
@@ -19991,7 +19991,7 @@ function renderSaveSlots() {
           day: "2-digit",
           month: "short"
         }) : "";
-      a.style.cssText = "border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--surface2);overflow:hidden";
+      a.style.cssText = "border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;background:var(--surface2);overflow:hidden";
       var d = document.createElement("div");
       d.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px 14px", d.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0;color:var(--text3)"><path d="M4 15V5l4 4 4-4 4 4 4-4v10"/><line x1="4" y1="19" x2="4" y2="15"/></svg><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + l + '</div><div style="font-size:11px;color:var(--text3)">S' + (n.saison || 1) + " · " + (n.cat || "Karting") + (c ? " · " + c : "") + "</div></div>";
       var p = document.createElement("button");
@@ -20016,7 +20016,7 @@ function renderSaveSlots() {
         } catch (e) {}
         renderSaveSlots()
       })
-    } else a.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px dashed var(--border);border-radius:12px;margin-bottom:8px;opacity:.6", a.innerHTML = '<div style="font-size:20px;color:var(--text3)">+</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text3)">Emplacement ' + (r + 1) + '</div><div style="font-size:11px;color:var(--text3)">Vide</div></div>';
+    } else a.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px dashed var(--border);border-radius:var(--r);margin-bottom:8px;opacity:.6", a.innerHTML = '<div style="font-size:20px;color:var(--text3)">+</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text3)">Emplacement ' + (r + 1) + '</div><div style="font-size:11px;color:var(--text3)">Vide</div></div>';
     e.appendChild(a)
   }))
 }
@@ -20520,7 +20520,7 @@ function sponsorSubTab(e) {
   var i = document.getElementById("spon-actif-badge");
   if (i) {
     var o = (G.sponsors || []).length;
-    i.innerHTML = o > 0 ? '<span style="background:#dc2626;color:#fff;border-radius:10px;padding:1px 5px;font-size:10px;margin-left:4px">' + o + "</span>" : ""
+    i.innerHTML = o > 0 ? '<span style="background:#dc2626;color:#fff;border-radius:var(--r);padding:1px 5px;font-size:10px;margin-left:4px">' + o + "</span>" : ""
   }
 }
 
@@ -20529,7 +20529,7 @@ function renderSponsors() {
   if (__racesDone < 2) {
     var __sl = document.getElementById("spon-list");
     if (__sl) {
-      __sl.innerHTML = '<div style="margin:10px 16px;padding:18px 14px;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:12px;text-align:center"><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Sponsors verrouillés</div><div style="font-size:12px;color:var(--text3);line-height:1.5">Tes premiers sponsors te contacteront <strong style="color:#F0B41E">après ta 2e course</strong>. (' + __racesDone + '/2 course' + (__racesDone > 1 ? 's' : '') + ' disputée' + (__racesDone > 1 ? 's' : '') + ')</div></div>';
+      __sl.innerHTML = '<div style="margin:10px 16px;padding:18px 14px;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Sponsors verrouillés</div><div style="font-size:12px;color:var(--text3);line-height:1.5">Tes premiers sponsors te contacteront <strong style="color:#F0B41E">après ta 2e course</strong>. (' + __racesDone + '/2 course' + (__racesDone > 1 ? 's' : '') + ' disputée' + (__racesDone > 1 ? 's' : '') + ')</div></div>';
     }
     var __so = document.getElementById("spon-active");
     if (__so) {
@@ -21075,17 +21075,17 @@ function _renderPalmaresCoeur() {
       m = a > 0 ? Math.round(o / a * 100) : 0,
       g = a > 0 ? Math.round(s / a * 100) : 0,
       h = "";
-    h += '<div class="t-sec">Trophées</div>', p.length > 0 && (h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#F59E0B"></div>', h += '<div style="padding:12px 14px 10px 18px;background:linear-gradient(180deg,rgba(245,158,11,0.10) 0%,transparent 100%)">', h += '<div style="display:flex;align-items:center;gap:10px">', h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0">' + renderIcon("trophy", 22, "#F59E0B") + "</span>", h += '<div style="flex:1;min-width:0">', h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">', h += '<span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Champion pilote</span>', h += '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#fff;background:#F59E0B;padding:3px 8px;border-radius:5px;letter-spacing:.08em;text-transform:uppercase">' + p.length + " titre" + (p.length > 1 ? "s" : "") + "</span>", h += "</div>", h += '<div style="font-size:11px;color:var(--text3);margin-top:4px">Meilleure performance en course</div>', h += "</div></div></div>", p.forEach(function(e, t) {
+    h += '<div class="t-sec">Trophées</div>', p.length > 0 && (h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#F59E0B"></div>', h += '<div style="padding:12px 14px 10px 18px;background:linear-gradient(180deg,rgba(245,158,11,0.10) 0%,transparent 100%)">', h += '<div style="display:flex;align-items:center;gap:10px">', h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0">' + renderIcon("trophy", 22, "#F59E0B") + "</span>", h += '<div style="flex:1;min-width:0">', h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">', h += '<span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Champion pilote</span>', h += '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#fff;background:#F59E0B;padding:3px 8px;border-radius:5px;letter-spacing:.08em;text-transform:uppercase">' + p.length + " titre" + (p.length > 1 ? "s" : "") + "</span>", h += "</div>", h += '<div style="font-size:11px;color:var(--text3);margin-top:4px">Meilleure performance en course</div>', h += "</div></div></div>", p.forEach(function(e, t) {
       var r = e.team || "Indépendant",
         n = TEAM_LOGOS[r] ? '<span style="display:inline-flex;width:14px;height:14px;border-radius:2px;overflow:hidden;vertical-align:middle;margin-right:4px">' + TEAM_LOGOS[r].replace('width="40" height="40"', 'width="14" height="14"') + "</span>" : "";
       h += '<div style="padding:10px 14px 10px 18px;' + (p.length, 'border-top:1px solid var(--border)">'), h += '<div style="display:flex;align-items:center;justify-content:space-between">';
       var a = G.pilot && G.pilot.startYear ? G.pilot.startYear + (e.saison - 1) : e.saison;
       h += '<div><div style="font-size:13px;font-weight:700;color:var(--text)">' + a + " — " + e.cat + "</div>", h += '<div style="display:flex;align-items:center;margin-top:3px">' + n + '<span style="font-size:11px;color:var(--text3)">' + r + "</span></div></div>", h += '<div style="text-align:right"><div style="font-family:var(--font-display);font-size:11px;font-weight:700;color:#F59E0B;letter-spacing:.04em">' + e.wins + "V · " + e.pods + "P · " + e.pts + " pts</div>", h += '<div style="font-size:11px;color:var(--text3);margin-top:2px">Âge ' + e.age + " ans</div></div>", h += "</div></div>"
-    }), h += "</div>"), u.length > 0 && (h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#F59E0B"></div>', h += '<div style="padding:12px 14px 10px 18px;background:linear-gradient(180deg,rgba(245,158,11,0.08) 0%,transparent 100%)">', h += '<div style="display:flex;align-items:center;gap:10px">', h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0">' + renderIcon("trophy", 22, "#F59E0B") + "</span>", h += '<div style="flex:1;min-width:0">', h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">', h += '<span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Champion constructeur</span>', h += '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#fff;background:#F59E0B;padding:3px 8px;border-radius:5px;letter-spacing:.08em;text-transform:uppercase">' + u.length + " titre" + (u.length > 1 ? "s" : "") + "</span>", h += "</div>", h += '<div style="font-size:11px;color:var(--text3);margin-top:4px">Meilleure écurie de la saison</div>', h += "</div></div></div>", u.forEach(function(e, t) {
+    }), h += "</div>"), u.length > 0 && (h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#F59E0B"></div>', h += '<div style="padding:12px 14px 10px 18px;background:linear-gradient(180deg,rgba(245,158,11,0.08) 0%,transparent 100%)">', h += '<div style="display:flex;align-items:center;gap:10px">', h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0">' + renderIcon("trophy", 22, "#F59E0B") + "</span>", h += '<div style="flex:1;min-width:0">', h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">', h += '<span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase">Champion constructeur</span>', h += '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#fff;background:#F59E0B;padding:3px 8px;border-radius:5px;letter-spacing:.08em;text-transform:uppercase">' + u.length + " titre" + (u.length > 1 ? "s" : "") + "</span>", h += "</div>", h += '<div style="font-size:11px;color:var(--text3);margin-top:4px">Meilleure écurie de la saison</div>', h += "</div></div></div>", u.forEach(function(e, t) {
       var r = e.constrChamp || e.team || "",
         n = TEAM_LOGOS[r] ? '<span style="display:inline-flex;width:14px;height:14px;border-radius:2px;overflow:hidden;vertical-align:middle;margin-right:4px">' + TEAM_LOGOS[r].replace('width="40" height="40"', 'width="14" height="14"') + "</span>" : "";
       h += '<div style="padding:10px 14px 10px 18px;border-top:1px solid var(--border)">', h += '<div style="font-size:13px;font-weight:700;color:var(--text)">Saison ' + e.saison + " — " + e.cat + "</div>", h += '<div style="display:flex;align-items:center;margin-top:3px">' + n + '<span style="font-size:11px;color:var(--text3)">' + r + "</span></div>", h += "</div>"
-    }), h += "</div>"), 0 === p.length && 0 === u.length && (h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface2);position:relative;overflow:hidden">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border-hi)"></div>', h += '<div style="padding:16px 16px 16px 18px;text-align:center;color:var(--text3);font-size:13px">Aucun titre pour le moment — continue à te battre !</div>', h += "</div>"), h += '<div class="t-sec">Statistiques de carrière</div>', h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red2)"></div>';
+    }), h += "</div>"), 0 === p.length && 0 === u.length && (h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);position:relative;overflow:hidden">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border-hi)"></div>', h += '<div style="padding:16px 16px 16px 18px;text-align:center;color:var(--text3);font-size:13px">Aucun titre pour le moment — continue à te battre !</div>', h += "</div>"), h += '<div class="t-sec">Statistiques de carrière</div>', h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red2)"></div>';
     var v = [{
       l: "Saisons disputées",
       v: t.length,
@@ -21314,10 +21314,10 @@ function _renderPalmaresCoeur() {
       label: "Carrière en construction",
       sub: "Les trophées arrivent !",
       c: "var(--text3)"
-    }), h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red2)"></div>', x.forEach(function(e, t) {
+    }), h += '<div style="margin:0 16px 12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2);position:relative">', h += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red2)"></div>', x.forEach(function(e, t) {
       h += '<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px 11px 18px;' + (t < x.length - 1 ? "border-bottom:1px solid var(--border)" : "") + '">';
       var r = e.icon ? renderIcon(e.icon, 22, e.c) : "";
-      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:' + e.c + '18;flex-shrink:0">' + r + "</span>", h += '<div><div style="font-size:13px;font-weight:700;color:' + e.c + '">' + e.label + "</div>", e.sub && (h += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + e.sub + "</div>"), h += "</div></div>"
+      h += '<span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r);background:' + e.c + '18;flex-shrink:0">' + r + "</span>", h += '<div><div style="font-size:13px;font-weight:700;color:' + e.c + '">' + e.label + "</div>", e.sub && (h += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + e.sub + "</div>"), h += "</div></div>"
     }), h += "</div>", e.innerHTML = h
   }
 }
@@ -21452,7 +21452,7 @@ function renderCareerGraph() {
     });
     var winsLine = winsPathPts ? '<path d="' + winsPathPts + '" stroke="#34D399" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3,2" opacity="0.7"/>' : "";
     var posLine = posPath ? '<path d="' + posPath + '" stroke="#FF1801" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' : "";
-    var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" style="display:block;background:rgba(0,0,0,0.4);border-radius:10px">' + lines + winsLine + posLine + winMarkers + posMarkers + seasonLabels + '</svg>';
+    var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" style="display:block;background:rgba(0,0,0,0.4);border-radius:var(--r)">' + lines + winsLine + posLine + winMarkers + posMarkers + seasonLabels + '</svg>';
     var totalWins = hist.reduce(function(s, e) {
       return s + (e.wins || 0)
     }, 0);
@@ -21469,7 +21469,7 @@ function renderCareerGraph() {
       if (!best) return s;
       return ((s.wins || 0) > (best.wins || 0)) ? s : best
     }, null);
-    var html = '<div style="margin:10px 14px 12px;padding:14px;background:linear-gradient(180deg,var(--surface2) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.25)">' + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#FF1801;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Évolution carrière</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text);line-height:1.1">' + nSeasons + ' saison' + (nSeasons > 1 ? "s" : "") + ' · ' + titles + ' titre' + (titles > 1 ? "s" : "") + '</div></div></div>' + svg + '<div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--text2)"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:2px;background:#FF1801;border-radius:1px"></span>Position</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:2px;background:#34D399;border-image:repeating-linear-gradient(90deg,#34D399 0 3px,transparent 3px 5px) 1"></span>Victoires</span></div>' + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px">' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:var(--text3);letter-spacing:.1em">SAISONS</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text);margin-top:2px">' + nSeasons + '</div></div>' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#F59E0B;letter-spacing:.1em">TITRES</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#F59E0B;margin-top:2px">' + titles + '</div></div>' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#34D399;letter-spacing:.1em">VICTOIRES</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#34D399;margin-top:2px">' + totalWins + '</div></div>' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#FBBF24;letter-spacing:.1em">PODIUMS</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#FBBF24;margin-top:2px">' + totalPodiums + '</div></div>' + '</div>' + '</div>';
+    var html = '<div style="margin:10px 14px 12px;padding:14px;background:linear-gradient(180deg,var(--surface2) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);box-shadow:0 4px 16px rgba(0,0,0,0.25)">' + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#FF1801;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Évolution carrière</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text);line-height:1.1">' + nSeasons + ' saison' + (nSeasons > 1 ? "s" : "") + ' · ' + titles + ' titre' + (titles > 1 ? "s" : "") + '</div></div></div>' + svg + '<div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--text2)"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:2px;background:#FF1801;border-radius:1px"></span>Position</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:2px;background:#34D399;border-image:repeating-linear-gradient(90deg,#34D399 0 3px,transparent 3px 5px) 1"></span>Victoires</span></div>' + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px">' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:var(--text3);letter-spacing:.1em">SAISONS</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text);margin-top:2px">' + nSeasons + '</div></div>' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#F59E0B;letter-spacing:.1em">TITRES</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#F59E0B;margin-top:2px">' + titles + '</div></div>' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#34D399;letter-spacing:.1em">VICTOIRES</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#34D399;margin-top:2px">' + totalWins + '</div></div>' + '<div style="padding:7px 4px;background:var(--bg3);border-radius:6px;text-align:center"><div style="font-family:var(--font-display);font-size:8.5px;color:#FBBF24;letter-spacing:.1em">PODIUMS</div><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#FBBF24;margin-top:2px">' + totalPodiums + '</div></div>' + '</div>' + '</div>';
     container.innerHTML = html
   } catch (e) {
     console.warn("renderCareerGraph:", e)
@@ -21539,7 +21539,7 @@ function renderCircuitStats() {
       return byCircuit[k]
     });
     if (circuits.length === 0) {
-      container.innerHTML = '<div style="margin:10px 14px;padding:18px;text-align:center;color:var(--text3);font-size:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);font-style:italic">Aucune statistique de circuit pour le moment.<br><br>Cours quelques épreuves pour voir tes performances par circuit.</div>';
+      container.innerHTML = '<div style="margin:10px 14px;padding:18px;text-align:center;color:var(--text3);font-size:12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);font-style:italic">Aucune statistique de circuit pour le moment.<br><br>Cours quelques épreuves pour voir tes performances par circuit.</div>';
       return
     }
     circuits.forEach(function(c) {
@@ -21553,7 +21553,7 @@ function renderCircuitStats() {
     var bestCircuit = circuits[0];
     var totalRaces = allRaces.length;
     var totalCircuits = circuits.length;
-    html += '<div style="margin:0 14px 12px;padding:14px;border-radius:12px;background:linear-gradient(180deg,var(--surface2) 0%,var(--bg2) 100%);border:1px solid var(--border);position:relative;overflow:hidden">';
+    html += '<div style="margin:0 14px 12px;padding:14px;border-radius:var(--r);background:linear-gradient(180deg,var(--surface2) 0%,var(--bg2) 100%);border:1px solid var(--border);position:relative;overflow:hidden">';
     html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#34D399 0%,#059669 100%);box-shadow:0 0 12px rgba(52,211,153,0.4)"></div>';
     html += '<div style="padding-left:6px"><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#34D399;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px">' + renderIcon('trophy', 14, '#F59E0B') + ' Circuit fétiche</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);line-height:1.1;margin-bottom:6px">' + bestCircuit.name + '</div>';
     html += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--text2)">';
@@ -21561,9 +21561,9 @@ function renderCircuitStats() {
     if (bestCircuit.podiums > 0) html += '<span><strong style="color:#FBBF24">' + bestCircuit.podiums + '</strong> podium' + (bestCircuit.podiums > 1 ? "s" : "") + '</span>';
     if (bestCircuit.poles > 0) html += '<span><strong style="color:#A855F7">' + bestCircuit.poles + '</strong> pole' + (bestCircuit.poles > 1 ? "s" : "") + '</span>';
     html += '<span><strong style="color:var(--text)">' + bestCircuit.races + '</strong> course' + (bestCircuit.races > 1 ? "s" : "") + '</span></div></div></div>';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:0 14px 14px">' + '<div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">CIRCUITS</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">' + totalCircuits + '</div></div>' + '<div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">COURSES</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">' + totalRaces + '</div></div>' + '<div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">/ CIRCUIT</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">' + (totalCircuits > 0 ? (totalRaces / totalCircuits).toFixed(1) : "0") + '</div></div>' + '</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:0 14px 14px">' + '<div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">CIRCUITS</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">' + totalCircuits + '</div></div>' + '<div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">COURSES</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">' + totalRaces + '</div></div>' + '<div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">/ CIRCUIT</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">' + (totalCircuits > 0 ? (totalRaces / totalCircuits).toFixed(1) : "0") + '</div></div>' + '</div>';
     html += '<div style="margin:0 14px 6px;font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase">Détails par circuit</div>';
-    html += '<div style="margin:0 14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)">';
+    html += '<div style="margin:0 14px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2)">';
     circuits.forEach(function(c, i) {
       var heatScore = c.score;
       var maxScore = circuits[0].score || 1;
@@ -23030,7 +23030,7 @@ function _buildChampImpactBlock(pos, pts) {
     var changeTxt = posChange > 0 ? "+" + posChange + " place" + (posChange > 1 ? "s" : "") : posChange < 0 ? posChange + " place" + (posChange < -1 ? "s" : "") : "stable";
     var S = "style";
     var div = document.createElement("div");
-    div.setAttribute(S, "margin:8px 14px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(34,211,238,0.07),rgba(168,85,247,0.06));border:1px solid rgba(34,211,238,0.20);border-radius:12px");
+    div.setAttribute(S, "margin:8px 14px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(34,211,238,0.07),rgba(168,85,247,0.06));border:1px solid rgba(34,211,238,0.20);border-radius:var(--r)");
     var html = "";
     html += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:10px'>";
     html += "<div style='font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.18em;text-transform:uppercase'>Championnat</div>";

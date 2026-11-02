@@ -119,7 +119,7 @@
     try {
       var list = document.getElementById('sp-list');
       if (!list) return;
-      list.innerHTML = '<div style="margin:14px;padding:18px 16px;background:linear-gradient(180deg,rgba(239,68,68,0.08),rgba(239,68,68,0.02));border:1px solid rgba(239,68,68,0.30);border-left:3px solid #EF4444;border-radius:10px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:#EF4444;letter-spacing:.10em;text-transform:uppercase">Sponsors verrouillés</span></div><div style="font-size:13px;color:var(--text2);line-height:1.55">Les sponsors te contacteront <strong>après ta première course</strong>. Termine ton premier week-end de compétition pour débloquer les opportunités de partenariats.</div></div>';
+      list.innerHTML = '<div style="margin:14px;padding:18px 16px;background:linear-gradient(180deg,rgba(239,68,68,0.08),rgba(239,68,68,0.02));border:1px solid rgba(239,68,68,0.30);border-left:3px solid #EF4444;border-radius:var(--r)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:#EF4444;letter-spacing:.10em;text-transform:uppercase">Sponsors verrouillés</span></div><div style="font-size:13px;color:var(--text2);line-height:1.55">Les sponsors te contacteront <strong>après ta première course</strong>. Termine ton premier week-end de compétition pour débloquer les opportunités de partenariats.</div></div>';
       // Aussi masquer les onglets dispo/actifs si présents
       try {
         var tabs = document.querySelectorAll('#S-sponsors .tabs .tab');

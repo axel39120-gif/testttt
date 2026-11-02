@@ -437,7 +437,7 @@
       b.setAttribute("data-rj62b", "1");
       var primaire = j === btns.length - 2 || /voir|accepte|j'accepte|merci|ok/i.test(t);
       b.style.cssText +=
-        ";padding:11px 14px;border-radius:10px;font-family:var(--font-display);font-size:11px;" +
+        ";padding:11px 14px;border-radius:var(--r);font-family:var(--font-display);font-size:11px;" +
         "font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;" +
         "touch-action:manipulation;-webkit-appearance:none;appearance:none;" +
         (primaire

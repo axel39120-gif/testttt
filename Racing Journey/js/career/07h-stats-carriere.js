@@ -41,7 +41,7 @@
       var cards = [];
       for (var i = 0; i < allDivs.length; i++) {
         var s = allDivs[i].getAttribute('style') || '';
-        if (s.indexOf('border-radius:14px') !== -1 &&
+        if (s.indexOf('border-radius:var(--r)') !== -1 &&
             s.indexOf('surface2') !== -1 &&
             allDivs[i].id !== 'career-stats-grid' &&
             allDivs[i].id !== 'career-stats-sep') {

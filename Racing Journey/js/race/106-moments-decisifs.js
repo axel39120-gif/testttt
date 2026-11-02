@@ -1035,7 +1035,7 @@
       "@keyframes rj106-entree{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}",
       "@keyframes rj106-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
 
-      "#rj106-boite{width:100%;max-width:410px;max-height:92vh;overflow-y:auto;border-radius:18px;" +
+      "#rj106-boite{width:100%;max-width:410px;max-height:92vh;overflow-y:auto;border-radius:var(--r);" +
         "background:linear-gradient(165deg,#1a1015 0%,#0d0d12 55%,#12080a 100%);" +
         "border:1px solid rgba(255,255,255,.14);" +
         "box-shadow:0 0 0 1px rgba(255,24,1,.22),0 24px 70px rgba(0,0,0,.75);" +
@@ -1064,7 +1064,7 @@
 
       "#rj106-boite .rj106-choix{padding:0 14px 16px;display:flex;flex-direction:column;gap:9px}",
       "#rj106-boite .rj106-c{width:100%;padding:14px 15px;cursor:pointer;text-align:left;" +
-        "border-radius:13px;font-family:inherit;background:rgba(255,255,255,.045);" +
+        "border-radius:var(--r);font-family:inherit;background:rgba(255,255,255,.045);" +
         "border:1px solid rgba(255,255,255,.13);border-left:3px solid #FF1801;" +
         "transition:transform .12s ease,background .15s ease}",
       "#rj106-boite .rj106-c:active{transform:scale(.985);background:rgba(255,24,1,.10)}",
@@ -1078,7 +1078,7 @@
         "text-align:center;font-style:italic}",
 
       "#rj106-boite .rj106-issue{padding:16px 18px;font-size:13.5px;line-height:1.6;color:#fff}",
-      "#rj106-boite .rj106-bilan{margin:0 18px 14px;padding:11px 13px;border-radius:11px;" +
+      "#rj106-boite .rj106-bilan{margin:0 18px 14px;padding:11px 13px;border-radius:var(--r);" +
         "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);" +
         "display:flex;flex-wrap:wrap;gap:6px}",
       "#rj106-boite .rj106-bilan span{font-family:var(--font-display);font-size:10px;font-weight:800;" +
@@ -1088,7 +1088,7 @@
       "#rj106-boite .rj106-bilan .dn{color:#F87171;background:rgba(248,113,113,.13);" +
         "border:1px solid rgba(248,113,113,.34)}",
       "#rj106-boite .rj106-ok{margin:0 14px 16px;width:calc(100% - 28px);padding:13px;border:none;" +
-        "border-radius:12px;cursor:pointer;background:#FF1801;color:#fff;" +
+        "border-radius:var(--r);cursor:pointer;background:#FF1801;color:#fff;" +
         "font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.12em;" +
         "text-transform:uppercase}",
       "@media (prefers-reduced-motion:reduce){#rj106-modal,#rj106-boite{animation:none}}"

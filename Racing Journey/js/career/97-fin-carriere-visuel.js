@@ -99,7 +99,7 @@
 
       /* --- chiffres en cartes ------------------------------------------ */
       ".rj74-stats{gap:8px !important}",
-      ".rj74-st{position:relative;overflow:hidden;padding:14px 6px !important;border-radius:13px !important;" +
+      ".rj74-st{position:relative;overflow:hidden;padding:14px 6px !important;border-radius:var(--r) !important;" +
         "background:linear-gradient(170deg,rgba(255,255,255,.055),rgba(255,255,255,.015)) !important;" +
         "border:1px solid rgba(255,255,255,.09) !important}",
       ".rj74-st::after{content:'';position:absolute;left:14%;right:14%;top:0;height:2px;border-radius:0 0 3px 3px;" +
@@ -113,13 +113,13 @@
 
       /* --- titres en vitrine -------------------------------------------- */
       ".rj74-pal{gap:7px !important;margin-top:12px !important}",
-      ".rj74-badge{padding:7px 12px !important;border-radius:9px !important;" +
+      ".rj74-badge{padding:7px 12px !important;border-radius:var(--r) !important;" +
         "background:linear-gradient(150deg,rgba(245,197,66,.20),rgba(245,158,11,.07)) !important;" +
         "border:1px solid rgba(245,197,66,.42) !important;color:#F5C542 !important;" +
         "font-weight:800 !important;letter-spacing:.03em}",
 
       /* --- frise du parcours -------------------------------------------- */
-      ".rj97-frise{margin:16px 0 4px;padding:15px 14px 13px;border-radius:14px;" +
+      ".rj97-frise{margin:16px 0 4px;padding:15px 14px 13px;border-radius:var(--r);" +
         "background:linear-gradient(170deg,rgba(255,255,255,.045),rgba(255,255,255,.012));" +
         "border:1px solid rgba(255,255,255,.08)}",
       ".rj97-frise .tt{font-family:var(--font-display);font-size:9.5px;font-weight:800;letter-spacing:.18em;" +

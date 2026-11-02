@@ -563,7 +563,7 @@
   function injecterCSS() {
     if (document.getElementById(CSS_ID)) return;
     var css = [
-      "#rj91-points{margin:8px 16px 4px;border:1px solid var(--border);border-radius:12px;overflow:hidden;" +
+      "#rj91-points{margin:8px 16px 4px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;" +
         "background:var(--surface2)}",
       "#rj91-points table{width:100%;border-collapse:collapse;font-family:var(--font-body)}",
       "#rj91-points th{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.1em;" +

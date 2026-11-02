@@ -485,7 +485,7 @@
 
     var div = document.createElement('div');
     div.id = 'rj-neg-bonus-report';
-    div.style.cssText = 'margin:0 16px 16px;padding:14px;background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.3);border-radius:14px';
+    div.style.cssText = 'margin:0 16px 16px;padding:14px;background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.3);border-radius:var(--r)';
 
     var html = '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#FBBF24;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Primes contractuelles</div>';
 
@@ -547,7 +547,7 @@
     var keys = Object.keys(clauses);
     if (!keys.length) { el.innerHTML = ''; return; }
 
-    var html = '<div style="margin:0 0 12px;padding:10px 12px;background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.25);border-radius:10px">';
+    var html = '<div style="margin:0 0 12px;padding:10px 12px;background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.25);border-radius:var(--r)">';
     html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#A78BFA;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px">Clauses & primes en cours</div>';
     html += '<div style="display:flex;flex-direction:column;gap:4px">';
 
@@ -800,7 +800,7 @@
         'border:1px solid ' + rgba(teamColor(team), .45) + ';border-left:3px solid ' + col + ';');
       head.innerHTML =
         '<div style="display:flex;align-items:center;gap:12px">' +
-          '<div style="flex-shrink:0;width:46px;height:46px;border-radius:10px;overflow:hidden;background:var(--bg3);' +
+          '<div style="flex-shrink:0;width:46px;height:46px;border-radius:var(--r);overflow:hidden;background:var(--bg3);' +
           'display:flex;align-items:center;justify-content:center">' + (logo || '') + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
@@ -1063,7 +1063,7 @@
           var lot = parGroupe[g.id];
           if (!lot || !lot.length) return;
           var sec = document.createElement('div');
-          sec.style.cssText = 'margin-bottom:8px;border:1px solid var(--border-hi);border-radius:10px;overflow:hidden;background:var(--bg2)';
+          sec.style.cssText = 'margin-bottom:8px;border:1px solid var(--border-hi);border-radius:var(--r);overflow:hidden;background:var(--bg2)';
           var head = document.createElement('button');
           head.type = 'button';
           head.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;' +

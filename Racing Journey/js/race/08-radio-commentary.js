@@ -147,7 +147,7 @@
     var style = document.createElement('style');
     style.id = 'rj-radio-commentary-css';
     style.textContent = [
-      '#rj-direct-section{margin:0 16px 8px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,rgba(20,22,30,0.92) 0%,rgba(14,16,22,0.88) 100%)}',
+      '#rj-direct-section{margin:0 16px 8px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:linear-gradient(180deg,rgba(20,22,30,0.92) 0%,rgba(14,16,22,0.88) 100%)}',
       '.rj-direct-hdr{display:flex;align-items:center;gap:8px;padding:8px 13px 7px;background:linear-gradient(90deg,rgba(239,68,68,0.10) 0%,rgba(239,68,68,0.02) 60%,transparent 100%);border-bottom:1px solid var(--border)}',
       '.rj-direct-led{width:7px;height:7px;border-radius:50%;background:#EF4444;box-shadow:0 0 6px #EF4444,0 0 12px rgba(239,68,68,.4);animation:rjDirectBlink 1.4s ease-in-out infinite}',
       '@keyframes rjDirectBlink{0%,100%{opacity:1}50%{opacity:.35}}',

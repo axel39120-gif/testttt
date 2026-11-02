@@ -1728,7 +1728,7 @@
       overlay.id = "fpl-debrief";
       overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9500;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)";
       var card = document.createElement("div");
-      card.style.cssText = "background:var(--bg2);border-top:2px solid " + vc + ";border-left:1px solid var(--line2);border-right:1px solid var(--line2);max-width:440px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.7);border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)";
+      card.style.cssText = "background:var(--bg2);border-top:2px solid " + vc + ";border-left:1px solid var(--line2);border-right:1px solid var(--line2);max-width:440px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.7);border-radius:var(--r) 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)";
 
       var h = '';
       // Header
@@ -1791,9 +1791,9 @@
       var noTime = clockRemaining(pr) <= OUTLAP_MS + FLYLAP_MS + 500;
       h += '<div style="padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px">';
       if (!noTime) {
-        h += '<button id="fpl-debrief-retrack" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21"/></svg>Repartir en piste</button>';
+        h += '<button id="fpl-debrief-retrack" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21"/></svg>Repartir en piste</button>';
       }
-      h += '<button id="fpl-debrief-close" style="width:100%;padding:13px 16px;background:' + (noTime ? 'linear-gradient(135deg,var(--red2) 0%,var(--red) 100%)' : '#13131c') + ';border:' + (noTime ? 'none' : '1px solid var(--line2)') + ';color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:8px">Retour au stand</button>';
+      h += '<button id="fpl-debrief-close" style="width:100%;padding:13px 16px;background:' + (noTime ? 'linear-gradient(135deg,var(--red2) 0%,var(--red) 100%)' : '#13131c') + ';border:' + (noTime ? 'none' : '1px solid var(--line2)') + ';color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:var(--r)">Retour au stand</button>';
       h += '</div>';
       card.innerHTML = h;
       overlay.appendChild(card);
@@ -2700,7 +2700,7 @@
       "border:none", "color:#fff", "font-family:var(--font-display)",
       "font-size:13px", "font-weight:900", "letter-spacing:.14em",
       "text-transform:uppercase", "cursor:pointer",
-      "-webkit-tap-highlight-color:transparent", "border-radius:8px",
+      "-webkit-tap-highlight-color:transparent", "border-radius:var(--r)",
       "display:flex", "align-items:center", "justify-content:center", "gap:8px"
     ].join(";");
     btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
@@ -3382,7 +3382,7 @@
       "#" + MODAL_ID + ".on{display:flex}",
       "#" + MODAL_ID + " .rj84-box{width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;" +
         "background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);" +
-        "border-bottom:none;border-radius:16px 16px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.6)}",
+        "border-bottom:none;border-radius:var(--r) 16px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.6)}",
       "#" + MODAL_ID + " .rj84-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-shrink:0}",
       "#" + MODAL_ID + " .rj84-ti{flex:1;font-family:var(--font-display);font-size:15px;font-weight:900;color:var(--white);letter-spacing:.02em}",
       "#" + MODAL_ID + " .rj84-x{background:none;border:none;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:0 4px}",
@@ -3390,7 +3390,7 @@
       /* bouton d'accès, affiche déjà l'essentiel */
       ".rj84-open{display:flex;align-items:center;gap:11px;box-sizing:border-box;width:100%;" +
         "margin:0 0 10px;padding:12px 13px;cursor:pointer;" +
-        "background:var(--bg3);border:1px solid var(--border-hi);border-left:3px solid var(--red);border-radius:10px;" +
+        "background:var(--bg3);border:1px solid var(--border-hi);border-left:3px solid var(--red);border-radius:var(--r);" +
         "font-family:inherit;text-align:left}",
       ".rj84-open .l{flex:1;min-width:0;display:block}",
       ".rj84-open .t{display:block;font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.1em;" +

@@ -176,7 +176,7 @@
     "  position:relative;display:block;width:100%;text-align:left;",
     "  padding:12px 30px 12px 13px;",
     "  background:rgba(255,255,255,.035);",
-    "  border:2px solid var(--border-hi);border-radius:10px;",
+    "  border:2px solid var(--border-hi);border-radius:var(--r);",
     "  color:var(--text);font-family:inherit;font-size:12.5px;font-weight:600;line-height:1.35;",
     "  cursor:pointer;touch-action:manipulation;-webkit-appearance:none;appearance:none;",
     "  transition:border-color .15s,background .15s,transform .08s;",
@@ -213,7 +213,7 @@
     "#evt-history-list > div{",
     "  margin:6px 14px;padding:10px 12px;",
     "  background:var(--bg3);border:1px solid var(--border);",
-    "  border-radius:8px;font-size:12px;",
+    "  border-radius:var(--r);font-size:12px;",
     "}"
   ].join("\n");
 
@@ -1127,7 +1127,7 @@
     st.textContent = [
       /* --- Style repris À L'IDENTIQUE des cartes de l'onglet Activités →
          Entraînement (.rjf-card, module 38) :
-             border-radius: 11px
+             border-radius: var(--r)
              background: linear-gradient(180deg, var(--bg3), var(--bg2))
              border: 1px solid var(--border)
              padding: 12px 13px 13px 16px
@@ -1138,7 +1138,7 @@
       ".mg{gap:11px !important;padding:11px 14px 5px !important}",
 
       ".mc, .f1-metric{",
-      "border-radius:11px !important;",
+      "border-radius:var(--r) !important;",
       "background:linear-gradient(180deg,var(--bg3),var(--bg2)) !important;",
       "border:1px solid var(--border) !important;",
       "padding:12px 13px 13px 16px !important;",
@@ -1171,7 +1171,7 @@
          d'Entrainement. Le bandeau colore de Mes biens est neutralise :
          il fait double emploi avec la bordure. -------------------------- */
       ".rjlife-eff, .agent-stats-card, .stat-hero, .train-hero, .f1-card, .agent-hero{",
-      "border-radius:11px !important;",
+      "border-radius:var(--r) !important;",
       "background:linear-gradient(180deg,var(--bg3),var(--bg2)) !important;",
       "border:1px solid var(--border) !important;",
       "box-shadow:none !important}",
@@ -1260,7 +1260,7 @@
     ".act-card,.ls-item{padding:9px 11px !important;margin-bottom:5px !important}",
     ".act-card > div,.ls-item > div{gap:9px !important}",
     ".ls-act-icon,.ls-item-icon{width:34px !important;height:34px !important;min-width:34px !important;" +
-      "flex:0 0 34px !important;border-radius:8px !important}",
+      "flex:0 0 34px !important;border-radius:var(--r) !important}",
 
     /* description sur une seule ligne, coupée proprement */
     ".rj85-desc{display:-webkit-box !important;-webkit-line-clamp:1 !important;-webkit-box-orient:vertical !important;" +

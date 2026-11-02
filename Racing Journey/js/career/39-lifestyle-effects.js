@@ -59,7 +59,7 @@
   function injectCSS() {
     if (document.getElementById("rj-life-css")) return;
     var css = [
-      '.rjlife-eff{position:relative;margin:12px 14px 4px;padding:13px 14px 13px 17px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;font-family:var(--font-display);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px rgba(0,0,0,.4)}',
+      '.rjlife-eff{position:relative;margin:12px 14px 4px;padding:13px 14px 13px 17px;border-radius:var(--r);background:var(--surface2);border:1px solid var(--border);overflow:hidden;font-family:var(--font-display);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px rgba(0,0,0,.4)}',
       '.rjlife-stripe{position:absolute;left:0;top:0;bottom:0;width:3px}',
       '.rjlife-kicker{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}',
       '.rjlife-rows{display:flex;flex-direction:column;gap:9px}',

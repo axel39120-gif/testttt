@@ -41,7 +41,7 @@
         "font-family:var(--font-display);font-size:9.5px;font-weight:800;letter-spacing:.14em;" +
         "text-transform:uppercase;color:var(--text3,#6b7280)}",
       "#rj93-arcs .rj93-sec .pt{width:5px;height:5px;border-radius:50%;background:var(--text3,#6b7280)}",
-      "#rj93-arcs .rj93-suivi{margin-bottom:8px;padding:11px 12px;border-radius:11px;" +
+      "#rj93-arcs .rj93-suivi{margin-bottom:8px;padding:11px 12px;border-radius:var(--r);" +
         "background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);" +
         "border-left:3px solid var(--red3,#FF1801)}",
       "#rj93-arcs .rj93-suivi.rj93-clos{border-left-color:rgba(255,255,255,.18);opacity:.72}",
@@ -60,7 +60,7 @@
       /* Les cartes d'arc viennent du module 32 avec leurs propres classes ;
          on les habille pour qu'elles se fondent dans l'onglet. */
       "#rj93-arcs .rjsa-arc{background:var(--bg2);border:1px solid var(--border-hi);" +
-        "border-left:3px solid var(--red3,#FF1801);border-radius:12px;padding:13px 14px;margin-bottom:9px}",
+        "border-left:3px solid var(--red3,#FF1801);border-radius:var(--r);padding:13px 14px;margin-bottom:9px}",
       "#rj93-arcs .rjsa-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}",
       "#rj93-arcs .rjsa-tag{font-family:var(--font-display);font-size:9px;font-weight:800;" +
         "letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;" +
@@ -73,7 +73,7 @@
       "#rj93-arcs .rjsa-prompt{font-size:12.5px;color:var(--text);font-weight:600;margin-bottom:9px}",
       "#rj93-arcs .rjsa-choices{display:flex;flex-direction:column;gap:6px}",
       "#rj93-arcs .rjsa-choice{display:block;width:100%;text-align:left;padding:10px 12px;" +
-        "background:var(--bg3);border:1px solid var(--line);border-radius:9px;cursor:pointer;font-family:inherit}",
+        "background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);cursor:pointer;font-family:inherit}",
       "#rj93-arcs .rjsa-choice.primary{border-color:var(--red3,#FF1801)}",
       "#rj93-arcs .rjsa-choice .cl{display:block;font-size:12.5px;font-weight:700;color:var(--text)}",
       "#rj93-arcs .rjsa-choice .cd{display:block;font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}"

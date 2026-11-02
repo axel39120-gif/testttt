@@ -170,7 +170,7 @@
     var css = [
       ".rj96-sec{margin-top:18px;padding:0 4px}",
       ".rj96-entree{display:flex;align-items:center;gap:11px;width:100%;padding:14px 15px;cursor:pointer;" +
-        "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);border-radius:13px;" +
+        "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);border-radius:var(--r);" +
         "font-family:inherit;text-align:left}",
       ".rj96-entree .col{flex:1;min-width:0}",
       ".rj96-entree .t{display:block;font-family:var(--font-display);font-size:11px;font-weight:800;" +
@@ -179,7 +179,7 @@
       ".rj96-entree .c{color:var(--red3,#FF1801);font-size:18px;flex-shrink:0}",
       ".rj96-liste{display:flex;flex-direction:column;gap:8px;margin-top:10px}",
       ".rj96-item{display:flex;align-items:center;gap:11px;width:100%;padding:12px 13px;cursor:pointer;" +
-        "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:12px;" +
+        "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:var(--r);" +
         "font-family:inherit;text-align:left}",
       ".rj96-item .col{flex:1;min-width:0}",
       ".rj96-item .nom{font-family:var(--font-display);font-size:13.5px;font-weight:800;color:#fff;" +
@@ -189,7 +189,7 @@
       ".rj96-fav{background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;" +
         "color:rgba(255,255,255,.22)}",
       ".rj96-fav.on{color:#F59E0B}",
-      ".rj96-vide{padding:16px 14px;border:1px dashed rgba(255,255,255,.12);border-radius:12px;" +
+      ".rj96-vide{padding:16px 14px;border:1px dashed rgba(255,255,255,.12);border-radius:var(--r);" +
         "font-size:12px;color:var(--muted,#8b93a7);text-align:center;margin-top:10px}",
       /* bilan d'une archive */
       ".rj96-fond{position:fixed;inset:0;z-index:9700;display:none;background:var(--bg,#0a0a0d);" +
