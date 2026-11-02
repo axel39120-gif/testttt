@@ -2,10 +2,10 @@
  * paysage.css — LE JEU À L'HORIZONTALE, PRÉSENTÉ COMME UN JEU MOBILE
  *
  * Une seule mise en page pour tous les écrans, dans le style existant :
- *   - un rail d'icônes à gauche (le bouton Avancer au centre) ;
+ *   - un rail à gauche, icônes et libellés (le bouton Jouer au centre) ;
  *   - un bandeau en haut : titre à gauche, ressources à droite (HUD,
  *     js/ui/109-hud.js) ;
- *   - les onglets en colonne à gauche du contenu, comme les menus de jeu ;
+ *   - les onglets en pastilles au centre du bandeau ;
  *   - le contenu en colonnes de la largeur d'un téléphone en portrait (les
  *     cartes gardent la taille pour laquelle elles ont été dessinées) ;
  *   - retour au toucher, transition d'écran, barres de défilement masquées ;
@@ -16,14 +16,12 @@
  * =================================================================== */
 
 :root {
-  --rail: 60px;
+  --rail: 64px;
   --rail-g: env(safe-area-inset-left, 0px);
   --bandeau: 44px;
-  --hud: 330px;         /* place réservée aux ressources, à droite du bandeau */
-  --onglets: 118px;
+  --hud: 290px;         /* place des ressources à droite du bandeau ; mesurée par 109-hud.js */
   --colonne: 340px;
 }
-@media (max-width: 720px) { :root { --hud: 250px; --onglets: 104px; } }
 
 /* --- Cadre : tout l'écran, plus de « téléphone » centré ---------------- */
 html, body { background: #0a0a0a; }
@@ -64,34 +62,45 @@ body { padding: 0 !important; }
 /* Création : même bandeau que les autres écrans. */
 #S-create > .apex-create-hdr { height: var(--bandeau) !important; min-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; }
 
-/* --- Rail d'icônes ------------------------------------------------------ */
+/* --- Rail : icône et libellé, le bouton Jouer au centre ------------------ */
 #main-nav.bnav, nav.bnav {
   position: fixed !important; z-index: 1000 !important;
   top: 0 !important; bottom: 0 !important; left: 0 !important; right: auto !important;
   width: calc(var(--rail) + var(--rail-g)) !important; height: auto !important;
-  padding: 6px 0 6px var(--rail-g) !important;
-  flex-direction: column !important; justify-content: space-evenly !important; align-items: center !important;
-  border-top: 0 !important; border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 8px 0 8px var(--rail-g) !important;
+  flex-direction: column !important; justify-content: space-between !important; align-items: center !important;
+  background: linear-gradient(180deg, #121217, #0b0b0e) !important;
+  border-top: 0 !important; border-right: 1px solid rgba(255, 255, 255, .07) !important;
 }
 #main-nav .ni {
-  width: 100% !important; height: auto !important; flex: 0 0 auto !important;
-  padding: 10px 0 !important;
+  position: relative; width: calc(100% - 10px) !important; height: auto !important; flex: 0 0 auto !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important; gap: 3px;
+  padding: 7px 0 6px !important; margin: 0 5px !important; border-radius: 12px !important;
+  color: var(--muted, #80808a) !important; transition: background .15s, color .15s;
 }
+#main-nav .ni .ni-ico-wrap svg { width: 20px; height: 20px; }
 #main-nav::before { display: none !important; }   /* liseré haut de l'ancienne barre */
-/* Libellés masqués à l'écran, gardés pour les lecteurs d'écran. */
 #main-nav .ni > span:not(:first-child) {
-  position: absolute !important; width: 1px !important; height: 1px !important;
-  overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important;
+  position: static !important; width: auto !important; height: auto !important; clip: auto !important;
+  overflow: visible !important; display: block !important;
+  font: 700 8px/1 var(--font-display) !important; letter-spacing: 0; text-transform: uppercase;
+  max-width: 100%; overflow: hidden !important; white-space: nowrap; text-overflow: ellipsis;
 }
-/* Repère de l'onglet actif : trait vertical à gauche. */
+#main-nav .ni.on { color: #fff !important; background: rgba(255, 24, 1, .14) !important; }
 #main-nav .ni::before {
-  top: 50% !important; left: 0 !important; transform: translateY(-50%) !important;
-  width: 3px !important; height: 0 !important;
+  top: 50% !important; left: -5px !important; transform: translateY(-50%) !important;
+  width: 3px !important; height: 0 !important; border-radius: 0 3px 3px 0;
 }
-#main-nav .ni.on::before { height: 26px !important; }
+#main-nav .ni.on::before { height: 24px !important; }
+/* Jouer : le disque teinté selon l'étape (105), avec son libellé dessous. */
 #main-nav #ni-cta-continue {
-  width: 48px !important; height: 48px !important; margin: 0 !important;
-  transform: none !important; top: auto !important;
+  position: relative; width: 50px !important; height: 50px !important; margin: 0 0 12px !important;
+  transform: none !important; top: auto !important; overflow: visible !important;
+}
+#main-nav #ni-cta-continue::after {
+  content: attr(data-rj105); position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%);
+  width: 60px; text-align: center; font: 800 7.5px/1.15 var(--font-display); letter-spacing: .02em; text-transform: uppercase;
+  color: var(--rj105-c, #FF1801);
 }
 
 /* --- Bandeau : titre à gauche, ressources à droite ---------------------- */
@@ -124,31 +133,53 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 .rj-hud-argent { color: var(--green, #00E676); }
 @media (max-width: 720px) { .rj-hud-chip[title="Réputation"] { display: none; } }
 
-/* --- Onglets en colonne, à gauche du contenu ---------------------------- */
+/* --- Onglets en pastilles, dans le bandeau ------------------------------
+   En paysage, la hauteur manque mais pas la largeur : les onglets prennent
+   place au centre du bandeau (titre à gauche, ressources à droite) au lieu
+   d'une colonne de 118 px qui rognait le contenu. Trop d'onglets : la
+   rangée défile au doigt. */
 .scr.on:has(> .tabs) {
   display: grid !important;
-  grid-template-columns: var(--onglets) minmax(0, 1fr);
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) calc(var(--hud) + 4px);
   grid-template-rows: var(--bandeau) minmax(0, 1fr);
 }
 .scr.on:has(> .tabs) > * { grid-column: 1 / -1; }
-.scr.on:has(> .tabs) > .hdr { grid-row: 1; }
-.scr.on:has(> .tabs) > .scroll { grid-column: 2; grid-row: 2; height: auto !important; min-height: 0; }
+.scr.on:has(> .tabs) > .hdr { grid-column: 1; grid-row: 1; padding-right: 12px !important; max-width: 240px; }
+.scr.on:has(> .tabs) > .scroll { grid-column: 1 / -1; grid-row: 2; height: auto !important; min-height: 0; }
 .scr > .tabs {
-  grid-column: 1 !important; grid-row: 2;
+  grid-column: 2 !important; grid-row: 1;
   position: static !important; width: auto !important; height: auto !important; margin: 0 !important;
-  flex-direction: column !important; align-items: stretch !important; gap: 2px;
-  padding: 8px 0 !important; border-bottom: 0 !important;
-  border-right: 1px solid var(--border-hi, rgba(255, 255, 255, .1)) !important;
-  overflow-x: hidden !important; overflow-y: auto !important; scrollbar-width: none;
+  display: flex !important; flex-direction: row !important; align-items: center !important;
+  justify-content: safe center !important; gap: 4px;
+  padding: 0 4px !important; border: 0 !important; background: none !important;
+  overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none;
 }
 .scr > .tabs::-webkit-scrollbar { display: none; }
 .scr > .tabs > * {
-  flex: 0 0 auto !important; justify-content: flex-start !important; text-align: left !important;
-  padding: 11px 10px 11px 12px !important; white-space: normal !important; line-height: 1.25;
-  border-bottom: 0 !important; border-left: 2px solid transparent !important; border-radius: 0 !important;
+  flex: 0 0 auto !important; width: auto !important; min-width: 0 !important;
+  padding: 7px 12px !important; margin: 0 !important; border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, .08) !important; background: rgba(255, 255, 255, .04) !important;
+  font: 700 10.5px/1 var(--font-display) !important; letter-spacing: .06em; text-transform: uppercase;
+  white-space: nowrap !important; color: var(--text2, #b0b0bc) !important;
 }
-.scr > .tabs > .on { border-left-color: var(--red, #FF1801) !important; background: rgba(255, 24, 1, .08) !important; }
+.scr > .tabs > .on {
+  color: #fff !important; border-color: transparent !important;
+  background: linear-gradient(135deg, #ff3a24, #d01000) !important; box-shadow: 0 2px 10px rgba(255, 24, 1, .35);
+}
 .scr > .tabs > *::after { display: none !important; }
+/* Bandeau : une seule teinte et un seul filet sur toute la largeur. */
+.screens > .scr:not(#S-home) {
+  background-image: linear-gradient(rgba(255, 255, 255, .035), rgba(255, 255, 255, .035)), linear-gradient(rgba(255, 255, 255, .07), rgba(255, 255, 255, .07)) !important;
+  background-size: 100% var(--bandeau), 100% 1px !important; background-position: 0 0, 0 calc(var(--bandeau) - 1px) !important;
+  background-repeat: no-repeat !important;
+}
+.scr > .hdr { background: transparent !important; border-bottom: 0 !important; }
+#S-home > .apex-cockpit-hdr { box-shadow: inset 0 -1px rgba(255, 255, 255, .07); }
+@media (max-width: 760px) {
+  .scr.on:has(> .tabs) > .hdr { max-width: 170px; }
+  .scr.on:has(> .tabs) > .hdr .hdr-sub { display: none; }
+  .scr > .tabs > * { padding: 7px 9px !important; }
+}
 
 /* Tiroir « Plus » : s'ouvre à côté du rail, en bas. */
 #more-drawer {
@@ -259,7 +290,53 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   flex: 1 1 0; min-height: 0; margin: 0 0 4px !important; padding: 0 !important;
   grid-auto-rows: 1fr !important; gap: 6px !important;
 }
-#S-home > .scroll .apex-action-tile { min-height: 0 !important; height: auto !important; padding: 4px !important; }
+/* Tuiles : icône à gauche, nom et information utile (118) à droite. Neuf
+   tuiles en trois rangées qui se partagent la hauteur, sans défilement. */
+#S-home > .scroll .apex-actions-grid > .apex-action-tile {
+  min-height: 0 !important; height: auto !important; padding: 8px 10px !important;
+  display: grid !important; grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto;
+  column-gap: 10px; row-gap: 2px; align-content: center; align-items: center; text-align: left !important;
+  border-radius: 14px !important;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015)) !important;
+  border: 1px solid rgba(255, 255, 255, .08) !important;
+}
+#S-home > .scroll .apex-actions-grid .apex-action-icon {
+  grid-row: 1 / 3; width: 38px !important; height: 38px !important; margin: 0 !important; border-radius: 11px !important;
+}
+#S-home > .scroll .apex-actions-grid .apex-action-title {
+  align-self: end; margin: 0 !important; font-size: 13px !important; line-height: 1.15 !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rj118-info {
+  align-self: start; font-size: 10.5px; line-height: 1.25; color: var(--muted, #80808a);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rj118-info:empty { display: none; }
+#S-home > .scroll .apex-action-tile:has(.rj118-info:empty) .apex-action-title { grid-row: 1 / 3; align-self: center; }
+/* Tuiles étroites (petit téléphone) : icône au-dessus, texte centré. */
+@media (max-width: 800px) {
+  #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; justify-items: center; text-align: center !important; row-gap: 3px; padding: 6px !important; }
+  #S-home > .scroll .apex-actions-grid .apex-action-icon { grid-row: auto; width: 32px !important; height: 32px !important; }
+  #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 12px !important; max-width: 100%; }
+  .rj118-info { font-size: 9.5px; max-width: 100%; }
+}
+/* Grands écrans : tuiles plus généreuses. */
+@media (min-height: 600px) {
+  #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: 52px minmax(0, 1fr); padding: 14px 16px !important; column-gap: 14px; }
+  #S-home > .scroll .apex-actions-grid .apex-action-icon { width: 52px !important; height: 52px !important; border-radius: 14px !important; }
+  #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 16px !important; }
+  .rj118-info { font-size: 12px; }
+}
+
+/* Carte de la prochaine course : l'action principale, nommée. */
+#S-home > .apex-hero-race { position: relative; }
+.rj118-cta {
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; height: 38px;
+  border-radius: 11px; font: 800 12px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--rj118-c, #FF1801) 80%, #fff), var(--rj118-c, #FF1801));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--rj118-c, #FF1801) 40%, transparent);
+}
+.apex-hero-race:active .rj118-cta { transform: scale(.98); }
 /* Petits téléphones : sans titres de section, les tuiles gardent leur libellé. */
 @media (max-height: 400px) {
   #S-home > .scroll .apex-sec { display: none !important; }
@@ -302,6 +379,9 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 .apex-champ-mini-row .pts { font-weight: 700; color: var(--text, #e8e8ec); }
 .apex-champ-mini-row .ecart { text-align: right; font-size: 10px; color: var(--muted, #80808a); }
 .apex-champ-mini-row.moi .nom, .apex-champ-mini-row.moi .pos { color: var(--red3, #ff2040); font-weight: 700; }
+
+/* --- Calendrier : le mois entier tient dans l'écran ------------------- */
+#S-cal .cal-cell { aspect-ratio: auto !important; height: clamp(24px, calc((100dvh - var(--bandeau) - 140px) / 6), 46px); }
 
 /* --- Course en direct ----------------------------------------------------
    À gauche, le circuit sur toute la hauteur (js/race/111-vue-circuit.js) ;

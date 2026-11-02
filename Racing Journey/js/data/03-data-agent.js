@@ -9186,7 +9186,10 @@ function go(e) {
   document.querySelectorAll(".scr").forEach(function(e) {
     e.classList.remove("on")
   }), document.getElementById(e).classList.add("on");
-  var t = ["S-home", "S-pilot", "S-race", "S-champ", "S-training", "S-contracts", "S-media", "S-cal", "S-neg", "S-lifestyle", "S-pantheon", "S-achievements", "S-mediaday"];
+  // Le rail reste sur tous les écrans de consultation ; seuls les parcours
+  // guidés (création, événement, intersaison, transfert…) prennent tout l'écran.
+  var t = ["S-home", "S-pilot", "S-race", "S-champ", "S-training", "S-contracts", "S-media", "S-cal", "S-neg", "S-lifestyle", "S-pantheon", "S-achievements", "S-mediaday",
+    "S-patrimoine", "S-sponsors", "S-mailbox", "S-contact-thread", "S-shop", "S-paddockpass", "S-settings", "S-save", "S-reserve"];
   var _nav = document.getElementById("main-nav");
   if (_nav) _nav.classList.toggle("show", t.includes(e));
   if (typeof G !== "undefined" && G && G.moreOpen && typeof closeMore === "function") closeMore();

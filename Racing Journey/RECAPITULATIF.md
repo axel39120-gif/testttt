@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v222**. Ce document décrit l'organisation du code après la
+Version **BUILD v223**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v222 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v223 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -293,7 +293,27 @@ Suites `economie`, `baquets`, `negociation`.
 
 ---
 
-## Reste à faire
+## Étape 5 (présentation de jeu mobile) — ce qui a été fait (v223)
+
+Forme seulement, rien ne change dans le jeu. Objectif : un affichage optimisé
+et ergonomique en paysage.
+
+- **Bandeau unique** : titre à gauche, onglets en pastilles au centre,
+  ressources à droite. La colonne d'onglets (118 px) a disparu : le contenu
+  prend toute la largeur. Trop d'onglets : la rangée défile au doigt. La place
+  du HUD est mesurée par 109 (`--hud`) et non plus fixée.
+- **Rail** : icône et libellé ; le bouton Jouer affiche l'étape suivante sous
+  le disque. Il reste présent sur tous les écrans de consultation (patrimoine,
+  sponsors, messagerie, paramètres, boutique…) ; seuls les parcours guidés
+  (création, événement, intersaison, transfert, fin de saison) prennent tout
+  l'écran (`go`, 03).
+- **Accueil** (`js/ui/118-accueil.js`) : un bouton dans la carte de la
+  prochaine course, au nom et à la couleur de l'étape suivante ; sous chaque
+  tuile, l'information utile (note, séances restantes, contrat, sponsors,
+  budget, bonheur, messages non lus). Tuiles en ligne, ou en colonne sur petit
+  téléphone, plus grandes sur tablette.
+- **Calendrier** : le mois entier tient dans l'écran.
+
 
 - **Moteur.** Les positions restent calculées au score (bridées à ±2 places
   par tour) ; le modèle de piste et la vue du circuit en dérivent une
