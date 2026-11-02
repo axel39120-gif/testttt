@@ -48,7 +48,8 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `course-rapide` | la même chose sur la seule Formule 1, pour une vérification en une minute |
 | `endurance` | six courses d'endurance : plus grand saut de places par course (défaut connu signalé, à corriger avec le nouveau moteur) |
 | `weekend` | stratégie retirée du parcours et inatteignable, réglages dans la préparation, feuille de temps en fenêtre |
-| `circuit` | course en direct sur le tracé : bon circuit, un point par voiture, jamais de recul, dépassements de moins d'1,2 s, stand, abandon, animation arrêtée hors écran et au drapeau |
+| `circuit` | course en direct sur le tracé : bon circuit, un point par voiture, jamais de recul, dépassements de moins d'1,2 s, stand, abandon, animation arrêtée hors écran et au drapeau, mouvement fluide à l'allure d'un tour |
+| `arrivee` | le classement inscrit au drapeau est celui du dernier tour, temps au stand compris (F1, F2, IndyCar) |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |

@@ -1,13 +1,15 @@
 /* =====================================================================
  * 40-weekend-ajustements.js — RÉGLAGES ET CALIBRAGES DU WEEK-END
  *
- * Regroupe huit modules qui interviennent tous sur le même moment du jeu :
+ * Regroupe sept modules qui interviennent tous sur le même moment du jeu :
  * le week-end de course, de l'entrée en piste au verrouillage des onglets
  * une fois le drapeau tombé. Réglages de la voiture, vitesse de
  * simulation, calibrage du réalisme, équilibrage, confort de lecture.
  *
  * Aucun ne dépend des autres : chacun s'installe seul et se désinstalle
- * seul. Ils étaient séparés parce qu'écrits à huit moments différents.
+ * seul. Ils étaient séparés parce qu'écrits à des moments différents. La
+ * « course ralentie » (49) est partie : la durée d'un tour est désormais
+ * explicite (dureeTourCourse, 04).
  *
  * L'ordre de chargement d'origine est conservé, car deux fonctions sont
  * ajustées par plusieurs de ces modules — la vitesse de simulation et
@@ -395,49 +397,6 @@
     document.addEventListener("DOMContentLoaded", function () { apply(); });
   } else {
     apply();
-  }
-})();
-
-
-/* ==================================================================== *
- * Vitesse de simulation
- * (anciennement 49-race-speed.js)
- * ==================================================================== */
-
-(function () {
-  "use strict";
-
-  var FACTOR = 1.6; // course ~60% plus lente (280×1.8×1.6 ≈ 806ms/tour)
-
-  function inLiveRace() {
-    try {
-      var L = window.LIVE_RACE;
-      return !!(L && L.total > 0 && (L.cur || 0) >= 1 && !L.finished);
-    } catch (e) { return false; }
-  }
-
-  function install() {
-    if (window._rjRaceSpeedInstalled) return;
-    if (typeof window.getSimSpeedMult !== "function") {
-      if (typeof setTimeout === "function") setTimeout(install, 300);
-      return;
-    }
-    window._rjRaceSpeedInstalled = true;
-    rjInscrire("getSimSpeedMult", { id: "49-course-ralentie", apres: function (base) {
-      return inLiveRace() ? base * FACTOR : base;
-    } });
-    window._rjRaceSpeedUninstall = function () {
-      window.RJ_HOOKS.getSimSpeedMult = window.RJ_HOOKS.getSimSpeedMult.filter(function (h) { return h.id !== "49-course-ralentie"; });
-      window._rjRaceSpeedInstalled = false;
-      console.log("[49-race-speed] désinstallé");
-    };
-    console.log("[49-race-speed] course ralentie ×" + FACTOR + " (qualifs inchangées)");
-  }
-
-  if (document.readyState === "loading" && typeof document.addEventListener === "function") {
-    document.addEventListener("DOMContentLoaded", install);
-  } else {
-    install();
   }
 })();
 

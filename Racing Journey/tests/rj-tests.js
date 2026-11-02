@@ -1206,6 +1206,32 @@ async function suiteCircuit() {
     });
     S.verifier("les voitures ne reculent jamais", suivi.recul === 0 && suivi.mesures > 100, JSON.stringify(suivi));
 
+    /* Fluidité : chaque voiture roule à l'allure d'un tour, sans bond ni arrêt net. */
+    const fluide = await page.evaluate(async () => {
+      // Allure attendue rapportée au temps écoulé entre deux images de la vue, pas entre deux attentes.
+      const pas = 100, allure = 1000 / dureeTourCourse() / 1000;
+      const avant = {}; let mesures = 0, bonds = 0, arrets = 0, plusGrand = 0, t0 = 0;
+      for (let i = 0; i < 35; i++) {
+        const pause = LIVE_RACE.paused, e = RJVueCircuit.etat(), attendu = allure * Math.min(250, e.temps - t0);
+        const neuf = t0 && e.temps > t0; t0 = e.temps;
+        if (!neuf) Object.keys(avant).forEach(k => { avant[k].pause = true; });
+        e.voitures.forEach(v => {
+          if (avant[v.nom] !== undefined && !v.stand && !pause && !avant[v.nom].pause) {
+            const d = v.distance - avant[v.nom].d; mesures++;
+            plusGrand = Math.max(plusGrand, d / attendu);
+            if (d > attendu * 2.5 * 1.4) bonds++;
+            if (d < attendu * 0.05) arrets++;
+          }
+          avant[v.nom] = { d: v.distance, pause };
+        });
+        await new Promise(r => setTimeout(r, pas));
+      }
+      return { mesures, bonds, arrets, plusGrand: +plusGrand.toFixed(2), tourEnSecondes: dureeTourCourse() / 1000 };
+    });
+    S.verifier("un tour se suit à l'œil (au moins 4 s en vitesse normale)", fluide.tourEnSecondes >= 4, fluide.tourEnSecondes + " s");
+    S.verifier("les voitures roulent sans bond", fluide.mesures > 200 && fluide.bonds === 0, JSON.stringify(fluide));
+    S.verifier("les voitures roulent sans arrêt net", fluide.arrets <= fluide.mesures * 0.03, JSON.stringify(fluide));
+
     /* L'ordre des points suit le classement. Quand le classement change,
        la voiture qui passe devant double l'autre à l'écran : l'inversion
        dure le temps du dépassement, jamais plus d'1,2 s. */
@@ -1674,6 +1700,57 @@ async function suiteNegociation() {
 }
 
 /* ==================================================================== *
+ * 8 decies. L'ARRIVÉE RESPECTE LA COURSE
+ *
+ * Défaut constaté en jeu : P17 au dernier tour, P1 à l'arrivée. Le temps
+ * passé au stand, déjà compté pendant la course (penaltySec), était ajouté
+ * une seconde fois au classement d'arrivée (≈ 1,2 s par place). Seule une
+ * sanction jamais appliquée (arrêt obligatoire manqué) peut déclasser.
+ * ==================================================================== */
+async function suiteArrivee() {
+  S.suite("Arrivée");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const res = [];
+      for (const cat of ["Formule 1", "Formule 2", "IndyCar"]) {
+        SETTINGS.simSpeed = "normal"; G.cat = cat;
+        if (typeof initRivals === "function") initRivals();
+        window.CAL_RACES = []; buildCalendar(); G.semaine = 6; G.seasonOver = false;
+        CAL_RACES.forEach(c => { c.done = c.week < 6; c.result = null; });
+        const course = getNextRace();
+        RACE_STATE.circuit = course.name; RACE_STATE.circuitData = getCircuitData(course.name);
+        RACE_STATE.weather = generateWeather(0); RACE_STATE.qualiPos = 10; G.totalLaps = 20;
+        if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+        window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+        try { confirmStrategy(); } catch (e) {}
+        if (!LIVE_RACE.total) runRaceLive();
+        await new Promise(r => setTimeout(r, 1500));
+        LIVE_RACE.paused = true;
+        if (LIVE_RACE.interval) { clearInterval(LIVE_RACE.interval); LIVE_RACE.interval = null; }
+        /* Des temps d'arrêt différents selon les pilotes, tous arrêts faits. */
+        LIVE_RACE.drivers.forEach((d, i) => { d.penaltySec = (i % 3) * 3.1; d._pitsDone = 2; });
+        const joueur = LIVE_RACE.drivers.find(d => d.isPlayer);
+        const avant = joueur.pos;
+        const ordre = LIVE_RACE.drivers.filter(d => !d.dnf).sort((a, b) => a.pos - b.pos).map(d => d.name).join("|");
+        const n = (G.races || []).length;
+        finalizeLiveRace();
+        await new Promise(r => setTimeout(r, 300));
+        const apres = LIVE_RACE.drivers.filter(d => !d.dnf).sort((a, b) => a.pos - b.pos).map(d => d.name).join("|");
+        res.push({ cat, avant, inscrit: G.races.length > n ? G.races[G.races.length - 1].pos : null, ordreGarde: ordre === apres });
+      }
+      return res;
+    });
+    r.forEach(x => {
+      S.verifier(x.cat + " : la position inscrite est celle du dernier tour", x.inscrit === x.avant, "dernier tour P" + x.avant + ", inscrit P" + x.inscrit);
+      S.verifier(x.cat + " : l'ordre d'arrivée est celui du dernier tour", x.ordreGarde);
+    });
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
 async function suiteDecisions() {
@@ -1871,6 +1948,7 @@ const SUITES = {
   economie: suiteEconomie,
   baquets: suiteBaquets,
   negociation: suiteNegociation,
+  arrivee: suiteArrivee,
   decisions: suiteDecisions
 };
 

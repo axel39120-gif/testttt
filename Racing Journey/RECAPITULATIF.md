@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v221**. Ce document décrit l'organisation du code après la
+Version **BUILD v222**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v221 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v222 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -184,6 +184,23 @@ Mise en page : le circuit occupe la colonne de gauche sur toute la hauteur ;
 à droite, la progression (tour, voisins, écarts) puis le fil du direct.
 Suite `circuit` : tracé, un point par voiture, pas de recul, durée des
 dépassements, stand, abandon, arrêt et reprise de l'animation.
+
+### Course fiable et lisible (v222)
+
+- **Arrivée faussée** : un pilote P17 au dernier tour pouvait finir P1. Le
+  classement officiel (`_finalizeOfficialOrder`, 04) ajoutait une seconde
+  fois le temps passé au stand, déjà compté pendant la course. Seule la
+  pénalité d'arrêt obligatoire manqué (`_penaliteArrivee`) compte désormais :
+  l'ordre au drapeau est celui du dernier tour. Suite `arrivee`.
+- **Rythme** : un tour dure `dureeTourCourse()` (04) — 8 s en lent, 4,5 s en
+  normal, 2 s en rapide — lu à chaque tour, donc un changement de vitesse
+  s'applique tout de suite. L'ancienne « course ralentie » (49, dans 40) ne
+  s'appliquait jamais : elle est retirée.
+- **Vue** : les voitures roulent à l'allure réelle d'un tour et se recalent en
+  douceur (celle qui dépasse accélère, celle qui cède lève le pied), sans arrêt
+  net ; silhouettes orientées dans le sens de la piste ; tour de classement
+  (position, écurie, écart) à gauche du tracé, masquée sous 800 px ; damier,
+  secteurs, limites de piste. Test de fluidité dans la suite `circuit`.
 
 ## Étape 4 (simulation de carrière) — ce qui a été fait
 
