@@ -42,17 +42,36 @@ body { padding: 0 !important; }
 /* Sans navigation (accueil du jeu, création) : l'écran prend toute la largeur. */
 .screens:has(> #main-nav:not(.show)) > .scr { left: 0 !important; }
 
-/* Écran titre : logo à gauche, nouvelle carrière et parties à droite. */
+/* Écran titre : une seule colonne centrée. Le logo, puis la partie à
+   reprendre (l'action principale dès qu'une sauvegarde existe), puis
+   « Nouvelle carrière », plus discrète dans ce cas. Les emplacements vides
+   ne s'affichent pas : il en reste toujours un pour une nouvelle carrière. */
 #S-splash .apex-splash {
-  display: grid !important; height: 100%;
-  grid-template-columns: 1fr minmax(300px, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
-  align-items: center; column-gap: 24px; padding: 12px 24px !important;
+  display: flex !important; flex-direction: column; align-items: stretch; justify-content: center; gap: 10px;
+  position: static !important;   /* le halo se cale sur tout l'écran, pas sur la colonne */
+  width: min(440px, 100%); height: 100%; margin: 0 auto; padding: 12px 16px !important;
+  overflow-y: auto; scrollbar-width: none;
 }
-#S-splash .apex-splash-hero { grid-column: 1; grid-row: 1 / 3; height: auto !important; }
-#S-splash .apex-splash-logo { width: min(240px, 52vh) !important; height: auto !important; }
-#S-splash .apex-splash-footer { grid-column: 1; grid-row: 3; padding: 0 !important; }
-#S-splash .apex-splash-cta-wrap { grid-column: 2; grid-row: 1; }
-#S-splash .apex-splash-resume { grid-column: 2; grid-row: 2 / 4; align-self: stretch; overflow-y: auto; }
+#S-splash .apex-splash::-webkit-scrollbar { display: none; }
+#S-splash .apex-splash-hero { flex: 0 0 auto; height: auto !important; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-logo { width: auto !important; height: clamp(80px, 34vh, 240px) !important; display: block; margin: 0 auto; }
+#S-splash .apex-splash-sub { margin-top: 4px !important; }
+#S-splash .apex-splash-resume { order: 1; flex: 0 0 auto; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-cta-wrap { order: 2; flex: 0 0 auto; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-footer { order: 3; flex: 0 0 auto; margin: 4px 0 0 !important; padding: 0 !important; text-align: center; font-size: 9px; }
+#S-splash .apex-splash-cta { width: 100%; height: 48px; margin: 0 !important; }
+#S-splash .apex-splash-section-title { display: none !important; }
+#S-splash #save-slots > div { margin-bottom: 6px !important; }
+#S-splash #save-slots > div[style*="dashed"] { display: none !important; }
+#S-splash .apex-splash-resume:not(:has(#save-slots button)) { display: none; }
+/* Une partie existe : la reprendre est l'action principale. */
+#S-splash #save-slots button:first-of-type { padding: 9px 18px !important; font-size: 13px !important; font-weight: 800 !important; border-radius: 9px !important; }
+/* Les notifications de la partie n'ont rien à faire sur l'écran titre. */
+body:has(#S-splash.on) :is(#rj-toast-container, #ach-unlock-stack) { display: none !important; }
+#S-splash .apex-splash:has(#save-slots button) .apex-splash-cta {
+  height: 42px; background: rgba(255, 255, 255, .05) !important; box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important; color: var(--text, #e8e8ec) !important;
+}
 
 /* Choix du mode : les deux formules côte à côte. */
 #S-mode .rj80-wrap { max-width: 880px !important; }
@@ -168,7 +187,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 }
 .scr > .tabs > *::after { display: none !important; }
 /* Bandeau : une seule teinte et un seul filet sur toute la largeur. */
-.screens > .scr:not(#S-home) {
+.screens > .scr:not(#S-home, #S-splash, #S-create, #S-mode, #S-display-setup) {
   background-image: linear-gradient(rgba(255, 255, 255, .035), rgba(255, 255, 255, .035)), linear-gradient(rgba(255, 255, 255, .07), rgba(255, 255, 255, .07)) !important;
   background-size: 100% var(--bandeau), 100% 1px !important; background-position: 0 0, 0 calc(var(--bandeau) - 1px) !important;
   background-repeat: no-repeat !important;
@@ -327,6 +346,72 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 16px !important; }
   .rj118-info { font-size: 12px; }
 }
+
+/* Boutons du menu : chacun sa couleur, une icône en pastille dégradée, une
+   lueur de sa teinte et une flèche. Teintes par destination. */
+#S-home .apex-action-tile { --t: #FF3B30; }
+#S-home .apex-action-tile[onclick*="S-training"] { --t: #22C55E; }
+#S-home .apex-action-tile[onclick*="S-media"] { --t: #A855F7; }
+#S-home .apex-action-tile[onclick*="S-contracts"] { --t: #3B82F6; }
+#S-home .apex-action-tile[onclick*="S-sponsors"] { --t: #F59E0B; }
+#S-home .apex-action-tile[onclick*="S-patrimoine"] { --t: #10B981; }
+#S-home .apex-action-tile[onclick*="S-mailbox"] { --t: #22D3EE; }
+#S-home .apex-action-tile[onclick*="S-lifestyle"] { --t: #EC4899; }
+#S-home .apex-action-tile[onclick*="showSaveMenu"] { --t: #94A3B8; }
+#S-home > .scroll .apex-actions-grid > .apex-action-tile {
+  position: relative; overflow: hidden; padding-right: 20px !important; column-gap: 9px !important;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t) 22%, transparent), transparent 60%),
+    linear-gradient(160deg, #18181d, #101014) !important;
+  border: 1px solid color-mix(in srgb, var(--t) 28%, rgba(255, 255, 255, .06)) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .35) !important;
+  transition: transform .12s ease, border-color .15s ease;
+}
+#S-home > .scroll .apex-actions-grid > .apex-action-tile::after {
+  content: "›"; position: absolute; right: 8px; top: 50%; transform: translateY(-52%);
+  font: 700 18px/1 var(--font-display); color: color-mix(in srgb, var(--t) 70%, #fff);
+}
+#S-home > .scroll .apex-actions-grid > .apex-action-tile:active { transform: scale(.97); border-color: var(--t) !important; }
+#S-home > .scroll .apex-actions-grid .apex-action-icon {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--t) 85%, #fff), color-mix(in srgb, var(--t) 70%, #000)) !important;
+  border: 0 !important; color: #fff !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--t) 45%, transparent), inset 0 1px rgba(255, 255, 255, .35) !important;
+}
+#S-home > .scroll .apex-actions-grid .apex-action-icon svg { stroke: #fff !important; }
+#S-home > .scroll .apex-actions-grid .apex-action-title { color: #fff !important; font-weight: 800 !important; }
+#S-home > .scroll .apex-sec { opacity: .85; }
+
+/* --- Widgets de carrière (js/ui/119-widgets.js) ------------------------ */
+.rj119-rangee { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+.rj119-w {
+  break-inside: avoid; margin: 0 0 12px; padding: 11px 13px 12px; border-radius: 14px; cursor: pointer;
+  background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--w) 16%, transparent), transparent 55%), var(--bg3, #0e0e12);
+  border: 1px solid color-mix(in srgb, var(--w) 26%, rgba(255, 255, 255, .06));
+}
+.rj119-rangee .rj119-w { margin: 0; }
+.rj119-w:active { transform: scale(.98); }
+.rj119-t {
+  display: flex; align-items: center; gap: 6px;
+  font: 800 9.5px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--w);
+}
+.rj119-t::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--w); box-shadow: 0 0 8px var(--w); }
+.rj119-t::after { content: "›"; margin-left: auto; font-size: 14px; color: var(--muted, #80808a); }
+.rj119-v { margin: 7px 0 6px; font: 800 18px/1.1 var(--font-display); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rj119-v small { font: 600 11px/1 var(--font-body); color: var(--muted, #80808a); }
+.rj119-l { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; line-height: 1.9; color: var(--text2, #b0b0bc); }
+.rj119-l b { color: var(--text, #e8e8ec); white-space: nowrap; }
+.rj119-l span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rj119-s { margin-top: 4px; font-size: 11px; line-height: 1.4; color: var(--muted, #80808a); }
+.rj119-barre { height: 5px; margin: 5px 0 2px; border-radius: 3px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.rj119-barre span { display: block; height: 100%; border-radius: 3px; }
+.rj119-forme { display: flex; gap: 4px; margin-top: 6px; }
+.rj119-forme i {
+  font: 700 10px/1 var(--font-display); font-style: normal; padding: 4px 6px; border-radius: 4px;
+  color: var(--text2, #b0b0bc); background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08);
+}
+.rj119-forme i.podium { color: #F59E0B; border-color: #F59E0B66; }
+.rj119-forme i.points { color: #34D399; border-color: #34D39944; }
+.rj119-forme i.ab { color: #ff2040; border-color: #ff204055; }
 
 /* Carte de la prochaine course : l'action principale, nommée. */
 #S-home > .apex-hero-race { position: relative; }

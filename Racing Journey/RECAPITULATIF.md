@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v223**. Ce document décrit l'organisation du code après la
+Version **BUILD v225**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v223 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v225 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -313,6 +313,19 @@ et ergonomique en paysage.
   budget, bonheur, messages non lus). Tuiles en ligne, ou en colonne sur petit
   téléphone, plus grandes sur tablette.
 - **Calendrier** : le mois entier tient dans l'écran.
+- **Écran titre** (v224) : une seule colonne centrée — le logo, la partie à
+  reprendre (action principale dès qu'une sauvegarde existe), puis « Nouvelle
+  carrière », plus discrète dans ce cas. Les emplacements vides et les
+  notifications de la partie n'y apparaissent plus.
+- **Boutons du menu** (v225) : chaque raccourci de l'accueil a sa couleur,
+  une icône en pastille dégradée, une lueur de sa teinte et une flèche.
+- **Widgets** (`js/ui/119-widgets.js`, v225) : contrat actuel, prochaine
+  course, saison (classement, points, forme), budget, Super Licence, rêves.
+  Chaque écran reçoit ceux qui le complètent (`WIDGETS_PAR_ECRAN`) ; ils se
+  glissent dans les colonnes de l'onglet affiché, qui s'équilibrent et
+  comblent les vides, ou forment une rangée en bas sans colonnes. Toucher un
+  widget mène à l'écran concerné. Les durées de contrat suivent la lecture de
+  l'écran Contrats (4 semaines par mois, 48 par saison).
 
 
 - **Moteur.** Les positions restent calculées au score (bridées à ±2 places
