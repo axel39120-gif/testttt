@@ -213,11 +213,13 @@
     lr._rj82PitsFaits = {};
   }
 
+  /* Un arrêt coûte sa durée, en secondes, à tout le monde. L'ancienne
+     pénalité visait un nombre de places à perdre d'après l'ordre du moment :
+     deux arrêts identiques ne coûtaient pas la même chose, et l'arrivée
+     dépendait de qui s'arrêtait quand (audit du week-end, étape 6). */
   function arretRival(d, dur) {
     try {
-      var perte = fn("_computePlacesLostByPit") ? window._computePlacesLostByPit(d, dur) : 0;
-      if (fn("_applyPitPenaltyForTargetDrop")) window._applyPitPenaltyForTargetDrop(d, perte, dur);
-      else d.penaltySec = (d.penaltySec || 0) + dur;
+      d.penaltySec = (d.penaltySec || 0) + dur;
       d._pitsDone = (d._pitsDone || 0) + 1;
       d._lastPitLap = LR() ? LR().cur : 0;
     } catch (e) {}

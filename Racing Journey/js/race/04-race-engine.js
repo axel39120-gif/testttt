@@ -791,8 +791,12 @@ function _qualiDriverTimeCoeur(e, t, r, n, a) {
     } catch (_e) {}
     if (Math.random() < errorRisk) lap += 0.018 * baseRef; // mistake costs ~1.8%
   }
-  // Sanity floor: best case ~96.5% of ref (a god-tier driver)
-  return Math.max(0.965 * baseRef, lap);
+  /* Plancher souple à 96,5 % de la référence : au-delà, l'avance n'est plus
+     gardée qu'au quart. Un plancher dur donnait le même temps aux meilleures
+     voitures de F1 (jusqu'à 40 % des tours), et la pole se jouait à l'ordre
+     de la liste (audit du week-end, étape 6). */
+  var plancher = 0.965 * baseRef;
+  return lap >= plancher ? lap : plancher - (plancher - lap) * 0.25;
 }
 
 function formatQualiTime(e) {
@@ -3025,7 +3029,8 @@ function _runRaceLiveCoeur() {
     return _qp >= 8 ? .008 : _qp >= 5 ? .003 : _qp <= 3 ? -.004 : 0;
   })();
   var _mismatchPen = (G._lastSetupMismatch && G._lastSetupMismatch.cat === G.cat) ? -.008 : 0;
-  var v = Math.min(.97, Math.max(.03, g + u + p + teamRatingToBonus(m) + getHappinessBonus() + h + _momentumBonus + _gridBonus + _mismatchPen + _catLevelBonus + ("function" == typeof getPlayerEngineerBonus ? getPlayerEngineerBonus() : 0) + (Math.random() - .5) * f * .5 + (function() {
+  /* Pas de plafond haut ici : les notes sont recalées une fois pour toutes au départ (81, « 81-echelle »). */ 
+  var v = Math.min(Infinity, Math.max(.03, g + u + p + teamRatingToBonus(m) + getHappinessBonus() + h + _momentumBonus + _gridBonus + _mismatchPen + _catLevelBonus + ("function" == typeof getPlayerEngineerBonus ? getPlayerEngineerBonus() : 0) + (Math.random() - .5) * f * .5 + (function() {
       try {
         return (typeof _getTeamCircuitAffinity === 'function' ? _getTeamCircuitAffinity(m === 72 ? (G.currentTeam || '') : G.currentTeam, G.cat, RACE_STATE.circuit) : 0) * 0.012
       } catch (_eA) {
@@ -3048,7 +3053,7 @@ function _runRaceLiveCoeur() {
       prevPos: o
     }];
   G.rivals.forEach(function(e, t) {
-    var r = Math.min(.96, Math.max(.02, e.skill / 100 + l + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72) + .7 * a.rainMod + .2 * (Math.random() - .5) * (1 - e.consistency + .25) + (function() {
+    var r = Math.min(Infinity, Math.max(.02, e.skill / 100 + l + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72) + .7 * a.rainMod + .2 * (Math.random() - .5) * (1 - e.consistency + .25) + (function() {
       try {
         return (typeof _getTeamCircuitAffinity === 'function' ? _getTeamCircuitAffinity(e.team, G.cat, RACE_STATE.circuit) : 0) * 0.012
       } catch (_eA) {
@@ -3182,7 +3187,7 @@ function _runRaceLiveCoeur() {
       if (a < _rSuperChance) n = .018;
       else if (a < _rSuperChance + _rBadChance) n = t === 1 ? -.022 : -.014;
     } /* #1 — n (effet du départ proprement dit) garde son effet permanent sur score, mais le malus de grille r=.013*-(t-1) est converti en paceMod temporaire (3 tours) appliqué après init de LIVE_RACE plus bas. */
-    e.score = Math.min(.97, Math.max(.03, e.score + n)), e.baseScore = e.score, e.gridPos = t, e.startBonus = n, e.eventScoreOffset = 0
+    e.score = Math.min(Infinity, Math.max(.03, e.score + n)), e.baseScore = e.score, e.gridPos = t, e.startBonus = n, e.eventScoreOffset = 0
   }), (LIVE_RACE = {
     drivers: x,
     cur: 0,
@@ -15387,8 +15392,11 @@ function _tickRaceCoeur() {
             console.warn("lap history:", e)
           }
         })();
-        (typeof _applyRivalPitsForLap === "function" && _applyRivalPitsForLap());
-        (typeof _decayPitPenalty === "function" && _decayPitPenalty());
+        /* Arrêts des rivaux : un seul système, celui du module 82 (même nombre
+           d'arrêts pour tous, perte de temps fixe). L'ancien planning
+           (_scheduleRivalPits / _applyRivalPitsForLap) s'y ajoutait — deux à six
+           arrêts par voiture — et _decayPitPenalty rendait du temps à ceux qui
+           s'étaient arrêtés tôt : l'arrivée en devenait aléatoire. */
         (typeof renderPitButton === "function" && renderPitButton());
         (function() {
           if (G._noDnf) return;

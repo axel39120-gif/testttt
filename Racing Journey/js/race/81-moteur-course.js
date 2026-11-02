@@ -331,6 +331,24 @@
    * ---------------------------------------------------------------- */
   var COURBE = 1.35;
 
+  /* Les notes tiennent dans [PLAFOND_NOTE − BANDE_NOTE, PLAFOND_NOTE] : le
+     meilleur est ramené au plafond, et si l'écart avec le dernier dépasse la
+     bande, il est resserré proportionnellement (l'ordre ne change jamais). */
+  var PLAFOND_NOTE = 0.93, BANDE_NOTE = 0.85;
+  function recalerLesNotes(pilotes) {
+    var notes = pilotes.filter(function (d) { return typeof d.baseScore === "number"; }).map(function (d) { return d.baseScore; });
+    if (!notes.length) return;
+    var max = Math.max.apply(null, notes), min = Math.min.apply(null, notes);
+    var k = max - min > BANDE_NOTE ? BANDE_NOTE / (max - min) : 1;
+    if (max <= PLAFOND_NOTE && k === 1) return;
+    var cible = Math.min(max, PLAFOND_NOTE);
+    function recaler(v) { return cible - (max - v) * k; }
+    pilotes.forEach(function (d) {
+      if (typeof d.baseScore === "number") d.baseScore = recaler(d.baseScore);
+      if (typeof d.score === "number") d.score = recaler(d.score);
+    });
+  }
+
   function decompresserEchelle(ordreFinal) {
     var n = ordreFinal.length;
     if (n < 4) return;
@@ -362,7 +380,7 @@
       var t = (n > 1) ? (i / (n - 1)) : 0;
       var valeur = haut - amplitude * Math.pow(t, COURBE);
       valeur += (Math.random() - 0.5) * 0.006;
-      d.score = Math.max(0.02, Math.min(0.99, valeur));
+      d.score = Math.max(0.02, valeur);   // sans plafond : recalée ensuite par « 81-echelle »
       d.baseScore = d.score;
     }
     console.log(TAG, "échelle décompressée (" + satures + " pilotes étaient au plafond)");
@@ -498,6 +516,16 @@
       window.updateLivePositions._rj81 = true;
     }
 
+    /* Dernier passage au départ, après toutes les couches qui ajustent les
+       notes (04k, 55, 81…) : si le meilleur dépasse PLAFOND_NOTE, tout le
+       plateau descend d'autant. Les écarts sont conservés et les bornes de
+       chaque tour (0,97 / 0,99 dans tickRace) ne mordent plus : avant, en F1,
+       six pilotes finissaient ex æquo au plafond (audit du week-end, étape 6). */
+    if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "81-echelle"; })) {
+      window.RJ_RACE_START_HOOKS.push({ id: "81-echelle", ordre: 90, apres: function (lr) {
+        if (lr && lr.drivers && lr.drivers.length) recalerLesNotes(lr.drivers);
+      } });
+    }
     if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "81-recalibrage"; })) {
       window.RJ_RACE_START_HOOKS.push({ id: "81-recalibrage", ordre: -10, apres: function (lr) {
         if (lr && lr.drivers && lr.drivers.length) recalibrerSurLaGrille();
