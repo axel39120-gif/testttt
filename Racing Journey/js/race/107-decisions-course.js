@@ -195,7 +195,7 @@
     var s = document.createElement("style");
     s.id = CSS_ID;
     s.textContent =
-      "#rj107-mini{margin-top:10px;border:1px solid var(--border-hi);border-radius:10px;background:var(--bg2);overflow:hidden}" +
+      "#rj107-mini{margin-top:10px;border:1px solid var(--border-hi);border-radius:var(--r);background:var(--bg2);overflow:hidden}" +
       ".rj107-l{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;color:var(--soft)}" +
       ".rj107-l+.rj107-l{border-top:1px solid var(--border-hi)}" +
       ".rj107-pos{min-width:32px;font-family:var(--font-display);font-weight:700}" +

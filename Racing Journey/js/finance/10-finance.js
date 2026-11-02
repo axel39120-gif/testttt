@@ -379,7 +379,7 @@
     html += '</div>';
 
     // Solde actuel
-    html += '<div style="margin:14px 20px 0;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:space-between">';
+    html += '<div style="margin:14px 20px 0;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:space-between">';
     html += '<div>';
     html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.12em;text-transform:uppercase">Solde actuel</div>';
     html += '<div style="font-family:var(--font-display);font-size:26px;font-weight:900;color:' + budgetColor + ';line-height:1;margin-top:3px">' + after.budget.toLocaleString('fr-FR') + ' €</div>';
@@ -435,14 +435,14 @@
 
     // Aucun revenu — alerte
     if (totalIn === 0 && G.currentTeam === 'Indépendant') {
-      html += '<div style="margin:10px 20px 0;padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px">';
+      html += '<div style="margin:10px 20px 0;padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r)">';
       html += '<div style="font-size:12px;color:#F87171;line-height:1.5">Sans contrat d\'équipe, tu n\'as pas de salaire. Signe un contrat ou multiplie les sponsors pour couvrir tes dépenses.</div>';
       html += '</div>';
     }
 
     // Conseil si budget faible
     if (after.budget < 3000) {
-      html += '<div style="margin:10px 20px 0;padding:10px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px">';
+      html += '<div style="margin:10px 20px 0;padding:10px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--r)">';
       html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#F59E0B;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">⚠ Budget faible</div>';
       html += '<div style="font-size:12px;color:var(--text2)">Il reste moins de 3 000 €. Évite les dépenses non essentielles et concentre-toi sur les sponsors.</div>';
       html += '</div>';
@@ -450,7 +450,7 @@
 
     // Bouton fermer
     html += '<div style="padding:16px 20px">';
-    html += '<button onclick="document.getElementById(\'rj-bilan-overlay\').remove()" style="width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:12px;font-family:var(--font-display);font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Continuer</button>';
+    html += '<button onclick="document.getElementById(\'rj-bilan-overlay\').remove()" style="width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-family:var(--font-display);font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Continuer</button>';
     html += '</div>';
 
     card.innerHTML = html;
@@ -606,13 +606,13 @@
     html += '<div style="display:flex;gap:8px;margin-bottom:14px">';
 
     // Budget
-    html += '<div style="flex:1;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;text-align:center">';
+    html += '<div style="flex:1;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center">';
     html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Solde</div>';
     html += '<div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:' + budgetColor + ';line-height:1">' + _rjFmtMoney(G.budget || 0) + '</div>';
     html += '</div>';
 
     // Net / semaine
-    html += '<div style="flex:1;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;text-align:center">';
+    html += '<div style="flex:1;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center">';
     html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Net / semaine</div>';
     html += '<div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:' + netColor + ';line-height:1">' + (weeklyNet >= 0 ? '+' : '') + _rjFmtMoney(weeklyNet) + '</div>';
     html += '</div>';
@@ -621,7 +621,7 @@
     var weeksLeft = Math.max(0, 48 - (G.semaine || 1));
     var projected = (G.budget || 0) + weeklyNet * weeksLeft;
     var projColor = projected >= 5000 ? '#4ADE80' : projected >= 0 ? '#F59E0B' : '#EF4444';
-    html += '<div style="flex:1;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;text-align:center">';
+    html += '<div style="flex:1;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center">';
     html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Fin de saison</div>';
     html += '<div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:' + projColor + ';line-height:1">' + _rjFmtMoney(projected) + '</div>';
     html += '</div>';
@@ -652,7 +652,7 @@
     }
 
     if (salary === 0 && (!G.sponsors || !G.sponsors.length)) {
-      html += '<div style="padding:10px 12px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;font-size:12px;color:#F87171;margin-top:6px">Aucun revenu. Signe un contrat ou des sponsors pour financer ta saison.</div>';
+      html += '<div style="padding:10px 12px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:var(--r);font-size:12px;color:#F87171;margin-top:6px">Aucun revenu. Signe un contrat ou des sponsors pour financer ta saison.</div>';
     }
     html += '</div>';
 
@@ -705,7 +705,7 @@
     });
 
     if (!available.length) {
-      html += '<div style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--muted)">Aucun investissement disponible pour ta catégorie en ce moment.</div>';
+      html += '<div style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--muted)">Aucun investissement disponible pour ta catégorie en ce moment.</div>';
     } else {
       // Grouper par catégorie
       var cats = ['materiel', 'coaching', 'mental', 'mediatique', 'administratif'];
@@ -722,11 +722,11 @@
           var borderColor = canAfford ? inv.color + '44' : 'var(--border)';
           var opacity = canAfford ? '1' : '0.55';
 
-          html += '<div style="padding:12px 14px;background:' + inv.color + '10;border:1px solid ' + borderColor + ';border-radius:10px;margin-bottom:6px;opacity:' + opacity + '">';
+          html += '<div style="padding:12px 14px;background:' + inv.color + '10;border:1px solid ' + borderColor + ';border-radius:var(--r);margin-bottom:6px;opacity:' + opacity + '">';
           html += '<div style="display:flex;align-items:flex-start;gap:10px">';
 
           // Icône
-          html += '<div style="width:36px;height:36px;border-radius:9px;background:' + inv.color + '22;border:1px solid ' + inv.color + '44;display:flex;align-items:center;justify-content:center;flex-shrink:0">';
+          html += '<div style="width:36px;height:36px;border-radius:var(--r);background:' + inv.color + '22;border:1px solid ' + inv.color + '44;display:flex;align-items:center;justify-content:center;flex-shrink:0">';
           html += (typeof renderIcon === 'function') ? renderIcon(inv.icon || 'star', 16, inv.color) : '●';
           html += '</div>';
 
@@ -748,7 +748,7 @@
 
           // Bouton acheter
           if (canAfford) {
-            html += '<button onclick="rjBuyInvestment(\'' + inv.id + '\')" style="margin-top:9px;width:100%;padding:9px;background:' + inv.color + ';color:#fff;border:none;border-radius:8px;font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Investir ' + inv.cost.toLocaleString('fr-FR') + ' €</button>';
+            html += '<button onclick="rjBuyInvestment(\'' + inv.id + '\')" style="margin-top:9px;width:100%;padding:9px;background:' + inv.color + ';color:#fff;border:none;border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Investir ' + inv.cost.toLocaleString('fr-FR') + ' €</button>';
           } else {
             html += '<div style="margin-top:7px;font-size:11px;color:var(--muted);text-align:center">Manque ' + ((inv.cost - (G.budget || 0)).toLocaleString('fr-FR')) + ' €</div>';
           }

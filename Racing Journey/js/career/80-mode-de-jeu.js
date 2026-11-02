@@ -153,7 +153,7 @@
       /* grille des écuries de cœur */
       ".rj80-fav-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}",
       ".rj80-fav-opt{display:flex;align-items:center;gap:8px;padding:8px 9px;background:var(--bg3);border:1.5px solid var(--line);" +
-        "border-radius:9px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s,background .15s}",
+        "border-radius:var(--r);cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s,background .15s}",
       ".rj80-fav-opt:hover{border-color:var(--border-hi)}",
       ".rj80-fav-opt.on{border-color:" + CYAN + ";background:rgba(0,212,255,.10)}",
       ".rj80-fav-opt .rj80-fav-logo{display:inline-flex;width:22px;height:22px;border-radius:4px;overflow:hidden;flex-shrink:0}",
@@ -599,7 +599,7 @@
     var bloc = document.createElement("div");
     bloc.id = "rj80-fav";
     bloc.style.cssText = "margin-top:14px;padding:13px 14px;background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,212,255,.02));" +
-      "border:1px solid rgba(0,212,255,.3);border-radius:12px";
+      "border:1px solid rgba(0,212,255,.3);border-radius:var(--r)";
     bloc.innerHTML =
       '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + CYAN +
         ';letter-spacing:.08em;text-transform:uppercase">Écurie de cœur</div>' +

@@ -363,24 +363,24 @@
       ".rj95-fond.on{display:flex}",
       ".rj95-boite{width:100%;max-width:420px;max-height:92vh;overflow-y:auto;padding:22px 20px;" +
         "background:linear-gradient(160deg,var(--bg3,#16161d) 0%,var(--bg2,#101015) 100%);" +
-        "border:1px solid var(--border-hi,rgba(255,255,255,.16));border-radius:18px}",
+        "border:1px solid var(--border-hi,rgba(255,255,255,.16));border-radius:var(--r)}",
       ".rj95-eyebrow{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.2em;" +
         "text-transform:uppercase;color:var(--red3,#FF1801)}",
       ".rj95-titre{font-family:var(--font-display);font-size:22px;font-weight:900;color:#fff;margin:8px 0 10px;line-height:1.15}",
       ".rj95-txt{font-size:13px;color:var(--soft,#aeb6c6);line-height:1.55;margin-bottom:14px}",
       ".rj95-recap{display:flex;gap:8px;margin-bottom:16px}",
       ".rj95-recap div{flex:1;padding:11px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);" +
-        "border-radius:10px;text-align:center}",
+        "border-radius:var(--r);text-align:center}",
       ".rj95-recap .v{font-family:var(--font-display);font-size:20px;font-weight:900;color:#fff}",
       ".rj95-recap .l{font-size:9.5px;color:var(--muted,#8b93a7);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}",
       ".rj95-actions{display:flex;flex-direction:column;gap:8px}",
-      ".rj95-btn{width:100%;padding:13px;border:none;border-radius:10px;cursor:pointer;font-family:var(--font-display);" +
+      ".rj95-btn{width:100%;padding:13px;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--font-display);" +
         "font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}",
       ".rj95-btn.rouge{background:var(--red,#FF1801);color:#fff}",
       ".rj95-btn.neutre{background:rgba(255,255,255,.06);color:var(--soft,#aeb6c6);border:1px solid rgba(255,255,255,.12)}",
-      ".rj95-apercu{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);display:block;margin-bottom:14px}",
+      ".rj95-apercu{width:100%;border-radius:var(--r);border:1px solid rgba(255,255,255,.12);display:block;margin-bottom:14px}",
       /* --- récapitulatif saison par saison, replié par défaut --------- */
-      ".rj95-detail{border:1px solid rgba(255,255,255,.10);border-radius:12px;margin-bottom:14px;overflow:hidden}",
+      ".rj95-detail{border:1px solid rgba(255,255,255,.10);border-radius:var(--r);margin-bottom:14px;overflow:hidden}",
       ".rj95-detail > summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;align-items:center;gap:9px;" +
         "background:rgba(255,255,255,.04)}",
       ".rj95-detail > summary::-webkit-details-marker{display:none}",
@@ -390,7 +390,7 @@
       ".rj95-detail[open] > summary .c{transform:rotate(90deg)}",
       ".rj95-tab{padding:8px 10px 10px;display:flex;flex-direction:column;gap:8px}",
       /* --- carte de saison, reprise de l'historique de carrière -------- */
-      ".rj95-sc{border:1px solid rgba(255,255,255,.09);border-radius:12px;overflow:hidden;" +
+      ".rj95-sc{border:1px solid rgba(255,255,255,.09);border-radius:var(--r);overflow:hidden;" +
         "background:var(--surface2,rgba(255,255,255,.03));position:relative}",
       ".rj95-sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}",
       ".rj95-sc-h{display:flex;align-items:center;gap:10px;padding:10px 12px 9px 14px}",

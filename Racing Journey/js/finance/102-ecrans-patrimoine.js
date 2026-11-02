@@ -46,7 +46,7 @@
     if (document.getElementById(CSS_ID)) return;
     var css = [
       "#S-patrimoine .rj102-vide{margin:16px;padding:22px 16px;border:1px dashed rgba(255,255,255,.13);" +
-        "border-radius:14px;text-align:center;color:var(--muted,#8b93a7);font-size:12.5px;line-height:1.6}",
+        "border-radius:var(--r);text-align:center;color:var(--muted,#8b93a7);font-size:12.5px;line-height:1.6}",
       "#S-patrimoine .rj102-vide b{display:block;font-family:var(--font-display);font-size:12px;" +
         "font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text2,#c7cddb);margin-bottom:8px}"
     ].join("\n");

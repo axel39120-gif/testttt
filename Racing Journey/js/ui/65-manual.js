@@ -169,7 +169,7 @@
   ];
 
   function carteCategorie(c, couleur) {
-    return '<div style="padding:10px 12px;border-radius:9px;background:var(--surface2);' +
+    return '<div style="padding:10px 12px;border-radius:var(--r);background:var(--surface2);' +
       'border:1px solid var(--border);border-left:3px solid ' + couleur + ';margin-bottom:6px">' +
       '<div style="font-family:var(--font-display);font-size:12.5px;font-weight:800;color:#fff">' + c.nom + '</div>' +
       '<div style="font-size:11px;color:' + couleur + ';margin:3px 0 5px">' + c.res +
@@ -199,7 +199,7 @@
       'principale. On peut y faire toute sa carrière — et ils recrutent aussi ceux que la F1 n\'a pas retenus.</div>';
     ALTERNATIVES.forEach(function (c) { h += carteCategorie(c, "#00D4FF"); });
 
-    h += '<div style="margin-top:14px;padding:11px 12px;border-radius:9px;' +
+    h += '<div style="margin-top:14px;padding:11px 12px;border-radius:var(--r);' +
       'background:rgba(255,24,1,.07);border:1px solid rgba(255,24,1,.28)">' +
       '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#FF1801;' +
       'letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Monter d\'une catégorie</div>' +
@@ -228,7 +228,7 @@
       'border:1px solid var(--border);border-left:3px solid ' + col + ';border-radius:0 9px 9px 0;' +
       'cursor:pointer;margin-bottom:5px">' +
       '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;' +
-      'border-radius:8px;background:' + col + '1A;border:1px solid ' + col + '40;color:' + col + ';flex-shrink:0">' + ic + '</span>' +
+      'border-radius:var(--r);background:' + col + '1A;border:1px solid ' + col + '40;color:' + col + ';flex-shrink:0">' + ic + '</span>' +
       '<div style="flex:1;min-width:0">' +
       '<div style="font-family:var(--font-display);font-size:12.5px;font-weight:800;color:#fff">' + def.title + '</div>' +
       '<div style="font-size:11px;color:var(--text2);line-height:1.4;overflow:hidden;display:-webkit-box;' +
@@ -277,12 +277,12 @@
     try { if (typeof renderIcon === "function") ic = renderIcon("diplome", 18, "#22D3EE"); } catch (e) {}
     ov.innerHTML =
       '<div style="background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);' +
-      'border-radius:16px;max-width:430px;width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden">' +
+      'border-radius:var(--r);max-width:430px;width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden">' +
         '<div style="padding:16px 16px 0">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
             '<div style="display:flex;align-items:center;gap:10px">' +
               '<span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;' +
-              'border-radius:9px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.30)">' + ic + '</span>' +
+              'border-radius:var(--r);background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.30)">' + ic + '</span>' +
               '<div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#22D3EE;' +
               'letter-spacing:.18em;text-transform:uppercase">Référence</div>' +
               '<div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:#fff">Manuel du pilote</div></div>' +

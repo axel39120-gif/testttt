@@ -300,7 +300,7 @@
     st.id = "rj75-css";
     st.textContent = [
       /* le panneau occupe toute la largeur de la grille a deux colonnes */
-      ".rj75{grid-column:1/-1;border:1px solid var(--border-hi);border-radius:11px;",
+      ".rj75{grid-column:1/-1;border:1px solid var(--border-hi);border-radius:var(--r);",
       "background:linear-gradient(180deg,var(--bg3),var(--bg2));overflow:hidden;",
       "margin:-2px 0 2px;animation:rj75in .18s ease}",
       "@keyframes rj75in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}",

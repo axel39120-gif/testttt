@@ -263,7 +263,7 @@
     var html = '';
 
     // En-tête journal
-    html += '<div style="margin:10px 16px 0;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(167,139,250,.03));border:1px solid rgba(167,139,250,.32)">'
+    html += '<div style="margin:10px 16px 0;padding:14px;border-radius:var(--r);background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(167,139,250,.03));border:1px solid rgba(167,139,250,.32)">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">'
       + '<span style="font-family:var(--font-display);font-size:15px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:' + FLAG + '">Le Paddock</span>'
       + '<span style="font-size:10px;color:var(--text3);letter-spacing:.05em">Saison ' + issue.saison + ' · Sem. ' + issue.semaine + '</span>'
@@ -277,7 +277,7 @@
     // lieu : le titre restait affiché au-dessus d'un tableau vide.
     if (issue.results && issue.results.length) {
     html += sectionTitle('R\u00e9sultats \u00b7 Vainqueurs');
-    html += '<div style="margin:0 16px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)">';
+    html += '<div style="margin:0 16px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface2)">';
     issue.results.forEach(function (r, i) {
       html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;' + (i ? 'border-top:1px solid rgba(255,255,255,.05)' : '') + (r.you ? ';background:rgba(167,139,250,.07)' : '') + '">'
         + catBadge(r.cat)
@@ -292,7 +292,7 @@
     html += sectionTitle('Transferts & rumeurs');
     html += '<div style="margin:0 16px;display:flex;flex-direction:column;gap:7px">';
     issue.transfers.forEach(function (t) {
-      html += '<div style="padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface2);font-size:12.5px;color:var(--text2);line-height:1.45">' + t + '</div>';
+      html += '<div style="padding:11px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);font-size:12.5px;color:var(--text2);line-height:1.45">' + t + '</div>';
     });
     html += '</div>';
 
@@ -300,7 +300,7 @@
     html += sectionTitle('Technique \u00b7 \u00c9volutions');
     html += '<div style="margin:0 16px;display:flex;flex-direction:column;gap:7px">';
     issue.tech.forEach(function (t) {
-      html += '<div style="padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface2);border-left:3px solid ' + FLAG + ';font-size:12.5px;color:var(--text2);line-height:1.45">' + t + '</div>';
+      html += '<div style="padding:11px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);border-left:3px solid ' + FLAG + ';font-size:12.5px;color:var(--text2);line-height:1.45">' + t + '</div>';
     });
     html += '</div>';
 
@@ -309,7 +309,7 @@
       html += sectionTitle('En bref');
       html += '<div style="margin:0 16px;display:flex;flex-direction:column;gap:7px">';
       issue.briefs.forEach(function (b) {
-        html += '<div style="padding:10px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface2)">'
+        html += '<div style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2)">'
           + '<div style="font-size:10px;color:' + FLAG + ';font-weight:700;letter-spacing:.04em;margin-bottom:3px">' + esc(b.src) + '</div>'
           + '<div style="font-size:12px;color:var(--text2);line-height:1.45">' + esc(b.body) + '</div>'
           + '</div>';

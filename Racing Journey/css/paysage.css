@@ -16,6 +16,9 @@
  * =================================================================== */
 
 :root {
+  /* Un seul arrondi pour les cartes, boutons et blocs de tout le jeu (styles.css
+     avait 8, 12 et 16 px) ; les cercles et pilules gardent le leur. */
+  --r: 6px; --r2: var(--r); --r3: var(--r);
   --rail: 64px;
   --rail-g: env(safe-area-inset-left, 0px);
   --bandeau: 44px;
@@ -65,7 +68,7 @@ body { padding: 0 !important; }
 #S-splash #save-slots > div[style*="dashed"] { display: none !important; }
 #S-splash .apex-splash-resume:not(:has(#save-slots button)) { display: none; }
 /* Une partie existe : la reprendre est l'action principale. */
-#S-splash #save-slots button:first-of-type { padding: 9px 18px !important; font-size: 13px !important; font-weight: 800 !important; border-radius: 9px !important; }
+#S-splash #save-slots button:first-of-type { padding: 9px 18px !important; font-size: 13px !important; font-weight: 800 !important; border-radius: var(--r) !important; }
 /* Les notifications de la partie n'ont rien à faire sur l'écran titre. */
 body:has(#S-splash.on) :is(#rj-toast-container, #ach-unlock-stack) { display: none !important; }
 #S-splash .apex-splash:has(#save-slots button) .apex-splash-cta {
@@ -94,7 +97,7 @@ body:has(#S-splash.on) :is(#rj-toast-container, #ach-unlock-stack) { display: no
 #main-nav .ni {
   position: relative; width: calc(100% - 10px) !important; height: auto !important; flex: 0 0 auto !important;
   display: flex !important; flex-direction: column !important; align-items: center !important; gap: 3px;
-  padding: 7px 0 6px !important; margin: 0 5px !important; border-radius: 12px !important;
+  padding: 7px 0 6px !important; margin: 0 5px !important; border-radius: var(--r) !important;
   color: var(--muted, #80808a) !important; transition: background .15s, color .15s;
 }
 #main-nav .ni .ni-ico-wrap svg { width: 20px; height: 20px; }
@@ -176,7 +179,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 .scr > .tabs::-webkit-scrollbar { display: none; }
 .scr > .tabs > * {
   flex: 0 0 auto !important; width: auto !important; min-width: 0 !important;
-  padding: 7px 12px !important; margin: 0 !important; border-radius: 999px !important;
+  padding: 7px 12px !important; margin: 0 !important; border-radius: var(--r) !important;
   border: 1px solid rgba(255, 255, 255, .08) !important; background: rgba(255, 255, 255, .04) !important;
   font: 700 10.5px/1 var(--font-display) !important; letter-spacing: .06em; text-transform: uppercase;
   white-space: nowrap !important; color: var(--text2, #b0b0bc) !important;
@@ -220,6 +223,36 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   top: auto !important; bottom: 44px !important; left: auto !important; right: 12px !important;
   width: min(360px, 45vw) !important; padding: 0 !important; align-items: stretch !important;
 }
+
+/* --- Titres de section : un seul style dans tout le jeu -----------------
+   Trois rayures inclinées aux couleurs de la course, le titre en capitales
+   blanches espacées, puis un filet qui part du rouge et s'efface. Remplace
+   le trait vertical gris des titres de styles.css (t-sec, apex-sec, sec-lbl,
+   écran titre), ceux des rêves (114), des paramètres (02) et de
+   l'entraînement (34). */
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .apex-splash-section-title) {
+  display: flex !important; align-items: center; gap: 9px;
+  font: 800 11px/1 var(--font-display) !important; letter-spacing: .16em !important; text-transform: uppercase;
+  color: #fff !important; opacity: 1 !important; padding: 14px 0 8px !important;
+}
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker)::before {
+  content: "" !important; flex: 0 0 auto; width: 17px !important; height: 9px !important; opacity: 1 !important;
+  border-radius: 0 !important; background: repeating-linear-gradient(115deg, var(--red, #FF1801) 0 3px, transparent 3px 6px) !important;
+}
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker)::after {
+  content: "" !important; flex: 1; height: 1px !important;
+  background: linear-gradient(90deg, rgba(255, 24, 1, .5), rgba(255, 255, 255, .07) 35%, transparent) !important;
+}
+/* Entraînement : le compteur (« 3 PA ») reste au bout du filet. */
+.rjf-kicker { justify-content: flex-start !important; }
+.rjf-kicker::after { order: 2; }
+.rjf-kicker > * { order: 3; color: var(--muted, #80808a); }
+.apex-sec .apex-sec-lbl, .apex-splash-section-title .apex-sec-name { font: inherit !important; letter-spacing: inherit !important; color: inherit !important; }
+.apex-splash-section-title .apex-sec-bar {
+  width: 17px !important; height: 9px !important; border-radius: 0 !important;
+  background: repeating-linear-gradient(115deg, var(--red, #FF1801) 0 3px, transparent 3px 6px) !important;
+}
+.apex-splash-section-title .apex-sec-line { background: linear-gradient(90deg, rgba(255, 24, 1, .5), rgba(255, 255, 255, .07) 35%, transparent) !important; }
 
 /* --- Contenu en colonnes ------------------------------------------------ */
 .scr > .scroll { padding: 12px 14px 16px !important; scrollbar-width: none; }
@@ -304,7 +337,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   left: calc(max(270px, 38%) + 10px); height: auto !important; margin: 0 !important;
   display: flex; flex-direction: column; padding: 6px 10px 10px 0 !important;
 }
-#S-home > .scroll .apex-sec { flex: 0 0 auto; margin-top: 2px !important; margin-bottom: 4px !important; }
+#S-home > .scroll .apex-sec { flex: 0 0 auto; margin-top: 2px !important; margin-bottom: 4px !important; padding: 4px 0 !important; }
 #S-home > .scroll .apex-actions-grid {
   flex: 1 1 0; min-height: 0; margin: 0 0 4px !important; padding: 0 !important;
   grid-auto-rows: 1fr !important; gap: 6px !important;
@@ -315,12 +348,12 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   min-height: 0 !important; height: auto !important; padding: 8px 10px !important;
   display: grid !important; grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto;
   column-gap: 10px; row-gap: 2px; align-content: center; align-items: center; text-align: left !important;
-  border-radius: 14px !important;
+  border-radius: var(--r) !important;
   background: linear-gradient(160deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015)) !important;
   border: 1px solid rgba(255, 255, 255, .08) !important;
 }
 #S-home > .scroll .apex-actions-grid .apex-action-icon {
-  grid-row: 1 / 3; width: 38px !important; height: 38px !important; margin: 0 !important; border-radius: 11px !important;
+  grid-row: 1 / 3; width: 38px !important; height: 38px !important; margin: 0 !important; border-radius: var(--r) !important;
 }
 #S-home > .scroll .apex-actions-grid .apex-action-title {
   align-self: end; margin: 0 !important; font-size: 13px !important; line-height: 1.15 !important;
@@ -342,7 +375,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 /* Grands écrans : tuiles plus généreuses. */
 @media (min-height: 600px) {
   #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: 52px minmax(0, 1fr); padding: 14px 16px !important; column-gap: 14px; }
-  #S-home > .scroll .apex-actions-grid .apex-action-icon { width: 52px !important; height: 52px !important; border-radius: 14px !important; }
+  #S-home > .scroll .apex-actions-grid .apex-action-icon { width: 52px !important; height: 52px !important; border-radius: var(--r) !important; }
   #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 16px !important; }
   .rj118-info { font-size: 12px; }
 }
@@ -379,12 +412,11 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 }
 #S-home > .scroll .apex-actions-grid .apex-action-icon svg { stroke: #fff !important; }
 #S-home > .scroll .apex-actions-grid .apex-action-title { color: #fff !important; font-weight: 800 !important; }
-#S-home > .scroll .apex-sec { opacity: .85; }
 
 /* --- Widgets de carrière (js/ui/119-widgets.js) ------------------------ */
 .rj119-rangee { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
 .rj119-w {
-  break-inside: avoid; margin: 0 0 12px; padding: 11px 13px 12px; border-radius: 14px; cursor: pointer;
+  break-inside: avoid; margin: 0 0 12px; padding: 11px 13px 12px; border-radius: var(--r); cursor: pointer;
   background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--w) 16%, transparent), transparent 55%), var(--bg3, #0e0e12);
   border: 1px solid color-mix(in srgb, var(--w) 26%, rgba(255, 255, 255, .06));
 }
@@ -417,7 +449,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 #S-home > .apex-hero-race { position: relative; }
 .rj118-cta {
   display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; height: 38px;
-  border-radius: 11px; font: 800 12px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #fff;
+  border-radius: var(--r); font: 800 12px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #fff;
   background: linear-gradient(135deg, color-mix(in srgb, var(--rj118-c, #FF1801) 80%, #fff), var(--rj118-c, #FF1801));
   box-shadow: 0 6px 18px color-mix(in srgb, var(--rj118-c, #FF1801) 40%, transparent);
 }
@@ -447,7 +479,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 
 /* Mini-classement : leader, voisins, écart. */
 .apex-champ-mini {
-  margin-top: 8px; padding: 6px 10px; border-radius: 10px; cursor: pointer;
+  margin-top: 8px; padding: 6px 10px; border-radius: var(--r); cursor: pointer;
   background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
 }
 .apex-champ-mini:empty { display: none; }
@@ -483,7 +515,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 #rj111-carte {
   display: flex; flex-direction: column; margin-bottom: 10px;
   height: clamp(150px, calc(100dvh - var(--bandeau) - 190px), 460px);
-  padding: 8px 10px 6px; border-radius: 12px;
+  padding: 8px 10px 6px; border-radius: var(--r);
   background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
 }
 #rj111-carte[hidden] { display: none; }
@@ -593,7 +625,7 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 
 /* --- Super Licence (js/career/112-super-licence.js) --------------------- */
 .rj112-carte {
-  margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; break-inside: avoid;
+  margin: 0 0 12px; padding: 12px 14px; border-radius: var(--r); break-inside: avoid;
   background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
 }
 .rj112-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -620,7 +652,7 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
   text-transform: uppercase; color: #A78BFA; break-after: avoid;
 }
 .rj113-bloc {
-  margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; break-inside: avoid;
+  margin: 0 0 12px; padding: 10px 12px; border-radius: var(--r); break-inside: avoid;
   background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
 }
 .rj113-titre {
@@ -641,7 +673,7 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 .rj113-statut.non { color: var(--muted, #80808a); border-color: var(--border-hi, rgba(255, 255, 255, .1)); }
 .rj113-plus, .rj113-vide { font-size: 11px; color: var(--muted, #80808a); padding-top: 6px; }
 .rj113-alerte {
-  margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 12px; break-inside: avoid;
+  margin: 0 0 12px; padding: 10px 12px; border-radius: var(--r); font-size: 12px; break-inside: avoid;
   color: #FFC107; background: rgba(255, 193, 7, .06); border: 1px solid rgba(255, 193, 7, .3);
 }
 
@@ -650,12 +682,8 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 /* Les cartes de rêves deux par ligne ; titres et frise sur toute la largeur. */
 .rj114-bloc:not(.rj114-frise) { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); column-gap: 10px; align-items: start; }
 .rj114-bloc > .rj114-titre, .rj114-bloc > .rj114-vide { grid-column: 1 / -1; }
-.rj114-titre {
-  margin: 2px 0 8px; font: 800 11px/1 var(--font-display); letter-spacing: .16em;
-  text-transform: uppercase; color: #F59E0B;
-}
 .rj114-reve {
-  margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; break-inside: avoid;
+  margin: 0 0 8px; padding: 10px 12px; border-radius: var(--r); break-inside: avoid;
   background: var(--bg3, #0e0e12); border: 1px solid #F59E0B55;
 }
 .rj114-reve.libre { border-color: var(--border-hi, rgba(255, 255, 255, .1)); }
@@ -666,7 +694,7 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 .rj114-barre { height: 5px; border-radius: 4px; background: rgba(255, 255, 255, .06); overflow: hidden; }
 .rj114-barre > span { display: block; height: 100%; background: #F59E0B; border-radius: 4px; }
 .rj114-choisir, .rj114-lien {
-  margin-top: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer;
+  margin-top: 8px; padding: 7px 10px; border-radius: var(--r); cursor: pointer;
   font: 700 10px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase;
 }
 .rj114-choisir { color: #0a0a0a; background: #F59E0B; border: 0; }
@@ -692,7 +720,7 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 .rj115-titre, .rj115-note { grid-column: 1 / -1; }
 .rj115-titre { font: 800 11px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--text3, #80808a); margin-bottom: 2px; }
 .rj115-milieu {
-  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  padding: 10px 12px; border-radius: var(--r); cursor: pointer;
   background: var(--bg3, #0e0e12); border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
 }
 .rj115-milieu.sel { border-color: var(--red, #FF1801); background: rgba(255, 24, 1, .06); }

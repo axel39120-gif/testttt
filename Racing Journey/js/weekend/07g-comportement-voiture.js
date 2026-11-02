@@ -254,7 +254,7 @@
   function _injectBehaviorPanelCSS() {
     if (document.getElementById('rj-bp-css')) return;
     var css = '' +
-    '.rj-bp{margin:0 0 10px;padding:12px 14px 10px;border-radius:10px;' +
+    '.rj-bp{margin:0 0 10px;padding:12px 14px 10px;border-radius:var(--r);' +
     'background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);' +
     'border:1px solid var(--border-hi);overflow:hidden;position:relative}' +
     '.rj-bp::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;' +

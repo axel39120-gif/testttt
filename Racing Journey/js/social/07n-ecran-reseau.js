@@ -26,18 +26,18 @@
     html += '<div style="padding:14px 16px 10px">';
     html += '<div style="display:flex;gap:10px;margin-bottom:14px">';
     // Stat 1 : contacts
-    html += '<div style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;text-align:center">';
+    html += '<div style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center">';
     html += '<div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--white)">' + totalContacts + '</div>';
     html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Contacts</div>';
     html += '</div>';
     // Stat 2 : relation moyenne
     var relColor = avgRel >= 65 ? '#4ADE80' : avgRel >= 45 ? '#F59E0B' : '#EF4444';
-    html += '<div style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;text-align:center">';
+    html += '<div style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center">';
     html += '<div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:' + relColor + '">' + avgRel + '</div>';
     html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Rel. moy.</div>';
     html += '</div>';
     // Stat 3 : alliés (>= 65)
-    html += '<div style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;text-align:center">';
+    html += '<div style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center">';
     html += '<div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:#4ADE80">' + strongContacts + '</div>';
     html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Alliés</div>';
     html += '</div>';
@@ -66,7 +66,7 @@
         }
         var decayWarning = weeksSince > 10;
 
-        html += '<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;position:relative;overflow:hidden">';
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;position:relative;overflow:hidden">';
         // Accent couleur gauche
         html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:' + contactColor + ';border-radius:3px 0 0 3px"></div>';
         // Avatar

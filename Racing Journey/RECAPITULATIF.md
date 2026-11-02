@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v225**. Ce document décrit l'organisation du code après la
+Version **BUILD v226**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v225 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v226 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -326,6 +326,15 @@ et ergonomique en paysage.
   comblent les vides, ou forment une rangée en bas sans colonnes. Toucher un
   widget mène à l'écran concerné. Les durées de contrat suivent la lecture de
   l'écran Contrats (4 semaines par mois, 48 par saison).
+- **Angles** (v226) : un seul arrondi, `--r` (6 px), pour les cartes,
+  boutons et blocs de tout le jeu ; `--r2` et `--r3` le suivent. Les arrondis
+  de 8 à 18 px écrits en dur dans styles.css et les modules sont passés à
+  `var(--r)`, sauf ceux des cercles et pilules (largeur ou hauteur ≤ 2 ×
+  rayon + 2). Changer l'arrondi du jeu : une seule ligne dans paysage.css.
+- **Titres de section** (v226) : un seul style partout — trois rayures
+  inclinées rouges, le titre en capitales blanches espacées, un filet qui part
+  du rouge et s'efface (t-sec, apex-sec, sec-lbl, rêves, paramètres,
+  entraînement, écran titre).
 
 
 - **Moteur.** Les positions restent calculées au score (bridées à ±2 places

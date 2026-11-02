@@ -382,10 +382,10 @@
 
     return '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--text3);' +
            'letter-spacing:.14em;text-transform:uppercase;margin:14px 0 8px">Identité visuelle</div>' +
-      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">' +
+      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:10px">' +
         '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">' +
           '<button type="button" onclick="_rjTeamOpenLogos()" title="Changer de logo" style="' +
-          'padding:0;border:1px solid ' + C + '66;border-radius:9px;background:transparent;cursor:pointer;line-height:0">' +
+          'padding:0;border:1px solid ' + C + '66;border-radius:var(--r);background:transparent;cursor:pointer;line-height:0">' +
           genLogo(logoId, C, 54, team) + '</button>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:12px;color:var(--text);font-weight:700">' + team + '</div>' +
@@ -452,7 +452,7 @@
       return liste.map(function (id) {
         var actif = (id === st.logo);
         return '<button type="button" onclick="_rjTeamSetLogo(\'' + id + '\')" style="' +
-          'padding:6px;border-radius:10px;cursor:pointer;line-height:0;' +
+          'padding:6px;border-radius:var(--r);cursor:pointer;line-height:0;' +
           'background:' + (actif ? "rgba(255,255,255,.07)" : "transparent") + ';' +
           'border:' + (actif ? "2px solid " + C : "1px solid var(--border)") + ';">' +
           genLogo(id, C, 46, team) + '</button>';
@@ -469,7 +469,7 @@
     var perso = !!(styleDe(team) || {}).logo;
     var choix = titre("Blason d'origine") +
       '<button type="button" onclick="_rjTeamResetLogo()" style="width:100%;display:flex;' +
-      'align-items:center;gap:10px;padding:9px 11px;border-radius:10px;cursor:pointer;' +
+      'align-items:center;gap:10px;padding:9px 11px;border-radius:var(--r);cursor:pointer;' +
       'background:' + (perso ? "transparent" : "rgba(255,255,255,.07)") + ';' +
       'border:' + (perso ? "1px solid var(--border)" : "2px solid " + C) + '">' +
       ((typeof TEAM_LOGOS !== "undefined" && TEAM_LOGOS[team]) ? TEAM_LOGOS[team] : "") +

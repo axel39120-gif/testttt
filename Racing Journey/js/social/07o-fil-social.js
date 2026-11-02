@@ -71,7 +71,7 @@
 
     var disabled = (typeof SOCIAL_LAST_WEEK !== 'undefined' && SOCIAL_LAST_WEEK === G.semaine) || (G.pa || 0) < 1;
 
-    wrap.innerHTML = '<div style="margin-bottom:10px;padding:12px 14px;background:rgba(131,58,180,.08);border:1px solid rgba(131,58,180,.25);border-radius:12px">'
+    wrap.innerHTML = '<div style="margin-bottom:10px;padding:12px 14px;background:rgba(131,58,180,.08);border:1px solid rgba(131,58,180,.25);border-radius:var(--r)">'
       + '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#A855F7;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Action de la semaine</div>'
       + '<div style="display:flex;flex-direction:column;gap:8px" id="rj-post-type-btns">'
       + _rjBuildPostTypeBtn('victoire', '🏆 Célébrer une victoire', disabled)
@@ -85,7 +85,7 @@
   }
 
   function _rjBuildPostTypeBtn(tone, label, disabled) {
-    var baseStyle = 'padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;font-family:var(--font-display);cursor:pointer;text-align:left;width:100%;border:none;transition:opacity .15s;';
+    var baseStyle = 'padding:10px 14px;border-radius:var(--r);font-size:12px;font-weight:700;font-family:var(--font-display);cursor:pointer;text-align:left;width:100%;border:none;transition:opacity .15s;';
     if (disabled) {
       return '<button style="' + baseStyle + 'background:var(--surface2);color:var(--muted);cursor:not-allowed;opacity:.5" disabled>' + label + '</button>';
     }

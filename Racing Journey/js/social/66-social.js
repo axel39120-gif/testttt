@@ -497,7 +497,7 @@
   function vignette(k, taille) {
     var C = couleurEquipe();
     return '<svg viewBox="0 0 120 120" width="' + taille + '" height="' + taille +
-           '" style="display:block;border-radius:8px">' + SCENES[k].dessin(C) + '</svg>';
+           '" style="display:block;border-radius:var(--r)">' + SCENES[k].dessin(C) + '</svg>';
   }
 
   /* ---------------------------------------------------------- publier --- */
@@ -619,8 +619,8 @@
     st.id = "rj66-css";
     st.textContent = [
       ".rj66{padding:8px 12px 22px}",
-      ".rj66-seg{display:flex;background:var(--bg2);border-radius:12px;padding:3px;margin-bottom:14px}",
-      ".rj66-seg button{flex:1;padding:9px 6px;border:0;border-radius:9px;background:transparent;",
+      ".rj66-seg{display:flex;background:var(--bg2);border-radius:var(--r);padding:3px;margin-bottom:14px}",
+      ".rj66-seg button{flex:1;padding:9px 6px;border:0;border-radius:var(--r);background:transparent;",
       "color:var(--text2);font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.04em;",
       "cursor:pointer;transition:background .18s,color .18s;-webkit-appearance:none;appearance:none}",
       ".rj66-seg button.on{background:var(--bg4,#1f1f28);color:#fff}",
@@ -642,7 +642,7 @@
       ".rj66-stat b{font-family:var(--font-display);font-size:14.5px;font-weight:900;color:#fff}",
       ".rj66-stat span{font-size:11.5px;color:var(--text3)}",
       ".rj66-sep{height:1px;background:var(--border);margin:0 0 16px}",
-      ".rj66-comp{padding:13px;margin-bottom:4px;border-radius:12px;",
+      ".rj66-comp{padding:13px;margin-bottom:4px;border-radius:var(--r);",
       "background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--border)}",
       ".rj66-ta{width:100%;box-sizing:border-box;background:transparent;border:0;color:var(--text);",
       "font-size:15px;line-height:1.5;resize:none;outline:none;font-family:inherit;min-height:66px}",
@@ -662,7 +662,7 @@
       ".rj66-titre{font-family:var(--font-display);font-size:10px;font-weight:800;color:var(--dim,#6b6b78);",
       "letter-spacing:.14em;text-transform:uppercase;margin:18px 0 10px;padding-top:14px;",
       "border-top:1px solid var(--border)}",
-      ".rj66-tw{display:flex;gap:11px;padding:13px;margin-bottom:8px;border-radius:12px;",
+      ".rj66-tw{display:flex;gap:11px;padding:13px;margin-bottom:8px;border-radius:var(--r);",
       "background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--border)}",
       ".rj66-tw.moi{border-color:rgba(255,255,255,.16)}",
       ".rj66-logo{background:#0d0d12;border:1px solid var(--border-hi);overflow:hidden;padding:2px}",
@@ -686,7 +686,7 @@
       ".rj66-bad{color:#EF4444}",
       ".rj66-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}",
       ".rj66-cell{position:relative;aspect-ratio:1/1;background:var(--bg2);overflow:hidden;",
-      "border-radius:8px;border:1px solid var(--border)}",
+      "border-radius:var(--r);border:1px solid var(--border)}",
       ".rj66-cell img{width:100%;height:100%;object-fit:cover;display:block}",
       ".rj66-cell svg{width:100%;height:100%;display:block}",
       ".rj66-cact{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:14px 6px 5px;",
@@ -695,31 +695,31 @@
       ".rj66-cact span{display:inline-flex;align-items:center;gap:3px;text-shadow:0 1px 3px rgba(0,0,0,.6)}",
       ".rj66-cact svg{width:11px;height:11px;opacity:.95;flex-shrink:0}",
       ".rj66-vide{padding:22px 10px;text-align:center;font-size:12.5px;color:var(--text3)}",
-      ".rj66-apercu{position:relative;border-radius:12px;overflow:hidden;background:var(--bg2);margin-bottom:9px}",
+      ".rj66-apercu{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg2);margin-bottom:9px}",
       ".rj66-apercu img{width:100%;display:block;max-height:280px;object-fit:cover}",
       ".rj66-x{position:absolute;top:7px;right:7px;width:28px;height:28px;border-radius:50%;border:0;",
       "background:rgba(0,0,0,.6);color:#fff;font-size:15px;line-height:1;cursor:pointer;",
       "-webkit-appearance:none;appearance:none}",
       ".rj66-gal{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;",
-      "border-radius:11px;border:1px dashed var(--border-hi);background:transparent;color:var(--text2);",
+      "border-radius:var(--r);border:1px dashed var(--border-hi);background:transparent;color:var(--text2);",
       "font-size:12.5px;cursor:pointer;margin-bottom:9px;-webkit-appearance:none;appearance:none}",
       ".rj66-scenes{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}",
-      ".rj66-sc{flex-shrink:0;border:2px solid transparent;border-radius:10px;padding:0;background:none;",
+      ".rj66-sc{flex-shrink:0;border:2px solid transparent;border-radius:var(--r);padding:0;background:none;",
       "cursor:pointer;line-height:0;-webkit-appearance:none;appearance:none}",
       ".rj66-sc.on{border-color:#E1306C}",
       ".rj66-modal{position:fixed;inset:0;z-index:9000;display:none;align-items:center;",
       "justify-content:center;background:rgba(0,0,0,.72);padding:18px}",
       ".rj66-modal.on{display:flex}",
       ".rj66-box{width:100%;max-width:340px;background:var(--bg2);border:1px solid var(--border-hi);",
-      "border-radius:16px;padding:17px}",
+      "border-radius:var(--r);padding:17px}",
       ".rj66-box h4{margin:0 0 13px;font-family:var(--font-display);font-size:13px;font-weight:900;",
       "letter-spacing:.1em;text-transform:uppercase;color:#fff}",
       ".rj66-lab{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;",
       "color:var(--dim,#6b6b78);margin:9px 0 4px;font-family:var(--font-display)}",
-      ".rj66-inp{width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg);",
+      ".rj66-inp{width:100%;box-sizing:border-box;padding:10px;border-radius:var(--r);background:var(--bg);",
       "border:1px solid var(--border-hi);color:var(--text);font-size:14px;outline:none;font-family:inherit}",
       ".rj66-btns{display:flex;gap:8px;margin-top:15px}",
-      ".rj66-btns button{flex:1;padding:11px;border-radius:10px;font-family:var(--font-display);",
+      ".rj66-btns button{flex:1;padding:11px;border-radius:var(--r);font-family:var(--font-display);",
       "font-size:12px;font-weight:800;cursor:pointer;-webkit-appearance:none;appearance:none}",
       ".rj66-ko{background:transparent;border:1px solid var(--border-hi);color:var(--text2)}",
       ".rj66-ok{background:var(--apex-red,#FF1801);border:0;color:#fff}"

@@ -56,13 +56,13 @@
     if (document.getElementById(CSS_ID)) return;
     var css = [
       ".rj83-fams{display:flex;gap:6px;padding:10px 14px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch}",
-      ".rj83-fam{flex:0 0 auto;padding:7px 11px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg3);" +
+      ".rj83-fam{flex:0 0 auto;padding:7px 11px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg3);" +
         "font-family:var(--font-display);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;" +
         "color:var(--muted);cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s}",
       ".rj83-fam.on{color:#fff}",
       ".rj83-fam b{font-weight:800;margin-left:5px;opacity:.8}",
       ".rj83-sub{padding:4px 16px 8px;font-size:11px;color:var(--text3);line-height:1.4;font-family:var(--font-body)}",
-      ".rj83-row{margin:0 14px 6px;border:1px solid var(--line);border-left-width:3px;border-radius:9px;" +
+      ".rj83-row{margin:0 14px 6px;border:1px solid var(--line);border-left-width:3px;border-radius:var(--r);" +
         "background:var(--bg2);overflow:hidden}",
       ".rj83-row.lock{opacity:.55}",
       ".rj83-head{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}",
@@ -76,11 +76,11 @@
       ".rj83-detail{padding:0 12px 11px;border-top:1px solid var(--line)}",
       ".rj83-desc{font-size:12.5px;color:var(--soft);line-height:1.5;margin:9px 0 8px;font-family:var(--font-body)}",
       ".rj83-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}",
-      ".rj83-go{width:100%;padding:10px;border:none;border-radius:8px;color:#fff;" +
+      ".rj83-go{width:100%;padding:10px;border:none;border-radius:var(--r);color:#fff;" +
         "font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}",
-      ".rj83-lock{padding:9px;text-align:center;font-size:11px;color:var(--muted);border:1px dashed var(--line2);border-radius:8px}",
+      ".rj83-lock{padding:9px;text-align:center;font-size:11px;color:var(--muted);border:1px dashed var(--line2);border-radius:var(--r)}",
       ".rj83-vide{margin:14px 16px;padding:18px 14px;border:1px dashed var(--line2);background:var(--bg3);" +
-        "text-align:center;font-size:12px;color:var(--muted);border-radius:8px}"
+        "text-align:center;font-size:12px;color:var(--muted);border-radius:var(--r)}"
     ].join("");
     var st = document.createElement("style");
     st.id = CSS_ID; st.textContent = css;
