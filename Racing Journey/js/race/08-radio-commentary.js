@@ -408,7 +408,14 @@
     // Seuls les cinq derniers messages restent affichés : au-delà, la boîte
     // radio prenait toute la hauteur de l'écran pendant la course. La file
     // complète est conservée en mémoire, seul l'affichage est borné.
-    var visibles = feed.slice(-RJ_DIRECT_MAX);
+    // Course rejouée en direct (108) : le récit d'un tour paraît quand ce tour
+    // se termine à l'écran, pas quand le moteur le calcule. La radio reste immédiate.
+    var enCours = LIVE_RACE && !LIVE_RACE.finished && window.RJModelePiste ? LIVE_RACE.cur : Infinity;
+    var visibles = feed.filter(function(item) { return item.isRadio || !(item.lap >= enCours); }).slice(-RJ_DIRECT_MAX);
+    if (!visibles.length) {
+      list.innerHTML = '<div class="rj-direct-empty">En attente d’événements en piste…</div>';
+      return;
+    }
 
     var html = '';
     visibles.forEach(function(item) {

@@ -15036,16 +15036,51 @@ function _tryPlayerMechDNF() {
   }
 }
 
+/* Durée réelle d'un tour de course, relue à chaque instant : changer de
+   vitesse en pleine course prend effet tout de suite. En « Normal », assez
+   lente pour suivre les voitures sur le circuit (111). */
+function dureeTourCourse() {
+  switch (SETTINGS && SETTINGS.simSpeed) {
+    case "slow": return 8000;
+    case "fast": return 2000;
+    case "instant": return 28;
+    default: return 4500;
+  }
+}
+
+/* Le dernier tour se rejoue encore en direct (108) quand le moteur l'a
+   calculé : le drapeau tombe une fois ce tour fini à l'écran. */
+function drapeauApresDernierTour(lr) {
+  lr._drapeau = true;
+  (function attendre() {
+    if (LIVE_RACE !== lr || lr.finished) return;
+    if (lr.paused) { lr._dernierTour += 200; return setTimeout(attendre, 200); }   // la pause suspend aussi ce tour
+    var reste = dureeTourCourse() - (Date.now() - (lr._dernierTour || 0));
+    if (reste > 0) return setTimeout(attendre, Math.max(20, reste));
+    lr.finished = true;
+    renderLiveLeaderboard();
+    setTimeout(finalizeLiveRace, 600);
+  })();
+}
+
 function tickRace() { return rjAppeler("tickRace", _tickRaceCoeur, this, arguments); }
 function _tickRaceCoeur() {
   if (!LIVE_RACE.finished) {
     _tryPlayerMechDNF();
     if (LIVE_RACE._mechStress > 0) LIVE_RACE._mechStress = Math.max(0, LIVE_RACE._mechStress - 0.1);
-    var e = 280,
-      t = Math.max(20, Math.round(e * getSimSpeedMult()));
+    // La boucle se réveille à pas régulier et n'avance d'un tour qu'une fois
+    // la durée voulue écoulée ; une pause suspend le décompte, sans le remettre
+    // à zéro : le tour rejoué en direct (108) reprend là où il s'était arrêté.
+    var t = Math.max(20, Math.min(100, Math.round(dureeTourCourse() / 4)));
+    LIVE_RACE._dernierTour = LIVE_RACE._dernierPas = Date.now();
     LIVE_RACE.interval = setInterval(function() {
       try {
+        var maintenant = Date.now();
+        if (LIVE_RACE.paused) LIVE_RACE._dernierTour += maintenant - LIVE_RACE._dernierPas;
+        LIVE_RACE._dernierPas = maintenant;
         if (LIVE_RACE.paused) return;
+        if (Date.now() - LIVE_RACE._dernierTour < dureeTourCourse()) return;
+        LIVE_RACE._dernierTour = Date.now();
         LIVE_RACE.cur = Math.min(LIVE_RACE.cur + 1, LIVE_RACE.total);
         var e = LIVE_RACE.cur / LIVE_RACE.total;
         LIVE_RACE.phase = Math.min(5, Math.floor(6 * e));
@@ -15511,7 +15546,7 @@ function _tickRaceCoeur() {
               console.warn("setup radio:", _e)
             }
           })()
-        })()), renderLiveLeaderboard(), renderLiveNewsFeed(), LIVE_RACE.cur >= LIVE_RACE.total && (clearInterval(LIVE_RACE.interval), LIVE_RACE.finished = !0, setTimeout(finalizeLiveRace, 600))
+        })()), renderLiveLeaderboard(), renderLiveNewsFeed(), LIVE_RACE.cur >= LIVE_RACE.total && (clearInterval(LIVE_RACE.interval), drapeauApresDernierTour(LIVE_RACE))
       } catch (e) {
         console.error("Erreur tickRace:", e && e.message, e && e.stack), clearInterval(LIVE_RACE.interval), LIVE_RACE.finished = !0, LIVE_RACE.paused = !1, "function" == typeof _hideRaceEventModal && _hideRaceEventModal(), setTimeout(finalizeLiveRace, 300)
       }
@@ -16422,6 +16457,7 @@ function _finalizeLiveRaceCoeur() {
             var missed = cfg.minStops - done;
             var pen = cfg.stopTimeMax * missed * 1.2;
             d.penaltySec = (d.penaltySec || 0) + pen;
+            d._penaliteArrivee = (d._penaliteArrivee || 0) + pen;   // la seule sanction qui joue à l'arrivée
             d._missedPits = missed;
             if (d.isPlayer) {
               RACE_STATE.eventsLog && RACE_STATE.eventsLog.push({
@@ -16470,8 +16506,12 @@ function _finalizeLiveRaceCoeur() {
         //  - F4/F3 : ~0.8s par position
         //  - F1/F2 : ~1.2s par position
         var gapPerPos = _isKart ? 0.5 : (G.cat === "Formule 1" || G.cat === "Formule 2" ? 1.2 : 0.8);
+        // penaltySec cumule aussi le temps passé au stand, déjà compté pendant
+        // la course (tri au score) : l'ajouter ici le comptait deux fois et
+        // bouleversait l'arrivée (P17 au dernier tour, P1 au classement). Seule
+        // la sanction jamais appliquée — arrêt obligatoire manqué — déclasse.
         byPos.forEach(function(d, idx) {
-          d._refTime = idx * gapPerPos + (d.penaltySec || 0);
+          d._refTime = idx * gapPerPos + (d._penaliteArrivee || 0);
         });
         // 3) Tri par _refTime — sans pénalité c'est identique à l'ordre courant
         alive.sort(function(a, b) {
@@ -16515,6 +16555,7 @@ function _finalizeLiveRaceCoeur() {
         // Nettoyage
         LIVE_RACE.drivers.forEach(function(d) {
           delete d._refTime;
+          delete d._penaliteArrivee;
         });
       })();
     } catch (e) {

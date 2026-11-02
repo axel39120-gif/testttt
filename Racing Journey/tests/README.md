@@ -41,14 +41,15 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `fiabilite` | sauvegarde tout-ou-rien : stockage plein, sauvegarde automatique, sauvegarde illisible, migration de l'ancien format, bloc en panne, sauvegarde de test seulement avec `?dev` |
 | `couches` | chaque fonction aplatie n'a qu'une définition et c'est la version retenue ; changement de saison ; filet de fin de course |
 | `sobriete` | au repos sur l'accueil, presque aucune surveillance du DOM ni minuterie |
-| `piste` | modèle de piste : distances dans les bornes, ordre conforme au classement, arrêts au stand visibles |
+| `piste` | course rejouée en temps réel : distances dans les bornes, classement en direct conforme à l'ordre sur la piste, arrêts au stand visibles dans le tour rejoué |
 | `parcours` | ouverture de chaque écran et de chaque onglet sans erreur (les `onclick` échappent à la mesure de couverture) |
 | `qualifications` | intitulés de session par catégorie, remise à zéro des références de secteurs entre Q1/Q2/Q3 |
 | `course` | déroulé complet dans quatre catégories : positions distinctes, écarts positifs, sauts bornés, résultat enregistré, absence d'usure de pneus, plateau multi-classes de l'endurance, arrêts au stand |
 | `course-rapide` | la même chose sur la seule Formule 1, pour une vérification en une minute |
 | `endurance` | six courses d'endurance : plus grand saut de places par course (défaut connu signalé, à corriger avec le nouveau moteur) |
 | `weekend` | stratégie retirée du parcours et inatteignable, réglages dans la préparation, feuille de temps en fenêtre |
-| `circuit` | course en direct sur le tracé : bon circuit, un point par voiture, jamais de recul, dépassements de moins d'1,2 s, stand, abandon, animation arrêtée hors écran et au drapeau |
+| `circuit` | course en direct sur le tracé : bon circuit, un point par voiture, jamais de recul, dépassements de moins d'1,2 s, stand, abandon, animation arrêtée hors écran et au drapeau, mouvement fluide à l'allure d'un tour |
+| `arrivee` | le classement inscrit au drapeau est celui du dernier tour, temps au stand compris (F1, F2, IndyCar) |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |

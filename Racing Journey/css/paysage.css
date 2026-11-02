@@ -333,14 +333,38 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 }
 .rj111-neutre { color: #FFC107; border-color: #FFC10766; }
 .rj111-neutre[hidden] { display: none; }
-.rj111-svg { flex: 1; min-height: 0; width: 100%; }
-.rj111-bord { fill: none; stroke: #2a2a36; stroke-width: 6.5; stroke-linejoin: round; }
-.rj111-piste { fill: none; stroke: #15151c; stroke-width: 4.4; stroke-linejoin: round; }
-.rj111-ligne { stroke: #fff; stroke-width: 1.1; }
+/* Feux de départ : allumés un à un, éteints au départ. */
+.rj111-neutre:has(.rj111-feux) { border-color: transparent; background: none; padding: 0; }
+.rj111-feux { display: flex; gap: 4px; }
+.rj111-feux i { width: 10px; height: 10px; border-radius: 50%; background: #2a0a0a; border: 1px solid #3a1414; }
+.rj111-feux i.on { background: #ff2a2a; border-color: #ff6a6a; box-shadow: 0 0 6px #ff2a2a; }
+/* Corps : tour de classement à gauche, circuit à droite. */
+.rj111-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px; margin-top: 6px; }
+.rj111-svg { width: 100%; height: 100%; min-height: 0; }
+/* Écran étroit : le circuit d’abord ; les voisins restent dans le mini-classement à droite. */
+@media (max-width: 799px) { .rj111-corps { grid-template-columns: minmax(0, 1fr); } .rj111-tour { display: none; } }
+.rj111-tour {
+  list-style: none; margin: 0; padding: 0; overflow-y: auto; scrollbar-width: none;
+  font: 700 10px/1 var(--font-display); letter-spacing: .02em;
+}
+.rj111-tour::-webkit-scrollbar { display: none; }
+.rj111-tour li { display: grid; grid-template-columns: 18px 3px 30px 1fr; align-items: center; gap: 4px; height: 17px; color: var(--text2, #b0b0bc); }
+.rj111-tour li .p { text-align: right; color: var(--muted, #80808a); }
+.rj111-tour li .c { width: 3px; height: 11px; border-radius: 1px; }
+.rj111-tour li .e { text-align: right; font-weight: 600; color: var(--muted, #80808a); font-variant-numeric: tabular-nums; }
+.rj111-tour li.moi { background: rgba(255, 255, 255, .08); border-radius: 4px; color: #fff; }
+.rj111-tour li.moi .p, .rj111-tour li.moi .e { color: #fff; }
+.rj111-tour li.autre { opacity: .5; }
+.rj111-tour li.stand .e { color: #FFC107; }
+/* Piste : bordure, limites blanches, bitume, repères de secteurs. */
+.rj111-bord { fill: none; stroke: #23232d; stroke-width: 7.5; stroke-linejoin: round; }
+.rj111-limite { fill: none; stroke: #4b4b58; stroke-width: 5.4; stroke-linejoin: round; }
+.rj111-piste { fill: none; stroke: #17171e; stroke-width: 4.6; stroke-linejoin: round; }
+.rj111-secteur { stroke: #FFC107; stroke-width: .6; opacity: .8; }
 .rj111-stand { fill: #101016; stroke: #2a2a36; stroke-width: .5; }
 .rj111-stand-lib { font: 700 3.4px var(--font-display); fill: #6b6b78; text-anchor: middle; letter-spacing: .3px; }
-.rj111-voiture { stroke: #000; stroke-width: .45; }
-.rj111-joueur { stroke: #fff; stroke-width: .9; }
+.rj111-caisse { stroke: rgba(0, 0, 0, .7); stroke-width: .3; }
+.rj111-joueur .rj111-caisse { stroke: #fff; stroke-width: .7; }
 .rj111-autre { opacity: .55; }
 .rj111-etiquette { font: 800 4.6px var(--font-display); fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 1px; }
 
