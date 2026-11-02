@@ -42,17 +42,36 @@ body { padding: 0 !important; }
 /* Sans navigation (accueil du jeu, création) : l'écran prend toute la largeur. */
 .screens:has(> #main-nav:not(.show)) > .scr { left: 0 !important; }
 
-/* Écran titre : logo à gauche, nouvelle carrière et parties à droite. */
+/* Écran titre : une seule colonne centrée. Le logo, puis la partie à
+   reprendre (l'action principale dès qu'une sauvegarde existe), puis
+   « Nouvelle carrière », plus discrète dans ce cas. Les emplacements vides
+   ne s'affichent pas : il en reste toujours un pour une nouvelle carrière. */
 #S-splash .apex-splash {
-  display: grid !important; height: 100%;
-  grid-template-columns: 1fr minmax(300px, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
-  align-items: center; column-gap: 24px; padding: 12px 24px !important;
+  display: flex !important; flex-direction: column; align-items: stretch; justify-content: center; gap: 10px;
+  position: static !important;   /* le halo se cale sur tout l'écran, pas sur la colonne */
+  width: min(440px, 100%); height: 100%; margin: 0 auto; padding: 12px 16px !important;
+  overflow-y: auto; scrollbar-width: none;
 }
-#S-splash .apex-splash-hero { grid-column: 1; grid-row: 1 / 3; height: auto !important; }
-#S-splash .apex-splash-logo { width: min(240px, 52vh) !important; height: auto !important; }
-#S-splash .apex-splash-footer { grid-column: 1; grid-row: 3; padding: 0 !important; }
-#S-splash .apex-splash-cta-wrap { grid-column: 2; grid-row: 1; }
-#S-splash .apex-splash-resume { grid-column: 2; grid-row: 2 / 4; align-self: stretch; overflow-y: auto; }
+#S-splash .apex-splash::-webkit-scrollbar { display: none; }
+#S-splash .apex-splash-hero { flex: 0 0 auto; height: auto !important; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-logo { width: auto !important; height: clamp(80px, 34vh, 240px) !important; display: block; margin: 0 auto; }
+#S-splash .apex-splash-sub { margin-top: 4px !important; }
+#S-splash .apex-splash-resume { order: 1; flex: 0 0 auto; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-cta-wrap { order: 2; flex: 0 0 auto; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-footer { order: 3; flex: 0 0 auto; margin: 4px 0 0 !important; padding: 0 !important; text-align: center; font-size: 9px; }
+#S-splash .apex-splash-cta { width: 100%; height: 48px; margin: 0 !important; }
+#S-splash .apex-splash-section-title { display: none !important; }
+#S-splash #save-slots > div { margin-bottom: 6px !important; }
+#S-splash #save-slots > div[style*="dashed"] { display: none !important; }
+#S-splash .apex-splash-resume:not(:has(#save-slots button)) { display: none; }
+/* Une partie existe : la reprendre est l'action principale. */
+#S-splash #save-slots button:first-of-type { padding: 9px 18px !important; font-size: 13px !important; font-weight: 800 !important; border-radius: 9px !important; }
+/* Les notifications de la partie n'ont rien à faire sur l'écran titre. */
+body:has(#S-splash.on) :is(#rj-toast-container, #ach-unlock-stack) { display: none !important; }
+#S-splash .apex-splash:has(#save-slots button) .apex-splash-cta {
+  height: 42px; background: rgba(255, 255, 255, .05) !important; box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important; color: var(--text, #e8e8ec) !important;
+}
 
 /* Choix du mode : les deux formules côte à côte. */
 #S-mode .rj80-wrap { max-width: 880px !important; }
@@ -168,7 +187,7 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 }
 .scr > .tabs > *::after { display: none !important; }
 /* Bandeau : une seule teinte et un seul filet sur toute la largeur. */
-.screens > .scr:not(#S-home) {
+.screens > .scr:not(#S-home, #S-splash, #S-create, #S-mode, #S-display-setup) {
   background-image: linear-gradient(rgba(255, 255, 255, .035), rgba(255, 255, 255, .035)), linear-gradient(rgba(255, 255, 255, .07), rgba(255, 255, 255, .07)) !important;
   background-size: 100% var(--bandeau), 100% 1px !important; background-position: 0 0, 0 calc(var(--bandeau) - 1px) !important;
   background-repeat: no-repeat !important;

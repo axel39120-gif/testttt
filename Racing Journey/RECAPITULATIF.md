@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v223**. Ce document décrit l'organisation du code après la
+Version **BUILD v224**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v223 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v224 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -313,6 +313,10 @@ et ergonomique en paysage.
   budget, bonheur, messages non lus). Tuiles en ligne, ou en colonne sur petit
   téléphone, plus grandes sur tablette.
 - **Calendrier** : le mois entier tient dans l'écran.
+- **Écran titre** (v224) : une seule colonne centrée — le logo, la partie à
+  reprendre (action principale dès qu'une sauvegarde existe), puis « Nouvelle
+  carrière », plus discrète dans ce cas. Les emplacements vides et les
+  notifications de la partie n'y apparaissent plus.
 
 
 - **Moteur.** Les positions restent calculées au score (bridées à ±2 places
