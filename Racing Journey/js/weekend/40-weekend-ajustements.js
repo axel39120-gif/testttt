@@ -611,8 +611,9 @@
 
       // Le joueur se place par rapport au peloton selon son écart de niveau réel.
       var target = fieldBase + (rating - fieldRating) + context;
-      if (typeof p.baseScore === "number") p.baseScore = Math.min(.97, Math.max(.03, target));
-      if (typeof p.score === "number") p.score = Math.min(.97, Math.max(.03, target));
+      // Sans plafond haut : la note est recalée au départ avec tout le plateau (81, « 81-echelle »).
+      if (typeof p.baseScore === "number") p.baseScore = Math.max(.03, target);
+      if (typeof p.score === "number") p.score = Math.max(.03, target);
 
       // Variance de rythme : le joueur oscillait ~1,4x plus que les rivaux.
       // Sur un plateau de 20, la plus grosse variance gagne trop souvent (on

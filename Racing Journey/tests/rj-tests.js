@@ -1713,6 +1713,88 @@ async function suiteNegociation() {
 }
 
 /* ==================================================================== *
+ * 8 undecies. SIMULATION DU WEEK-END (audit, étape 6)
+ *
+ * L'arrivée doit refléter le niveau des pilotes, même avec arrêts au
+ * stand : un seul système d'arrêts, le même nombre d'arrêts pour tous, une
+ * perte de temps fixe. Les meilleurs ne sont jamais ex æquo (ni en course,
+ * ni en qualification), et deux coéquipiers n'ont pas le même talent.
+ * ==================================================================== */
+function rangsSpearman(a, b) {
+  const n = a.length; if (n < 3) return 0;
+  const r = v => { const i = v.map((x, k) => k).sort((p, q) => v[p] - v[q]); const o = []; i.forEach((k, j) => o[k] = j); return o; };
+  const ra = r(a), rb = r(b); let d2 = 0;
+  for (let k = 0; k < n; k++) d2 += (ra[k] - rb[k]) ** 2;
+  return 1 - 6 * d2 / (n * (n * n - 1));
+}
+
+async function suiteSimulation() {
+  S.suite("Simulation du week-end");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    for (const cat of ["Formule 1", "IndyCar", "Endurance WEC"]) {
+      const courses = [];
+      for (let k = 0; k < 4; k++) {
+        await S.courirUneCourse(page, { categorie: cat, grille: 1 + (k * 5) % 15 });
+        courses.push(await page.evaluate(() => {
+          const D = LIVE_RACE.drivers.filter(d => !d._mc && !d.dnf);
+          const top = LIVE_RACE.drivers.filter(d => !d._mc).map(d => d.baseScore).sort((a, b) => b - a).slice(0, 5);
+          return { arrivee: D.map(d => d.pos), base: D.map(d => -d.baseScore), arrets: D.filter(d => !d.isPlayer).map(d => d._pitsDone || 0),
+                   exaequo: top.length - new Set(top.map(v => v.toFixed(4))).size };
+        }));
+      }
+      const t = cat.padEnd(14);
+      const lien = courses.reduce((s, c) => s + rangsSpearman(c.arrivee, c.base), 0) / courses.length;
+      S.verifier(t + "l'arrivée suit le niveau des pilotes", lien >= 0.5, "lien moyen " + lien.toFixed(2));
+      const arrets = courses.flatMap(c => c.arrets);
+      /* Le joueur peut s'arrêter en plus sur décision (crevaison, « rentre maintenant »). */
+      S.verifier(t + "les rivaux s'arrêtent autant de fois, au plus deux", Math.max(...arrets) <= 2 && courses.every(c => new Set(c.arrets).size <= 2),
+        "arrêts : " + [...new Set(arrets)].sort().join("/"));
+      S.verifier(t + "aucun ex æquo parmi les cinq meilleurs", courses.every(c => c.exaequo === 0), courses.map(c => c.exaequo).join(","));
+    }
+
+    /* Qualification F1 : pas de temps plancher partagé. */
+    const q = await page.evaluate(() => {
+      G.cat = "Formule 1"; initRivals(); window.CAL_RACES = []; buildCalendar();
+      QUALI_STATE.baseRef = getCircuitBaseRef(CAL_RACES[0].name, G.cat) || 90; QUALI_STATE.circuitName = CAL_RACES[0].name;
+      const P = G.rivals.map(e => ({ name: e.name, skill: e.skill / 100 + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72), consistency: e.consistency, team: e.team }));
+      const poleurs = {}; let egalites = 0;
+      for (let s = 0; s < 30; s++) {
+        QUALI_STATE.drivers = P.map(p => Object.assign({}, p));
+        const temps = QUALI_STATE.drivers.map(d => Math.min(...[1, 2, 3].map(r => qualiDriverTime(d, 3, r, 3, 0.5))));
+        const tri = temps.slice().sort((a, b) => a - b);
+        if (tri[0] === tri[1]) egalites++;
+        poleurs[P[temps.indexOf(tri[0])].name] = 1;
+      }
+      return { poleurs: Object.keys(poleurs).length, egalites };
+    });
+    S.verifier("qualification F1 : jamais deux meilleurs temps identiques", q.egalites === 0, q.egalites + " séance(s) sur 30");
+    S.verifier("qualification F1 : la pole change de mains", q.poleurs >= 2, q.poleurs + " poleur(s) sur 30 séances");
+
+    /* Coéquipiers : jamais le même talent. */
+    const eq = await page.evaluate(async () => {
+      const res = [];
+      for (const cat of ["Formule 1", "Formule 2", "IndyCar"]) {
+        G.cat = cat; initRivals();
+        Object.keys(G).filter(k => k.indexOf("_rjSkillsCalib_") === 0).forEach(k => delete G[k]);
+        if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+        window.LIVE_RACE = { drivers: G.rivals.map((r, i) => ({ name: r.name, team: r.team, skill: r.skill, rivalIdx: i, score: 0.5 })), cur: 0, total: 10 };
+        LIVE_RACE.drivers.push({ name: "Joueur", isPlayer: true, score: 0.5 });
+        _rjRecalibrateSkills();
+        const parEquipe = {};
+        G.rivals.forEach(r => { if (r.team) (parEquipe[r.team] = parEquipe[r.team] || []).push(r.skill); });
+        const pareils = Object.entries(parEquipe).filter(([, s]) => s.length > 1 && new Set(s).size < s.length).map(([e]) => e);
+        if (pareils.length) res.push(cat + " : " + pareils.join("/"));
+      }
+      return res;
+    });
+    S.verifier("coéquipiers de talents différents", eq.length === 0, eq.join(" ; "));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 8 decies. L'ARRIVÉE RESPECTE LA COURSE
  *
  * Défaut constaté en jeu : P17 au dernier tour, P1 à l'arrivée. Le temps
@@ -1966,6 +2048,7 @@ const SUITES = {
   baquets: suiteBaquets,
   negociation: suiteNegociation,
   arrivee: suiteArrivee,
+  simulation: suiteSimulation,
   decisions: suiteDecisions
 };
 

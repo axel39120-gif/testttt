@@ -277,6 +277,22 @@ function _rjAssignSkillsByTeamRanking(driversWithTeams, skillPool) {
       indexed[i2].driver._rjTier = tmpTier;
     }
   }
+
+  // Deux coéquipiers ne sont jamais au même niveau : leurs rangs voisins dans
+  // une distribution arrondie à l'unité leur donnaient souvent le même talent,
+  // et le duel interne (le premier repère d'un pilote) n'existait pas.
+  var parEquipe = {};
+  indexed.forEach(function(item) {
+    var d = item.driver;
+    if (!d.team || d.team === "Indépendant") return;
+    (parEquipe[d.team] = parEquipe[d.team] || []).push(d);
+  });
+  Object.keys(parEquipe).forEach(function(equipe) {
+    var L = parEquipe[equipe].sort(function(a, b) { return b._rjNewSkill - a._rjNewSkill; });
+    for (var k = 1; k < L.length; k++) {
+      if (L[k]._rjNewSkill >= L[k - 1]._rjNewSkill) L[k]._rjNewSkill = Math.max(50, L[k - 1]._rjNewSkill - 1 - Math.floor(Math.random() * 3));
+    }
+  });
 }
 
 /* ========================================================================
@@ -339,7 +355,7 @@ function _rjRecalibrateSkills() {
     // On a juste remplacé skill, donc on ajuste le score de la différence skill
     if (typeof d.score === "number") {
       var delta = (d._rjNewSkill - (oldSkill || 75)) / 100;
-      d.score = Math.max(0.02, Math.min(0.99, d.score + delta));
+      d.score = Math.max(0.02, d.score + delta);   // recalée au départ par 81 (« 81-echelle »)
       d.baseScore = d.score;
     }
     d.skill = d._rjNewSkill;

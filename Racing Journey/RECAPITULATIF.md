@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v226**. Ce document décrit l'organisation du code après la
+Version **BUILD v227**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v226 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v227 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -354,6 +354,37 @@ et ergonomique en paysage.
   leurs hooks (`rjDesinscrire(prefixes, nom)`) sans toucher aux fonctions,
   mais les drapeaux d'installation restent posés : on ne réinstalle pas un
   module sans recharger la page.
+
+## Étape 6 (simulation du week-end) — urgences de l'audit (v227)
+
+Un audit (lecture du code, 90 courses et 360 qualifications mesurées) a
+montré que l'arrivée était quasi aléatoire dans toutes les catégories à
+arrêts au stand (lien arrivée ↔ niveau ≈ 0). Corrigé :
+
+- **Un seul système d'arrêts** : celui du module 82 (même nombre d'arrêts
+  pour tous). L'ancien planning du moteur (`_applyRivalPitsForLap`) s'y
+  ajoutait (2 à 6 arrêts par voiture) et `_decayPitPenalty` rendait du temps
+  à ceux qui s'étaient arrêtés tôt : les deux appels sont retirés de tickRace.
+- **Un arrêt coûte sa durée** (18 à 26 s selon la catégorie), au lieu d'une
+  pénalité calculée pour faire perdre un nombre de places.
+- **Plus d'ex æquo au sommet** : les plafonds de note (0,96 / 0,97 / 0,99)
+  posés par le moteur, 04k, 55 et 81 sont retirés ; un dernier passage au
+  départ (« 81-echelle ») ramène le meilleur à 0,93 et resserre l'écart si
+  besoin, sans changer l'ordre. Avant, six pilotes de F1 finissaient au même
+  plafond.
+- **Qualifications** : le temps plancher (96,5 % de la référence) est souple ;
+  la pole ne se joue plus à l'ordre de la liste.
+- **Coéquipiers** : jamais le même talent (écart de 1 à 3 points).
+
+Suite `simulation` : arrivée liée au niveau (F1, IndyCar, endurance), même
+nombre d'arrêts pour les rivaux, pas d'ex æquo, pas de temps de qualification
+identiques, pole qui change de mains, coéquipiers différents.
+
+Restent (audit) : formules et bonus différents pour le joueur et les rivaux,
+pluie et pneus de qualification appliqués au seul joueur, course sans
+chronomètre (écarts tirés de la note, dépassements uniformes, départ figé),
+écart de qualification trop large, recalibrage des talents après la
+qualification du premier week-end de la saison.
 
 ## Pistes suivantes
 
