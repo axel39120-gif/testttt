@@ -1,52 +1,34 @@
 /* =====================================================================
- * 81-moteur-course.js — CLASSEMENT EN COURSE : COHÉRENCE ET RÉALISME
+ * 81-moteur-course.js — LA COURSE AU CHRONOMÈTRE
  *
- * SYMPTÔME : parti en pole, le joueur tombait à la 20e place, revenait
- * premier, repartait dernier — plusieurs fois dans la même course.
+ * POURQUOI
+ * Le classement en course était un tri par note, bridé à ±2 places par
+ * tour ; les écarts n'étaient que la note × 45 et la grille dictait le
+ * rythme (70 % de la note venait de la place de départ). Résultat mesuré :
+ * des courses figées, des écarts qui ne se creusaient jamais, et une voiture
+ * rapide partie dernière qui roulait lentement (audit du week-end, étape 6).
  *
- * DIAGNOSTIC (course F1 instrumentée, position relevée à chaque tour) :
- * le rang du joueur au score restait STABLE (19e sur 20) pendant que sa
- * position affichée passait de P1 à P18 puis P2. La position n'était donc
- * pas dérivée du classement : elle était produite par un algorithme qui
- * partait en vrille.
+ * LE MODÈLE
+ * Chaque pilote a un temps cumulé. À chaque tour :
+ *   - temps au tour = référence du circuit × (1 − K × (note − note moyenne)),
+ *     plus un aléa selon sa régularité. La note (04, runRaceLive) porte le
+ *     talent, la voiture, la pluie, la forme, les événements de course ;
+ *   - un arrêt au stand ajoute sa durée (pénalités, module 82) ;
+ *   - premier tour : décalage de la place sur la grille et temps de réaction ;
+ *   - dépassement : une voiture plus rapide qui rattrape celle de devant ne
+ *     passe que si son avance de rythme dépasse le seuil du circuit (facilité
+ *     de dépassement de getCircuitData : Monaco 0,1, Monza 0,6) ; sinon elle
+ *     reste dans l'air sale, quelques dixièmes derrière ;
+ *   - safety car et drapeau rouge : le peloton se regroupe derrière le
+ *     leader ; VSC : tout le monde ralentit d'autant, sans dépasser.
+ * Classement = ordre des temps cumulés ; écart = vrai écart en secondes
+ * (plus d'un tour de référence : tour de retard).
  *
- * ── CAUSE 1 : le repli catastrophique de la résolution de collisions
+ * Un déplacement imposé de l'extérieur (moments décisifs, 106) est traduit en
+ * temps : la voiture prend place entre ses nouveaux voisins.
  *
- * updateLivePositions (04-race-engine) procédait ainsi :
- *   1. tri par score décroissant → rang idéal ;
- *   2. bridage du déplacement à 2 places par mise à jour ;
- *   3. attribution des positions avec résolution des collisions :
- *          while (prise[p] && p < n) p++;
- *          if (prise[p]) { premier libre EN PARTANT DE 1 }   ← ici
- *
- * Ce dernier repli est destructeur. Un pilote qui vise le fond de grille
- * trouve les dernières places occupées, la recherche ascendante bute sur
- * la borne n, et il se voit alors attribuer… la première position libre en
- * partant de la tête. Le 19e se retrouve P2. Au tour suivant le bridage le
- * fait redescendre, jusqu'à ce que le repli le renvoie devant : c'est
- * exactement l'oscillation observée.
- *
- * CORRECTIF : l'attribution devient séquentielle. On trie les pilotes par
- * position souhaitée (départage par rang au score) puis on distribue 1..n
- * dans cet ordre. L'unicité est garantie par construction, aucune collision
- * n'est possible, donc aucun repli n'est nécessaire. Le bridage subsiste —
- * il évite les téléportations — mais il ne peut plus produire d'inversion.
- *
- * ── CAUSE 2 : le rythme de course ignorait la qualification
- *
- * La grille venait des qualifs, mais le score de course était tiré
- * indépendamment. Un pilote pouvait donc partir en pole avec le rythme du
- * dernier : même corrigée, la course le faisait glisser jusqu'au fond, ce
- * qui reste absurde à voiture et pilote identiques.
- *
- * CORRECTIF : au départ, on réordonne les scores selon un rang mixte —
- * 60 % la grille, 40 % le mérite propre calculé par le moteur. Les VALEURS
- * de score ne changent pas (gaps, seuils et calibrages restent intacts),
- * seule leur répartition entre pilotes est corrigée. La course garde donc
- * toute sa part d'imprévu, mais un poleman n'a plus le rythme d'un dernier.
- *
- * OPTION A — aucun fichier cœur modifié : updateLivePositions est remplacée
- * à l'exécution, runRaceLive est enveloppée.
+ * Ce module porte aussi les points d'accroche « une fois par tour »
+ * (RJ_LAP_HOOKS) et le recalage des notes au départ (« 81-echelle »).
  *
  * Réversible : window._rj81Uninstall().
  * =================================================================== */
@@ -55,194 +37,160 @@
 
   var TAG = "[81-moteur-course]";
 
-  /* Part de la grille dans le rythme de départ. 1 = la course suit
-     exactement la qualif, 0 = comportement d'avant (aucun lien). */
-  var POIDS_GRILLE = 0.7;
-
-  /* Places gagnées ou perdues au maximum par mise à jour. */
-  var SAUT_MAX = 2;
-  var SAUT_MAX_APRES_ARRET = 6;   // sortie des stands : les écarts sont réels
-  var SAUT_PLAFOND = 6;           // jamais davantage en un tour, quoi qu'il arrive
-  var SAUT_PLAFOND_LARGE = 8;     // après un regroupement : un peu plus, jamais davantage
+  var K_RYTHME = 0.03;      // 0,1 de note = 0,3 % du temps au tour
+  var GRILLE_PAS = 0.18;    // s entre deux places sur la grille au départ
+  var AIR_SALE = [0.3, 0.8];// s derrière une voiture qu'on ne passe pas
+  var ECART_SC = 0.6;       // s entre deux voitures derrière la safety car
 
   function LR() { return (typeof window.LIVE_RACE !== "undefined") ? window.LIVE_RACE : null; }
 
-  /* Score effectif : le score brut moins le poids des pénalités, comme
-     partout ailleurs dans le moteur. */
-  function scoreEffectif(d) {
-    return (d.score || 0) - ((d.penaltySec || 0) / 45);
+  function gauss() {
+    var u = 1 - Math.random(), v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  /* Avance de rythme (s/tour) qu'il faut pour doubler, selon le circuit. */
+  function seuilDepassement(circuit) {
+    var c = typeof getCircuitData === "function" ? getCircuitData(circuit || "") : null;
+    var facilite = c && typeof c.overtake === "number" ? c.overtake : 0.35;
+    return Math.max(0.2, Math.min(1.4, 0.25 + 1.6 * (0.6 - facilite)));
+  }
+
+  function regularite(d) {
+    if (d.isPlayer) return (G && G.stats && typeof G.stats.regularite === "number") ? G.stats.regularite / 100 : 0.75;
+    var r = (typeof d.rivalIdx === "number" && G && G.rivals && G.rivals[d.rivalIdx]) || null;
+    return r && typeof r.consistency === "number" ? r.consistency : 0.8;
+  }
+
+  /* ------------------------------------------------------------------
+   * Chronomètre de la course
+   * ---------------------------------------------------------------- */
+  function chrono(lr) {
+    if (lr._chrono) return lr._chrono;
+    var principaux = lr.drivers.filter(function (d) { return !d._mc && typeof d.baseScore === "number"; });
+    var ref = principaux.reduce(function (s, d) { return s + d.baseScore; }, 0) / (principaux.length || 1);
+    var circuit = (window.RACE_STATE && RACE_STATE.circuit) || "";
+    lr._chrono = { tour: 0, ref: ref, base: lr.baseRef > 0 ? lr.baseRef : 90, seuil: seuilDepassement(circuit) };
+    lr.drivers.forEach(function (d) {
+      d._t = ((d.gridPos || d.pos || 99) - 1) * 1e-4;   // ordre de la grille
+      d._tPen = d.penaltySec || 0;
+    });
+    return lr._chrono;
+  }
+
+  function rythme(d, c) { return c.base * (1 - K_RYTHME * ((d.score || 0) - c.ref)); }
+
+  function neutralisation(lr) {
+    var n = lr && lr._rjNeutral;
+    return n && n.active ? (n.type || "sc") : null;
+  }
+
+  /* Un tour de course pour tout le plateau vivant. */
+  function avancerUnTour(lr, c, vivants) {
+    var premier = lr.cur <= 1, neutre = neutralisation(lr);
+    var ordre = vivants.slice().sort(function (a, b) { return a._t - b._t; });   // ordre sur la piste
+    var devant = null;
+    ordre.forEach(function (d) {
+      var r = rythme(d, c), tour = r + gauss() * c.base * 0.0022 * (1.25 - regularite(d));
+      var pen = Math.max(0, (d.penaltySec || 0) - (d._tPen || 0));
+      d._tPen = d.penaltySec || 0;
+      if (neutre === "vsc") tour = c.base * 1.35;
+      if (premier) tour += ((d.gridPos || d.pos || 1) - 1) * GRILLE_PAS + Math.abs(gauss()) * 0.25;
+      var arrivee = d._t + tour + pen;
+
+      /* Rattrape la voiture de devant (même tour, sur la piste) : passe-t-il ? */
+      if (devant && !d._mc && !devant._mc && !pen && d._t - devant._t < c.base * 0.5 && arrivee < devant._arrivee + AIR_SALE[0]) {
+        var avance = rythme(devant, c) - r;
+        var seuil = c.seuil * (premier ? 0.5 : 1);
+        var chance = Math.min(0.8, Math.max(0, (avance - 0.03) / seuil) * 0.9);
+        if (neutre === "vsc" || Math.random() >= chance) {
+          arrivee = Math.max(arrivee, devant._arrivee + AIR_SALE[0] + Math.random() * (AIR_SALE[1] - AIR_SALE[0]));
+        }
+      }
+      d._arrivee = arrivee;
+      // La suivante se mesure à la voiture physiquement juste devant elle :
+      // celle des deux qui passe la ligne le plus tard.
+      if (!devant || d._arrivee >= devant._arrivee) devant = d;
+    });
+    ordre.forEach(function (d) { d._t = d._arrivee; delete d._arrivee; });
+
+    /* Safety car / drapeau rouge : regroupement derrière le leader. */
+    if (neutre === "sc" || neutre === "rf") {
+      var file = vivants.filter(function (d) { return !d._mc; }).sort(function (a, b) { return a._t - b._t; });
+      for (var i = 1; i < file.length; i++) file[i]._t = Math.min(file[i]._t, file[i - 1]._t + ECART_SC);
+    }
+  }
+
+  /* Déplacement imposé de l'extérieur : la voiture prend place, en temps,
+     entre ses nouveaux voisins. */
+  function reconcilier(vivants) {
+    var bouge = vivants.some(function (d) { return typeof d._rj81PosLaissee === "number" && d.pos !== d._rj81PosLaissee; });
+    if (!bouge) return;
+    var parPos = vivants.slice().sort(function (a, b) { return a.pos - b.pos; });
+    for (var i = 0; i < parPos.length; i++) {
+      var d = parPos[i];
+      if (d.pos === d._rj81PosLaissee) continue;
+      var avant = i > 0 ? parPos[i - 1]._t : null, apres = null;
+      for (var k = i + 1; k < parPos.length; k++) if (parPos[k].pos === parPos[k]._rj81PosLaissee) { apres = parPos[k]._t; break; }
+      d._t = avant === null ? (apres === null ? d._t : apres - 0.3) : apres === null || apres <= avant ? avant + 0.3 : (avant + apres) / 2;
+    }
+    for (var j = 1; j < parPos.length; j++) if (parPos[j]._t <= parPos[j - 1]._t) parPos[j]._t = parPos[j - 1]._t + 0.2;
   }
 
   /* ==================================================================
-   * 1. ATTRIBUTION DES POSITIONS
+   * Attribution des positions et des écarts
    * ================================================================== */
-
   function attribuer(liste) {
     var lr = LR();
-    /* Multi-classes (endurance) : le trafic des catégories inférieures (_mc)
-       reste derrière la catégorie du joueur au général. Classé au même score,
-       il passait devant le leader après un arrêt au stand (P1 → P13), alors
-       qu'en réalité ces voitures comptent des tours de retard. */
+    /* Endurance : le trafic des catégories inférieures (_mc) reste classé
+       derrière la catégorie du joueur. */
     var principaux = liste.filter(function (d) { return !d._mc; });
     if (principaux.length && principaux.length < liste.length) {
       var trafic = liste.filter(function (d) { return d._mc; });
       liste.length = 0;
       Array.prototype.push.apply(liste, principaux.concat(trafic));
     }
-    for (var i = 0; i < liste.length; i++) {
-      liste[i].pos = i + 1;
-      liste[i]._rj81PosLaissee = i + 1;      // repère pour détecter les déplacements externes
-      delete liste[i]._posSouhaitee;
-      delete liste[i]._rangCible;
-      delete liste[i]._cappedPos;
-    }
-    /* Écarts au leader, dans l'unité du moteur (45 s par point de score). */
     var leader = liste[0];
-    for (var j = 0; j < liste.length; j++) {
-      var d = liste[j];
-      if (!leader || d === leader) { d.gap = 0; continue; }
-      var ecart = 45 * (scoreEffectif(leader) - scoreEffectif(d));
-      d.gap = parseFloat(Math.max(0, ecart).toFixed(1));
+    for (var i = 0; i < liste.length; i++) {
+      var d = liste[i];
+      d.pos = i + 1;
+      d._rj81PosLaissee = i + 1;
+      d.gap = !leader || d === leader ? 0 : parseFloat(Math.max(0, (d._t || 0) - (leader._t || 0)).toFixed(1));
     }
-    /* Les abandons occupent les positions suivantes, dans l'ordre. */
     if (lr && lr.drivers) {
       var suivante = liste.length + 1;
-      for (var k = 0; k < lr.drivers.length; k++) {
-        if (lr.drivers[k] && lr.drivers[k].dnf) lr.drivers[k].pos = suivante++;
-      }
+      for (var k = 0; k < lr.drivers.length; k++) if (lr.drivers[k] && lr.drivers[k].dnf) lr.drivers[k].pos = suivante++;
     }
   }
 
-  /* Sous safety car ou drapeau rouge, le peloton est regroupé par le module
-     de neutralisation : le classement est alors figé, on ne réordonne pas.
-     Ce comportement était porté par une enveloppe de 04m-safety-car, rendue
-     inerte depuis que ce module remplace le calculateur : on le rétablit
-     ici, à sa place. */
-  function neutralisationFigeLOrdre() {
-    var lr = LR();
-    try {
-      var n = lr && lr._rjNeutral;
-      if (!n || !n.active) return false;
-      return n.type === "sc" || n.type === "rf";
-    } catch (e) { return false; }
-  }
-
-  function nouvelleUpdateLivePositions() {
+  function classement() {
     var lr = LR();
     if (!lr || !lr.drivers) return;
-
-    if (neutralisationFigeLOrdre()) { declencherHooksDeTour(); return; }
-
     var vivants = lr.drivers.filter(function (d) { return d && !d.dnf; });
     if (!vivants.length) return;
-
-    /* Premier tour : la grille de départ fait foi, sans réordonnancement. */
-    if (lr.cur <= 1) {
-      vivants.sort(function (a, b) {
-        return (a.gridPos || a.pos || 99) - (b.gridPos || b.pos || 99);
-      });
-      attribuer(vivants);
-      return;
+    var c = chrono(lr);
+    /* Voiture ajoutée en cours d'épreuve (trafic d'endurance) : elle part
+       derrière le dernier. */
+    var dernier = 0;
+    vivants.forEach(function (d) { if (typeof d._t === "number") dernier = Math.max(dernier, d._t); });
+    vivants.forEach(function (d) { if (typeof d._t !== "number") { d._t = dernier + 1; d._tPen = d.penaltySec || 0; } });
+    reconcilier(vivants);
+    if ((lr.cur || 0) > c.tour) {
+      for (var t = c.tour; t < lr.cur; t++) avancerUnTour(lr, c, vivants);
+      c.tour = lr.cur;
     }
-
-    /* Filet de sécurité sur les déplacements d'origine externe.
-       Le plafond appliqué plus bas ne borne que NOTRE calcul. D'autres
-       codes déplacent les voitures directement entre deux tours : swaps
-       d'événements, regroupement de neutralisation, arrivée du plateau
-       multi-classes en cours d'épreuve. On a mesuré ainsi des bonds de
-       treize places. On compare donc la position courante à celle que nous
-       avions laissée, et on ramène l'écart dans les limites — le rattrapage
-       se fait alors sur les tours suivants, ce qui reste lisible. */
-    var plafondExterne = SAUT_PLAFOND_LARGE;   /* même en regroupement : au-delà, le mouvement devient illisible */
-    for (var e = 0; e < vivants.length; e++) {
-      var v = vivants[e];
-      if (typeof v._rj81PosLaissee !== "number") continue;
-      var bond = v.pos - v._rj81PosLaissee;
-      if (bond > plafondExterne) v.pos = v._rj81PosLaissee + plafondExterne;
-      else if (bond < -plafondExterne) v.pos = v._rj81PosLaissee - plafondExterne;
-    }
-
-    /* Rang visé : l'ordre des scores effectifs. */
-    var cible = vivants.slice().sort(function (a, b) {
-      return scoreEffectif(b) - scoreEffectif(a);
-    });
-    for (var i = 0; i < cible.length; i++) cible[i]._rangCible = i + 1;
-
-    /* Bridage : on se rapproche du rang visé sans téléportation. */
-    var bypass = lr._bypassPositionCap;
-    if (bypass) lr._bypassPositionCap = false;
-
-    /* Fin de course : le bridage doit se relâcher, sinon le classement
-       affiché à l'arrivée reste figé à mi-chemin de l'ordre réel et diverge
-       du résultat calculé au drapeau.
-       Mais le lever d'un coup au dernier tour produisait des rattrapages
-       brutaux — jusqu'à 14 places en un tour, mesuré dans les catégories à
-       arrêts. On le relâche donc progressivement sur les cinq derniers
-       tours : la convergence est la même, elle s'étale. */
-    var restants = (lr.total || 0) - (lr.cur || 0);
-    var relachement = 0;
-    if (lr.total && restants <= 5) relachement = [6, 5, 4, 3, 2, 1][Math.max(0, Math.min(5, restants))];
-
-    for (var j = 0; j < vivants.length; j++) {
-      var d = vivants[j];
-      var precedente = d.pos || d._rangCible;
-      var saut = SAUT_MAX;
-      if (d._lastPitLap && (lr.cur - d._lastPitLap) <= 2) saut = SAUT_MAX_APRES_ARRET;
-      if (relachement) saut = Math.max(saut, relachement);
-      if (bypass) saut = vivants.length;
-
-
-      /* Plafond dur. Le bridage ci-dessus peut être levé par un
-         regroupement ou par l'arrivée d'un plateau multi-classes en cours
-         d'épreuve ; on a mesuré dans ce cas des bonds de quatorze à seize
-         places en un tour, incompréhensibles pour le joueur. Quelle que
-         soit la raison, une voiture ne se déplace jamais de plus de
-         SAUT_PLAFOND places d'un tour à l'autre : le rattrapage se fait
-         alors sur deux ou trois tours, ce qui reste lisible. */
-      saut = Math.min(saut, bypass ? SAUT_PLAFOND_LARGE : SAUT_PLAFOND);
-
-      var delta = d._rangCible - precedente;
-      if (delta > saut) delta = saut;
-      else if (delta < -saut) delta = -saut;
-      d._posSouhaitee = precedente + delta;
-    }
-
-    /* Attribution séquentielle : unicité par construction. Le rang visé
-       départage deux pilotes qui convoitent la même place — c'est le plus
-       rapide qui passe devant, jamais un repli arbitraire. */
-    /* Départage : à souhait égal, c'est l'ordre du tour précédent qui
-       tranche, et le rang au score seulement ensuite. Départager par le
-       seul rang au score faisait glisser un pilote de plus de dix places
-       quand plusieurs convoitaient la même position — le bornage portait
-       sur le souhait, pas sur le rang finalement attribué. */
-    vivants.sort(function (a, b) {
-      if (a._posSouhaitee !== b._posSouhaitee) return a._posSouhaitee - b._posSouhaitee;
-      var pa = (typeof a._rj81PosLaissee === "number") ? a._rj81PosLaissee : a._rangCible;
-      var pb = (typeof b._rj81PosLaissee === "number") ? b._rj81PosLaissee : b._rangCible;
-      if (pa !== pb) return pa - pb;
-      return a._rangCible - b._rangCible;
-    });
+    vivants.sort(function (a, b) { return a._t - b._t; });
     attribuer(vivants);
     declencherHooksDeTour();
   }
 
   /* ------------------------------------------------------------------
    * POINT D'ACCROCHE OFFICIEL « UNE FOIS PAR TOUR »
-   *
-   * Huit modules enveloppaient updateLivePositions — non pour calculer des
-   * positions, mais faute d'un endroit où se brancher une fois par tour :
-   * usure des pneus, construction des tours, décisions de l'IA, vie de la
-   * piste, radio, fiabilité, safety car. D'où une pile de huit couches sur
-   * la fonction la plus appelée de la course.
-   *
-   * On expose donc ce qui manquait. Un module s'inscrit ainsi :
    *   window.RJ_LAP_HOOKS.push({ id: "monModule", run: function (tour) { … } });
-   * et n'a plus aucune raison de toucher au calculateur.
    * ---------------------------------------------------------------- */
   function declencherHooksDeTour() {
     var lr = LR();
-    if (!lr) return;
-    if (!Array.isArray(window.RJ_LAP_HOOKS)) return;
+    if (!lr || !Array.isArray(window.RJ_LAP_HOOKS)) return;
     if (lr._rj81DernierTour === lr.cur) return;      // une seule fois par tour
     lr._rj81DernierTour = lr.cur;
     for (var i = 0; i < window.RJ_LAP_HOOKS.length; i++) {
@@ -253,87 +201,13 @@
     }
   }
 
-  /* ==================================================================
-   * 2. RYTHME DE DÉPART COHÉRENT AVEC LA GRILLE
-   * ================================================================== */
-
-  /* Certaines disciplines font courir plusieurs classes sur la même piste :
-     en endurance, un plateau LMP2/GT3 roule volontairement sous le rythme de
-     la classe reine, et le résultat du joueur est sa position DANS SA CLASSE.
-     Ces voitures de trafic (_mc) doivent donc rester où le module 35 les a
-     placées — les mêler au reste ferait remonter des GT3 devant des Hypercar
-     et fausserait le classement de classe. */
-  function estTrafic(d) {
-    return !!(d && (d._mc || (d.cls && d.cls !== "Hypercar" && !d.isPlayer && d.gridPos === 99)));
-  }
-
-  function recalibrerSurLaGrille() {
-    var lr = LR();
-    if (!lr || !lr.drivers || lr.drivers.length < 3) return;
-
-    var pilotes = lr.drivers.filter(function (d) { return !estTrafic(d); });
-    if (pilotes.length < 3) return;
-    var n = pilotes.length;
-
-    /* Rang au mérite, tel que le moteur l'a calculé. */
-    var parScore = pilotes.slice().sort(function (a, b) {
-      return scoreEffectif(b) - scoreEffectif(a);
-    });
-    var rangMerite = {};
-    for (var i = 0; i < parScore.length; i++) rangMerite[parScore[i].name] = i + 1;
-
-    /* Rang mixte : la grille pèse, le mérite garde sa part. */
-    for (var j = 0; j < pilotes.length; j++) {
-      var d = pilotes[j];
-      var grille = d.gridPos || d.startPos || d.pos || (j + 1);
-      var merite = rangMerite[d.name] || (j + 1);
-      d._rangMixte = POIDS_GRILLE * grille + (1 - POIDS_GRILLE) * merite;
-    }
-
-    /* On permute les scores existants : les valeurs, donc les écarts et les
-       calibrages du moteur, restent exactement les mêmes. */
-    var valeurs = parScore.map(function (d) {
-      return { score: d.score, baseScore: d.baseScore };
-    });
-    var ordreFinal = pilotes.slice().sort(function (a, b) {
-      if (a._rangMixte !== b._rangMixte) return a._rangMixte - b._rangMixte;
-      return (rangMerite[a.name] || 99) - (rangMerite[b.name] || 99);
-    });
-
-    for (var k = 0; k < ordreFinal.length; k++) {
-      var p = ordreFinal[k];
-      var v = valeurs[k];
-      if (!v) continue;
-      p.score = v.score;
-      p.baseScore = (typeof v.baseScore === "number") ? v.baseScore : v.score;
-      delete p._rangMixte;
-    }
-
-    decompresserEchelle(ordreFinal);
-
-    console.log(TAG, "rythme de départ aligné sur la grille (" +
-                Math.round(POIDS_GRILLE * 100) + " % grille)");
-  }
-
   /* ------------------------------------------------------------------
-   * Décompression de l'échelle des scores
-   *
-   * Mesuré au départ d'un Grand Prix : onze pilotes sur vingt collés entre
-   * 0.960 et 0.970. À ce niveau de saturation il n'existe plus de hiérarchie
-   * — les écarts affichés tombent à zéro et l'ordre entre eux devient
-   * arbitraire, ce qui alimentait l'instabilité du classement.
-   *
-   * On conserve l'amplitude réelle (le meilleur et le dernier gardent leur
-   * score, donc les calibrages du moteur restent valables) et on redistribue
-   * les valeurs intermédiaires sur une courbe en puissance : peloton de tête
-   * resserré, milieu de grille étalé, fond décroché — la forme d'une grille
-   * de Formule 1. Un léger bruit évite une régularité mécanique.
+   * Recalage des notes au départ : après toutes les couches qui les
+   * ajustent (04k, 55…), le meilleur est ramené à PLAFOND_NOTE et l'écart au
+   * dernier resserré dans BANDE_NOTE (l'ordre ne change jamais). Les bornes
+   * de chaque tour (0,97 / 0,99 dans tickRace) ne mordent plus, et le
+   * chronomètre lit des écarts de rythme réalistes.
    * ---------------------------------------------------------------- */
-  var COURBE = 1.35;
-
-  /* Les notes tiennent dans [PLAFOND_NOTE − BANDE_NOTE, PLAFOND_NOTE] : le
-     meilleur est ramené au plafond, et si l'écart avec le dernier dépasse la
-     bande, il est resserré proportionnellement (l'ordre ne change jamais). */
   var PLAFOND_NOTE = 0.93, BANDE_NOTE = 0.85;
   function recalerLesNotes(pilotes) {
     var notes = pilotes.filter(function (d) { return typeof d.baseScore === "number"; }).map(function (d) { return d.baseScore; });
@@ -349,190 +223,24 @@
     });
   }
 
-  function decompresserEchelle(ordreFinal) {
-    var n = ordreFinal.length;
-    if (n < 4) return;
-
-    var scores = ordreFinal.map(function (d) { return d.score || 0; });
-    var haut = Math.max.apply(null, scores);
-    var bas = Math.min.apply(null, scores);
-
-    /* On ne descend jamais sous le plateau de trafic : sa hiérarchie est
-       posée par la discipline, pas par nous. */
-    try {
-      var lr = LR();
-      var trafic = (lr && lr.drivers) ? lr.drivers.filter(estTrafic) : [];
-      if (trafic.length) {
-        var plafondTrafic = Math.max.apply(null, trafic.map(function (d) { return d.score || 0; }));
-        if (bas < plafondTrafic + 0.03) bas = plafondTrafic + 0.03;
-        if (haut <= bas) return;
-      }
-    } catch (e) {}
-    var amplitude = haut - bas;
-    if (amplitude <= 0.02) return;          // échelle déjà plate : on ne touche à rien
-
-    /* Nombre de pilotes agglutinés dans le haut du tableau. */
-    var satures = scores.filter(function (v) { return v >= haut - 0.02; }).length;
-    if (satures < 3) return;                // pas de saturation à corriger
-
-    for (var i = 0; i < n; i++) {
-      var d = ordreFinal[i];
-      var t = (n > 1) ? (i / (n - 1)) : 0;
-      var valeur = haut - amplitude * Math.pow(t, COURBE);
-      valeur += (Math.random() - 0.5) * 0.006;
-      d.score = Math.max(0.02, valeur);   // sans plafond : recalée ensuite par « 81-echelle »
-      d.baseScore = d.score;
-    }
-    console.log(TAG, "échelle décompressée (" + satures + " pilotes étaient au plafond)");
-  }
+  /* Le registre RJ_RACE_START_HOOKS (avant / apres la construction de la
+     grille) est déclenché par runRaceLive (04-race-engine). */
 
   /* ==================================================================
-   * 2 bis. POINT D'ACCROCHE AU DÉPART DE COURSE
-   *
-   * Dix fichiers enveloppaient runRaceLive. Contrairement au calcul des
-   * positions, ces couches font un travail légitime : initialiser l'état
-   * des pilotes, appliquer la forme des rivaux, recalibrer les niveaux,
-   * armer un chien de garde, remettre le fil radio à zéro, compter les
-   * manches du week-end. Aucune n'avait d'endroit où se brancher, d'où dix
-   * enveloppes successives sur le lancement d'une course.
-   *
-   * On expose donc le rendez-vous manquant. Un module s'inscrit ainsi :
-   *   window.RJ_RACE_START_HOOKS.push({
-   *     id: "monModule",
-   *     avant: function () { … },   // avant la construction de la grille
-   *     apres: function (course) { … }   // une fois la grille construite
-   *   });
+   * Installation
    * ================================================================== */
-
-  /* Le registre est déclenché par runRaceLive (04-race-engine). */
-
-  /* ==================================================================
-   * 3. INSTALLATION
-   * ================================================================== */
-
-  var _origUpdate = null, _origRun = null;
-
   function installer() {
-    if (typeof window.updateLivePositions === "function" && !window.updateLivePositions._rj81) {
-      _origUpdate = window.updateLivePositions;
-      rjInscrire("updateLivePositions", { id: "81-moteur-course:updateLivePositions", ordre: -6000, remplace: function (args, suite) {
-    var lr = LR();
-    if (!lr || !lr.drivers) return;
-
-    if (neutralisationFigeLOrdre()) { declencherHooksDeTour(); return; }
-
-    var vivants = lr.drivers.filter(function (d) { return d && !d.dnf; });
-    if (!vivants.length) return;
-
-    /* Premier tour : la grille de départ fait foi, sans réordonnancement. */
-    if (lr.cur <= 1) {
-      vivants.sort(function (a, b) {
-        return (a.gridPos || a.pos || 99) - (b.gridPos || b.pos || 99);
-      });
-      attribuer(vivants);
-      return;
-    }
-
-    /* Filet de sécurité sur les déplacements d'origine externe.
-       Le plafond appliqué plus bas ne borne que NOTRE calcul. D'autres
-       codes déplacent les voitures directement entre deux tours : swaps
-       d'événements, regroupement de neutralisation, arrivée du plateau
-       multi-classes en cours d'épreuve. On a mesuré ainsi des bonds de
-       treize places. On compare donc la position courante à celle que nous
-       avions laissée, et on ramène l'écart dans les limites — le rattrapage
-       se fait alors sur les tours suivants, ce qui reste lisible. */
-    var plafondExterne = SAUT_PLAFOND_LARGE;   /* même en regroupement : au-delà, le mouvement devient illisible */
-    for (var e = 0; e < vivants.length; e++) {
-      var v = vivants[e];
-      if (typeof v._rj81PosLaissee !== "number") continue;
-      var bond = v.pos - v._rj81PosLaissee;
-      if (bond > plafondExterne) v.pos = v._rj81PosLaissee + plafondExterne;
-      else if (bond < -plafondExterne) v.pos = v._rj81PosLaissee - plafondExterne;
-    }
-
-    /* Rang visé : l'ordre des scores effectifs. */
-    var cible = vivants.slice().sort(function (a, b) {
-      return scoreEffectif(b) - scoreEffectif(a);
-    });
-    for (var i = 0; i < cible.length; i++) cible[i]._rangCible = i + 1;
-
-    /* Bridage : on se rapproche du rang visé sans téléportation. */
-    var bypass = lr._bypassPositionCap;
-    if (bypass) lr._bypassPositionCap = false;
-
-    /* Fin de course : le bridage doit se relâcher, sinon le classement
-       affiché à l'arrivée reste figé à mi-chemin de l'ordre réel et diverge
-       du résultat calculé au drapeau.
-       Mais le lever d'un coup au dernier tour produisait des rattrapages
-       brutaux — jusqu'à 14 places en un tour, mesuré dans les catégories à
-       arrêts. On le relâche donc progressivement sur les cinq derniers
-       tours : la convergence est la même, elle s'étale. */
-    var restants = (lr.total || 0) - (lr.cur || 0);
-    var relachement = 0;
-    if (lr.total && restants <= 5) relachement = [6, 5, 4, 3, 2, 1][Math.max(0, Math.min(5, restants))];
-
-    for (var j = 0; j < vivants.length; j++) {
-      var d = vivants[j];
-      var precedente = d.pos || d._rangCible;
-      var saut = SAUT_MAX;
-      if (d._lastPitLap && (lr.cur - d._lastPitLap) <= 2) saut = SAUT_MAX_APRES_ARRET;
-      if (relachement) saut = Math.max(saut, relachement);
-      if (bypass) saut = vivants.length;
-
-
-      /* Plafond dur. Le bridage ci-dessus peut être levé par un
-         regroupement ou par l'arrivée d'un plateau multi-classes en cours
-         d'épreuve ; on a mesuré dans ce cas des bonds de quatorze à seize
-         places en un tour, incompréhensibles pour le joueur. Quelle que
-         soit la raison, une voiture ne se déplace jamais de plus de
-         SAUT_PLAFOND places d'un tour à l'autre : le rattrapage se fait
-         alors sur deux ou trois tours, ce qui reste lisible. */
-      saut = Math.min(saut, bypass ? SAUT_PLAFOND_LARGE : SAUT_PLAFOND);
-
-      var delta = d._rangCible - precedente;
-      if (delta > saut) delta = saut;
-      else if (delta < -saut) delta = -saut;
-      d._posSouhaitee = precedente + delta;
-    }
-
-    /* Attribution séquentielle : unicité par construction. Le rang visé
-       départage deux pilotes qui convoitent la même place — c'est le plus
-       rapide qui passe devant, jamais un repli arbitraire. */
-    /* Départage : à souhait égal, c'est l'ordre du tour précédent qui
-       tranche, et le rang au score seulement ensuite. Départager par le
-       seul rang au score faisait glisser un pilote de plus de dix places
-       quand plusieurs convoitaient la même position — le bornage portait
-       sur le souhait, pas sur le rang finalement attribué. */
-    vivants.sort(function (a, b) {
-      if (a._posSouhaitee !== b._posSouhaitee) return a._posSouhaitee - b._posSouhaitee;
-      var pa = (typeof a._rj81PosLaissee === "number") ? a._rj81PosLaissee : a._rangCible;
-      var pb = (typeof b._rj81PosLaissee === "number") ? b._rj81PosLaissee : b._rangCible;
-      if (pa !== pb) return pa - pb;
-      return a._rangCible - b._rangCible;
-    });
-    attribuer(vivants);
-    declencherHooksDeTour();
-  } });
+    if (typeof window.updateLivePositions !== "function") return false;
+    if (!window.updateLivePositions._rj81) {
+      rjInscrire("updateLivePositions", { id: "81-moteur-course:updateLivePositions", ordre: -6000, remplace: function () { classement(); } });
       window.updateLivePositions._rj81 = true;
     }
-
-    /* Dernier passage au départ, après toutes les couches qui ajustent les
-       notes (04k, 55, 81…) : si le meilleur dépasse PLAFOND_NOTE, tout le
-       plateau descend d'autant. Les écarts sont conservés et les bornes de
-       chaque tour (0,97 / 0,99 dans tickRace) ne mordent plus : avant, en F1,
-       six pilotes finissaient ex æquo au plafond (audit du week-end, étape 6). */
     if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "81-echelle"; })) {
       window.RJ_RACE_START_HOOKS.push({ id: "81-echelle", ordre: 90, apres: function (lr) {
-        if (lr && lr.drivers && lr.drivers.length) recalerLesNotes(lr.drivers);
+        if (lr && lr.drivers && lr.drivers.length) { recalerLesNotes(lr.drivers); delete lr._chrono; }
       } });
     }
-    if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "81-recalibrage"; })) {
-      window.RJ_RACE_START_HOOKS.push({ id: "81-recalibrage", ordre: -10, apres: function (lr) {
-        if (lr && lr.drivers && lr.drivers.length) recalibrerSurLaGrille();
-      } });
-    }
-
-    return !!window.updateLivePositions._rj81;
+    return true;
   }
 
   function boot() {
@@ -540,22 +248,17 @@
     if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
     var essais = 0;
     (function tenter() {
-      if (installer()) {
-        console.log(TAG, "actif — classement séquentiel, plus de repli en tête de grille");
-        return;
-      }
+      if (installer()) { console.log(TAG, "actif — course au chronomètre"); return; }
       if (essais++ < 80) setTimeout(tenter, 150);
       else console.warn(TAG, "installation impossible (updateLivePositions introuvable)");
     })();
 
     window._rj81 = {
-      recalibrer: recalibrerSurLaGrille,
-      positions: nouvelleUpdateLivePositions,
+      positions: classement,
+      seuil: seuilDepassement,
       hooks: function () { return window.RJ_LAP_HOOKS; },
-      hooksDepart: function () { return window.RJ_RACE_START_HOOKS; },
-      poidsGrille: function (v) { if (typeof v === "number") POIDS_GRILLE = Math.max(0, Math.min(1, v)); return POIDS_GRILLE; }
+      hooksDepart: function () { return window.RJ_RACE_START_HOOKS; }
     };
-
     window._rj81Uninstall = function () {
       rjDesinscrire(["81-moteur-course:"], "updateLivePositions");
       console.log(TAG, "désinstallé");

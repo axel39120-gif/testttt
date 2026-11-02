@@ -2982,41 +2982,6 @@ function _runRaceLiveCoeur() {
     g = G.substats ? computeRacePerformanceScore() : (.3 * G.stats.vitesse + .2 * G.stats.regularite + .15 * G.stats.sangfroid + .15 * G.stats.attaque + .1 * G.stats.strategie + .1 * G.stats.physique) / 100 + .02,
     h = 0;
   "num1" === G._playerRole ? h = .012 : "num2" === G._playerRole && (h = -.008);
-  var _catLevelBonus = (function() {
-    var _cl = {
-      "Karting Junior": .040,
-      "Karting Senior": .100,
-      "Formule 4": .180,
-      "Formula Regional": .260,
-      "Formule 3": .300,
-      "Formule 2": .360,
-      "Formule 1": .420,
-      "Super Formula": .340,
-      "Endurance WEC": .370,
-      "IndyCar": .330
-    };
-    var _styleAdj = (G.pilot && G.pilot.style === "attaquant") ? .030 : (G.pilot && G.pilot.style === "stratege") ? .015 : 0;
-    var _base = (_cl[G.cat] || .20) + _styleAdj;
-    var _exp = Math.min(0.05, (G.races ? G.races.length : 0) * 0.002);
-    return _base - _exp;
-  })();
-  var _catLevelBonus = (function() {
-    var _cl = {
-      "Karting Junior": .040,
-      "Karting Senior": .100,
-      "Formule 4": .180,
-      "Formula Regional": .260,
-      "Formule 3": .300,
-      "Formule 2": .360,
-      "Formule 1": .420,
-      "Super Formula": .340,
-      "Endurance WEC": .340,
-      "IndyCar": .300
-    };
-    var _base = _cl[G.cat] || .20;
-    var _exp = Math.min(0.05, (G.races ? G.races.length : 0) * 0.002);
-    return _base - _exp;
-  })();
   var _momentum = typeof _getMomentum === "function" ? _getMomentum() : "neutral";
   var _momentumBonus = {
     "hot": .018,
@@ -3025,13 +2990,16 @@ function _runRaceLiveCoeur() {
     "cold": -.008,
     "ice": -.018
   } [_momentum] || 0;
-  var _gridBonus = (function() {
-    var _qp = RACE_STATE && RACE_STATE.qualiPos || 5;
-    return _qp >= 8 ? .008 : _qp >= 5 ? .003 : _qp <= 3 ? -.004 : 0;
-  })();
   var _mismatchPen = (G._lastSetupMismatch && G._lastSetupMismatch.cat === G.cat) ? -.008 : 0;
   /* Pas de plafond haut ici : les notes sont recalées une fois pour toutes au départ (81, « 81-echelle »). */ 
-  var v = Math.min(Infinity, Math.max(.03, g + u + p + teamRatingToBonus(m) + getHappinessBonus() + h + _momentumBonus + _gridBonus + _mismatchPen + _catLevelBonus + ("function" == typeof getPlayerEngineerBonus ? getPlayerEngineerBonus() : 0) + (Math.random() - .5) * f * .5 + (function() {
+  /* Note de course du joueur : la formule des rivaux (niveau, catégorie,
+     voiture, pluie selon son talent, aléa selon sa régularité, affinité,
+     forme), plus ses leviers de jeu (réglages, rôle, ingénieur, bonheur).
+     Plus de bonus de catégorie, de rattrapage depuis le fond de grille ni de
+     stratégie (retirée du jeu) : la course au chronomètre (81) récompense
+     déjà une bonne voiture partie loin. */
+  var _regulariteJ = (G.stats && typeof G.stats.regularite === "number") ? G.stats.regularite / 100 : 0.75;
+  var v = Math.min(Infinity, Math.max(.03, g + l + .7 * effetPluie(a.rainMod, talentPluie(null)) + .2 * (Math.random() - .5) * (1 - _regulariteJ + .25) + p + teamRatingToBonus(m) + getHappinessBonus() + h + _momentumBonus + _mismatchPen + ("function" == typeof getPlayerEngineerBonus ? getPlayerEngineerBonus() : 0) + (Math.random() - .5) * f * .5 + (function() {
       try {
         return (typeof _getTeamCircuitAffinity === 'function' ? _getTeamCircuitAffinity(m === 72 ? (G.currentTeam || '') : G.currentTeam, G.cat, RACE_STATE.circuit) : 0) * 0.012
       } catch (_eA) {
@@ -16519,8 +16487,11 @@ function _finalizeLiveRaceCoeur() {
         // la course (tri au score) : l'ajouter ici le comptait deux fois et
         // bouleversait l'arrivée (P17 au dernier tour, P1 au classement). Seule
         // la sanction jamais appliquée — arrêt obligatoire manqué — déclasse.
+        // Course au chronomètre (81) : le temps cumulé fait foi, en vraies
+        // secondes. Sinon (ancien modèle), un écart typique par position.
+        var _chrono = byPos.every(function(d) { return typeof d._t === "number" && isFinite(d._t); });
         byPos.forEach(function(d, idx) {
-          d._refTime = idx * gapPerPos + (d._penaliteArrivee || 0);
+          d._refTime = (_chrono ? d._t - byPos[0]._t : idx * gapPerPos) + (d._penaliteArrivee || 0);
         });
         // 3) Tri par _refTime — sans pénalité c'est identique à l'ordre courant
         alive.sort(function(a, b) {

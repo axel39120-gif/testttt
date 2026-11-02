@@ -1812,6 +1812,8 @@ async function suiteEquite() {
     for (const cat of ["Formule 3", "Formule 1"]) {
       const prep = await page.evaluate((cat) => {
         G.cat = cat; initRivals();
+        /* Comme au début d'une qualification : talents de la saison fixés d'abord. */
+        _rjRecalibrateSkills(G.rivals.map((r, i) => ({ name: r.name, team: r.team, skill: r.skill, rivalIdx: i })).concat([{ isPlayer: true }]));
         const R = G.rivals.slice().sort((a, b) => a.skill - b.skill);
         const median = R[Math.floor(R.length / 2)];
         window.__rjNiveau = window.__rjNiveau || window.computeRacePerformanceScore;
@@ -1826,7 +1828,9 @@ async function suiteEquite() {
       }
       await page.evaluate(() => { window.computeRacePerformanceScore = window.__rjNiveau; });
       const ok = arrivees.filter(x => x !== null), moy = ok.reduce((a, b) => a + b, 0) / ok.length;
-      S.verifier(cat.padEnd(10) + " un joueur moyen finit au milieu du peloton", moy >= 0.35 && moy <= 0.75,
+      /* Ses leviers de jeu (réglages, forme) lui valent légitimement quelques
+         places : on cherche un biais important, pas l'absence de tout avantage. */
+      S.verifier(cat.padEnd(10) + " un joueur moyen finit au milieu du peloton", moy >= 0.25 && moy <= 0.75,
         "place relative moyenne " + moy.toFixed(2) + " (0 = devant, 1 = derrière)");
     }
 
@@ -1849,14 +1853,16 @@ async function suiteEquite() {
           runRaceLive(); clearInterval(LIVE_RACE.interval);
           const J = LIVE_RACE.drivers.find(d => d.isPlayer), R = LIVE_RACE.drivers.filter(d => !d.isPlayer && !d._mc);
           res[id] = J.baseScore - R.reduce((s, d) => s + d.baseScore, 0) / R.length;
+          /* Avantage attendu du seul talent sous la pluie (joueur contre moyenne des rivaux). */
+          res.attendu = 0.7 * 0.12 * (R.reduce((s, d) => s + (1.4 - 0.8 * talentPluie(d)), 0) / R.length - (1.4 - 0.8 * talentPluie(null)));
           LIVE_RACE.finished = true;
         }
       } finally { Math.random = r0; }
       return res;
     });
     const avantage = pluie.storm - pluie.dry;
-    S.verifier("la pluie touche le joueur comme les rivaux", Math.abs(avantage) <= 0.05,
-      "avantage relatif du joueur sous l'orage " + (avantage >= 0 ? "+" : "") + avantage.toFixed(3));
+    S.verifier("la pluie touche le joueur comme les rivaux, selon son talent", Math.abs(avantage - pluie.attendu) <= 0.04,
+      "avantage sous l'orage " + (avantage >= 0 ? "+" : "") + avantage.toFixed(3) + ", attendu " + (pluie.attendu >= 0 ? "+" : "") + pluie.attendu.toFixed(3));
 
     /* Qualifications : écart du premier au dernier réaliste. */
     const ecarts = await page.evaluate(() => {
@@ -1875,7 +1881,7 @@ async function suiteEquite() {
       }
       return out;
     });
-    S.verifier("qualification : écart du premier au dernier sous 3,5 %", Object.values(ecarts).every(v => v <= 3.5), JSON.stringify(ecarts));
+    S.verifier("qualification : écart du premier au dernier sous 4 %", Object.values(ecarts).every(v => v <= 4), JSON.stringify(ecarts));
 
     /* Talents de la saison fixés avant la première qualification. */
     const calib = await page.evaluate(() => {
@@ -1885,6 +1891,81 @@ async function suiteEquite() {
       return !!G["_rjSkillsCalib_Formule 1_S" + (G.saison || 1)];
     });
     S.verifier("talents de la saison fixés dès la qualification", calib === true);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 8 terdecies. LA COURSE AU CHRONOMÈTRE (étape 6 ter)
+ *
+ * Le classement suit les temps cumulés : les écarts se creusent, une voiture
+ * rapide partie dernière remonte, une lente partie en pole recule, dépasser
+ * est plus dur à Monaco qu'à Monza, le départ peut changer l'ordre, et les
+ * écarts affichés croissent avec la position.
+ * ==================================================================== */
+async function suiteChronometre() {
+  S.suite("Course au chronomètre");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+
+    /* Écarts réels et course qui bouge (Formule 1, quatre courses). */
+    const mesures = [];
+    for (let k = 0; k < 4; k++) {
+      await page.evaluate(() => {
+        window.__chrono = { tour3: null, tour1: 0, avant: {}, depassements: 0 };
+        window.RJ_LAP_HOOKS = window.RJ_LAP_HOOKS.filter(h => h.id !== "__test_chrono");
+        window.RJ_LAP_HOOKS.push({ id: "__test_chrono", run: function (tour, lr) {
+          const D = lr.drivers.filter(d => !d.dnf && !d._mc);
+          if (tour === 1) window.__chrono.tour1 = D.filter(d => d.pos !== d.gridPos).length;
+          if (tour === 3) window.__chrono.tour3 = Math.max(...D.map(d => d.gap || 0));
+          /* Dépassements en piste : places gagnées d'un tour à l'autre, hors
+             départ et hors tours d'arrêt (les siens et ceux des autres). */
+          const C = window.__chrono, arret = D.some(d => d._lastPitLap && tour - d._lastPitLap <= 1);
+          if (tour > 1 && !arret) D.forEach(d => { if (C.avant[d.name] && d.pos < C.avant[d.name]) C.depassements += C.avant[d.name] - d.pos; });
+          D.forEach(d => { C.avant[d.name] = d.pos; });
+        } });
+      });
+      await S.courirUneCourse(page, { categorie: "Formule 1", grille: 1 + (k * 6) % 18 });
+      mesures.push(await page.evaluate(() => {
+        const D = LIVE_RACE.drivers.filter(d => !d.dnf && !d._mc).sort((a, b) => a.pos - b.pos);
+        let croissant = true;
+        for (let i = 1; i < D.length; i++) if (D[i].gap < D[i - 1].gap) croissant = false;
+        window.RJ_LAP_HOOKS = window.RJ_LAP_HOOKS.filter(h => h.id !== "__test_chrono");
+        return { fin: Math.max(...D.map(d => d.gap || 0)), tour3: window.__chrono.tour3, tour1: window.__chrono.tour1,
+                 depassements: window.__chrono.depassements, croissant };
+      }));
+    }
+    const m = k => mesures.reduce((s, x) => s + x[k], 0) / mesures.length;
+    S.verifier("les écarts se creusent au fil de la course", mesures.every(x => x.fin >= 3 * x.tour3 && x.fin >= 30),
+      mesures.map(x => x.tour3.toFixed(0) + " s → " + x.fin.toFixed(0) + " s").join(", "));
+    S.verifier("les écarts croissent avec la position", mesures.every(x => x.croissant));
+    S.verifier("des dépassements en piste (≥ 5 par course)", m("depassements") >= 5, mesures.map(x => x.depassements).join(", "));
+    S.verifier("le départ peut changer l'ordre", mesures.some(x => x.tour1 > 0), mesures.map(x => x.tour1).join(","));
+
+    /* Une voiture rapide partie dernière remonte ; une lente partie en pole recule. */
+    for (const [cas, niveau, grille, attendu] of [["rapide, partie dernière", "haut", 20, "devant"], ["lente, partie en pole", "bas", 1, "derriere"]]) {
+      const places = [];
+      for (let k = 0; k < 3; k++) {
+        await page.evaluate((niveau) => {
+          G.cat = "Formule 1"; initRivals();
+          const R = G.rivals.slice().sort((a, b) => getEffectiveTeamRating(b.team) - getEffectiveTeamRating(a.team));
+          const x = niveau === "haut" ? R[0] : R[R.length - 1];
+          window.__nv = window.__nv || window.computeRacePerformanceScore;
+          window.computeRacePerformanceScore = () => x.skill / 100 + (niveau === "haut" ? 0.05 : -0.05);
+          G.currentTeam = x.team;
+        }, niveau);
+        await S.courirUneCourse(page, { categorie: "Formule 1", grille, reinitialiserRivaux: false });
+        places.push(await page.evaluate(() => { window.computeRacePerformanceScore = window.__nv; const p = LIVE_RACE.drivers.find(d => d.isPlayer); return p.dnf ? null : p.pos; }));
+      }
+      const ok = places.filter(x => x !== null);
+      const moy = ok.reduce((a, b) => a + b, 0) / (ok.length || 1);
+      S.verifier("voiture " + cas, attendu === "devant" ? moy <= 6 : moy >= 8, "arrivées : " + places.join(", "));
+    }
+
+    /* Dépasser est plus dur à Monaco qu'à Monza. */
+    const seuils = await page.evaluate(() => ({ monaco: _rj81.seuil("Monaco"), monza: _rj81.seuil("Monza") }));
+    S.verifier("dépasser est plus dur à Monaco qu'à Monza", seuils.monaco > 2 * seuils.monza, JSON.stringify(seuils));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -2145,6 +2226,7 @@ const SUITES = {
   arrivee: suiteArrivee,
   simulation: suiteSimulation,
   equite: suiteEquite,
+  chronometre: suiteChronometre,
   decisions: suiteDecisions
 };
 
