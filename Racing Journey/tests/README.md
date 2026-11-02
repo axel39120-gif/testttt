@@ -58,7 +58,7 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `negociation` | écran ouvert de bout en bout, clause du module 11, patience selon le rival, sponsors engagés, plan B |
 | `decisions` | décisions en course, mini-classement, chien de garde |
 | `ui` | hauteurs d'écran sous leurs seuils (en écrans paysage), absence d'icônes dans les boutons d'action, navigation sans erreur |
-| `paysage` | à trois tailles : rail d'icônes à gauche, un seul écran affiché, même bandeau partout, HUD en haut de chaque écran et à jour, onglets en colonne, même gouttière partout, accueil sans défilement avec saison et forme, rien ne déborde ; écran « tourne ton téléphone » en portrait |
+| `paysage` | à trois tailles : rail à gauche (présent sur les écrans de consultation), un seul écran affiché, même bandeau partout, HUD en haut de chaque écran et à jour, onglets dans le bandeau entre titre et HUD, même gouttière partout, accueil sans défilement avec saison et forme, rien ne déborde ; écran « tourne ton téléphone » en portrait |
 
 ## Lire un échec
 

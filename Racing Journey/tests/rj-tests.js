@@ -1036,7 +1036,8 @@ async function suiteInterface() {
  * 8 bis. PAYSAGE (étape 2)
  *
  * Le jeu se joue à l'horizontale. Chaque écran suit la même mise en page :
- * rail de navigation à gauche, un seul bandeau en haut (titre, onglets),
+ * rail de navigation à gauche, un seul bandeau en haut (titre, onglets en
+ * pastilles, ressources),
  * le contenu dessous. Vérifié à trois tailles ; en portrait, le jeu demande
  * de tourner l'appareil.
  * ==================================================================== */
@@ -1057,7 +1058,7 @@ async function suitePaysage() {
         const nav = document.getElementById("main-nav"), bn = boite(nav);
         const ecrans = [...document.querySelectorAll(".scr[id^='S-']")].map(e => e.id)
           .filter(id => !/^S-(splash|create|display-setup|mode)$/.test(id));
-        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], ongletsHaut: [], gouttieres: {} };
+        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], ongletsHors: [], sansRail: [], gouttieres: {} };
         for (const id of ecrans) {
           try { navTo(id, null); } catch (e) { continue; }
           await attendre(260);
@@ -1071,10 +1072,15 @@ async function suitePaysage() {
           /* La barre de ressources (HUD) reste en haut de chaque écran de jeu. */
           const hud = document.getElementById("rj-hud");
           if (!hud || getComputedStyle(hud).display === "none" || boite(hud).top > 1 || boite(hud).height > 60) res.sansHud.push(s.id);
-          /* Les onglets forment une colonne à gauche du contenu. */
+          /* Les onglets sont dans le bandeau, entre le titre et le HUD. */
           const tabs = s.querySelector(":scope > .tabs");
-          if (tabs && sc && getComputedStyle(tabs).display !== "none" && !(boite(tabs).right <= boite(sc).left + 1 && boite(tabs).height > boite(tabs).width))
-            res.ongletsHaut.push(s.id);
+          if (tabs && hdr && getComputedStyle(tabs).display !== "none") {
+            const bt = boite(tabs), bh = boite(hdr), bhud = boite(hud);
+            if (bt.top < bh.top - 1 || bt.bottom > bh.bottom + 1 || bt.left < bh.right - 1 || bt.right > bhud.left + 1) res.ongletsHors.push(s.id);
+          }
+          /* Écrans de consultation : le rail reste là pour circuler. */
+          if (/^S-(home|pilot|champ|cal|training|contracts|patrimoine|sponsors|media|mailbox|lifestyle|settings|pantheon|achievements)$/.test(s.id) && !railVisible)
+            res.sansRail.push(s.id);
           res.hauts[s.id] = sc ? Math.round(boite(sc).top) : null;
           /* Gouttière unique : les cartes du premier niveau s'alignent sur le
              bord du contenu (écrans en colonnes), sans marge héritée du portrait. */
@@ -1127,7 +1133,8 @@ async function suitePaysage() {
       S.verifier(nom + " : le contenu commence sous un seul bandeau", bas.length === 0, bas.join(", "));
       S.verifier(nom + " : même gouttière sur tous les écrans", Object.keys(r.gouttieres).length === 0, JSON.stringify(r.gouttieres));
       S.verifier(nom + " : HUD en haut de chaque écran", r.sansHud.length === 0, r.sansHud.join(", "));
-      S.verifier(nom + " : onglets en colonne à gauche", r.ongletsHaut.length === 0, r.ongletsHaut.join(", "));
+      S.verifier(nom + " : onglets dans le bandeau, entre titre et HUD", r.ongletsHors.length === 0, r.ongletsHors.join(", "));
+      S.verifier(nom + " : rail présent sur les écrans de consultation", r.sansRail.length === 0, r.sansRail.join(", "));
       S.verifier(nom + " : le HUD suit l'état du jeu", r.hudSuit === true);
       S.verifier(nom + " : accueil — pastilles de saison et forme", r.accueil.points !== undefined && r.accueil.victoires !== undefined && r.accueil.forme, JSON.stringify(r.accueil));
       if (viewport.height >= 400) S.verifier(nom + " : accueil sans défilement", r.accueil.defile !== null && r.accueil.defile <= 2, "dépasse de " + r.accueil.defile + " px");
@@ -1846,8 +1853,10 @@ async function suiteDecisions() {
           const v = RJ107.voisins(lr);
           if (!v.joueur || v.joueur.dnf) return;
           window.__rj107Sonde.lus++;
-          /* Le mini-classement montre la position sur la piste à cet instant (108). */
-          const j = RJModelePiste.etat().voitures.find(x => x.joueur);
+          /* Le mini-classement montre la position sur la piste à cet instant (108) :
+             on le redessine avec l'état lu, l'horloge avançant entre deux lectures. */
+          const e = RJModelePiste.etat(), j = e.voitures.find(x => x.joueur);
+          (window.RJ_FRAME_HOOKS || []).forEach(h => h.run(e));
           const pos = mini[0].querySelector(".rj107-moi .rj107-pos");
           if (!pos || !j || pos.textContent !== "P" + j.pos) window.__rj107Sonde.incoherents++;
           /* L'arrondi global (04q) agit après coup : on relit au tick suivant. */
