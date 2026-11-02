@@ -1795,6 +1795,101 @@ async function suiteSimulation() {
 }
 
 /* ==================================================================== *
+ * 8 duodecies. ÉQUITÉ JOUEUR / RIVAUX (audit, étape 6 bis)
+ *
+ * Le joueur suit la même formule que les rivaux : un joueur moyen dans une
+ * voiture moyenne finit au milieu ; la pluie touche tout le monde selon son
+ * talent sous la pluie ; les écarts de qualification restent réalistes ; les
+ * talents de la saison sont fixés avant la première qualification.
+ * ==================================================================== */
+async function suiteEquite() {
+  S.suite("Équité joueur / rivaux");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+
+    /* Joueur moyen : niveau et voiture au milieu du plateau, grille variée. */
+    for (const cat of ["Formule 3", "Formule 1"]) {
+      const prep = await page.evaluate((cat) => {
+        G.cat = cat; initRivals();
+        const R = G.rivals.slice().sort((a, b) => a.skill - b.skill);
+        const median = R[Math.floor(R.length / 2)];
+        window.__rjNiveau = window.__rjNiveau || window.computeRacePerformanceScore;
+        window.computeRacePerformanceScore = () => median.skill / 100;
+        G.currentTeam = median.team;
+        return { n: G.rivals.length + 1 };
+      }, cat);
+      const arrivees = [];
+      for (let k = 0; k < 8; k++) {
+        await S.courirUneCourse(page, { categorie: cat, grille: 1 + (k * 7) % (prep.n - 1), reinitialiserRivaux: false });
+        arrivees.push(await page.evaluate(() => { const p = LIVE_RACE.drivers.find(d => d.isPlayer); const n = LIVE_RACE.drivers.filter(d => !d._mc).length; return p && !p.dnf ? p.pos / n : null; }));
+      }
+      await page.evaluate(() => { window.computeRacePerformanceScore = window.__rjNiveau; });
+      const ok = arrivees.filter(x => x !== null), moy = ok.reduce((a, b) => a + b, 0) / ok.length;
+      S.verifier(cat.padEnd(10) + " un joueur moyen finit au milieu du peloton", moy >= 0.35 && moy <= 0.75,
+        "place relative moyenne " + moy.toFixed(2) + " (0 = devant, 1 = derrière)");
+    }
+
+    /* Pluie : en course, le joueur la subit comme un rival. */
+    const pluie = await page.evaluate(async () => {
+      const r0 = Math.random; const res = {};
+      try {
+        G.cat = "Formule 2"; initRivals();
+        for (const id of ["dry", "storm"]) {
+          Math.random = () => 0.5;
+          window.CAL_RACES = []; buildCalendar(); G.semaine = 6; G.seasonOver = false;
+          CAL_RACES.forEach(c => { c.done = c.week < 6; c.result = null; });
+          const course = getNextRace(); RACE_STATE.circuit = course.name; RACE_STATE.circuitData = getCircuitData(course.name);
+          RACE_STATE.weather = generateWeather(0);
+          const modele = { dry: 0, storm: -0.12 };
+          RACE_STATE.weather = Object.assign({}, RACE_STATE.weather, { id, rainMod: modele[id] });
+          RACE_STATE.qualiPos = 8; G.totalLaps = 10; SETTINGS.simSpeed = "instant";
+          if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+          window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+          runRaceLive(); clearInterval(LIVE_RACE.interval);
+          const J = LIVE_RACE.drivers.find(d => d.isPlayer), R = LIVE_RACE.drivers.filter(d => !d.isPlayer && !d._mc);
+          res[id] = J.baseScore - R.reduce((s, d) => s + d.baseScore, 0) / R.length;
+          LIVE_RACE.finished = true;
+        }
+      } finally { Math.random = r0; }
+      return res;
+    });
+    const avantage = pluie.storm - pluie.dry;
+    S.verifier("la pluie touche le joueur comme les rivaux", Math.abs(avantage) <= 0.05,
+      "avantage relatif du joueur sous l'orage " + (avantage >= 0 ? "+" : "") + avantage.toFixed(3));
+
+    /* Qualifications : écart du premier au dernier réaliste. */
+    const ecarts = await page.evaluate(() => {
+      const out = {};
+      for (const cat of ["Formule 4", "Formule 2", "Formule 1"]) {
+        G.cat = cat; initRivals(); window.CAL_RACES = []; buildCalendar();
+        QUALI_STATE.baseRef = getCircuitBaseRef(CAL_RACES[0].name, cat) || 90; QUALI_STATE.circuitName = CAL_RACES[0].name;
+        const P = G.rivals.map(e => ({ skill: e.skill / 100 + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72), consistency: e.consistency, team: e.team }));
+        let somme = 0;
+        for (let s = 0; s < 20; s++) {
+          QUALI_STATE.drivers = P.map(p => Object.assign({}, p));
+          const t = QUALI_STATE.drivers.map(d => Math.min(...[1, 2, 3].map(r => qualiDriverTime(d, 1, r, 3, 0.5))));
+          somme += (Math.max(...t) - Math.min(...t)) / Math.min(...t) * 100;
+        }
+        out[cat] = +(somme / 20).toFixed(2);
+      }
+      return out;
+    });
+    S.verifier("qualification : écart du premier au dernier sous 3,5 %", Object.values(ecarts).every(v => v <= 3.5), JSON.stringify(ecarts));
+
+    /* Talents de la saison fixés avant la première qualification. */
+    const calib = await page.evaluate(() => {
+      G.cat = "Formule 1"; initRivals();
+      Object.keys(G).filter(k => k.indexOf("_rjSkillsCalib_") === 0).forEach(k => delete G[k]);
+      try { if (typeof rjAppeler === "function") rjAppeler("startQual", function () {}, null, []); } catch (e) {}
+      return !!G["_rjSkillsCalib_Formule 1_S" + (G.saison || 1)];
+    });
+    S.verifier("talents de la saison fixés dès la qualification", calib === true);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 8 decies. L'ARRIVÉE RESPECTE LA COURSE
  *
  * Défaut constaté en jeu : P17 au dernier tour, P1 à l'arrivée. Le temps
@@ -2049,6 +2144,7 @@ const SUITES = {
   negociation: suiteNegociation,
   arrivee: suiteArrivee,
   simulation: suiteSimulation,
+  equite: suiteEquite,
   decisions: suiteDecisions
 };
 

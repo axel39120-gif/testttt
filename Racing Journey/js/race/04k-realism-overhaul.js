@@ -305,9 +305,14 @@ function _rjAssignSkillsByTeamRanking(driversWithTeams, skillPool) {
  * qualif/course, les anciennes valeurs reviennent.
  * ===================================================================== */
 
-function _rjRecalibrateSkills() {
+/* pilotes : le plateau à recalibrer (par défaut celui de la course). Au début
+   de la qualification, on passe les rivaux de G.rivals : les talents de la
+   saison sont fixés avant le premier tour chronométré, et la qualification du
+   premier week-end ne court plus avec les anciens talents. */
+function _rjRecalibrateSkills(pilotes) {
   if (typeof G === "undefined" || !G.rivals || !G.rivals.length) return;
-  if (typeof LIVE_RACE === "undefined" || !LIVE_RACE || !LIVE_RACE.drivers) return;
+  if (!pilotes) pilotes = (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE.drivers) || null;
+  if (!pilotes) return;
   
   var category = G.cat;
   var distribution = RJ_TIER_DISTRIBUTION[category];
@@ -319,7 +324,7 @@ function _rjRecalibrateSkills() {
   G[calibKey] = true;
   
   // Total de pilotes (joueur inclus pour simplifier la distribution)
-  var allDrivers = LIVE_RACE.drivers.slice();
+  var allDrivers = pilotes.slice();
   var totalDrivers = allDrivers.length;
   
   // Génère le pool de skills tier par tier
@@ -449,6 +454,12 @@ function _rjNewTeamRatingToBonus(rating) {
        5 ms servait à passer après les autres enveloppes : le registre
        garantit cet ordre sans temporisation. */
     if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
+    rjInscrire("startQual", { id: "04k-realism-overhaul:startQual", avant: function () {
+      try {
+        _rjRecalibrateSkills(G.rivals.map(function (r, i) { return { name: r.name, team: r.team, skill: r.skill, rivalIdx: i }; })
+          .concat([{ isPlayer: true }]));
+      } catch (e) { console.warn("[RJ] Recalibrage avant qualification :", e && e.message); }
+    } });
     window.RJ_RACE_START_HOOKS.push({
       id: "04k-realism-overhaul",
       apres: function () {

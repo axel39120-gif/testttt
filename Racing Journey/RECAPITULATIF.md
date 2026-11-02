@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v227**. Ce document décrit l'organisation du code après la
+Version **BUILD v228**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v227 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v228 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -380,11 +380,28 @@ Suite `simulation` : arrivée liée au niveau (F1, IndyCar, endurance), même
 nombre d'arrêts pour les rivaux, pas d'ex æquo, pas de temps de qualification
 identiques, pole qui change de mains, coéquipiers différents.
 
-Restent (audit) : formules et bonus différents pour le joueur et les rivaux,
-pluie et pneus de qualification appliqués au seul joueur, course sans
-chronomètre (écarts tirés de la note, dépassements uniformes, départ figé),
-écart de qualification trop large, recalibrage des talents après la
-qualification du premier week-end de la saison.
+### Équité joueur / rivaux (v228)
+
+Mesuré d'abord (suite `equite`) : en course, le joueur était déjà traité
+comme les rivaux — l'alignement du module 55 puis le mélange avec la grille
+(81) ramènent sa note au niveau d'un rival de même talent dans la même
+voiture ; un joueur moyen finit au milieu. Les vraies inégalités étaient en
+qualification. Corrigé :
+
+- **Talent sous la pluie** pour tous (`talentPluie`, `effetPluie`, 04) : de
+  0,6 × (spécialiste) à 1,4 × (mal à l'aise) l'effet de la pluie ; le joueur
+  le tire de son adaptation, chaque rival d'un tirage stable lié à son nom.
+  En qualification, joueur et rivaux au même poids (avant : le double pour
+  le joueur). En course, le joueur reçoit la pluie moyenne du peloton (55).
+- **Écarts de qualification** : 0,1 de niveau vaut 0,22 % du temps au tour
+  (avant 0,55 %) — du premier au dernier, 2,2 % en F4, 2,6 % en F2, 3,3 % en
+  F1, au lieu de 4 à 6 %.
+- **Talents de la saison fixés dès la qualification** (`startQual`, 04k) : la
+  première qualification de la saison ne court plus avec les anciens talents.
+
+Restent (audit) : pneus de qualification appliqués au seul joueur, course
+sans chronomètre (écarts tirés de la note, dépassements uniformes, départ
+figé), essais libres sans rivaux.
 
 ## Pistes suivantes
 

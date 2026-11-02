@@ -498,7 +498,7 @@ function _startQualCoeur() {
     } [G.setup] || 0);
     var n = G.currentTeam || "Indépendant",
       a, i = teamRatingToBonus("Indépendant" !== n ? getEffectiveTeamRating(n) : 75),
-      o = (.6 * G.stats.vitesse + .25 * G.stats.sangfroid + .15 * G.stats.adapt) / 100 + r + t.rainMod + i + (G._fpBonus && G._fpBonus.qualiPace ? G._fpBonus.qualiPace : 0),
+      o = (.6 * G.stats.vitesse + .25 * G.stats.sangfroid + .15 * G.stats.adapt) / 100 + r + .5 * effetPluie(t.rainMod, talentPluie(null)) + i + (G._fpBonus && G._fpBonus.qualiPace ? G._fpBonus.qualiPace : 0),
       s = {
         "Karting Junior": 52,
         "Karting Senior": 50,
@@ -532,7 +532,7 @@ function _startQualCoeur() {
         name: e.name,
         nat: e.nat || "FR",
         isPlayer: !1,
-        skill: e.skill / 100 + a + .5 * t.rainMod,
+        skill: e.skill / 100 + a + .5 * effetPluie(t.rainMod, talentPluie(e)),
         consistency: e.consistency,
         bestTime: null,
         lastTime: null,
@@ -728,9 +728,10 @@ function getQualiElimCount(e) {
 function qualiDriverTime() { return rjAppeler("qualiDriverTime", _qualiDriverTimeCoeur, this, arguments); }
 function _qualiDriverTimeCoeur(e, t, r, n, a) {
   var baseRef = QUALI_STATE.baseRef;
-  // Skill effect: skill in [0.4,1.0]. Mapping centered at 0.75 → 0% delta. Above → faster, below → slower.
-  // Slope: each 0.10 above 0.75 = -0.7% lap time. So skill 0.85 → -0.7%, skill 1.0 → -1.75%.
-  var skillDelta = -(e.skill - 0.75) * 0.055;
+  // Effet du niveau (pilote + voiture) : 0,1 de niveau vaut 0,22 % du temps
+  // au tour. Avec 0,055, l'écart du premier au dernier atteignait 4 à 6 %
+  // (F1 réelle : 2 à 3 % ; audit du week-end, étape 6).
+  var skillDelta = -(e.skill - 0.75) * 0.022;
   // Consistency variation
   var i = 0.022 * baseRef;
   var consVar = (Math.random() - 0.5) * i * (1.0 - e.consistency + 0.20);
@@ -3053,7 +3054,7 @@ function _runRaceLiveCoeur() {
       prevPos: o
     }];
   G.rivals.forEach(function(e, t) {
-    var r = Math.min(Infinity, Math.max(.02, e.skill / 100 + l + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72) + .7 * a.rainMod + .2 * (Math.random() - .5) * (1 - e.consistency + .25) + (function() {
+    var r = Math.min(Infinity, Math.max(.02, e.skill / 100 + l + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72) + .7 * effetPluie(a.rainMod, talentPluie(e)) + .2 * (Math.random() - .5) * (1 - e.consistency + .25) + (function() {
       try {
         return (typeof _getTeamCircuitAffinity === 'function' ? _getTeamCircuitAffinity(e.team, G.cat, RACE_STATE.circuit) : 0) * 0.012
       } catch (_eA) {
@@ -21638,6 +21639,26 @@ function getEffectiveTeamRating() { return rjAppeler("getEffectiveTeamRating", _
 function _getEffectiveTeamRatingCoeur(e) {
   var t = getTeamRatings();
   return t && t[e] ? Math.max(50, Math.min(99, t[e] + getTeamSeasonDelta(e))) : 72
+}
+
+/* Talent sous la pluie (0 à 1), le même pour tous : le joueur le tire de
+   son adaptation, chaque rival d'un tirage stable lié à son nom (rien à
+   sauvegarder) et un peu de sa régularité. Sous la pluie, l'effet de la météo
+   est multiplié de 1,4 (le plus mal à l'aise) à 0,6 (le spécialiste) ; sur le
+   sec, rien ne change. En course, le joueur reçoit la pluie moyenne du
+   peloton par l'alignement du module 55 (shortcut: son talent sous la pluie
+   ne joue qu'en qualification, jusqu'au moteur au chronomètre). Avant, la pluie pesait deux fois plus sur le joueur
+   que sur les rivaux en qualification, et personne n'avait de talent propre. */
+function talentPluie(pilote) {
+  if (!pilote || pilote.isPlayer) return (G && G.stats && typeof G.stats.adapt === "number") ? Math.max(0, Math.min(1, G.stats.adapt / 100)) : 0.5;
+  var h = 0, nom = String(pilote.name || "");
+  for (var i = 0; i < nom.length; i++) h = (h * 31 + nom.charCodeAt(i)) >>> 0;
+  var tirage = (h % 1000) / 999;
+  var regularite = typeof pilote.consistency === "number" ? pilote.consistency : 0.7;
+  return Math.max(0, Math.min(1, 0.65 * tirage + 0.35 * regularite));
+}
+function effetPluie(rainMod, talent) {
+  return rainMod < 0 ? rainMod * (1.4 - 0.8 * talent) : rainMod;
 }
 
 function teamRatingToBonus() { return rjAppeler("teamRatingToBonus", _teamRatingToBonusCoeur, this, arguments); }
