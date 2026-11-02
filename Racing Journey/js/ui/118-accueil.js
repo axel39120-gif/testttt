@@ -29,11 +29,11 @@
       var n = typeof calcPlayerRating === "function" ? calcPlayerRating() : null;
       return n === null ? "" : "Note " + n + (typeof getRatingTier === "function" ? " · " + getRatingTier(n).tier : "");
     },
-    "S-training": function () { return G.pa > 0 ? pluriel(G.pa, "séance") + " à jouer" : "Aucune séance cette semaine"; },
+    "S-training": function () { return G.pa > 0 ? pluriel(G.pa, "séance") + " dispo" : "Aucune séance"; },
     "S-media": function () { return "Réputation " + (G.reputation || 0); },
     "S-contracts": function () {
       var sem = G.contractWeeksLeft || 0;
-      return (G.currentTeam || "Sans écurie") + (sem ? " · " + (sem >= 5 ? Math.round(sem / 4.33) + " mois" : sem + " sem.") : "");
+      return (G.currentTeam || "Sans écurie") + (sem ? " · " + (sem >= 48 ? Math.floor(sem / 48) + " s." : sem >= 20 ? Math.round(sem / 4) + " mois" : sem + " sem.") : "");
     },
     "S-sponsors": function () { var n = Array.isArray(G.sponsors) ? G.sponsors.length : 0; return n ? pluriel(n, "contrat") + " actif" + (n > 1 ? "s" : "") : "Aucun sponsor"; },
     "S-patrimoine": function () { return "Budget " + argent(G.budget); },
@@ -41,8 +41,8 @@
       var b = tuile.querySelector(".apex-action-badge"), n = b && b.style.display !== "none" ? parseInt(b.textContent, 10) || 0 : 0;
       return n ? pluriel(n, "non lu") : "Rien de nouveau";
     },
-    "S-lifestyle": function () { return "Bonheur " + Math.round(G.happiness || 0) + " / 100"; },
-    "save": function () { return "Semaine " + (G.semaine || 1) + ", saison " + (G.saison || 1); }
+    "S-lifestyle": function () { return "Bonheur " + Math.round(G.happiness || 0); },
+    "save": function () { return "S" + (G.saison || 1) + " · sem. " + (G.semaine || 1); }
   };
 
   function cible(tuile) {

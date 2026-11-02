@@ -347,6 +347,72 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
   .rj118-info { font-size: 12px; }
 }
 
+/* Boutons du menu : chacun sa couleur, une icône en pastille dégradée, une
+   lueur de sa teinte et une flèche. Teintes par destination. */
+#S-home .apex-action-tile { --t: #FF3B30; }
+#S-home .apex-action-tile[onclick*="S-training"] { --t: #22C55E; }
+#S-home .apex-action-tile[onclick*="S-media"] { --t: #A855F7; }
+#S-home .apex-action-tile[onclick*="S-contracts"] { --t: #3B82F6; }
+#S-home .apex-action-tile[onclick*="S-sponsors"] { --t: #F59E0B; }
+#S-home .apex-action-tile[onclick*="S-patrimoine"] { --t: #10B981; }
+#S-home .apex-action-tile[onclick*="S-mailbox"] { --t: #22D3EE; }
+#S-home .apex-action-tile[onclick*="S-lifestyle"] { --t: #EC4899; }
+#S-home .apex-action-tile[onclick*="showSaveMenu"] { --t: #94A3B8; }
+#S-home > .scroll .apex-actions-grid > .apex-action-tile {
+  position: relative; overflow: hidden; padding-right: 20px !important; column-gap: 9px !important;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t) 22%, transparent), transparent 60%),
+    linear-gradient(160deg, #18181d, #101014) !important;
+  border: 1px solid color-mix(in srgb, var(--t) 28%, rgba(255, 255, 255, .06)) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .35) !important;
+  transition: transform .12s ease, border-color .15s ease;
+}
+#S-home > .scroll .apex-actions-grid > .apex-action-tile::after {
+  content: "›"; position: absolute; right: 8px; top: 50%; transform: translateY(-52%);
+  font: 700 18px/1 var(--font-display); color: color-mix(in srgb, var(--t) 70%, #fff);
+}
+#S-home > .scroll .apex-actions-grid > .apex-action-tile:active { transform: scale(.97); border-color: var(--t) !important; }
+#S-home > .scroll .apex-actions-grid .apex-action-icon {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--t) 85%, #fff), color-mix(in srgb, var(--t) 70%, #000)) !important;
+  border: 0 !important; color: #fff !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--t) 45%, transparent), inset 0 1px rgba(255, 255, 255, .35) !important;
+}
+#S-home > .scroll .apex-actions-grid .apex-action-icon svg { stroke: #fff !important; }
+#S-home > .scroll .apex-actions-grid .apex-action-title { color: #fff !important; font-weight: 800 !important; }
+#S-home > .scroll .apex-sec { opacity: .85; }
+
+/* --- Widgets de carrière (js/ui/119-widgets.js) ------------------------ */
+.rj119-rangee { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+.rj119-w {
+  break-inside: avoid; margin: 0 0 12px; padding: 11px 13px 12px; border-radius: 14px; cursor: pointer;
+  background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--w) 16%, transparent), transparent 55%), var(--bg3, #0e0e12);
+  border: 1px solid color-mix(in srgb, var(--w) 26%, rgba(255, 255, 255, .06));
+}
+.rj119-rangee .rj119-w { margin: 0; }
+.rj119-w:active { transform: scale(.98); }
+.rj119-t {
+  display: flex; align-items: center; gap: 6px;
+  font: 800 9.5px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--w);
+}
+.rj119-t::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--w); box-shadow: 0 0 8px var(--w); }
+.rj119-t::after { content: "›"; margin-left: auto; font-size: 14px; color: var(--muted, #80808a); }
+.rj119-v { margin: 7px 0 6px; font: 800 18px/1.1 var(--font-display); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rj119-v small { font: 600 11px/1 var(--font-body); color: var(--muted, #80808a); }
+.rj119-l { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; line-height: 1.9; color: var(--text2, #b0b0bc); }
+.rj119-l b { color: var(--text, #e8e8ec); white-space: nowrap; }
+.rj119-l span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rj119-s { margin-top: 4px; font-size: 11px; line-height: 1.4; color: var(--muted, #80808a); }
+.rj119-barre { height: 5px; margin: 5px 0 2px; border-radius: 3px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.rj119-barre span { display: block; height: 100%; border-radius: 3px; }
+.rj119-forme { display: flex; gap: 4px; margin-top: 6px; }
+.rj119-forme i {
+  font: 700 10px/1 var(--font-display); font-style: normal; padding: 4px 6px; border-radius: 4px;
+  color: var(--text2, #b0b0bc); background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08);
+}
+.rj119-forme i.podium { color: #F59E0B; border-color: #F59E0B66; }
+.rj119-forme i.points { color: #34D399; border-color: #34D39944; }
+.rj119-forme i.ab { color: #ff2040; border-color: #ff204055; }
+
 /* Carte de la prochaine course : l'action principale, nommée. */
 #S-home > .apex-hero-race { position: relative; }
 .rj118-cta {
