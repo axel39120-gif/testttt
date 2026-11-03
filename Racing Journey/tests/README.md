@@ -53,6 +53,7 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `simulation` | arrivée liée au niveau des pilotes avec arrêts (F1, IndyCar, endurance), même nombre d'arrêts pour les rivaux, pas d'ex æquo en tête, qualification sans temps identiques, coéquipiers différents |
 | `equite` | joueur moyen au milieu du peloton (F3, F1), pluie identique pour tous, écart de qualification sous 4 %, talents de la saison fixés dès la qualification |
 | `chronometre` | course au chronomètre : écarts qui se creusent et croissants avec la position, dépassements en piste, départ qui peut changer l'ordre, voiture rapide partie dernière qui remonte, lente partie en pole qui recule, Monaco plus dur que Monza |
+| `ecrans` | iPhone en portrait : jeu pivoté aux proportions du paysage, toucher qui suit la rotation ; iPhone en paysage avec encoche simulée : rail, HUD, badge et contenu hors des zones sûres |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |

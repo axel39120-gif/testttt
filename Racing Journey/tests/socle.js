@@ -105,7 +105,8 @@ function conclusion() {
 async function ouvrirJeu(options) {
   options = options || {};
   const navigateur = await chromium.launch(process.env.RJ_CHANNEL ? { channel: process.env.RJ_CHANNEL } : {});
-  const contexte = await navigateur.newContext({ serviceWorkers: "block", viewport: options.viewport || VIEWPORT });
+  const contexte = await navigateur.newContext(Object.assign({ serviceWorkers: "block", viewport: options.viewport || VIEWPORT },
+    options.mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 3 } : {}));
   /* mulberry32 : Math.random remplacé avant tout script du jeu. */
   await contexte.addInitScript(graine => {
     let a = graine >>> 0;
