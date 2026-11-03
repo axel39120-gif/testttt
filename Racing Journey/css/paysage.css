@@ -802,3 +802,72 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 .rj117-argent span { color: var(--muted, #80808a); }
 .rj117-argent b { color: var(--text, #e8e8ec); text-align: right; }
 .rj117-argent em { grid-column: 1 / -1; font-style: normal; font-size: 10px; color: var(--muted, #80808a); }
+
+/* --- Atelier de réglages (js/weekend/120-atelier-reglages.js) ---------- */
+#rj-behavior-panel { display: none !important; }   /* les ressentis de l'atelier le remplacent */
+.rja {
+  margin-bottom: 12px; border-radius: var(--r); overflow: hidden; break-inside: avoid;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .012)), var(--bg3, #0e0e12);
+  border: 1px solid var(--border-hi, rgba(255, 255, 255, .1));
+}
+.rja-tete { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.rja-conf { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rja-anneau { width: 80px; height: 80px; transform: rotate(-90deg); }
+.rja-anneau circle { fill: none; stroke-width: 7; }
+.rja-anneau .fond { stroke: rgba(255, 255, 255, .07); }
+.rja-anneau .jauge { stroke-linecap: round; transition: stroke-dasharray .4s ease; }
+.rja-anneau-val { position: absolute; top: 25px; left: 0; right: 0; text-align: center; font: 900 21px/1 var(--font-display); }
+.rja-anneau-val small { font-size: 11px; margin-left: 1px; }
+.rja-conf-lbl { text-align: center; font: 700 8.5px/1.25 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rja-ressentis { display: grid; gap: 7px; min-width: 0; }
+.rja-r-tete { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.rja-r-tete .nom { font: 700 11px/1 var(--font-display); letter-spacing: .04em; color: var(--text, #e8e8ec); }
+.rja-verdict { font: 800 8.5px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; padding: 3px 5px; border-radius: 4px; }
+.rja-verdict.parfait { color: #2DD4BF; background: rgba(45, 212, 191, .12); }
+.rja-verdict.bon { color: #34D399; background: rgba(52, 211, 153, .1); }
+.rja-verdict.moyen { color: #F59E0B; background: rgba(245, 158, 11, .1); }
+.rja-verdict.mauvais { color: #EF4444; background: rgba(239, 68, 68, .1); }
+.rja-verdict.doute { color: var(--muted, #80808a); background: rgba(255, 255, 255, .05); }
+.rja-barre { position: relative; height: 8px; margin-top: 5px; border-radius: 4px;
+  background: linear-gradient(90deg, rgba(239, 68, 68, .35), rgba(255, 255, 255, .06) 30%, rgba(255, 255, 255, .06) 70%, rgba(239, 68, 68, .35)); }
+.rja-barre .zone { position: absolute; top: -2px; bottom: -2px; border-radius: 4px; background: rgba(45, 212, 191, .25); border: 1px solid rgba(45, 212, 191, .7); transition: left .4s, width .4s; }
+.rja-barre .marque { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, .6); transition: left .3s; }
+.rja-bornes { display: flex; justify-content: space-between; margin-top: 3px; font-size: 9px; color: var(--muted, #80808a); }
+
+.rja-pilote { padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.rja-bulle {
+  position: relative; padding: 9px 11px; border-radius: var(--r); font-size: 12px; line-height: 1.45; color: var(--text, #e8e8ec);
+  background: rgba(96, 165, 250, .08); border: 1px solid rgba(96, 165, 250, .25); font-style: italic;
+}
+.rja-actions { display: flex; gap: 8px; margin-top: 9px; }
+.rja-actions button {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 40px;
+  border-radius: var(--r); cursor: pointer; font: 800 11px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase;
+}
+.rja-actions button small { font: 600 9.5px/1 var(--font-body); letter-spacing: 0; text-transform: none; opacity: .8; }
+.rja-essai { border: 0; color: #fff; background: linear-gradient(135deg, #ff3a24, #d01000); box-shadow: 0 4px 14px rgba(255, 24, 1, .3); }
+.rja-essai:disabled { background: rgba(255, 255, 255, .06); color: var(--muted, #80808a); box-shadow: none; cursor: default; }
+.rja-inge { background: rgba(96, 165, 250, .08); color: #93C5FD; border: 1px solid rgba(96, 165, 250, .3); }
+.rja-temps { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.rja-temps span { font: 700 11px/1 var(--font-display); font-variant-numeric: tabular-nums; padding: 5px 7px; border-radius: 4px; color: var(--text2, #b0b0bc); background: rgba(255, 255, 255, .04); }
+.rja-temps span.meilleur { color: #C084FC; background: rgba(192, 132, 252, .12); }
+
+.rja-groupe { padding: 8px 12px 10px; }
+.rja-groupe + .rja-groupe { border-top: 1px solid rgba(255, 255, 255, .06); }
+.rja-groupe-titre { font: 800 9.5px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--red, #FF1801); margin-bottom: 6px; }
+.rja-p { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; }
+.rja-p-info { min-width: 0; }
+.rja-p-info .nom { display: block; font-size: 12.5px; font-weight: 700; color: var(--text, #e8e8ec); }
+.rja-p-info .effets { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.rja-p-info .effets i { font-style: normal; font-size: 9.5px; color: var(--muted, #80808a); padding: 2px 5px; border-radius: 4px; background: rgba(255, 255, 255, .04); }
+.rja-p-ctrl { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.rja-p-ctrl button {
+  width: 34px; height: 34px; border-radius: var(--r); cursor: pointer; font: 700 18px/1 var(--font-display);
+  color: #fff; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12);
+}
+.rja-p-ctrl button:active { transform: scale(.94); background: rgba(255, 24, 1, .2); }
+.rja-p-ctrl button:disabled { opacity: .3; cursor: default; }
+.rja-p-ctrl .crans { display: flex; gap: 2px; }
+.rja-p-ctrl .crans b { width: 5px; height: 16px; border-radius: 2px; background: rgba(255, 255, 255, .08); }
+.rja-p-ctrl .crans b.on { background: linear-gradient(180deg, #ff6b45, #d01000); }
+.rja-p-ctrl .val { width: 18px; text-align: center; font: 800 13px/1 var(--font-display); color: #fff; }
