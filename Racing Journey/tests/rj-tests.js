@@ -2038,6 +2038,60 @@ async function suiteEcrans() {
 }
 
 /* ==================================================================== *
+ * 8 quaterdecies. ATELIER DE RÉGLAGES (étape 8)
+ *
+ * L'atelier remplace les curseurs : cinq ressentis (selon les réglages de
+ * la catégorie), boutons − / + qui modifient G.setupAdv, tour d'essai qui
+ * fait parler le pilote et mesure sa confiance, fenêtres qui se resserrent
+ * avec les essais, confiance maximale au réglage idéal.
+ * ==================================================================== */
+async function suiteReglages() {
+  S.suite("Atelier de réglages");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    await page.evaluate(() => { G.cat = "Formule 1"; initRivals(); G.semaine = 6; G.seasonOver = false; goToRaceWeekend(); });
+    await page.waitForTimeout(800);
+    const avant = await page.evaluate(() => ({
+      atelier: !!document.querySelector("#advanced-setup-container .rja"),
+      ressentis: document.querySelectorAll(".rja-r").length,
+      reglages: document.querySelectorAll(".rja-p").length,
+      zone: [...document.querySelectorAll(".rja-barre .zone")].reduce((s, z) => s + parseFloat(z.style.width), 0),
+      ail: G.setupAdv.aileron_ar
+    }));
+    S.verifier("F1 : l'atelier remplace les curseurs (5 ressentis, 9 réglages)", avant.atelier && avant.ressentis === 5 && avant.reglages === 9, JSON.stringify(avant));
+
+    await page.click(".rja [data-rja='plus'][data-p='aileron_ar']");
+    const apres = await page.evaluate(() => G.setupAdv.aileron_ar);
+    S.verifier("le bouton + règle la voiture", apres === Math.min(10, avant.ail + 1), avant.ail + " → " + apres);
+
+    for (let k = 0; k < 3; k++) { await page.click(".rja [data-rja='essai']"); await page.waitForTimeout(150); }
+    const essais = await page.evaluate(() => ({
+      tests: RACE_STATE.practice.tests.length, confiance: RJAtelier.confiance(), parole: RJAtelier.parole(),
+      bulle: (document.querySelector(".rja-bulle") || {}).textContent || "",
+      zone: [...document.querySelectorAll(".rja-barre .zone")].reduce((s, z) => s + parseFloat(z.style.width), 0)
+    }));
+    S.verifier("tour d'essai : le pilote parle et donne sa confiance", essais.tests >= 3 && typeof essais.confiance === "number" && /«/.test(essais.bulle), JSON.stringify(essais).slice(0, 160));
+    S.verifier("les fenêtres idéales se resserrent avec les essais", essais.zone < avant.zone, avant.zone.toFixed(0) + " → " + essais.zone.toFixed(0));
+
+    const ideal = await page.evaluate(() => {
+      const sweet = getSetupSweetSpots();
+      getAvailableSetupParams(G.cat).forEach(p => { G.setupAdv[p] = sweet[p]; });
+      runPracticeTest();
+      return { confiance: RJAtelier.confiance(), parole: RJAtelier.parole() };
+    });
+    S.verifier("réglage idéal : confiance maximale, pilote ravi", ideal.confiance >= 95 && /superbe/.test(ideal.parole), JSON.stringify(ideal));
+
+    const kart = await page.evaluate(() => {
+      G.cat = "Karting Junior"; RACE_STATE.practice = null; renderAdvancedSetupUI();
+      return { ressentis: document.querySelectorAll(".rja-r").length, reglages: document.querySelectorAll(".rja-p").length };
+    });
+    S.verifier("karting : seulement les ressentis de ses réglages", kart.reglages === 1 && kart.ressentis >= 1 && kart.ressentis < 5, JSON.stringify(kart));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 8 decies. L'ARRIVÉE RESPECTE LA COURSE
  *
  * Défaut constaté en jeu : P17 au dernier tour, P1 à l'arrivée. Le temps
@@ -2295,6 +2349,7 @@ const SUITES = {
   equite: suiteEquite,
   chronometre: suiteChronometre,
   ecrans: suiteEcrans,
+  reglages: suiteReglages,
   decisions: suiteDecisions
 };
 

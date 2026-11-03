@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v231**. Ce document décrit l'organisation du code après la
+Version **BUILD v232**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v231 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v232 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -470,6 +470,34 @@ badge et contenu hors des zones sûres).
 
 Non fait : l'agrandissement de l'interface sur tablette (le zoom du module
 53, désactivé, ne suit ni le paysage ni les éléments hors de #app).
+
+## Étape 8 (atelier de réglages) — v232
+
+`js/weekend/120-atelier-reglages.js` remplace l'affichage des réglages
+(renderAdvancedSetupUI) par un atelier, dans l'esprit des jeux de gestion de
+course : on règle, on roule, le pilote parle, on corrige.
+
+- **Confiance du pilote** (anneau) : mesurée au dernier tour d'essai roulé —
+  un réglage modifié ne se juge qu'en roulant.
+- **Cinq ressentis** : équilibre (sous-vireuse / survireuse), freinage, appui
+  en virage, traction, vitesse de pointe. Chacun est une barre avec la
+  position estimée du réglage et la fenêtre idéale, qui se resserre avec la
+  connaissance du circuit (RACE_STATE.practice.knowledge) ; verdict Parfait,
+  Bon, À revoir, Mauvais, ou À confirmer tant que l'équipe en sait trop peu.
+- **Parole du pilote** après chaque tour d'essai (runPracticeTest), selon le
+  réglage le plus éloigné de l'idéal, et ses derniers temps (meilleur en
+  violet) ; conseil de l'ingénieur (askEngineerHint).
+- **Réglages** en trois groupes (aérodynamique, châssis, pneus et freins),
+  boutons − / + et crans, avec les ressentis que chacun déplace ; seuls ceux
+  de la catégorie apparaissent (un seul en Karting Junior).
+
+Rien ne change dans le calcul : G.setupAdv via setAdvParam (couplages
+compris), qualité computeAdvancedSetupScore (bonus de qualif et de course).
+Les jauges du module 07g sont masquées (les ressentis les remplacent).
+
+Suite `reglages` : atelier à la place des curseurs, bouton + qui règle,
+tour d'essai qui fait parler le pilote, fenêtres qui se resserrent, confiance
+maximale au réglage idéal, karting réduit à ses réglages.
 
 ## Pistes suivantes
 
