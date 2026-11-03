@@ -1156,8 +1156,10 @@ async function suitePaysage() {
       const c = getComputedStyle(document.body, "::after");
       return { contenu: c.content, position: c.position, largeur: parseFloat(c.width) };
     });
-    S.verifier("portrait : le jeu demande de tourner l'appareil",
-      /tourne/i.test(voile.contenu) && voile.position === "fixed" && voile.largeur >= 400, JSON.stringify(voile));
+    /* Sur ordinateur (pointeur fin), une fenêtre en hauteur affiche un message ;
+       sur téléphone, le jeu se pivote (suite « ecrans »). */
+    S.verifier("portrait sur ordinateur : le jeu demande d'élargir la fenêtre",
+      /élargis/i.test(voile.contenu) && voile.position === "fixed" && voile.largeur >= 400, JSON.stringify(voile));
   } finally { await navigateur.close(); }
 }
 
@@ -1978,6 +1980,64 @@ async function suiteChronometre() {
 }
 
 /* ==================================================================== *
+ * 8 bis b. ÉCRANS DE TÉLÉPHONE : PIVOT ET ZONES SÛRES (étape 7)
+ *
+ * Tenu en portrait, un téléphone tactile affiche le jeu pivoté, aux
+ * proportions du paysage, et le toucher y fonctionne. En paysage, les zones
+ * sûres (encoche, Dynamic Island, barre d'accueil) restent libres : rail,
+ * HUD et notifications s'en écartent.
+ * ==================================================================== */
+async function suiteEcrans() {
+  S.suite("Écrans de téléphone");
+
+  /* iPhone tenu en portrait (393 × 852) : jeu pivoté, 852 × 393. */
+  {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 393, height: 852 }, mobile: true });
+    try {
+      await S.repondeurAutomatique(page);
+      const r = await page.evaluate(() => {
+        navTo("S-home", "ni-home");
+        const app = document.getElementById("app");
+        return { corps: document.body.offsetWidth + "×" + document.body.offsetHeight, app: app.offsetWidth + "×" + app.offsetHeight,
+                 pivote: getComputedStyle(document.body).transform !== "none" };
+      });
+      S.verifier("portrait : le jeu est pivoté en paysage", r.pivote && r.corps === "852×393" && r.app === "852×393", JSON.stringify(r));
+      await page.click("#ni-cal");
+      await page.waitForTimeout(300);
+      const ecran = await page.evaluate(() => (document.querySelector(".scr.on") || {}).id);
+      S.verifier("portrait : le toucher suit la rotation", ecran === "S-cal", "écran ouvert : " + ecran);
+      S.verifier("portrait : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+
+  /* iPhone en paysage avec encoche (59 px de chaque côté, 21 px en bas). */
+  {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+    try {
+      await S.repondeurAutomatique(page);
+      const r = await page.evaluate(async () => {
+        const st = document.documentElement.style;
+        st.setProperty("--sg", "59px"); st.setProperty("--sd", "59px"); st.setProperty("--sb", "21px");
+        navTo("S-pilot", null);
+        await new Promise(res => setTimeout(res, 300));
+        const b = id => document.querySelector(id).getBoundingClientRect();
+        const icone = document.querySelector("#ni-home .ni-ico-wrap").getBoundingClientRect();
+        const ecran = document.querySelector(".scr.on").getBoundingClientRect();
+        const hud = b("#rj-hud"), badge = b("#rj-build-badge");
+        const contenu = document.querySelector(".scr.on > .scroll"), cs = getComputedStyle(contenu);
+        return { iconeGauche: Math.round(icone.left), ecranGauche: Math.round(ecran.left), hudDroite: Math.round(innerWidth - hud.right),
+                 badgeDroite: Math.round(innerWidth - badge.right), badgeBas: Math.round(innerHeight - badge.bottom),
+                 contenuBas: parseFloat(cs.paddingBottom) };
+      });
+      S.verifier("encoche : le rail s'écarte du bord gauche", r.iconeGauche >= 59 && r.ecranGauche >= 59 + 60, JSON.stringify(r));
+      S.verifier("encoche : HUD et badge s'écartent du bord droit", r.hudDroite >= 59 && r.badgeDroite >= 59, JSON.stringify(r));
+      S.verifier("barre d'accueil : bas libre (badge, contenu)", r.badgeBas >= 21 && r.contenuBas >= 21, JSON.stringify(r));
+      S.verifier("encoche : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+}
+
+/* ==================================================================== *
  * 8 decies. L'ARRIVÉE RESPECTE LA COURSE
  *
  * Défaut constaté en jeu : P17 au dernier tour, P1 à l'arrivée. Le temps
@@ -2234,6 +2294,7 @@ const SUITES = {
   simulation: suiteSimulation,
   equite: suiteEquite,
   chronometre: suiteChronometre,
+  ecrans: suiteEcrans,
   decisions: suiteDecisions
 };
 

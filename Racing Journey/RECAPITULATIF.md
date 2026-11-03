@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v230**. Ce document décrit l'organisation du code après la
+Version **BUILD v231**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v230 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v231 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -443,6 +443,33 @@ plus dur que Monza.
 Restent (audit) : pneus de qualification appliqués au seul joueur, essais
 libres sans rivaux, pas d'usure de pneus ni de carburant (rythme constant sur
 un relais), stratégies des rivaux toutes identiques.
+
+## Étape 7 (paysage automatique et écrans de téléphone) — v231
+
+- **Paysage au lancement** : application installée (manifeste
+  `orientation: landscape`) et Android dans le navigateur (plein écran et
+  verrouillage au premier toucher, 110) passent seuls à l'horizontale.
+  Sur iPhone, où une page ne peut pas imposer l'orientation, le jeu se
+  **dessine pivoté** tant que l'appareil est en portrait (css/paysage.css,
+  `@media (orientation: portrait) and (pointer: coarse)`) : il apparaît en
+  paysage dès qu'on tourne le téléphone, même avec le verrouillage de
+  rotation. Un appareil qui tourne vraiment l'écran repasse sans pivot. Sur
+  ordinateur, une fenêtre en hauteur affiche « Élargis la fenêtre ».
+- **Tailles de l'application, pas de l'écran** : `--app-w` / `--app-h` et
+  requêtes de conteneur `@container app` (le body est le conteneur) au lieu
+  de `100dvh` et des `@media` de taille ; le correctif de hauteur iOS
+  d'index.html cale `#app` sur la largeur de la fenêtre une fois pivoté.
+- **Zones sûres** (encoche, Dynamic Island, barre d'accueil, coins
+  arrondis) : `--sg` / `--sd` / `--sb` (gauche, droite, bas) réservées par le
+  rail, le contenu, le HUD, le badge, les notifications et l'écran titre ;
+  une fois pivoté, le haut de l'appareil devient la gauche du jeu.
+
+Suite `ecrans` : iPhone tenu en portrait (jeu pivoté en 852 × 393, toucher
+qui suit la rotation), iPhone en paysage avec encoche simulée (rail, HUD,
+badge et contenu hors des zones sûres).
+
+Non fait : l'agrandissement de l'interface sur tablette (le zoom du module
+53, désactivé, ne suit ni le paysage ni les éléments hors de #app).
 
 ## Pistes suivantes
 
