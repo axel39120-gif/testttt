@@ -2308,6 +2308,105 @@ async function suitePresse() {
   } finally { await navigateur.close(); }
 }
 
+/* ==================================================================== *
+ * 8 septdecies. UNE MESSAGERIE DE JEU (étape 12)
+ *
+ * Chaque message a une priorité (à répondre, personnel, info) et la boîte
+ * se filtre ; une proposition sans réponse expire au bout de trois semaines,
+ * et l'expéditeur s'en souvient ; répondre à quelqu'un amène sa réponse la
+ * semaine suivante ; l'ingénieur débriefe chaque course sans rien demander ;
+ * on peut écrire soi-même à un contact depuis sa fiche.
+ * ==================================================================== */
+async function suiteMessagerie() {
+  S.suite("Messagerie");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    await page.evaluate(() => { G.currentTeam = G.currentTeam || "Williams"; syncNetworkFromSources(); });
+
+    /* Priorités. */
+    const prio = await page.evaluate(() => ({
+      urgent: _rj124.priorite({ actions: [{ label: "Oui", kind: "accept" }], replied: false, role: "sponsor" }),
+      perso: _rj124.priorite({ role: "family" }),
+      info: _rj124.priorite({ role: "team" })
+    }));
+    S.verifier("chaque message a une priorité", prio.urgent === "urgent" && prio.perso === "personnel" && prio.info === "info", JSON.stringify(prio));
+
+    /* Expiration : trois semaines sans réponse. */
+    const exp = await page.evaluate(() => {
+      const envoyer = (o) => { pushMail(o); return getMailbox()[0]; };
+      const m = envoyer({ from: "Team Principal", role: "team_boss", subject: "Journée sponsor", body: "Tu viens ?", actions: [{ label: "Oui", kind: "accept" }, { label: "Non", kind: "refuse" }] });
+      const neg = envoyer({ from: "Team Principal", role: "team_boss", subject: "Négociation", body: "On discute ?", actions: [{ label: "Oui", kind: "accept" }] });
+      neg.tpApproach = { team: "X" };
+      [m, neg].forEach(x => { x.week = (G.semaine || 4) - 3; x.saison = G.saison; });
+      const c = G._network[m.contactKey], rel = c && c.relation;
+      runWeeklyTicks(1);
+      return { expire: !!m.rj124Expire, repondu: m.replied, sansBouton: m.action_taken !== null && m.actions[m.action_taken].kind === "dismiss",
+        negOuverte: !neg.replied, relAvant: rel, relApres: c && c.relation, souvenir: c && c.memoire && c.memoire[0] && c.memoire[0].t };
+    });
+    S.verifier("une proposition sans réponse expire au bout de trois semaines", exp.expire && exp.repondu && exp.sansBouton, JSON.stringify(exp));
+    S.verifier("une négociation d'écurie n'expire pas", exp.negOuverte, JSON.stringify(exp));
+    S.verifier("l'expéditeur se souvient d'un message ignoré", exp.relApres < exp.relAvant && /répondu|réponse/i.test(exp.souvenir || ""), JSON.stringify(exp));
+
+    /* Conversation : la réponse arrive la semaine suivante. */
+    const conv = await page.evaluate(() => {
+      pushMail({ from: "Team Principal", role: "team_boss", subject: "Séance simulateur", body: "Dispo jeudi ?", actions: [{ label: "J'y serai", kind: "accept" }, { label: "Impossible", kind: "refuse" }] });
+      const m = getMailbox()[0], n0 = getMailbox().length;
+      handleMailAction(m.id, 0);
+      const immediat = getMailbox().length - n0;
+      runWeeklyTicks(1);
+      const r = getMailbox()[0];
+      return { immediat, suite: r !== m && r.contactKey === m.contactKey, sansChoix: !r.actions || !r.actions.length, objet: r.subject, corps: r.body };
+    });
+    S.verifier("répondre amène la réponse du contact la semaine suivante, sans choix", conv.immediat === 0 && conv.suite && conv.sansChoix && /simulateur/i.test(conv.objet + conv.corps), JSON.stringify(conv));
+
+    /* Une course : le débrief de l'ingénieur, sans choix. */
+    const n0 = await page.evaluate(() => getMailbox().map(m => m.id));
+    await S.courirUneCourse(page, { categorie: "Formule 1", reinitialiserRivaux: false, grille: 4 });
+    const debrief = await page.evaluate((ids) => {
+      const neufs = getMailbox().filter(m => ids.indexOf(m.id) < 0), c = G.races[G.races.length - 1];
+      const d = neufs.find(m => m.rj124 === "debrief");
+      return { neufs: neufs.length, debrief: !!d, sansChoix: d && !(d.actions && d.actions.length), contact: d && G._network[d.contactKey] && G._network[d.contactKey].role,
+        circuit: d && (d.subject + d.body).indexOf(c.circuit || "") >= 0 };
+    }, n0);
+    S.verifier("après une course, l'ingénieur débriefe sans rien demander", debrief.debrief && debrief.sansChoix && debrief.contact === "ing_course" && debrief.circuit, JSON.stringify(debrief));
+
+    /* Écrire à un contact depuis sa fiche. */
+    await page.evaluate(() => { navTo("S-contracts", null); ctab("reseau"); });
+    await page.waitForTimeout(300);
+    const cle = await page.evaluate(() => { const c = Object.keys(G._network).find(k => G._network[k].role === "agent"); return c; });
+    await page.evaluate(k => RJEntourage.fiche(k), cle);
+    await page.waitForTimeout(300);
+    await page.click(".rj122-fiche [data-act='ecrire']");
+    await page.waitForTimeout(150);
+    await page.click(".rj122-fiche [data-sujet]");
+    await page.waitForTimeout(150);
+    const ecrit = await page.evaluate(k => {
+      const attente = (G._rj124 && G._rj124.attente || []).filter(a => a.cle === k).length;
+      const fiche = document.querySelector(".rj122-fiche").innerText;
+      runWeeklyTicks(1);
+      const r = getMailbox()[0];
+      return { attente, note: /réponse/i.test(fiche), reponse: r.contactKey === k, sansChoix: !(r.actions && r.actions.length), corps: r.body.slice(0, 120) };
+    }, cle);
+    S.verifier("on écrit à un contact depuis sa fiche, il répond la semaine suivante", ecrit.attente === 1 && ecrit.note && ecrit.reponse && ecrit.sansChoix, JSON.stringify(ecrit));
+
+    /* Boîte : filtres et priorités visibles. */
+    await page.evaluate(() => { document.querySelectorAll(".rj122-voile").forEach(v => v.remove()); navTo("S-mailbox", null); if (typeof backToMailList === "function") backToMailList(); renderMailbox(); });
+    await page.waitForTimeout(300);
+    const boite = await page.evaluate(() => {
+      const cartes = [...document.querySelectorAll("#mailbox-list [data-rj124]")];
+      const filtres = document.querySelectorAll(".rj124-filtre").length;
+      const b = [...document.querySelectorAll(".rj124-filtre")].find(x => x.getAttribute("data-f") === "personnel");
+      if (b) b.click();
+      const visibles = cartes.filter(c => c.style.display !== "none");
+      return { cartes: cartes.length, filtres, badges: document.querySelectorAll("#mailbox-list .rj124-prio").length,
+        filtre: visibles.every(c => c.getAttribute("data-rj124") === "personnel"), visibles: visibles.length };
+    });
+    S.verifier("la boîte montre la priorité de chaque conversation et se filtre", boite.filtres >= 4 && boite.badges === boite.cartes && boite.cartes >= 3 && boite.filtre, JSON.stringify(boite));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -2561,6 +2660,7 @@ const SUITES = {
   reglages: suiteReglages,
   entourage: suiteEntourage,
   presse: suitePresse,
+  messagerie: suiteMessagerie,
   decisions: suiteDecisions
 };
 

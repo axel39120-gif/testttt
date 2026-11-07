@@ -584,6 +584,29 @@ retenue puis rappelée, titres avec le circuit, interview et effet de la
 réponse, course réelle qui fait titrer et grandir l'audience, sauvegarde,
 écran.
 
+## Étape 12 (une messagerie de jeu) — v237
+
+- **Priorités** (`js/social/124-messagerie.js`) : chaque conversation porte
+  une pastille « À répondre » (avec le délai restant), « Personnel » ou
+  « Info », et la boîte se filtre (Tout, À répondre, Personnel, Infos).
+- **Les propositions expirent** : sans réponse au bout de trois semaines, une
+  proposition se ferme (« Proposition expirée ») et l'expéditeur s'en
+  souvient. Jamais une négociation d'écurie ni un message qui mène à un
+  écran.
+- **De vraies conversations** : répondre à quelqu'un de ton entourage
+  amène sa réponse la semaine suivante, selon ton choix et son caractère
+  (le rancunier n'oublie pas un refus, le loyal passe à autre chose).
+- **Des messages sans choix** : après chaque course, ton ingénieur de course
+  débriefe (positions gagnées ou perdues, coéquipier).
+- **Écrire** : depuis la fiche d'un contact (Entourage), on lui écrit sur un
+  sujet propre à son rôle (l'agent sur ton marché, le team principal sur
+  ton avenir, l'ingénieur pour un débrief…). La réponse arrive la semaine
+  suivante et dépend de votre relation.
+
+Suite `messagerie` : priorités, expiration (et négociation épargnée),
+souvenir de l'expéditeur, réponse différée sans choix, débrief après une
+course, écrire depuis la fiche, filtres de la boîte.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

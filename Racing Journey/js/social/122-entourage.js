@@ -74,6 +74,8 @@
     var souvenirs = (c.memoire || []).map(function (m) {
       return '<li class="' + (m.d > 0 ? "plus" : m.d < 0 ? "moins" : "") + '"><span>S' + m.s + " · sem. " + m.w + "</span>" + esc(m.t) + "</li>";
     }).join("") || '<li class="rien">Rien de marquant entre vous pour l\'instant.</li>';
+    /* Écrire à quelqu'un passe par la messagerie (124), si elle est là. */
+    var m124 = window._rj124, attend = m124 && m124.enAttente(cle);
     var voile = document.createElement("div");
     voile.className = "rj122-voile";
     voile.innerHTML = '<div class="rj122-fiche" role="dialog" aria-modal="true" data-cle="' + esc(cle) + '" style="--teinte:' + esc(c.color || "#60A5FA") + '">' +
@@ -87,17 +89,31 @@
       '<div class="rj122-actions">' +
       '<button type="button" data-act="nouvelles"' + (dejaVu || (G.pa || 0) < 1 ? " disabled" : "") + ">Prendre des nouvelles <small>1 PA</small></button>" +
       '<button type="button" data-act="conseil"' + (dejaVu || rel < 60 || (G.pa || 0) < 1 ? " disabled" : "") + ">Demander conseil <small>1 PA · relation 60+</small></button>" +
-      "</div>" + (dejaVu ? '<div class="rj122-note">Vous vous êtes déjà parlé cette semaine.</div>' : "") + "</div>";
+      (m124 ? '<button type="button" data-act="ecrire"' + (attend ? " disabled" : "") + ">Écrire <small>gratuit · réponse la semaine suivante</small></button>" : "") +
+      "</div>" + (dejaVu ? '<div class="rj122-note">Vous vous êtes déjà parlé cette semaine.</div>' : "") +
+      (attend ? '<div class="rj122-note">Tu lui as écrit : réponse attendue la semaine prochaine.</div>' : "") + "</div>";
     var ouvertA = Date.now();
     voile.addEventListener("click", function (e) {
       if (Date.now() - ouvertA < 300) return;
+      var su = e.target.closest && e.target.closest("[data-sujet]");
+      if (su) { window._rj124.ecrire(cle, su.getAttribute("data-sujet")); fiche(cle); return; }
       var b = e.target.closest && e.target.closest("[data-act]");
+      if (b && !b.disabled && b.getAttribute("data-act") === "ecrire") { sujetsEcrire(voile, cle); return; }
       if (b && !b.disabled) agir(cle, b.getAttribute("data-act"));
       else if (e.target === voile) fermer();
     });
     document.body.appendChild(voile);
     ouverte = voile;
     requestAnimationFrame(function () { voile.classList.add("on"); });
+  }
+
+  /* Les sujets dont on peut parler à cette personne, à la place des actions. */
+  function sujetsEcrire(voile, cle) {
+    var zone = voile.querySelector(".rj122-actions");
+    if (!zone) return;
+    zone.innerHTML = window._rj124.sujets(G._network[cle]).map(function (s) {
+      return '<button type="button" data-sujet="' + esc(s.id) + '">' + esc(s.lbl) + "</button>";
+    }).join("");
   }
 
   function fermer() {
