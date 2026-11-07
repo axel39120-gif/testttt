@@ -614,6 +614,12 @@ Suite `messagerie` : faux choix retirés, priorités, expiration (et négociatio
 souvenir de l'expéditeur, réponse différée sans choix, débrief après une
 course, écrire depuis la fiche, filtres de la boîte.
 
+## Étape 13 (vie perso et volume des messages) — v239
+
+- **Vie perso** (`js/career/125-vie-perso.js`) : plus d'érosion fixe (un proche ne s'éloigne qu'après plusieurs semaines sans nouvelles, jamais sous un plancher) ; moments de saison par message (anniversaire, mariage d'un ami, Grand Prix à domicile, rencontre) ; proches qui écrivent après une course marquante ; « Moments de la saison » dans Vie perso.
+- **Messagerie** (124) : délai entre deux messages d'un expéditeur secondaire, pas de redite d'un sujet avant six mois, boîte pleine qui garde les décisions en attente, débrief seulement après une course qui compte. Sur 8 manches : 22 messages au lieu de 40, amis à 48 au lieu de 15.
+- **Habillage** : messages, entourage, presse et vie perso reprennent la tuile de l'accueil (lueur de la couleur du sujet en haut à gauche, fond sombre, bordure teintée, reflet) et les titres de section à rayures rouges. Dans un fil, les bulles façon téléphone (bleu, vert) deviennent des cartes du jeu : celles de l'expéditeur à sa couleur, les tiennes en rouge ; les boutons de réponse passent en capitales, l'acceptation en rouge.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

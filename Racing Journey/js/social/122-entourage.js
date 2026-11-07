@@ -69,7 +69,7 @@
   function fiche(cle) {
     var c = G._network && G._network[cle];
     if (!c) return;
-    fermer();
+    if (ouverte) { ouverte.remove(); ouverte = null; }   // on rouvre : pas d'animation de sortie, une seule fiche
     var r = R(), t = r.trait(c), h = r.humeur(c), rel = Math.round(c.relation || 0), dejaVu = c._rj122Vu === semaine();
     var souvenirs = (c.memoire || []).map(function (m) {
       return '<li class="' + (m.d > 0 ? "plus" : m.d < 0 ? "moins" : "") + '"><span>S' + m.s + " · sem. " + m.w + "</span>" + esc(m.t) + "</li>";
