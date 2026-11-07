@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v232**. Ce document décrit l'organisation du code après la
+Version **BUILD v233**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v232 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v233 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -498,6 +498,27 @@ Les jauges du module 07g sont masquées (les ressentis les remplacent).
 Suite `reglages` : atelier à la place des curseurs, bouton + qui règle,
 tour d'essai qui fait parler le pilote, fenêtres qui se resserrent, confiance
 maximale au réglage idéal, karting réduit à ses réglages.
+
+## Étape 9 (une application, pas une page) — v233
+
+- **Listes de choix** (`js/ui/121-selecteurs.js`) : les `<select>` ont l'allure
+  d'un bouton du jeu (chevron rouge) ; un toucher ouvre un panneau qui glisse
+  du bas, titré par le libellé de la liste, options en lignes larges avec une
+  pastille sur le choix courant. La liste d'origine reste dessous : sa valeur
+  change et « change » part comme avant (onchange intacts). Le module
+  intercepte le toucher, le focus (iPhone) et le clavier : il couvre aussi les
+  listes créées plus tard, sans surveiller la page.
+- **Application figée** : html et body fixes, `overscroll-behavior` (la page ne
+  glisse ni ne rebondit, l'élan d'une zone qui défile s'arrête à ses bords),
+  pas de zoom au double toucher ni de sélection de texte accidentelle ;
+  110 ajoute le garde-fou pour Safari avant iOS 16 (un doigt qui glisse hors
+  d'une zone qui défile ne déplace rien, axes inversés quand le jeu est
+  pivoté) et bloque le pincement.
+- Sections dépliables : jamais le triangle d'un site web.
+
+Suite `ecrans` : application figée, liste ouverte en panneau titré, choix
+appliqué avec son onchange. Suite `equite` : le joueur moyen est mesuré sans
+les leviers mérités de la sauvegarde de test (forme, ingénieur).
 
 ## Pistes suivantes
 

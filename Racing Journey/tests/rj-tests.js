@@ -1827,6 +1827,12 @@ async function suiteEquite() {
         const median = R[Math.floor(R.length / 2)];
         window.__rjNiveau = window.__rjNiveau || window.computeRacePerformanceScore;
         window.computeRacePerformanceScore = () => median.skill / 100;
+        /* Un joueur moyen, sans les leviers qu'il a mérités dans la sauvegarde
+           de test (forme en hausse, bon ingénieur) : on mesure la formule. */
+        window.__rjForme = window.__rjForme || window._getMomentum;
+        window.__rjInge = window.__rjInge || window.getPlayerEngineerBonus;
+        window._getMomentum = () => "neutral";
+        window.getPlayerEngineerBonus = () => 0;
         G.currentTeam = median.team;
         return { n: G.rivals.length + 1 };
       }, cat);
@@ -1835,7 +1841,7 @@ async function suiteEquite() {
         await S.courirUneCourse(page, { categorie: cat, grille: 1 + (k * 7) % (prep.n - 1), reinitialiserRivaux: false });
         arrivees.push(await page.evaluate(() => { const p = LIVE_RACE.drivers.find(d => d.isPlayer); const n = LIVE_RACE.drivers.filter(d => !d._mc).length; return p && !p.dnf ? p.pos / n : null; }));
       }
-      await page.evaluate(() => { window.computeRacePerformanceScore = window.__rjNiveau; });
+      await page.evaluate(() => { window.computeRacePerformanceScore = window.__rjNiveau; window._getMomentum = window.__rjForme; window.getPlayerEngineerBonus = window.__rjInge; });
       const ok = arrivees.filter(x => x !== null), moy = ok.reduce((a, b) => a + b, 0) / ok.length;
       /* Ses leviers de jeu (réglages, forme) lui valent légitimement quelques
          places : on cherche un biais important, pas l'absence de tout avantage. */
@@ -2033,6 +2039,34 @@ async function suiteEcrans() {
       S.verifier("encoche : HUD et badge s'écartent du bord droit", r.hudDroite >= 59 && r.badgeDroite >= 59, JSON.stringify(r));
       S.verifier("barre d'accueil : bas libre (badge, contenu)", r.badgeBas >= 21 && r.contenuBas >= 21, JSON.stringify(r));
       S.verifier("encoche : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+
+  /* Une application, pas une page : écran figé, listes en panneau de choix. */
+  {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+    try {
+      await S.repondeurAutomatique(page);
+      const fige = await page.evaluate(() => ({
+        corps: getComputedStyle(document.body).position, rebond: getComputedStyle(document.documentElement).overscrollBehaviorY,
+        pageDefile: document.scrollingElement.scrollHeight > innerHeight + 1
+      }));
+      S.verifier("application figée : ni glissement ni rebond de la page", fige.corps === "fixed" && fige.rebond === "none" && !fige.pageDefile, JSON.stringify(fige));
+      await page.evaluate(() => {
+        navMore("S-settings");
+        const d = document.createElement("div");
+        d.innerHTML = '<div class="t-sec">Essai</div><select id="essai-liste" onchange="window.__choix = this.value"><option>A</option><option>B</option><option>C</option></select>';
+        document.getElementById("settings-container").prepend(d);
+      });
+      await page.tap("#essai-liste");
+      await page.waitForTimeout(500);
+      const panneau = await page.evaluate(() => ({ ouvert: !!document.querySelector(".rj121-voile.on"), titre: (document.querySelector(".rj121-titre") || {}).textContent }));
+      await page.tap(".rj121-liste button:nth-child(3)");
+      await page.waitForTimeout(300);
+      const choix = await page.evaluate(() => ({ valeur: document.getElementById("essai-liste").value, onchange: window.__choix, ferme: !document.querySelector(".rj121-voile") }));
+      S.verifier("liste : panneau de choix au toucher, titré par son libellé", panneau.ouvert && panneau.titre === "Essai", JSON.stringify(panneau));
+      S.verifier("liste : le choix s'applique et déclenche onchange", choix.valeur === "C" && choix.onchange === "C" && choix.ferme, JSON.stringify(choix));
+      S.verifier("application : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
     } finally { await navigateur.close(); }
   }
 }
