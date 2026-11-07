@@ -157,7 +157,11 @@ body:has(#S-splash.on) :is(#rj-toast-container, #ach-unlock-stack) { display: no
   height: var(--bandeau); display: flex; align-items: center; gap: 6px; padding: 0 10px;
   pointer-events: none;
 }
-body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { display: none; }
+/* Les ressources (semaine, budget, réputation, note) ne s'affichent qu'à
+   l'accueil : ailleurs, le bandeau rend toute sa largeur aux onglets, qui ne
+   sont plus coupés. */
+body:not(:has(#S-home.on)) #rj-hud { display: none; }
+body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj-hud-chip {
   font: 700 11px/1 var(--font-display); letter-spacing: .04em; white-space: nowrap;
   padding: 6px 8px; border-radius: 6px;
@@ -210,9 +214,10 @@ body:has(#S-splash.on, #S-create.on, #S-mode.on, #S-display-setup.on) #rj-hud { 
 .scr > .hdr { background: transparent !important; border-bottom: 0 !important; }
 #S-home > .apex-cockpit-hdr { box-shadow: inset 0 -1px rgba(255, 255, 255, .07); }
 @container app (max-width: 760px) {
-  .scr.on:has(> .tabs) > .hdr { max-width: 170px; }
+  .scr.on:has(> .tabs) > .hdr { max-width: 150px; }
   .scr.on:has(> .tabs) > .hdr .hdr-sub { display: none; }
-  .scr > .tabs > * { padding: 7px 9px !important; }
+  .scr > .tabs { gap: 3px; }
+  .scr > .tabs > * { padding: 6px 7px !important; font-size: 9.5px !important; letter-spacing: .02em; }
 }
 
 /* Tiroir « Plus » : s'ouvre à côté du rail, en bas. */
