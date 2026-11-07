@@ -2225,6 +2225,89 @@ async function suiteEntourage() {
  * une seconde fois au classement d'arrivée (≈ 1,2 s par place). Seule une
  * sanction jamais appliquée (arrêt obligatoire manqué) peut déclasser.
  * ==================================================================== */
+/* ==================================================================== *
+ * 8 sexdecies. UNE PRESSE VIVANTE (étape 11)
+ *
+ * Chaque média a une ligne éditoriale et une sympathie pour vous, qui
+ * bouge avec vos déclarations ; après chaque course, la presse titre sur
+ * vous selon le résultat et selon ce qu'elle pense de vous, et se souvient
+ * de ce que vous aviez annoncé ; un podium ou un abandon vaut une interview
+ * d'après-course dont le ton compte ; l'audience suit les résultats ; tout
+ * cela se sauvegarde, et se lit dans Médias › Presse.
+ * ==================================================================== */
+async function suitePresse() {
+  S.suite("Presse vivante");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+
+    /* Des médias avec une ligne et une sympathie. */
+    const medias = await page.evaluate(() => _rj123.medias().map(m => ({ nom: m.nom, ligne: m.ligne, sym: m.sym })));
+    S.verifier("chaque média a une ligne éditoriale et une sympathie", medias.length >= 6 && medias.every(m => m.ligne && typeof m.sym === "number"), JSON.stringify(medias.slice(0, 3)));
+
+    /* Une déclaration provocatrice plaît au tabloïd, refroidit le bienveillant. */
+    const sym = await page.evaluate(() => {
+      const tab = _rj123.medias().find(m => m.ligne === "Sensation"), bien = _rj123.medias().find(m => m.ligne === "Bienveillance");
+      const a = { tab: tab.sym, bien: bien.sym };
+      G._rjDeclarations = G._rjDeclarations || [];
+      G._rjDeclarations.unshift({ saison: G.saison, semaine: G.semaine, titre: "x", media: tab.nom, auteur: "?", ton: "provocateur", citation: "Ce titre, il est pour moi cette année", reaction: "" });
+      _rj123.lireDeclarations();
+      const m = _rj123.medias();
+      return { avant: a, apres: { tab: m.find(x => x.nom === tab.nom).sym, bien: m.find(x => x.nom === bien.nom).sym },
+        promesses: (G._rjPresse.promesses || []).length };
+    });
+    S.verifier("une provocation plaît au tabloïd et refroidit la presse bienveillante", sym.apres.tab > sym.avant.tab && sym.apres.bien < sym.avant.bien, JSON.stringify(sym));
+    S.verifier("une déclaration forte est retenue comme promesse", sym.promesses >= 1, JSON.stringify(sym));
+
+    /* La presse se souvient : un mauvais résultat après la promesse est rappelé. */
+    const rappel = await page.evaluate(() => {
+      const r = _rj123.apresCourse({ pos: 14, dnf: false, circuit: "Monza", pts: 0 });
+      return { titres: r.titres.map(t => t.titre), resolue: G._rjPresse.promesses.filter(p => p.resolue).length };
+    });
+    S.verifier("la presse rappelle la promesse après un mauvais résultat", rappel.titres.some(t => /pour moi cette ann/i.test(t)) && rappel.resolue >= 1, JSON.stringify(rappel));
+    S.verifier("plusieurs titres sur le week-end, avec le circuit", rappel.titres.length >= 2 && rappel.titres.some(t => /Monza/.test(t)), JSON.stringify(rappel));
+
+    /* Un podium vaut une interview, dont le ton compte. */
+    const itw = await page.evaluate(() => {
+      _rj123.apresCourse({ pos: 2, dnf: false, circuit: "Silverstone", pts: 18 });
+      const m = getMailbox().find(x => x.rj123);
+      if (!m) return { mail: false };
+      const media = m.rj123.media, avant = _rj123.medias().find(x => x.nom === media).sym, nb = (G._rjDeclarations || []).length;
+      const i = m.actions.findIndex(a => a.ton === "humble");
+      handleMailAction(m.id, i);
+      return { mail: true, choix: m.actions.length, avant, apres: _rj123.medias().find(x => x.nom === media).sym,
+        declarations: (G._rjDeclarations || []).length - nb, ton: (G._rjDeclarations || [])[0] && G._rjDeclarations[0].ton };
+    });
+    S.verifier("un podium vaut une interview d'après-course à plusieurs tons", itw.mail && itw.choix >= 3, JSON.stringify(itw));
+    S.verifier("la réponse est publiée et change la sympathie du média", itw.declarations === 1 && itw.ton === "humble" && itw.apres !== itw.avant, JSON.stringify(itw));
+
+    /* Une course vraie : titres et audience, sans rien publier. */
+    const avant = await page.evaluate(() => ({ titres: (G._rjPresse.revue || []).length, abonnes: _rj123.abonnes() }));
+    await S.courirUneCourse(page, { categorie: "Formule 1", reinitialiserRivaux: false, grille: 1 });
+    const apres = await page.evaluate(() => ({ titres: (G._rjPresse.revue || []).length, abonnes: _rj123.abonnes(), pos: G.races[G.races.length - 1].pos }));
+    S.verifier("une course fait titrer la presse", apres.titres > avant.titres, avant.titres + " → " + apres.titres);
+    S.verifier("l'audience suit les résultats sans publication", apres.abonnes > avant.abonnes, JSON.stringify({ avant, apres }));
+
+    /* Sauvegarde : presse et déclarations survivent au rechargement. */
+    const sauve = await page.evaluate(() => {
+      G._slot = 1; saveGame(1);
+      const n = { revue: G._rjPresse.revue.length, decl: G._rjDeclarations.length };
+      G._rjPresse = undefined; G._rjDeclarations = undefined;
+      loadSave(1);
+      return { avant: n, apres: { revue: G._rjPresse ? G._rjPresse.revue.length : 0, decl: G._rjDeclarations ? G._rjDeclarations.length : 0 } };
+    });
+    S.verifier("la presse et vos déclarations sont sauvegardées", sauve.apres.revue === sauve.avant.revue && sauve.apres.decl === sauve.avant.decl, JSON.stringify(sauve));
+
+    /* Écran : Médias › Presse montre la revue et ce que chaque média pense de vous. */
+    await page.evaluate(() => { navTo("S-media", null); mtab("presse"); });
+    await page.waitForTimeout(400);
+    const ecran = await page.evaluate(() => ({ titres: document.querySelectorAll("#mt-presse .rj123-titre").length,
+      medias: document.querySelectorAll("#mt-presse .rj123-media").length }));
+    S.verifier("Médias › Presse : revue de presse et sympathie des médias", ecran.titres >= 2 && ecran.medias >= 6, JSON.stringify(ecran));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -2477,6 +2560,7 @@ const SUITES = {
   ecrans: suiteEcrans,
   reglages: suiteReglages,
   entourage: suiteEntourage,
+  presse: suitePresse,
   decisions: suiteDecisions
 };
 

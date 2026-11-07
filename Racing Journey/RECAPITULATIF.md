@@ -554,6 +554,36 @@ Suite `entourage` : pas de doublon et fusion fidèle, pilotes et souvenirs
 après des courses, message rattaché et réponse qui compte, traits pour tous
 et qui pèsent, écran groupé, fiche, action à 1 PA.
 
+## Étape 11 (une presse vivante) — v236
+
+- **Des médias qui ont un avis** (`js/social/123-presse-vivante.js`) : chaque
+  média de la salle de presse a une ligne éditoriale (analyse, passion,
+  critique, sensation, bienveillance, tirée du ton de son journaliste) et une
+  sympathie pour toi. Toute la presse lit tes déclarations, chacune selon
+  ses goûts (le tabloïd aime la provocation, la presse bienveillante
+  l'humilité) ; le média qui l'a recueillie réagit davantage.
+- **La presse se souvient** : une déclaration assurée ou provocatrice devient
+  une promesse, ressortie au premier résultat qui la confirme (« Il l'avait
+  annoncé… ») ou la dément (« … rattrapé par ses mots »).
+- **La revue de presse** : après chaque course, trois médias titrent sur toi,
+  selon le résultat et selon ce qu'ils pensent de toi (favorable, neutre,
+  hostile). Médias › Presse montre la revue, puis la sympathie de chaque
+  média, du plus favorable au plus hostile.
+- **Interview d'après-course** : une victoire, un podium ou un abandon vaut
+  un message d'un journaliste, avec trois tons de réponse ; la réponse est
+  publiée parmi tes déclarations et pèse sur les médias et la réputation.
+- **L'audience suit tes résultats**, selon l'exposition de la catégorie et
+  les polémiques, sans attendre que tu publies.
+- **Sauvegarde** : la presse (`_rjPresse`) et tes déclarations
+  (`_rjDeclarations`, jusqu'ici perdues au rechargement) sont sauvegardées.
+- Le badge de version affiche de nouveau la bonne version (il était resté à
+  v234 en v235).
+
+Suite `presse` : lignes et sympathies, provocation qui divise, promesse
+retenue puis rappelée, titres avec le circuit, interview et effet de la
+réponse, course réelle qui fait titrer et grandir l'audience, sauvegarde,
+écran.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
