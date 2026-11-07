@@ -76,7 +76,11 @@
     var gp = gpMaison();
     if (gp) m.push({ type: "gp_maison", w: Math.max(1, gp.week - 1), circuit: gp.name });
     var R = getRelations();
-    if (!R.partner && (G.age || 16) >= 18) m.push({ type: "rencontre", w: entre(6, 34), qui: hasard(RENCONTRES), cache: true });
+    if (!R.partner && (G.age || 16) >= 18) {
+      /* Qui l'on rencontre dépend de la réputation (127) : célébrité, visage connu ou vie discrète. */
+      var pr = window._rj127 ? window._rj127.pretendant() : { qui: hasard(RENCONTRES), profil: "discret" };
+      m.push({ type: "rencontre", w: entre(6, 34), qui: pr.qui, profil: pr.profil, metier: pr.metier, cache: true });
+    }
     m.sort(function (a, b) { return a.w - b.w; });
     e.saison = G.saison || 1; e.moments = m;
     return m;
@@ -94,7 +98,7 @@
     if (eff.budget) G.budget = (G.budget || 0) + eff.budget;
     if (eff.couple) {
       var R = getRelations();
-      R.partner = { name: eff.couple, closeness: 45, since: { saison: G.saison || 1, year: G.annee || (2023 + (G.saison || 1)) }, lastContact: G.semaine || 1, events: [] };
+      R.partner = { name: eff.couple, profil: eff.profil || "discret", metier: eff.metier || null, closeness: 45, since: { saison: G.saison || 1, year: G.annee || (2023 + (G.saison || 1)) }, lastContact: G.semaine || 1, events: [] };
     }
   }
 
@@ -120,9 +124,9 @@
         { label: "On se voit après la course", kind: "reply", rj125: { parents: 4, mental: 1 } }],
       ignorer: { parents: -3 } }; },
     rencontre: function (m) { return { from: "Tes amis", role: "friends", subject: "Une rencontre à la soirée de l'écurie",
-      body: m.qui + " t'a parlé toute la soirée et t'a laissé son numéro. Tes amis n'en reviennent pas.",
+      body: m.qui + (m.metier ? ", " + m.metier + "," : "") + " t'a parlé toute la soirée et t'a laissé son numéro. Tes amis n'en reviennent pas.",
       actions: [
-        { label: "L'inviter à dîner", kind: "accept", rj125: { couple: m.qui, happiness: 4 } },
+        { label: "L'inviter à dîner", kind: "accept", rj125: { couple: m.qui, profil: m.profil, metier: m.metier, happiness: 4 } },
         { label: "Rester concentré sur la saison", kind: "refuse", rj125: { mental: 1 } }],
       ignorer: null }; }
   };

@@ -2568,7 +2568,7 @@
     A += '</div>'; // .cal-current-month
 
     // --- Saison complète ----------------------------------------------------
-    A += '<div class="cal-other-months-title">Saison complète</div>';
+    A += '<div class="t-sec cal-other-months-title">Saison complète</div>';
     for (var j = 0; j < 12; j++) {
       if (j === y) continue;
       var arr = byMonth[j];

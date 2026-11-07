@@ -630,7 +630,7 @@
 
     // ---- 2. Revenus détaillés ----
     html += '<div style="margin-bottom:12px">';
-    html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#4ADE80;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">↑ Revenus par semaine</div>';
+    html += '<div class="t-sec">Revenus par semaine</div>';
 
     var salary = _rjCalcSalaryWeekly();
     if (salary > 0) {
@@ -658,7 +658,7 @@
 
     // ---- 3. Dépenses détaillées ----
     html += '<div style="margin-bottom:12px">';
-    html += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#EF4444;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">↓ Dépenses par semaine</div>';
+    html += '<div class="t-sec">Dépenses par semaine</div>';
 
     var material = _rjCalcWeeklyMaterial();
     if (material > 0) {

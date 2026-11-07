@@ -230,16 +230,23 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 
 #rj-build-badge { left: auto !important; right: calc(8px + var(--sd)) !important; top: auto !important; bottom: calc(8px + var(--sb)) !important; }
 
-/* Notifications et trophées en bas à droite : en haut, ils couvraient le
-   bandeau. */
-#ach-unlock-stack {
-  top: auto !important; bottom: calc(44px + var(--sb)) !important; left: auto !important; right: calc(12px + var(--sd)) !important;
-  transform: none !important; width: min(360px, 45vw) !important;
+/* Notifications et trophées : un bandeau en haut, centré, sous l'encoche,
+   qui descend puis remonte ; au-dessus de tout, mais étroit, pour laisser
+   voir les onglets du bandeau. Une seule pile pour tout le jeu (124 y
+   envoie aussi les messages courts de showToast). */
+:is(#rj-toast-container, #ach-unlock-stack) {
+  top: calc(6px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important;
+  left: 50% !important; right: auto !important; transform: translateX(-50%) !important;
+  width: min(440px, 62vw) !important; padding: 0 !important; align-items: stretch !important; z-index: 10050 !important;
 }
-#rj-toast-container {
-  top: auto !important; bottom: calc(44px + var(--sb)) !important; left: auto !important; right: calc(12px + var(--sd)) !important;
-  width: min(360px, 45vw) !important; padding: 0 !important; align-items: stretch !important;
+#ach-unlock-stack { top: calc(6px + env(safe-area-inset-top, 0px)) !important; }
+#rj-toast-container .rj-toast {
+  max-width: none !important; border-radius: var(--r) !important;
+  background: linear-gradient(160deg, #1d1d23, #121216) !important; border: 1px solid rgba(255, 255, 255, .1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .55), inset 0 1px rgba(255, 255, 255, .06) !important;
+  animation: rj-toast-descend .26s cubic-bezier(.2, .8, .2, 1);
 }
+@keyframes rj-toast-descend { from { transform: translateY(-120%); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* --- Titres de section : un seul style dans tout le jeu -----------------
    Trois rayures inclinées aux couleurs de la course, le titre en capitales
@@ -1075,3 +1082,120 @@ details > summary::marker { content: ""; }
 #mailbox-list.rj124-fil [style*="background:var(--bg2)"] { background: transparent !important; }
 .rj122-carte { font-family: var(--font-body); }
 #vp-content .rel-card-accent { display: none; }
+
+/* =====================================================================
+ * Uniformisation (étape 14) : une seule carte, une seule marge.
+ * Relevé écran par écran (photos et inventaire automatiques) : les tuiles
+ * de l'accueil cohabitaient avec des carrés plats (statistiques, boutique,
+ * activités, Panthéon, académie, contacts…) et des encadrés posés en ligne
+ * dans le HTML. Tous prennent la tuile de l'accueil ; --t donne la teinte
+ * (rouge du jeu par défaut, plus discrète que sur l'accueil).
+ * =================================================================== */
+.scr > .scroll :is(.mc, .card, .stat-hero, .pillar-block, .rj112-carte, .rj114-reve, .rj119-w, .rjf-card, .rjp-card, .train-hero,
+  .rj83-row, .agent-choice-card, .contact-card, .ls-item, .act-card, .pant-card, .cf-dd-btn, .rj66-comp),
+.scr > .scroll :is([style*="background:var(--bg3)"], [style*="background:var(--surface2)"], [style*="background:var(--surface)"], [style*="background: var(--surface2)"])[style*="border"] {
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t, #FF1801) 12%, transparent), transparent 60%),
+    linear-gradient(160deg, #18181d, #101014) !important;
+  border-radius: var(--r) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .3) !important;
+}
+.scr > .scroll :is(.mc, .card, .stat-hero, .pillar-block, .rj112-carte, .rj114-reve, .rj119-w, .rjf-card, .rjp-card, .train-hero,
+  .rj83-row, .agent-choice-card, .contact-card, .ls-item, .act-card, .pant-card, .cf-dd-btn, .rj66-comp),
+.scr > .scroll :is([style*="border:1px solid var(--border)"], [style*="border:1px solid var(--line)"]) {
+  border-color: color-mix(in srgb, var(--t, #FF1801) 22%, rgba(255, 255, 255, .06)) !important;
+}
+.scr > .scroll .rj119-w { --t: var(--w); }
+.scr > .scroll .act-card { --t: #22C55E; }
+.scr > .scroll .pant-card { --t: #D4A842; }
+.scr > .scroll .contact-card, .scr > .scroll .agent-choice-card { --t: #22D3EE; }
+
+/* Marges : la zone qui défile porte la gouttière (14 px) ; les blocs posés
+   dedans n'en rajoutent pas une seconde sur les côtés. */
+.scr > .scroll > *,
+.scr > .scroll > * > *,
+.scr > .scroll > * > :only-child > * { margin-left: 0 !important; margin-right: 0 !important; }
+.scr > .scroll > * > * > * { margin-left: 0 !important; margin-right: 0 !important; }
+
+/* --- Style de vie : boutons, catégories et icônes du jeu ---------------- */
+#S-lifestyle .ls-cat-btn {
+  min-height: 34px; padding: 0 14px !important; border-radius: 17px !important; border: 1px solid rgba(255, 255, 255, .12) !important;
+  background: rgba(255, 255, 255, .03) !important; color: var(--muted, #80808a) !important;
+  font: 800 10.5px/1 var(--font-display) !important; letter-spacing: .08em !important; text-transform: uppercase;
+}
+#S-lifestyle .ls-cat-btn.on { background: rgba(255, 24, 1, .16) !important; border-color: var(--red, #FF1801) !important; color: #fff !important; }
+#S-lifestyle :is(.ls-btn, .ls-btn-prim, .ls-btn-sec, .act-btn) {
+  min-height: 40px; border-radius: var(--r) !important; font: 800 11.5px/1 var(--font-display) !important; letter-spacing: .08em !important; text-transform: uppercase;
+  background: rgba(255, 255, 255, .05) !important; border: 1px solid rgba(255, 255, 255, .14) !important; color: #e8e8ec !important;
+}
+#S-lifestyle :is(.ls-btn-prim, .ls-item .ls-btn:not(.ls-btn-sec), .act-card .ls-btn:not(.ls-btn-sec)) {
+  background: linear-gradient(160deg, #ff3b1f, #c81400) !important; border-color: transparent !important; color: #fff !important;
+  box-shadow: 0 4px 14px rgba(255, 24, 1, .28) !important;
+}
+#S-lifestyle :is(.ls-btn, .ls-btn-prim, .ls-btn-sec):disabled { opacity: .4; box-shadow: none !important; }
+#S-lifestyle :is(.ls-btn, .ls-btn-prim, .ls-btn-sec):active { transform: scale(.97); }
+#S-lifestyle :is(.ls-item-icon, .ls-act-icon) {
+  border-radius: var(--r) !important; border: 1px solid color-mix(in srgb, var(--t, #FF1801) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--t, #FF1801) 16%, #15151a) !important; color: color-mix(in srgb, var(--t, #FF1801) 70%, #fff) !important;
+}
+
+/* --- Vie perso : moments de la saison ------------------------------------ */
+.rj125-moment { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 12px; margin-bottom: 6px; }
+.rj125-moment span { font: 800 10px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj125-moment b { font: 700 13px/1.3 var(--font-body); color: #fff; }
+.rj125-moment em { font: 800 9.5px/1 var(--font-display); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--t); }
+
+/* --- Face-à-face (126) ---------------------------------------------------- */
+#h2h-content .rj126 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 720px) { #h2h-content .rj126 { grid-template-columns: minmax(0, 1fr); } }
+.rj126-col > .t-sec:first-child { padding-top: 0 !important; }
+.rj126-vide { padding: 22px 16px; text-align: center; color: var(--muted, #80808a); border: 1px dashed rgba(255, 255, 255, .12); border-radius: var(--r); }
+.rj126-duel {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 14px; border-radius: var(--r);
+  background: radial-gradient(90% 160% at 0% 0%, rgba(255, 24, 1, .26), transparent 60%), radial-gradient(90% 160% at 100% 100%, rgba(212, 168, 66, .2), transparent 60%), linear-gradient(160deg, #18181d, #101014);
+  border: 1px solid rgba(255, 255, 255, .08); box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .35);
+}
+.rj126-camp { min-width: 0; }
+.rj126-camp.lui { text-align: right; }
+.rj126-camp small { display: block; font: 800 9.5px/1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--red, #FF1801); }
+.rj126-camp.lui small { color: #D4A842; }
+.rj126-camp b { display: block; margin-top: 5px; font: 900 15px/1.15 var(--font-display); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rj126-camp span { display: block; margin-top: 3px; font-size: 11px; color: var(--muted, #80808a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rj126-score { display: grid; grid-template-columns: auto auto auto; align-items: baseline; justify-items: center; column-gap: 6px; }
+.rj126-score b { font: 900 36px/1 var(--font-display); color: #fff; }
+.rj126-score i { font: 900 22px/1 var(--font-display); font-style: normal; color: var(--muted, #80808a); }
+.rj126-score small { grid-column: 1 / -1; margin-top: 4px; font: 800 8.5px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj126-moi .rj126-score b:first-child, .rj126-lui .rj126-score b:last-of-type { color: var(--red, #FF1801); }
+.rj126-lui .rj126-score b:last-of-type { color: #D4A842; }
+.rj126-choix { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.rj126-choix span { flex: 0 0 auto; font: 800 10px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj126-choix select { flex: 1; min-width: 0; min-height: 38px; }
+.rj126-stats { display: grid; gap: 4px; }
+.rj126-ligne { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; align-items: center; row-gap: 5px; padding: 8px 12px 9px; border-radius: var(--r); background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .05); }
+.rj126-ligne span { text-align: center; font: 800 10px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj126-ligne b { font: 900 15px/1 var(--font-display); color: #c8c8d0; }
+.rj126-ligne b.lui { text-align: right; }
+.rj126-ligne.g-p b.moi { color: var(--red, #FF1801); }
+.rj126-ligne.g-r b.lui { color: #D4A842; }
+.rj126-jauge { grid-column: 1 / -1; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--red, #FF1801) var(--p), #D4A842 var(--p)); opacity: .85; }
+.rj126-verdict { padding: 12px 14px; border-radius: var(--r); border: 1px solid rgba(255, 255, 255, .08); background: linear-gradient(160deg, #18181d, #101014); }
+.rj126-verdict.rj126-moi { border-color: rgba(255, 24, 1, .5); background: radial-gradient(120% 160% at 0% 0%, rgba(255, 24, 1, .22), transparent 60%), linear-gradient(160deg, #18181d, #101014); }
+.rj126-verdict.rj126-lui { border-color: rgba(212, 168, 66, .5); background: radial-gradient(120% 160% at 0% 0%, rgba(212, 168, 66, .2), transparent 60%), linear-gradient(160deg, #18181d, #101014); }
+.rj126-verdict b { display: block; font: 900 15px/1.2 var(--font-display); color: #fff; }
+.rj126-verdict span { display: block; margin-top: 5px; font-size: 12px; color: var(--muted, #80808a); }
+.rj126-graphe { padding: 8px; border-radius: var(--r); background: linear-gradient(160deg, #18181d, #101014); border: 1px solid rgba(255, 255, 255, .08); }
+/* Un trophée et une notification en même temps : la notification passe dessous. */
+body:has(#ach-unlock-stack > *) #rj-toast-container { top: calc(92px + env(safe-area-inset-top, 0px)) !important; }
+
+/* --- Presse people et foyer (127) ----------------------------------------- */
+.rj123-people { --t: #EC4899 !important; }
+.rj127-foyer { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.rj127-carte {
+  --t: #EC4899; padding: 12px 14px; border-radius: var(--r);
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t) 18%, transparent), transparent 60%), linear-gradient(160deg, #18181d, #101014);
+  border: 1px solid color-mix(in srgb, var(--t) 28%, rgba(255, 255, 255, .06)); box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .35);
+}
+.rj127-carte.enfants { --t: #F59E0B; }
+.rj127-carte small { display: block; font: 800 9.5px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--t); }
+.rj127-carte b { display: block; margin-top: 6px; font: 900 16px/1.2 var(--font-display); color: #fff; }
+.rj127-carte span { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted, #80808a); }

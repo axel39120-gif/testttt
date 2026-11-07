@@ -620,6 +620,18 @@ course, écrire depuis la fiche, filtres de la boîte.
 - **Messagerie** (124) : délai entre deux messages d'un expéditeur secondaire, pas de redite d'un sujet avant six mois, boîte pleine qui garde les décisions en attente, débrief seulement après une course qui compte. Sur 8 manches : 22 messages au lieu de 40, amis à 48 au lieu de 15.
 - **Habillage** : messages, entourage, presse et vie perso reprennent la tuile de l'accueil (lueur de la couleur du sujet en haut à gauche, fond sombre, bordure teintée, reflet) et les titres de section à rayures rouges. Dans un fil, les bulles façon téléphone (bleu, vert) deviennent des cartes du jeu : celles de l'expéditeur à sa couleur, les tiennes en rouge ; les boutons de réponse passent en capitales, l'acceptation en rouge.
 
+## Étape 14 (DA uniforme, notifications, vie amoureuse) — v240
+
+- **Notifications** : en haut de l'écran, centrées, sous l'encoche. Pendant la course, la conférence de presse ou un événement, elles attendent et s'affichent à la sortie, les messages regroupés (« 2 nouveaux messages »). Le filtre de 40 qui devait différer les « Nouveau message » les abandonnait : remplacé par cette file. Les messages courts (showToast) rejoignent la même pile.
+- **Widgets** : « Prochaine course » et « Rêves de carrière » retirés des écrans où ils répétaient l'accueil et l'héritage.
+- **Titres de section** : presse (journal du paddock, vos déclarations), patrimoine, calendrier, panthéon, accomplissements et fil social prennent les rayures rouges communes.
+- **Cartes et marges** : statistiques, boutique, activités, panthéon, académie, contacts, encadrés posés dans le HTML… prennent la tuile de l'accueil ; les blocs n'ajoutent plus de marge latérale à la gouttière de l'écran.
+- **Style de vie** : catégories en pastilles, boutons d'achat et d'activité pleins et rouges, icônes teintées, moments de la saison en lignes.
+- **Face-à-face** (`js/ui/126-face-a-face.js`) : tuile du duel (toi en rouge, le rival en or, le score de catégories au centre), choix du rival en panneau, catégories sur une ligne avec jauge partagée, verdict et points par manche en colonne de droite.
+- **Vie amoureuse** (`js/career/127-amour.js`) : rencontre à partir de 18 ans, selon la réputation (vie discrète, personnalité connue, célébrité) ; étapes par message (vie commune, fiançailles, mariage, désir d'enfant, grossesse, naissance) ; une relation glacée mène à « il faut qu'on parle » ; presse people dans Médias › Presse (« Vie privée ») ; le foyer dans Vie perso.
+
+Suites `habillage` et `amour`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

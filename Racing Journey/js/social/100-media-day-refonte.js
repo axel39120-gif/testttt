@@ -1462,11 +1462,7 @@
 
     injecterCSSPresse();
 
-    var h = '<div style="margin:18px 16px 8px;display:flex;align-items:center;gap:8px">' +
-              '<span style="width:3px;height:13px;background:#A78BFA;border-radius:2px"></span>' +
-              '<span style="font-family:var(--font-display);font-size:11px;font-weight:800;' +
-              'letter-spacing:.1em;text-transform:uppercase;color:var(--text2,#c7cddb)">' +
-              'Vos déclarations</span></div>';
+    var h = '<div class="t-sec">Vos déclarations</div>';
 
     decls.forEach(function (d) {
       h += '<div class="rj100-art" style="--t:' + d.couleur + '">' +

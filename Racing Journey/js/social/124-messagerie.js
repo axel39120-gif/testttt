@@ -290,6 +290,35 @@
     }
   }
 
+  /* ------------------------------------- notifications au bon moment --- */
+  /* Le filtre de 40 (« les nouveaux messages attendent le retour sur
+     l'accueil ») les abandonnait en réalité : un message reçu pendant le
+     week-end n'était jamais signalé. Ici, une vraie file : pendant la course,
+     la conférence de presse ou un événement, les notifications attendent, et
+     s'affichent à la sortie, les messages regroupés en une seule. Dans la
+     messagerie, inutile de signaler un message qu'on a sous les yeux. */
+  var CALMES = { "S-race": 1, "S-mediaday": 1, "S-event": 1, "S-season-end": 1, "S-create": 1 };
+  var file = { messages: [], couleur: null, autres: [] };
+  function ecran() { var e = document.querySelector(".scr.on"); return e ? e.id : ""; }
+  function filtreFile(label, texte, couleur) {
+    var id = ecran();
+    if (label === "Nouveau message") {
+      if (id === "S-mailbox") return false;
+      if (CALMES[id]) { file.messages.push(texte); file.couleur = couleur; return false; }
+      return;
+    }
+    if (CALMES[id]) { if (file.autres.length < 6) file.autres.push([label, texte, couleur]); return false; }
+  }
+  function viderFile(id) {
+    if (CALMES[id] || typeof _pushHomeToastCoeur !== "function") return;
+    var n = file.messages.length, a = file.autres.splice(0, 3);
+    if (id === "S-mailbox") n = 0;
+    if (n === 1) a.unshift(["Nouveau message", file.messages[0], file.couleur]);
+    else if (n > 1) a.unshift(["Messagerie", n + " nouveaux messages — dernier : " + file.messages[n - 1], file.couleur]);
+    file.messages = []; file.autres = [];
+    a.forEach(function (x, i) { setTimeout(function () { _pushHomeToastCoeur(x[0], x[1], x[2]); }, 350 + i * 700); });
+  }
+
   /* -------------------------------------------------------- installation --- */
   function installer() {
     if (!R() || typeof rjInscrire !== "function" || !Array.isArray(window.WEEKLY_TICK_HOOKS) || !Array.isArray(window.RACE_POST_HOOKS)) return false;
@@ -309,6 +338,19 @@
       return suite();
     } });
     rjInscrire("renderMailbox", { id: "124-messagerie:renderMailbox", apres: function () { habiller(); } });
+    /* Les messages courts (showToast : « Pas assez de PA »…) avaient leur propre
+       fenêtre, posée par-dessus la pile des notifications : ils rejoignent la
+       pile, en haut de l'écran, sans passer par les filtres (réponse immédiate
+       à une action du joueur). */
+    if (typeof _pushHomeToastCoeur === "function") rjInscrire("showToast", { id: "124-messagerie:showToast", remplace: function (args) {
+      _pushHomeToastCoeur("", String(args[0] == null ? "" : args[0]), "#FF1801");
+    } });
+    if (!Array.isArray(window.RJ_TOAST_FILTERS)) window.RJ_TOAST_FILTERS = [];
+    window.RJ_TOAST_FILTERS = window.RJ_TOAST_FILTERS.filter(function (f) { return f && f.id !== "42-weekend-entry"; });
+    if (window.pushHomeToast) window.pushHomeToast._rjMsgGate = true;   // 40 ne réinstalle pas son filtre
+    window.RJ_TOAST_FILTERS.unshift({ id: "124-file", filtre: filtreFile });
+    if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
+    window.RJ_SCREEN_HOOKS.push({ id: "124-file", ecran: "*", apres: viderFile });
     if (typeof window._rj64Champs === "function") window._rj64Champs("_rj124");
     return true;
   }
@@ -320,7 +362,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 
-  window._rj124 = { deTrop: deTrop, sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
+  window._rj124 = { file: file, viderFile: viderFile, deTrop: deTrop, sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
   window._rj124Uninstall = function () {
     window.WEEKLY_TICK_HOOKS = (window.WEEKLY_TICK_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });
     window.RACE_POST_HOOKS = (window.RACE_POST_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });
