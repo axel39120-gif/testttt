@@ -180,9 +180,10 @@
     bloc.id = "rj127-bloc";
     if (!p && !es.length) { bloc.innerHTML = ""; return; }
     var h = '<div class="t-sec">Ton foyer</div><div class="rj127-foyer">';
-    if (p) h += '<div class="rj127-carte"><small>' + esc(LIB_ETAPE[p.etape] || "En couple") + (p.grossesse != null ? " · un bébé en route" : "") + "</small><b>" + esc(p.name) + "</b><span>" +
+    var vis = function (nom, info) { return window.RJAvatar ? '<span class="rj127-visage">' + RJAvatar.html(RJAvatar.personnage(nom, info), 52) + "</span>" : ""; };
+    if (p) h += '<div class="rj127-carte">' + vis(p.name, { age: Math.max(18, (G.age || 25) + 1), role: "civil" }) + '<small>' + esc(LIB_ETAPE[p.etape] || "En couple") + (p.grossesse != null ? " · un bébé en route" : "") + "</small><b>" + esc(p.name) + "</b><span>" +
       esc((PROFILS[p.profil] || PROFILS.discret).lbl) + (p.metier ? " · " + esc(p.metier) : "") + " · " + Math.round(p.closeness) + " de complicité</span></div>";
-    if (es.length) h += '<div class="rj127-carte enfants"><small>Enfant' + (es.length > 1 ? "s" : "") + "</small><b>" + es.map(function (e) { return esc(e.prenom); }).join(", ") + "</b><span>" +
+    if (es.length) h += '<div class="rj127-carte enfants">' + es.map(function (e) { return vis(e.prenom + " " + ((G.pilot && G.pilot.nom) || ""), { age: Math.max(1, (G.saison || 1) - e.saison), role: "civil" }); }).join("") + '<small>Enfant' + (es.length > 1 ? "s" : "") + "</small><b>" + es.map(function (e) { return esc(e.prenom); }).join(", ") + "</b><span>" +
       es.map(function (e) { return "arrivé en saison " + e.saison; }).join(" · ") + "</span></div>";
     bloc.innerHTML = h + "</div>";
     var avant = document.getElementById("rj125-bloc");

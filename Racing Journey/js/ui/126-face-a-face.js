@@ -68,9 +68,11 @@
 
     var h = '<div class="rj126"><div class="rj126-col">';
     h += '<div class="rj126-duel rj126-' + etat + '">' +
+      (window.RJAvatar ? '<span class="rj126-visage moi">' + RJAvatar.html(RJAvatar.joueur(), 64) + "</span>" : "") +
       '<div class="rj126-camp moi"><small>Toi</small><b>' + esc(pNom) + "</b><span>" + esc(G.currentTeam || "Indépendant") + "</span></div>" +
       '<div class="rj126-score"><b>' + pG + "</b><i>–</i><b>" + rG + "</b><small>catégories</small></div>" +
-      '<div class="rj126-camp lui"><small>Rival</small><b>' + esc(rNom) + "</b><span>" + esc(rival.team || "—") + "</span></div></div>";
+      '<div class="rj126-camp lui"><small>Rival</small><b>' + esc(rNom) + "</b><span>" + esc(rival.team || "—") + "</span></div>" +
+      (window.RJAvatar ? '<span class="rj126-visage lui">' + RJAvatar.html(RJAvatar.personnage(rNom, { role: "pilote", equipe: rival.team, nat: rival.nat, age: rival.age }), 64) + "</span>" : "") + "</div>";
     h += '<label class="rj126-choix"><span>Comparer avec</span><select aria-label="Comparer avec" onchange="G._h2hIdx=+this.value;renderH2H()">' +
       tries.map(function (o) { return '<option value="' + o.i + '"' + (o.i === idx ? " selected" : "") + ">" + esc(o.r.name) + " — " + (o.r.pts || 0) + " pts</option>"; }).join("") + "</select></label>";
     h += '<div class="t-sec">Confrontation par catégorie</div><div class="rj126-stats">' + lignes.map(function (l) {

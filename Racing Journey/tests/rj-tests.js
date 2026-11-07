@@ -2477,6 +2477,7 @@ async function suiteViePerso() {
     /* Plus d'érosion fixe. */
     const erosion = await page.evaluate(() => {
       const R = getRelations();
+      G._rj125 = { saison: G.saison || 1, moments: [{ type: "aucun", w: 99, fait: true }], ecrit: -99 };   /* pas de moment pendant la mesure : on ne mesure que l'érosion */
       R.friends.closeness = 55; R.friends.lastContact = G.semaine = 2; R.parents.closeness = 65; R.parents.lastContact = 2;
       for (let k = 0; k < 16; k++) { G.semaine++; runWeeklyTicks(1); }
       return { amis: R.friends.closeness, parents: R.parents.closeness };
@@ -2689,6 +2690,89 @@ async function suiteAmour() {
     await page.waitForTimeout(300);
     const foyer = await page.evaluate(() => document.querySelectorAll("#vp-content .rj127-carte").length);
     S.verifier("Vie perso montre le foyer (enfants)", foyer >= 1, String(foyer));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 8 unvicies. LES AVATARS (étape 15)
+ *
+ * Chaque personnage a un portrait généré, toujours le même ; le teint et
+ * les cheveux suivent le pays ; le joueur compose le sien à la création
+ * (étape du numéro) et le modifie depuis le bandeau ; les portraits
+ * remplacent les initiales (bandeau, messagerie, entourage, face-à-face,
+ * classements) ; tout se sauvegarde, et se génère vite.
+ * ==================================================================== */
+async function suiteAvatars() {
+  S.suite("Avatars");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 844, height: 390 } });
+  try {
+    await S.repondeurAutomatique(page);
+    const base = await page.evaluate(() => {
+      const A = RJAvatar, p1 = A.personnage("Marco Rinaldi", { role: "pilote" }), p2 = A.personnage("Marco Rinaldi", { role: "pilote" }), p3 = A.personnage("Kofi Adeyemi", { role: "pilote" });
+      const jp = [1, 2, 3, 4, 5, 6].map(i => A.personnage("Pilote " + i, { nat: "JP" }).cheveux);
+      const t0 = performance.now();
+      for (let i = 0; i < 30; i++) A.url(A.personnage("Perf " + i, { role: "pilote" }), 40);
+      return { meme: A.url(p1, 40) === A.url(p2, 40), different: A.url(p1, 40) !== A.url(p3, 40), jp, duree: Math.round(performance.now() - t0) };
+    });
+    S.verifier("un personnage a toujours le même visage, deux personnages deux visages", base.meme && base.different, JSON.stringify(base));
+    S.verifier("les cheveux suivent le pays", base.jp.every(c => ["#15100D", "#2E1C13"].indexOf(c) >= 0), JSON.stringify(base.jp));
+    S.verifier("trente portraits se génèrent en moins d'une seconde et demie", base.duree < 1500, base.duree + " ms");
+
+    const creation = await page.evaluate(async () => {
+      navTo("S-create", null); window.creStep = 5; updateCreUI();
+      await new Promise(r => setTimeout(r, 200));
+      const ed = document.querySelector("#rja-creation .rja-ed");
+      const b = document.querySelector('#rja-creation [data-k="forme"][data-i="1"]');
+      if (b) b.click();
+      return { editeur: !!ed, apercu: !!(ed && ed.querySelector("img.rja")), forme: G.pilot.avatar && G.pilot.avatar.forme, options: document.querySelectorAll("#rja-creation [data-k]").length };
+    });
+    S.verifier("la création propose l'éditeur de visage", creation.editeur && creation.apercu && creation.options > 20, JSON.stringify(creation));
+    S.verifier("un choix dans l'éditeur s'enregistre", creation.forme === "carre", JSON.stringify(creation));
+
+    const partout = await page.evaluate(async () => {
+      navTo("S-home", "ni-home"); updateUI();
+      await new Promise(r => setTimeout(r, 300));
+      const bandeau = (document.getElementById("h-avatar").style.backgroundImage || "").indexOf("data:image/svg") >= 0;
+      const mini = document.querySelectorAll(".apex-champ-mini-row .rja").length;
+      pushMail({ from: "Team Principal", role: "team_boss", subject: "Test avatar", body: "…" });
+      navTo("S-mailbox", null); if (typeof backToMailList === "function") backToMailList(); renderMailbox();
+      await new Promise(r => setTimeout(r, 300));
+      const mail = document.querySelectorAll("#mailbox-list img.rja").length;
+      navTo("S-contracts", null); ctab("reseau");
+      await new Promise(r => setTimeout(r, 300));
+      const entourage = document.querySelectorAll(".rj122-carte img.rja").length;
+      navTo("S-champ", "ni-champ"); chtab("classement");
+      await new Promise(r => setTimeout(r, 300));
+      const classement = document.querySelectorAll("#S-champ .cr .rja").length;
+      chtab("h2h");
+      await new Promise(r => setTimeout(r, 300));
+      const duel = document.querySelectorAll(".rj126-visage img.rja").length;
+      return { bandeau, mini, mail, entourage, classement, duel };
+    });
+    S.verifier("les portraits remplacent les initiales (bandeau, messagerie, entourage)", partout.bandeau && partout.mail >= 1 && partout.entourage >= 3, JSON.stringify(partout));
+    S.verifier("les classements et le face-à-face montrent les visages", partout.mini >= 3 && partout.classement >= 5 && partout.duel === 2, JSON.stringify(partout));
+
+    const menu = await page.evaluate(async () => {
+      navTo("S-home", "ni-home"); _showAvatarMenu();
+      await new Promise(r => setTimeout(r, 100));
+      const b = document.querySelector(".rja-menu"); if (b) b.click();
+      await new Promise(r => setTimeout(r, 200));
+      const feuille = !!document.querySelector(".rja-feuille");
+      const lun = document.querySelector('.rja-feuille [data-k="lunettes"][data-i="1"]'); if (lun) lun.click();
+      document.querySelector(".rja-valider").click();
+      await new Promise(r => setTimeout(r, 100));
+      return { bouton: !!b, feuille, ferme: !document.querySelector(".rja-feuille"), lunettes: G.pilot.avatar.lunettes };
+    });
+    S.verifier("on modifie son avatar depuis le bandeau", menu.bouton && menu.feuille && menu.ferme && menu.lunettes === true, JSON.stringify(menu));
+
+    const sauve = await page.evaluate(() => {
+      G._slot = 1; saveGame(1);
+      const avant = JSON.stringify(G.pilot.avatar);
+      G.pilot.avatar = null; loadSave(1);
+      return { egal: JSON.stringify(G.pilot.avatar) === avant };
+    });
+    S.verifier("l'avatar est sauvegardé avec la partie", sauve.egal, JSON.stringify(sauve));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -2950,6 +3034,7 @@ const SUITES = {
   vieperso: suiteViePerso,
   habillage: suiteHabillage,
   amour: suiteAmour,
+  avatars: suiteAvatars,
   decisions: suiteDecisions
 };
 

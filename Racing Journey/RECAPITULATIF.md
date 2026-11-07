@@ -632,6 +632,15 @@ course, écrire depuis la fiche, filtres de la boîte.
 
 Suites `habillage` et `amour`.
 
+## Étape 15 (avatars) — v241
+
+- **Portraits générés** (`js/ui/128-avatars.js`) : visage construit (pommettes, angle de la mâchoire, menton ; cinq formes : ovale, carré, rond, allongé, fin), éclairage latéral, orbites, paupières, iris texturé, grain de peau, barbe en poils, cheveux mèche par mèche, légère asymétrie. L'âge vieillit le visage (enfant, rides, cheveux gris) ; le rôle choisit la tenue (combinaison aux couleurs de l'écurie et au numéro du joueur, polo et casque radio du staff, veste et badge presse, habits de ville) ; le teint et les cheveux suivent le pays.
+- **Même visage partout** : les traits d'un personnage sont tirés de son nom. Chaque portrait devient une image mise en cache ; en petit, une version allégée.
+- **Ton pilote** : un éditeur dans la création de carrière (étape du numéro) — teint, forme du visage, coupe (vignettes à ton visage), cheveux, yeux, barbe, lunettes, traits, tirage aléatoire ; modifiable ensuite depuis l'avatar du bandeau (« Modifier mon avatar »). Une photo importée reste prioritaire. Sauvegardé avec la partie (`G.pilot.avatar`).
+- **Les initiales disparaissent** : bandeau, profil, classement du championnat et de l'accueil, messagerie, entourage (cartes et fiche), face-à-face, réseaux sociaux, foyer (partenaire, enfants).
+
+Suite `avatars`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

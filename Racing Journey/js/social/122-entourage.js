@@ -25,6 +25,8 @@
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function initiales(n) { return String(n || "?").split(/\s+/).map(function (m) { return m.charAt(0); }).join("").slice(0, 2).toUpperCase(); }
+  /* Le portrait du contact (128), à défaut ses initiales. */
+  function visage(c, t) { return window.RJAvatar ? window.RJAvatar.html(window.RJAvatar.contact(c), t) : esc(initiales(c.name)); }
   function couleurRel(r) { return r >= 70 ? "var(--green, #4ADE80)" : r >= 45 ? "#F59E0B" : "#EF4444"; }
   function semaine() { return (G.saison || 1) * 100 + (G.semaine || 1); }
 
@@ -39,7 +41,7 @@
   function carte(c, cle) {
     var h = R().humeur(c), rel = Math.round(c.relation || 0);
     return '<button type="button" class="rj122-carte" data-cle="' + esc(cle) + '" style="--teinte:' + esc(c.color || "#60A5FA") + '">' +
-      '<span class="rj122-avatar">' + esc(initiales(c.name)) + "</span>" +
+      '<span class="rj122-avatar">' + visage(c, 36) + "</span>" +
       '<span class="rj122-id"><b>' + esc(c.name) + "</b><small>" + esc(c.roleLabel || R().role(c.role).lbl) + (c.team ? " · " + esc(c.team) : "") + "</small></span>" +
       '<span class="rj122-humeur rj122-h-' + h.c + '">' + h.lbl + "</span>" +
       '<span class="rj122-rel"><span class="rj122-piste" style="--rel:' + rel + "%;--coul:" + couleurRel(rel) + '"></span><em>' + rel + "</em></span></button>";
@@ -79,7 +81,7 @@
     var voile = document.createElement("div");
     voile.className = "rj122-voile";
     voile.innerHTML = '<div class="rj122-fiche" role="dialog" aria-modal="true" data-cle="' + esc(cle) + '" style="--teinte:' + esc(c.color || "#60A5FA") + '">' +
-      '<div class="rj122-fiche-tete"><span class="rj122-avatar">' + esc(initiales(c.name)) + "</span><div><b>" + esc(c.name) + "</b><small>" +
+      '<div class="rj122-fiche-tete"><span class="rj122-avatar">' + visage(c, 46) + "</span><div><b>" + esc(c.name) + "</b><small>" +
       esc(c.roleLabel || r.role(c.role).lbl) + (c.team ? " · " + esc(c.team) : "") + '</small></div><button type="button" class="rj122-x" data-act="fermer" aria-label="Fermer">×</button></div>' +
       '<div class="rj122-ligne"><span>Relation</span><span class="rj122-rel"><span class="rj122-piste" style="--rel:' + rel + "%;--coul:" + couleurRel(rel) + '"></span><em>' + rel + "</em></span>" +
       '<span class="rj122-humeur rj122-h-' + h.c + '">' + h.lbl + "</span></div>" +
