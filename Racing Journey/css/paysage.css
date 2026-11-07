@@ -1199,3 +1199,53 @@ body:has(#ach-unlock-stack > *) #rj-toast-container { top: calc(92px + env(safe-
 .rj127-carte small { display: block; font: 800 9.5px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--t); }
 .rj127-carte b { display: block; margin-top: 6px; font: 900 16px/1.2 var(--font-display); color: #fff; }
 .rj127-carte span { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted, #80808a); }
+
+/* =====================================================================
+ * Avatars (128) : portraits générés, éditeur.
+ * =================================================================== */
+img.rja { display: block; object-fit: cover; object-position: center 18%; }
+.rja-rond { display: inline-block; flex: 0 0 auto; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .12); background: #15151a; }
+.rja-rond img.rja { width: 100%; height: 100%; }
+.rja-classement { width: 26px; height: 26px; margin-right: 8px; vertical-align: middle; }
+.rja-classement img.rja { width: 26px; height: 26px; }
+#h-avatar.rja-fond, #p-avatar.rja-fond { background-repeat: no-repeat; }
+.rj122-avatar { overflow: hidden; padding: 0 !important; background: #15151a !important; }
+.rj122-avatar img.rja { width: 100%; height: 100%; }
+.rj127-visage { float: left; width: 52px; height: 52px; margin: 0 10px 0 0; border-radius: 50%; overflow: hidden; border: 1.5px solid var(--t); }
+.rj127-visage + .rj127-visage { margin-left: -18px; }
+.rj127-visage img.rja { width: 100%; height: 100%; }
+.rj126-duel { grid-template-columns: 64px minmax(0, 1fr) auto minmax(0, 1fr) 64px !important; }
+.rj126-visage { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 2px solid var(--red, #FF1801); }
+.rj126-visage.lui { border-color: #D4A842; }
+.rj126-visage img.rja { width: 100%; height: 100%; }
+
+/* Éditeur */
+.rja-ed { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 640px) { .rja-ed { grid-template-columns: 1fr; } }
+.rja-ed-grand img.rja { width: 200px; height: 220px; border-radius: var(--r); box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
+.rja-hasard { width: 200px; margin-top: 8px; min-height: 36px; border-radius: var(--r); border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: #fff; font: 800 11px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.rja-ligne { margin-bottom: 9px; }
+.rja-ligne > span { display: block; margin-bottom: 5px; font: 800 9.5px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rja-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rja-pastille { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .14); cursor: pointer; padding: 0; }
+.rja-pastille.on { border-color: var(--red, #FF1801); box-shadow: 0 0 0 2px rgba(255, 24, 1, .3); }
+.rja-mini { width: 44px; height: 44px; padding: 0; border-radius: var(--r); overflow: hidden; border: 1.5px solid rgba(255, 255, 255, .12); background: #15151a; cursor: pointer; }
+.rja-mini.on { border-color: var(--red, #FF1801); }
+.rja-mini img.rja { width: 44px; height: 44px; }
+.rja-puce { min-height: 30px; padding: 0 11px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, .12); background: transparent; color: #c8c8d0; font: 700 11px/1 var(--font-body); cursor: pointer; }
+.rja-puce.on { background: rgba(255, 24, 1, .16); border-color: var(--red, #FF1801); color: #fff; }
+.rja-voile { position: fixed; inset: 0; z-index: 100002; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0); transition: background .18s ease; }
+.rja-voile.on { background: rgba(0, 0, 0, .65); }
+.rja-feuille { width: min(720px, calc(100% - 24px)); max-height: 92%; overflow-y: auto; scrollbar-width: none; padding: 6px 16px 14px; border-radius: calc(var(--r) * 2); background: linear-gradient(160deg, #1a1a20, #121216); border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 10px 40px rgba(0, 0, 0, .6); }
+.rja-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.rja-actions button { min-height: 40px; padding: 0 18px; border-radius: var(--r); font: 800 11.5px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: #e8e8ec; }
+.rja-actions .rja-valider { background: linear-gradient(160deg, #ff3b1f, #c81400); border-color: transparent; color: #fff; }
+#rja-creation { margin-bottom: 6px; }
+
+/* Classements : le visage dans la cellule du nom. */
+:is(.cr-name, .apex-champ-mini-row .nom):has(.rja-classement) { display: inline-flex !important; align-items: center; gap: 7px; min-width: 0; }
+.rja-classement { width: 24px !important; height: 24px !important; margin: 0 !important; }
+.rja-classement img.rja { width: 24px !important; height: 24px !important; }
+/* Conversations : visage à gauche, texte à droite (un module retire le display:flex en ligne). */
+#mailbox-list .rj124-carte { display: flex !important; align-items: center; gap: 12px; }
+#mailbox-list .rj124-carte > div:nth-child(2) { flex: 1; min-width: 0; }

@@ -188,7 +188,7 @@
   function injecter() {
     var hote = document.getElementById("vp-content");
     if (!hote || !G) return;
-    var ms = planifier(false).filter(function (m) { return !m.cache || m.fait; });
+    var ms = planifier(false).filter(function (m) { return LIBELLE[m.type] && (!m.cache || m.fait); });
     var bloc = document.getElementById("rj125-bloc") || document.createElement("div");
     bloc.id = "rj125-bloc";
     bloc.innerHTML = '<div class="rj125-titre">Moments de la saison</div>' + (ms.length ? ms.map(function (m) {
