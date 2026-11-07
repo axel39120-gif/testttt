@@ -1058,7 +1058,7 @@ async function suitePaysage() {
         const nav = document.getElementById("main-nav"), bn = boite(nav);
         const ecrans = [...document.querySelectorAll(".scr[id^='S-']")].map(e => e.id)
           .filter(id => !/^S-(splash|create|display-setup|mode)$/.test(id));
-        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], ongletsHors: [], sansRail: [], gouttieres: {} };
+        const res = { rail: { gauche: bn.left, largeur: bn.width, hauteur: bn.height }, bandeaux: {}, hauts: {}, debords: [], chevauche: [], plusieurs: [], sansHud: [], hudAilleurs: [], ongletsHors: [], ongletsCoupes: [], sansRail: [], gouttieres: {} };
         for (const id of ecrans) {
           try { navTo(id, null); } catch (e) { continue; }
           await attendre(260);
@@ -1069,14 +1069,19 @@ async function suitePaysage() {
           if (railVisible && bs.left < bn.right - 1) res.chevauche.push(s.id);
           if ([...document.querySelectorAll(".scr")].filter(x => getComputedStyle(x).display !== "none").length > 1) res.plusieurs.push(s.id);
           res.bandeaux[s.id] = hdr ? Math.round(boite(hdr).height) : null;
-          /* La barre de ressources (HUD) reste en haut de chaque écran de jeu. */
           const hud = document.getElementById("rj-hud");
-          if (!hud || getComputedStyle(hud).display === "none" || boite(hud).top > 1 || boite(hud).height > 60) res.sansHud.push(s.id);
+          /* Ressources (HUD) : en haut de l'accueil seulement ; ailleurs le
+             bandeau laisse toute la place aux onglets. */
+          const hudVisible = hud && getComputedStyle(hud).display !== "none";
+          if (s.id === "S-home" && (!hudVisible || boite(hud).top > 1 || boite(hud).height > 60)) res.sansHud.push(s.id);
+          if (s.id !== "S-home" && hudVisible) res.hudAilleurs.push(s.id);
           /* Les onglets sont dans le bandeau, entre le titre et le HUD. */
           const tabs = s.querySelector(":scope > .tabs");
           if (tabs && hdr && getComputedStyle(tabs).display !== "none") {
             const bt = boite(tabs), bh = boite(hdr), bhud = boite(hud);
-            if (bt.top < bh.top - 1 || bt.bottom > bh.bottom + 1 || bt.left < bh.right - 1 || bt.right > bhud.left + 1) res.ongletsHors.push(s.id);
+            const limite = hudVisible ? bhud.left : innerWidth;
+            if (bt.top < bh.top - 1 || bt.bottom > bh.bottom + 1 || bt.left < bh.right - 1 || bt.right > limite + 1) res.ongletsHors.push(s.id);
+            if (tabs.scrollWidth > tabs.clientWidth + 1) res.ongletsCoupes.push(s.id + " " + tabs.scrollWidth + ">" + tabs.clientWidth);
           }
           /* Écrans de consultation : le rail reste là pour circuler. */
           if (/^S-(home|pilot|champ|cal|training|contracts|patrimoine|sponsors|media|mailbox|lifestyle|settings|pantheon|achievements)$/.test(s.id) && !railVisible)
@@ -1138,8 +1143,10 @@ async function suitePaysage() {
       const bas = Object.entries(r.hauts).filter(([, t]) => t !== null && t > 64).map(([id, t]) => id + "@" + t);
       S.verifier(nom + " : le contenu commence sous un seul bandeau", bas.length === 0, bas.join(", "));
       S.verifier(nom + " : même gouttière sur tous les écrans", Object.keys(r.gouttieres).length === 0, JSON.stringify(r.gouttieres));
-      S.verifier(nom + " : HUD en haut de chaque écran", r.sansHud.length === 0, r.sansHud.join(", "));
-      S.verifier(nom + " : onglets dans le bandeau, entre titre et HUD", r.ongletsHors.length === 0, r.ongletsHors.join(", "));
+      S.verifier(nom + " : ressources (HUD) en haut de l'accueil", r.sansHud.length === 0, r.sansHud.join(", "));
+      S.verifier(nom + " : ressources masquées hors de l'accueil", r.hudAilleurs.length === 0, r.hudAilleurs.join(", "));
+      S.verifier(nom + " : onglets dans le bandeau, après le titre", r.ongletsHors.length === 0, r.ongletsHors.join(", "));
+      S.verifier(nom + " : aucun onglet coupé", r.ongletsCoupes.length === 0, r.ongletsCoupes.join(", "));
       S.verifier(nom + " : rail présent sur les écrans de consultation", r.sansRail.length === 0, r.sansRail.join(", "));
       S.verifier(nom + " : le HUD suit l'état du jeu", r.hudSuit === true);
       S.verifier(nom + " : accueil — classement des écuries au sélecteur", r.ecuries !== false, String(r.ecuries));

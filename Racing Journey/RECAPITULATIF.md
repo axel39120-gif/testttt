@@ -1,6 +1,6 @@
 # Racing Journey — état du projet
 
-Version **BUILD v233**. Ce document décrit l'organisation du code après la
+Version **BUILD v234**. Ce document décrit l'organisation du code après la
 restructuration (étape 1) et le passage en paysage (étape 2), ce qui reste
 à faire, et comment reprendre.
 
@@ -12,7 +12,7 @@ Copier à la racine du site : `index.html`, `service-worker.js`, `styles.css`,
 `manifest.json`, `_headers`, et les dossiers `css/` et `js/` avec leurs
 sous-dossiers.
 
-Le badge en bas à droite doit afficher `BUILD v233 · OK`. S'il liste des
+Le badge en bas à droite doit afficher `BUILD v234 · OK`. S'il liste des
 modules manquants, un fichier n'a pas été copié.
 
 À chaque déploiement : passer `?vNNN` (index.html) et `CACHE_NAME`
@@ -515,6 +515,10 @@ maximale au réglage idéal, karting réduit à ses réglages.
   d'une zone qui défile ne déplace rien, axes inversés quand le jeu est
   pivoté) et bloque le pincement.
 - Sections dépliables : jamais le triangle d'un site web.
+- **Bandeau** (v234) : les ressources (semaine, budget, réputation, note)
+  ne s'affichent qu'à l'accueil ; ailleurs le bandeau rend sa largeur aux
+  onglets (`--hud` à 0), et sur petit écran les pastilles se resserrent :
+  aucun onglet n'est coupé.
 
 Suite `ecrans` : application figée, liste ouverte en panneau titré, choix
 appliqué avec son onchange. Suite `equite` : le joueur moyen est mesuré sans
