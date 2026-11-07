@@ -17,6 +17,8 @@
  *     débriefe.
  *  5. Écrire : depuis la fiche d'un contact (122), on lui écrit sur un sujet
  *     propre à son rôle ; il répond la semaine suivante.
+ *  6. Pas de faux choix : un seul bouton sans effet (« Compris ») fait une
+ *     info ; un seul bouton à petit effet s'applique à la réception.
  *
  * Réversible : window._rj124Uninstall().
  * =================================================================== */
@@ -60,6 +62,22 @@
       n++;
     });
     return n;
+  }
+
+  /* ------------------------------------------------------ faux choix --- */
+  /* Mesuré sur 8 manches : la moitié des messages « à choix » n'offraient
+     qu'un bouton — « Compris », « Merci » — sans effet, ou avec un effet
+     minime. Ce n'est pas une décision : sans effet, le message devient une
+     info ; avec un petit effet, il s'applique à la réception. Les vrais
+     choix, les liens vers un écran et les drapeaux restent. */
+  var EFFETS_AUTO = { happiness: 1, mental: 1, rep: 1, trust: 1 };
+  function sansFauxChoix(o) {
+    var a = o && o.actions;
+    if (!a || a.length !== 1 || a[0].followUp || a[0].kind === "nav") return;
+    var e = a[0].effect;
+    if (e && !EFFETS_AUTO[e.type]) return;
+    if (e) { try { applyMailEffect(e); } catch (err) { console.warn(TAG, "effet :", err && err.message); } }
+    o.actions = null;
   }
 
   /* -------------------------------------------------- envoi d'un contact --- */
@@ -236,6 +254,8 @@
       if (!m || !a || !m.contactKey || m.rj124 || m.rj123 || a.kind === "dismiss") return;
       etat().attente.push({ cle: m.contactKey, ticks: 1, type: "suite", objet: m.subject || "ton message", kind: a.kind });
     } });
+    /* Plus intérieur que 62 (-5100) : un message que 62 bloque comme doublon n'applique pas son effet. */
+    rjInscrire("pushMail", { id: "124-messagerie:pushMail", ordre: 0, remplace: function (args, suite) { sansFauxChoix(args[0]); return suite(); } });
     rjInscrire("renderMailbox", { id: "124-messagerie:renderMailbox", apres: function () { habiller(); } });
     if (typeof window._rj64Champs === "function") window._rj64Champs("_rj124");
     return true;
@@ -248,7 +268,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 
-  window._rj124 = { priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
+  window._rj124 = { sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
   window._rj124Uninstall = function () {
     window.WEEKLY_TICK_HOOKS = (window.WEEKLY_TICK_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });
     window.RACE_POST_HOOKS = (window.RACE_POST_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });
