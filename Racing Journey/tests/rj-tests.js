@@ -2535,6 +2535,164 @@ async function suiteViePerso() {
   } finally { await navigateur.close(); }
 }
 
+/* ==================================================================== *
+ * 8 novodecies. HABILLAGE ET NOTIFICATIONS (étape 14)
+ *
+ * Les notifications tombent en haut de l'écran, attendent la fin de la
+ * course pour s'afficher (messages regroupés), et les messages courts
+ * rejoignent la même pile ; les widgets « course » et « rêves » ne sont
+ * plus semés partout ; le face-à-face a sa tuile de duel ; titres et
+ * cartes suivent la DA de l'accueil.
+ * ==================================================================== */
+async function suiteHabillage() {
+  S.suite("Habillage et notifications");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 844, height: 390 } });
+  try {
+    await S.repondeurAutomatique(page);
+    const haut = await page.evaluate(async () => {
+      navTo("S-home", "ni-home");
+      document.querySelectorAll(".rj-toast").forEach(t => t.remove());
+      pushHomeToast("Test", "Une notification", "#22D3EE");
+      await new Promise(r => setTimeout(r, 400));
+      const t = document.querySelector("#rj-toast-container .rj-toast"), b = t && t.getBoundingClientRect();
+      return { vue: !!t, haut: b && Math.round(b.top), centre: b && Math.round(b.left + b.width / 2 - innerWidth / 2) };
+    });
+    S.verifier("une notification s'affiche en haut, au centre", haut.vue && haut.haut < 60 && Math.abs(haut.centre) < 30, JSON.stringify(haut));
+
+    const file = await page.evaluate(async () => {
+      document.querySelectorAll(".rj-toast").forEach(t => t.remove());
+      navTo("S-race", null);
+      pushHomeToast("Nouveau message", "Agent — Une offre", "#34D399");
+      pushHomeToast("Nouveau message", "Team Principal — Débrief", "#F59E0B");
+      pushHomeToast("Trophée", "Premier podium", "#F59E0B");
+      await new Promise(r => setTimeout(r, 300));
+      const pendant = document.querySelectorAll(".rj-toast").length;
+      navTo("S-home", "ni-home");
+      await new Promise(r => setTimeout(r, 1800));
+      const apres = [...document.querySelectorAll(".rj-toast")].map(t => t.textContent);
+      return { pendant, apres };
+    });
+    S.verifier("pendant la course, les notifications attendent", file.pendant === 0, JSON.stringify(file));
+    S.verifier("au retour, elles s'affichent, les messages regroupés", file.apres.length === 2 && file.apres.some(t => /2 nouveaux messages/.test(t)) && file.apres.some(t => /podium/.test(t)), JSON.stringify(file));
+
+    const court = await page.evaluate(async () => {
+      document.querySelectorAll(".rj-toast").forEach(t => t.remove());
+      showToast("Pas assez de PA.");
+      await new Promise(r => setTimeout(r, 300));
+      return [...document.querySelectorAll("#rj-toast-container .rj-toast")].some(t => /Pas assez de PA/.test(t.textContent));
+    });
+    S.verifier("les messages courts rejoignent la même pile", court, String(court));
+
+    const widgets = await page.evaluate(async () => {
+      const vus = {};
+      for (const id of ["S-contracts", "S-lifestyle", "S-mailbox", "S-media", "S-champ", "S-pilot", "S-patrimoine"]) {
+        try { navTo(id, null); } catch (e) {}
+        await new Promise(r => setTimeout(r, 200));
+        document.querySelectorAll("#" + id + " .rj119-w").forEach(w => { const k = w.getAttribute("data-w"); vus[k] = (vus[k] || 0) + 1; });
+      }
+      return vus;
+    });
+    S.verifier("plus de widgets « prochaine course » ni « rêves » hors de leur écran", !widgets.course && !widgets.reves, JSON.stringify(widgets));
+
+    const duel = await page.evaluate(async () => {
+      navTo("S-champ", "ni-champ"); chtab("h2h");
+      await new Promise(r => setTimeout(r, 400));
+      const c = document.getElementById("h2h-content");
+      return { tuile: !!c.querySelector(".rj126-duel"), lignes: c.querySelectorAll(".rj126-ligne").length, choix: c.querySelectorAll(".rj126-choix option").length,
+        rivaux: (G.rivals || []).length, verdict: !!c.querySelector(".rj126-verdict"), tableau: !!c.querySelector("#rj91-points, table") };
+    });
+    S.verifier("face-à-face : tuile du duel, huit catégories, choix du rival, verdict", duel.tuile && duel.lignes === 8 && duel.choix === duel.rivaux && duel.verdict, JSON.stringify(duel));
+
+    const titres = await page.evaluate(async () => {
+      navTo("S-achievements", null); if (typeof renderHallOfFame === "function") try { renderHallOfFame(); } catch (e) {}
+      await new Promise(r => setTimeout(r, 300));
+      const succes = document.querySelectorAll("#S-achievements .t-sec").length;
+      navTo("S-media", null); mtab("presse");
+      await new Promise(r => setTimeout(r, 400));
+      const presse = [...document.querySelectorAll("#mt-presse .t-sec")].map(t => t.textContent.trim());
+      const carte = document.querySelector("#S-lifestyle .mc") || document.querySelector(".mc");
+      navTo("S-lifestyle", null); lstab("biens");
+      await new Promise(r => setTimeout(r, 300));
+      const mc = document.querySelector("#S-lifestyle .mc");
+      return { succes, presse, tuile: mc && getComputedStyle(mc).backgroundImage.indexOf("radial-gradient") >= 0 };
+    });
+    S.verifier("titres de section communs (presse, accomplissements)", titres.succes >= 1 && titres.presse.some(t => /Transferts/.test(t)), JSON.stringify(titres));
+    S.verifier("les cartes d'information prennent la tuile de l'accueil", titres.tuile, JSON.stringify(titres));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 8 vicies. LA VIE AMOUREUSE (étape 14)
+ * ==================================================================== */
+async function suiteAmour() {
+  S.suite("Vie amoureuse");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const rencontre = await page.evaluate(() => {
+      const R = getRelations();
+      G.age = 16; R.partner = null;
+      const jeune = _rj127.peutRencontrer();
+      G.age = 23;
+      return { jeune, majeur: _rj127.peutRencontrer(), star: _rj127.pretendant(90).profil, connu: _rj127.pretendant(55).profil, discret: _rj127.pretendant(20).profil };
+    });
+    S.verifier("pas de rencontre avant 18 ans", !rencontre.jeune && rencontre.majeur, JSON.stringify(rencontre));
+    S.verifier("la réputation décide de qui l'on rencontre", rencontre.star === "celebrite" && rencontre.connu === "connu" && rencontre.discret === "discret", JSON.stringify(rencontre));
+
+    const couple = await page.evaluate(() => {
+      G.reputation = 85; G.pilot.nat = "FR"; G.cat = "Formule 1"; window.CAL_RACES = []; buildCalendar();
+      const m = _rj125.planifier(true).find(x => x.type === "rencontre");
+      G.semaine = m.w; runWeeklyTicks(1);
+      const mail = getMailbox().find(x => x.rj125 === "rencontre");
+      handleMailAction(mail.id, 0);
+      runWeeklyTicks(1);
+      const p = getRelations().partner;
+      return { nom: p && p.name, profil: p && p.profil, etape: p && p.etape, people: (G._rjPresse && G._rjPresse.people || []).length };
+    });
+    S.verifier("une célébrité rencontrée : couple, et la presse people en parle", couple.nom && couple.profil === "celebrite" && couple.etape === "couple" && couple.people >= 1, JSON.stringify(couple));
+
+    const etapes = await page.evaluate(() => {
+      const p = getRelations().partner;
+      p.closeness = 80; p.semainesEtape = 12; G.pa = 3; G.budget = 1e6;
+      runWeeklyTicks(1);
+      const m1 = getMailbox().find(x => x.rj127 === "vie_commune");
+      if (m1) handleMailAction(m1.id, 0);
+      const vie = p.etape;
+      p.etape = "marie"; p.semainesEtape = 40; p.closeness = 85; G.age = 27; p.attente = null;
+      runWeeklyTicks(1);
+      const m2 = getMailbox().find(x => x.rj127 === "enfant");
+      if (m2) handleMailAction(m2.id, 0);
+      const h0 = G.happiness;
+      p.grossesse = 35; runWeeklyTicks(1);
+      return { emmenage: !!m1 && m1.actions.length >= 2, vie, enfant: !!m2, enfants: (getRelations().enfants || []).length, bonheur: G.happiness - h0,
+        naissance: !!getMailbox().find(x => x.rj127 === "naissance") };
+    });
+    S.verifier("le couple avance : emménager ensemble", etapes.emmenage && etapes.vie === "vie_commune", JSON.stringify(etapes));
+    S.verifier("un enfant : la proposition, puis la naissance qui rend heureux", etapes.enfant && etapes.enfants === 1 && etapes.naissance && etapes.bonheur > 0, JSON.stringify(etapes));
+
+    const rupture = await page.evaluate(() => {
+      const p = getRelations().partner, nom = p.name;
+      p.closeness = 15; p.froid = 0; p.crise = false;
+      for (let k = 0; k < 4; k++) runWeeklyTicks(1);
+      const m = getMailbox().find(x => x.rj127 === "crise");
+      if (m) handleMailAction(m.id, 1);
+      return { crise: !!m, seul: !getRelations().partner, rumeur: (G._rjPresse.people || []).some(r => r.titre.indexOf(nom) >= 0 && /fini/.test(r.titre)) };
+    });
+    S.verifier("une relation glacée mène à la rupture, et la presse le sait", rupture.crise && rupture.seul && rupture.rumeur, JSON.stringify(rupture));
+
+    await page.evaluate(() => { navTo("S-media", null); mtab("presse"); });
+    await page.waitForTimeout(400);
+    const people = await page.evaluate(() => document.querySelectorAll("#mt-presse .rj123-people").length);
+    S.verifier("Médias › Presse : une rubrique « Vie privée »", people >= 1, String(people));
+    await page.evaluate(() => { navTo("S-lifestyle", null); lstab("vieperso"); });
+    await page.waitForTimeout(300);
+    const foyer = await page.evaluate(() => document.querySelectorAll("#vp-content .rj127-carte").length);
+    S.verifier("Vie perso montre le foyer (enfants)", foyer >= 1, String(foyer));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -2790,6 +2948,8 @@ const SUITES = {
   presse: suitePresse,
   messagerie: suiteMessagerie,
   vieperso: suiteViePerso,
+  habillage: suiteHabillage,
+  amour: suiteAmour,
   decisions: suiteDecisions
 };
 

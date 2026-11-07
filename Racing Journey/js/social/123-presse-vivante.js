@@ -261,6 +261,12 @@
     h += p.revue.length ? p.revue.slice(0, 6).map(function (t) {
       return '<div class="rj123-titre rj123-' + t.humeur + '"><span>' + esc(t.media) + " · S" + t.s + " sem. " + t.w + "</span>" + esc(t.titre) + "</div>";
     }).join("") : '<div class="rj123-vide">Pas encore de titre : la presse attend ta première course.</div>';
+    /* Vie privée : les rumeurs de couple de la presse people (127). */
+    if (p.people && p.people.length) {
+      h += '<div class="rj123-sous">Vie privée</div>' + p.people.slice(0, 4).map(function (t) {
+        return '<div class="rj123-titre rj123-people"><span>' + esc(t.media) + " · S" + t.s + " sem. " + t.w + "</span>" + esc(t.titre) + "</div>";
+      }).join("");
+    }
     /* Les médias, du plus favorable au plus hostile, en lignes compactes. */
     h += '<div class="rj123-sous">Ce que la presse pense de toi</div><div class="rj123-medias">' +
       medias().sort(function (a, b) { return b.sym - a.sym; }).map(function (m) {

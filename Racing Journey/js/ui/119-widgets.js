@@ -22,14 +22,17 @@
   var TAG = "[119-widgets]";
   var F1 = "Formule 1";
 
+  /* « Prochaine course » et « Rêves de carrière » ne sont plus proposés :
+     la course est à l'accueil et au calendrier, les rêves dans Pilote ›
+     Héritage ; ailleurs ils répétaient l'information. */
   var WIDGETS_PAR_ECRAN = {
-    "S-contracts": ["saison", "licence", "course"],   // le contrat et le budget y sont déjà
-    "S-patrimoine": ["contrat", "course"],
-    "S-lifestyle": ["budget", "saison", "course"],
-    "S-mailbox": ["course", "contrat", "saison"],
-    "S-media": ["saison", "course"],
-    "S-champ": ["course", "licence", "reves"],
-    "S-pilot": ["contrat", "reves", "licence"]
+    "S-contracts": ["saison", "licence"],   // le contrat et le budget y sont déjà
+    "S-patrimoine": ["contrat"],
+    "S-lifestyle": ["budget", "saison"],
+    "S-mailbox": ["contrat", "saison"],
+    "S-media": ["saison"],
+    "S-champ": ["licence"],
+    "S-pilot": ["contrat", "licence"]
   };
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }

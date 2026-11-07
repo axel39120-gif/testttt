@@ -245,10 +245,7 @@
    * ----------------------------------------------------------------------- */
   var FLAG = '#A78BFA';
   function sectionTitle(txt) {
-    return '<div style="margin:18px 16px 8px;display:flex;align-items:center;gap:8px">'
-      + '<span style="width:3px;height:13px;background:' + FLAG + ';border-radius:2px"></span>'
-      + '<span style="font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)">' + esc(txt) + '</span>'
-      + '</div>';
+    return '<div class="t-sec">' + esc(txt) + '</div>';   // titre de section commun (paysage.css)
   }
   function catBadge(cat) {
     return '<span style="flex-shrink:0;font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.04em;padding:2px 7px;border-radius:5px;background:rgba(167,139,250,.14);color:' + FLAG + ';border:1px solid rgba(167,139,250,.3)">' + esc(cat) + '</span>';

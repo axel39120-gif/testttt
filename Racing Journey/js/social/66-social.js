@@ -1102,7 +1102,7 @@
       '</div>' +
       enTete(ONGLET) +
       (estX ? composerX() : composerIG()) +
-      '<div class="rj66-titre">' + (estX ? "Fil" : "Publications") + '</div>' +
+      '<div class="t-sec rj66-titre">' + (estX ? "Fil" : "Publications") + '</div>' +
       (estX ? filX() : grilleIG()) +
       modal() +
     '</div>';
