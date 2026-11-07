@@ -247,17 +247,23 @@
   function habiller() {
     var liste = document.getElementById("mailbox-list");
     if (!liste || typeof _getMailThreads !== "function") return;
+    /* Couleur de l'expéditeur, reprise par l'habillage (paysage.css). */
+    var couleur = function (role) { return (window.MAIL_SENDERS && MAIL_SENDERS[role] && MAIL_SENDERS[role].color) || "#60A5FA"; };
+    liste.classList.toggle("rj124-fil", !!window._MAIL_OPEN_THREAD);
+    if (window._MAIL_OPEN_THREAD) liste.style.setProperty("--t", couleur(String(_MAIL_OPEN_THREAD).split("::")[0]));
     var cartes = [].slice.call(liste.querySelectorAll("[onclick^=\"openMailThread(\"]"));
     if (!cartes.length) return;
     var fils = {};
     _getMailThreads().forEach(function (t) {
       var p = t.messages.some(function (m) { return priorite(m) === "urgent"; }) ? "urgent" : priorite(t.lastMail);
-      fils[t.key] = { p: p, exp: t.messages.filter(expirable).map(function (m) { return EXPIRATION - age(m); }).sort()[0] };
+      fils[t.key] = { role: t.role, p: p, exp: t.messages.filter(expirable).map(function (m) { return EXPIRATION - age(m); }).sort()[0] };
     });
     cartes.forEach(function (carte) {
       var cle = (carte.getAttribute("onclick").match(/openMailThread\('(.*)'\)/) || [])[1];
       var f = fils[cle] || { p: "info" };
       carte.setAttribute("data-rj124", f.p);
+      carte.classList.add("rj124-carte");
+      carte.style.setProperty("--t", couleur(f.role));
       if (!carte.querySelector(".rj124-prio")) {
         var b = document.createElement("span");
         b.className = "rj124-prio rj124-" + f.p;

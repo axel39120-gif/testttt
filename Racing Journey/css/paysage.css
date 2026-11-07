@@ -247,16 +247,16 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
    le trait vertical gris des titres de styles.css (t-sec, apex-sec, sec-lbl,
    écran titre), ceux des rêves (114), des paramètres (02) et de
    l'entraînement (34). */
-:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .apex-splash-section-title) {
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .apex-splash-section-title, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre) {
   display: flex !important; align-items: center; gap: 9px;
   font: 800 11px/1 var(--font-display) !important; letter-spacing: .16em !important; text-transform: uppercase;
   color: #fff !important; opacity: 1 !important; padding: 14px 0 8px !important;
 }
-:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker)::before {
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre)::before {
   content: "" !important; flex: 0 0 auto; width: 17px !important; height: 9px !important; opacity: 1 !important;
   border-radius: 0 !important; background: repeating-linear-gradient(115deg, var(--red, #FF1801) 0 3px, transparent 3px 6px) !important;
 }
-:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker)::after {
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre)::after {
   content: "" !important; flex: 1; height: 1px !important;
   background: linear-gradient(90deg, rgba(255, 24, 1, .5), rgba(255, 255, 255, .07) 35%, transparent) !important;
 }
@@ -1023,3 +1023,55 @@ details > summary::marker { content: ""; }
 .rj124-prio { flex: 0 0 auto; align-self: flex-start; padding: 3px 7px; border-radius: 3px; font: 800 9px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; background: rgba(255, 255, 255, .07); color: #c8c8d0; }
 .rj124-urgent { background: rgba(239, 68, 68, .16); color: #F87171; }
 .rj124-personnel { background: rgba(236, 72, 153, .14); color: #F472B6; }
+
+/* =====================================================================
+ * Messages, entourage, presse, vie perso : la tuile de l'accueil.
+ * Même recette que les tuiles d'action (lueur de la couleur du sujet en
+ * haut à gauche, fond sombre, bordure teintée, reflet), mêmes titres de
+ * section à rayures. La couleur vient de --t (rôle de l'expéditeur, du
+ * contact, du média) ou de --teinte (entourage).
+ * =================================================================== */
+:is(.rj124-carte, .rj122-carte, .rj123-titre, .rj123-media, .rj125-moment, .rj122-fiche, .rj122-entete > div, #vp-content .rel-card) {
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t, var(--teinte, #FF1801)) 18%, transparent), transparent 60%),
+    linear-gradient(160deg, #18181d, #101014) !important;
+  border: 1px solid color-mix(in srgb, var(--t, var(--teinte, #FF1801)) 28%, rgba(255, 255, 255, .06)) !important;
+  border-radius: var(--r) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .35) !important;
+}
+.rj122-entete > div { --t: #FF1801; }
+.rj123-pos { --t: #4ADE80; }
+.rj123-neg { --t: #EF4444; }
+.rj123-titre:not(.rj123-pos):not(.rj123-neg) { --t: #94A3B8; }
+.rj125-moment { --t: #EC4899; }
+.rj125-moment.passe { --t: #64748B; opacity: .6; }
+:is(.rj124-carte, .rj122-carte):active { transform: scale(.98); border-color: var(--t, var(--teinte)) !important; }
+.rj122-fiche { border-top: 3px solid var(--teinte) !important; }
+
+/* Liste des conversations */
+#mailbox-list .rj124-carte { transition: transform .12s ease, border-color .15s ease; }
+
+/* Fil : bulles du jeu, pas d'une messagerie de téléphone. */
+#mailbox-list.rj124-fil [style*="#0A84FF"] {
+  background: radial-gradient(140% 160% at 0% 0%, color-mix(in srgb, var(--t) 16%, transparent), transparent 65%), linear-gradient(160deg, #1b1b21, #131317) !important;
+  border: 1px solid rgba(255, 255, 255, .08) !important; border-left: 3px solid var(--t) !important;
+  border-radius: 2px var(--r) var(--r) 2px !important; color: var(--text, #e8e8ec) !important;
+  font-size: 13.5px !important; box-shadow: inset 0 1px rgba(255, 255, 255, .05) !important;
+}
+#mailbox-list.rj124-fil [style*="#34D399 0%,#10B981"] {
+  background: linear-gradient(160deg, rgba(255, 24, 1, .2), rgba(255, 24, 1, .1)) !important;
+  border: 1px solid rgba(255, 24, 1, .45) !important; border-right: 3px solid var(--red, #FF1801) !important;
+  border-radius: var(--r) 2px 2px var(--r) !important; color: #fff !important; font-size: 13.5px !important; box-shadow: none !important;
+}
+#mailbox-list.rj124-fil button[onclick^="handleMailAction"] {
+  min-height: 40px; padding: 9px 16px !important; border-radius: var(--r) !important;
+  font: 800 11.5px/1.2 var(--font-display) !important; letter-spacing: .06em !important; text-transform: uppercase;
+  background: rgba(255, 255, 255, .04) !important; border: 1px solid rgba(255, 255, 255, .14) !important; color: #c8c8d0 !important;
+}
+#mailbox-list.rj124-fil button[onclick^="handleMailAction"][style*="52,211,153"] {
+  background: linear-gradient(160deg, rgba(255, 24, 1, .28), rgba(255, 24, 1, .14)) !important; border-color: rgba(255, 24, 1, .6) !important; color: #fff !important;
+}
+#mailbox-list.rj124-fil button[onclick^="handleMailAction"]:active { transform: scale(.97); }
+#mailbox-list.rj124-fil [style*="background:var(--bg2)"] { background: transparent !important; }
+.rj122-carte { font-family: var(--font-body); }
+#vp-content .rel-card-accent { display: none; }

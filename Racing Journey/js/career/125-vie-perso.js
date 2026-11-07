@@ -193,6 +193,11 @@
         (passe ? "Passé" : "À venir") + "</em></div>";
     }).join("") : '<div class="rj125-moment passe"><b>Rien de prévu cette saison.</b></div>');
     hote.insertBefore(bloc, hote.firstChild);
+    /* Les cartes de proches prennent la tuile de l'accueil, à leur couleur. */
+    [].forEach.call(hote.querySelectorAll(".rel-card"), function (c) {
+      var acc = c.querySelector(".rel-card-accent");
+      if (acc) c.style.setProperty("--t", acc.style.background || "#60A5FA");
+    });
   }
 
   /* ------------------------------------------------------ installation --- */
