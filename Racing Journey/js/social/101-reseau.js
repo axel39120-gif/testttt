@@ -140,6 +140,59 @@
   }
 
   /* ==================================================================
+   * 2 bis. DES PERSONNES, PAS DES FICHES
+   *
+   * Chaque contact a un trait de caractère (stable, tiré de son nom), une
+   * humeur (ses derniers échanges avec vous) et une mémoire : ce qu'il
+   * retient de vous, daté. Toute variation de relation passe par bouger(),
+   * qui applique le trait et laisse un souvenir.
+   * ================================================================== */
+  var TRAITS = {
+    loyal:      { lbl: "Loyal",      desc: "Ne t'en veut pas longtemps.",                 pos: 1.0, neg: 0.5 },
+    rancunier:  { lbl: "Rancunier",  desc: "N'oublie rien, surtout pas les affronts.",       pos: 0.9, neg: 1.6 },
+    exigeant:   { lbl: "Exigeant",   desc: "Difficile à satisfaire, prompt à juger.",        pos: 0.6, neg: 1.2 },
+    chaleureux: { lbl: "Chaleureux", desc: "Se rapproche vite de ceux qui le respectent.",   pos: 1.4, neg: 0.9 },
+    ambitieux:  { lbl: "Ambitieux",  desc: "Juge sur les résultats, dans un sens ou l'autre.", pos: 1.3, neg: 1.3 },
+    discret:    { lbl: "Discret",    desc: "Change rarement d'avis.",                        pos: 0.7, neg: 0.7 }
+  };
+  var NOMS_TRAITS = Object.keys(TRAITS);
+
+  function traitDe(c) {
+    if (!c) return TRAITS.discret;
+    if (!c.trait || !TRAITS[c.trait]) {
+      var h = 0, k = String(c.name || c.key || "");
+      for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+      c.trait = NOMS_TRAITS[h % NOMS_TRAITS.length];
+    }
+    return TRAITS[c.trait];
+  }
+
+  /* Variation de relation, pondérée par le trait, avec un souvenir. */
+  function bouger(c, delta, texte) {
+    if (!c || !delta) return 0;
+    var t = traitDe(c), d = delta * (delta > 0 ? t.pos : t.neg);
+    d = Math.round(d * 10) / 10;
+    c.relation = borne((c.relation || 50) + d, 0, 100);
+    if (texte) noter(c, texte, d);
+    return d;
+  }
+
+  function noter(c, texte, d) {
+    var G = G_();
+    c.memoire = c.memoire || [];
+    c.memoire.unshift({ s: G ? G.saison : 1, w: G ? G.semaine : 1, t: String(texte).slice(0, 90), d: d || 0 });
+    if (c.memoire.length > 8) c.memoire.length = 8;
+  }
+
+  /* L'humeur : ses trois derniers échanges avec vous. */
+  function humeur(c) {
+    var m = (c && c.memoire) || [], somme = 0;
+    m.slice(0, 3).forEach(function (x) { somme += x.d || 0; });
+    return somme >= 5 ? { lbl: "Ravi", c: "ravi" } : somme >= 1.5 ? { lbl: "Content", c: "content" }
+      : somme <= -5 ? { lbl: "Fâché", c: "fache" } : somme <= -1.5 ? { lbl: "Froid", c: "froid" } : { lbl: "Neutre", c: "neutre" };
+  }
+
+  /* ==================================================================
    * 3. INSCRIPTION DES CONTACTS
    *
    * Le réseau ne se remplissait que du staff de l'écurie. Tous ceux que
@@ -209,8 +262,11 @@
     else if (course.pos >= 15) d = -1;
 
     if (!d) return;
+    var lieu = course.circuit || course.nom || "la dernière course";
+    var texte = course.dnf || !course.pos ? "Ton abandon à " + lieu : course.pos === 1 ? "Ta victoire à " + lieu
+      : course.pos <= 3 ? "Ton podium à " + lieu : course.pos <= 6 ? "Ta bonne course à " + lieu : "Ta course difficile à " + lieu;
     parEquipe(equipe).forEach(function (c) {
-      c.relation = borne((c.relation || 50) + d, 0, 100);
+      bouger(c, d, texte);
       c.lastSeen = { saison: G.saison || 1, week: G.semaine || 1 };
     });
   }
@@ -229,13 +285,17 @@
     };
     var e = effets[ton] || effets.mesure;
 
-    if (journaliste) inscrireJournaliste(journaliste, e.presse);
+    var mots = { assure: "assurée", mesure: "mesurée", humble: "humble", provocateur: "provocatrice", evasif: "évasive" };
+    if (journaliste) {
+      var j = inscrireJournaliste(journaliste, 0);
+      if (j) bouger(j, e.presse, "Ta réponse " + (mots[ton] || "") + " en conférence de presse");
+    }
 
     var G = G_();
     if (G && e.staff) {
       var equipe = cible || G.currentTeam;
       parEquipe(equipe).forEach(function (c) {
-        c.relation = borne((c.relation || 50) + e.staff, 0, 100);
+        bouger(c, e.staff, "Tes mots en conférence de presse");
       });
     }
   }
@@ -397,10 +457,102 @@
       try {
         var G = G_();
         if (G && G.currentTeam) amorcerStaff(G.currentTeam);
+        fusionnerDoublons();
+        tous().forEach(traitDe);
       } catch (e) {}
       return r;
     } });
     window.syncNetworkFromSources._rj101 = true;
+    return true;
+  }
+
+  /* Le cœur inscrit le staff sous « team_<écurie>_<nom> », ce module sous
+     « paddock_<nom> » : la même personne apparaissait deux fois, l'une
+     rétrogradée en « Ancien contact ». Une personne garde son nom quand
+     elle change d'écurie : on fusionne par nom, en gardant la fiche au rôle
+     officiel, la meilleure relation et toute la mémoire. */
+  function fusionnerDoublons() {
+    var G = G_();
+    if (!G || !G._network) return 0;
+    var parNom = {}, n = 0;
+    Object.keys(G._network).forEach(function (cle) {
+      var c = G._network[cle];
+      if (!c || !c.name) return;
+      var nom = cleDe(c.name);
+      var deja = parNom[nom];
+      if (!deja) { parNom[nom] = cle; return; }
+      var a = G._network[deja], garder = a.role === "contact" && c.role !== "contact" ? cle : deja;
+      var jeter = garder === cle ? deja : cle, g = G._network[garder], j = G._network[jeter];
+      g.relation = Math.max(g.relation || 0, j.relation || 0);
+      g.interactions = (g.interactions || 0) + (j.interactions || 0);
+      g.memoire = (g.memoire || []).concat(j.memoire || []).slice(0, 8);
+      if (!g.trait && j.trait) g.trait = j.trait;
+      delete G._network[jeter];
+      parNom[nom] = garder;
+      n++;
+    });
+    return n;
+  }
+
+  /* ==================================================================
+   * 6 bis. LES MESSAGES VIENNENT DE QUELQU'UN
+   *
+   * Un message du « Team Principal » venait d'un rôle anonyme. Il vient
+   * désormais du team principal du réseau (de l'agent, du rival, du
+   * journaliste, du sponsor nommé) ; y répondre change la relation, selon
+   * le trait de la personne, et laisse un souvenir.
+   * ================================================================== */
+  function contactDuMail(m) {
+    var G = G_();
+    if (!G || !m) return null;
+    var nom = m.from && !/^(Team Principal|Presse|Rival|Sponsor|Agent|Anonyme)$/i.test(m.from) ? m.from : null;
+    switch (m.role) {
+      case "team_boss": case "team": return decideur(G.currentTeam);
+      case "journalist": case "press": return nom ? inscrireJournaliste({ prenom: nom.split(" ")[0], nom: nom.split(" ").slice(1).join(" "), media: null }, 0) : null;
+      case "rival": return nom ? inscrirePilote({ name: nom }, 0) : null;
+      case "sponsor": return nom ? inscrireSponsor(nom, 0) : null;
+      case "agent":
+        var a = G.agent && (G.agent.name || ((G.agent.firstName || "") + " " + (G.agent.lastName || "")).trim());
+        return inscrire("agent_" + cleDe(a || "agent"), { name: a || "Ton agent", role: "agent", team: null,
+          color: ROLES.agent.couleur, roleLabel: "Agent", icon: iconeDe("agent") }, 0);
+    }
+    return null;
+  }
+
+  function cleDuContact(c) {
+    var G = G_();
+    if (!G || !G._network || !c) return null;
+    var cles = Object.keys(G._network);
+    for (var i = 0; i < cles.length; i++) if (G._network[cles[i]] === c) return cles[i];
+    return null;
+  }
+
+  function brancherMessages() {
+    /* Toute personne qui entre au réseau, par quelque module que ce soit, a un trait. */
+    rjInscrire("recordNetworkInteraction", { id: "101-reseau:recordNetworkInteraction", apres: function (c) { traitDe(c); } });
+    if (typeof window.pushMail !== "function" || typeof window.handleMailAction !== "function") return false;
+    rjInscrire("pushMail", { id: "101-reseau:pushMail", remplace: function (args, suite) {
+      var boite = typeof getMailbox === "function" ? getMailbox() : [], avant = boite[0];
+      var r = suite();
+      try {
+        boite = typeof getMailbox === "function" ? getMailbox() : [];
+        var m = boite[0] !== avant ? boite[0] : null;   // un message refusé (doublon) n'est pas rattaché
+        var c = m && !m.contactKey ? contactDuMail(m) : null, cle = cleDuContact(c);
+        if (cle) { m.contactKey = cle; m.contactName = c.name; }
+      } catch (e) { console.warn(TAG, "message :", e && e.message); }
+      return r;
+    } });
+    rjInscrire("handleMailAction", { id: "101-reseau:handleMailAction", apres: function (res, args) {
+      try {
+        var G = G_(), boite = typeof getMailbox === "function" ? getMailbox() : [];
+        var m = boite.filter(function (x) { return x.id === args[0]; })[0];
+        var c = m && m.contactKey && G._network && G._network[m.contactKey];
+        var a = m && m.actions && m.actions[args[1]];
+        if (!c || !a) return;
+        var d = a.kind === "accept" ? 3 : a.kind === "refuse" ? -2 : a.kind === "dismiss" ? -3 : 1;
+        bouger(c, d, (a.label || "Ta réponse") + " — « " + (m.subject || "") + " »");
+      } catch (e) { console.warn(TAG, "réponse :", e && e.message); }
+    } });
     return true;
   }
 
@@ -429,17 +581,18 @@
     /* --- résultats : après chaque course --------------------------- */
     if (Array.isArray(window.RACE_POST_HOOKS) &&
         !window.RACE_POST_HOOKS.some(function (h) { return h && h._rj101; })) {
-      var hook = function () {
+      /* runRacePostHooks appelle h.run(e) : une fonction nue y plantait à
+         chaque course, en silence — ni les résultats ni les rencontres ne
+         touchaient le réseau. */
+      window.RACE_POST_HOOKS.push({ id: "101-reseau", _rj101: true, run: function () {
         try {
           var G = G_();
           var c = (G && G.races) ? G.races[G.races.length - 1] : null;
           apresCourse(c);
           rencontresDeCourse(c);
           amorcerContacts();
-        } catch (e) {}
-      };
-      hook._rj101 = true;
-      window.RACE_POST_HOOKS.push(hook);
+        } catch (e) { console.warn(TAG, "après course :", e && e.message); }
+      } });
       pose++;
     }
 
@@ -566,9 +719,11 @@
     retenus.slice(0, 2).forEach(function (x) {
       var cle = "pilote_" + cleDe(x.r.name);
       var existe = G._network && G._network[cle];
-      var e = inscrirePilote(x.r, x.delta);
+      var e = inscrirePilote(x.r, 0);
       /* Une première rencontre ne fait pas un contact : on démarre bas. */
       if (e && !existe) e.relation = 35 + Math.round(Math.random() * 8);
+      var lieu = course.circuit || course.nom || "la course";
+      if (e) bouger(e, x.delta, (x.delta >= 4 ? "Podium partagé à " : "Duel à l'arrivée à ") + lieu);
     });
   }
 
@@ -605,7 +760,10 @@
         brancherPersistanceStaff();
         brancherNormalisation();
         brancherAmorcage();
+        brancherMessages();
         amorcerContacts();
+        fusionnerDoublons();
+        tous().forEach(traitDe);
         console.log(TAG, "réseau actif — " + tous().length + " contact(s)");
         return;
       }
@@ -623,10 +781,15 @@
       remise: remise, veto: veto, ajusterOffres: ajusterOffres,
       offreSpontanee: offreSpontanee, porteDeSortie: porteDeSortie,
       amorcerStaff: amorcerStaff, rencontres: rencontresDeCourse,
+      TRAITS: TRAITS, trait: traitDe, bouger: bouger, noter: noter, humeur: humeur,
+      fusionner: fusionnerDoublons, contactDuMail: contactDuMail,
       SEUILS: { appui: SEUIL_APPUI, spontane: SEUIL_SPONTANE, veto: SEUIL_VETO }
     };
     window._rj101Uninstall = function () {
       Object.keys(_orig).forEach(function (k) { rjDesinscrire(["101-reseau:"], k); });
+      rjDesinscrire(["101-reseau:"], "pushMail");
+      rjDesinscrire(["101-reseau:"], "handleMailAction");
+      rjDesinscrire(["101-reseau:"], "recordNetworkInteraction");
       if (Array.isArray(window.RACE_POST_HOOKS)) {
         window.RACE_POST_HOOKS = window.RACE_POST_HOOKS.filter(function (h) { return !(h && h._rj101); });
       }

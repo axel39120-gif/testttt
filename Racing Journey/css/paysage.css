@@ -932,3 +932,66 @@ select:active { transform: scale(.98); border-color: var(--red, #FF1801) !import
 details > summary { list-style: none; -webkit-tap-highlight-color: transparent; }
 details > summary::-webkit-details-marker { display: none; }
 details > summary::marker { content: ""; }
+
+/* =====================================================================
+ * Entourage (122) : cercles, cartes de personnes, fiche en panneau.
+ * =================================================================== */
+.rj122-entete { display: flex; gap: 8px; margin: 12px 14px 4px; }
+.rj122-entete > div { flex: 1; padding: 10px; text-align: center; border-radius: var(--r); background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08); }
+.rj122-entete b { display: block; font: 900 20px/1 var(--font-display); color: #fff; }
+.rj122-entete small { display: block; margin-top: 4px; font: 700 9.5px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj122-vide { margin: 16px 14px; padding: 22px 16px; text-align: center; color: var(--muted, #80808a); font-size: 12.5px; border: 1px dashed rgba(255, 255, 255, .12); border-radius: var(--r); }
+.rj122-groupe { margin: 14px 14px 0; }
+.rj122-groupe-titre { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font: 800 11px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj122-groupe-titre span { padding: 2px 6px; border-radius: 3px; background: rgba(255, 255, 255, .07); color: #fff; letter-spacing: 0; }
+.rj122-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px; }
+.rj122-carte {
+  display: grid; grid-template-columns: 36px 1fr auto; grid-template-areas: "a id h" "a rel rel"; align-items: center; gap: 4px 10px;
+  width: 100%; padding: 9px 11px; text-align: left; cursor: pointer; color: var(--text, #e8e8ec);
+  border: 1px solid rgba(255, 255, 255, .08); border-left: 3px solid var(--teinte); border-radius: var(--r); background: rgba(255, 255, 255, .035);
+}
+.rj122-carte:active { transform: scale(.98); background: rgba(255, 255, 255, .06); }
+.rj122-avatar { grid-area: a; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; font: 900 13px/1 var(--font-display); color: #fff; background: color-mix(in srgb, var(--teinte) 35%, #16161b); border: 1px solid var(--teinte); }
+.rj122-id { grid-area: id; min-width: 0; }
+.rj122-id b, .rj122-fiche-tete b { display: block; font: 800 13.5px/1.2 var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rj122-id small, .rj122-fiche-tete small { display: block; font-size: 11px; color: var(--muted, #80808a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rj122-humeur { grid-area: h; padding: 3px 7px; border-radius: 3px; font: 800 9.5px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; background: rgba(255, 255, 255, .07); color: #c8c8d0; }
+.rj122-h-ravi, .rj122-h-content { background: rgba(74, 222, 128, .14); color: #4ADE80; }
+.rj122-h-froid { background: rgba(251, 146, 60, .14); color: #FB923C; }
+.rj122-h-fache { background: rgba(239, 68, 68, .16); color: #F87171; }
+.rj122-rel { grid-area: rel; display: flex; align-items: center; gap: 8px; flex: 1; }
+.rj122-piste { flex: 1; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--coul) var(--rel), rgba(255, 255, 255, .08) var(--rel)); }
+.rj122-rel em { margin-left: auto; font: 900 12px/1 var(--font-display); font-style: normal; color: #fff; }
+
+.rj122-voile { position: fixed; inset: 0; z-index: 100001; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0); transition: background .16s ease; }
+.rj122-voile.on { background: rgba(0, 0, 0, .6); }
+.rj122-fiche {
+  width: min(460px, calc(100% - 24px)); max-height: 86%; overflow-y: auto; scrollbar-width: none; margin-bottom: calc(8px + var(--sb, 0px));
+  padding: 14px 16px 16px; border-radius: calc(var(--r) * 2); border-top: 3px solid var(--teinte);
+  background: linear-gradient(180deg, #1a1a20, #121216); box-shadow: 0 -10px 40px rgba(0, 0, 0, .5);
+  transform: translateY(110%); transition: transform .2s cubic-bezier(.2, .8, .2, 1); color: var(--text, #e8e8ec);
+}
+.rj122-voile.on .rj122-fiche { transform: none; }
+.rj122-fiche-tete { display: flex; align-items: center; gap: 12px; }
+.rj122-fiche-tete > div { flex: 1; min-width: 0; }
+.rj122-fiche-tete .rj122-avatar { width: 46px; height: 46px; font-size: 16px; }
+.rj122-x { width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .07); color: #fff; font-size: 20px; cursor: pointer; }
+.rj122-ligne { display: flex; align-items: center; gap: 10px; margin-top: 14px; font: 800 10px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj122-peut { margin-top: 12px; font-size: 12.5px; color: #c8c8d0; }
+.rj122-trait { margin-top: 8px; padding: 9px 11px; border-radius: var(--r); background: rgba(255, 255, 255, .04); font-size: 12.5px; }
+.rj122-trait b { color: var(--teinte); }
+.rj122-sous { margin: 14px 0 6px; font: 800 10.5px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #80808a); }
+.rj122-memoire { list-style: none; margin: 0; padding: 0; }
+.rj122-memoire li { padding: 6px 0 6px 10px; border-left: 2px solid rgba(255, 255, 255, .12); font-size: 12.5px; }
+.rj122-memoire li.plus { border-left-color: #4ADE80; }
+.rj122-memoire li.moins { border-left-color: #EF4444; }
+.rj122-memoire li span { display: block; font-size: 10px; color: var(--muted, #80808a); }
+.rj122-memoire li.rien { color: var(--muted, #80808a); font-style: italic; }
+.rj122-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.rj122-actions button {
+  flex: 1 1 160px; min-height: 44px; padding: 8px 12px; border: 1px solid rgba(255, 255, 255, .12); border-radius: var(--r); cursor: pointer;
+  background: rgba(255, 24, 1, .12); color: #fff; font: 800 12px/1.2 var(--font-display); letter-spacing: .04em; text-transform: uppercase;
+}
+.rj122-actions button small { display: block; margin-top: 3px; font: 600 10px/1 var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted, #80808a); }
+.rj122-actions button:disabled { opacity: .35; cursor: default; }
+.rj122-note { margin-top: 8px; font-size: 11.5px; color: var(--muted, #80808a); text-align: center; }

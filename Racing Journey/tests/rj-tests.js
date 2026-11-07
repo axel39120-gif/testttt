@@ -2133,6 +2133,91 @@ async function suiteReglages() {
 }
 
 /* ==================================================================== *
+ * 8 quindecies. ENTOURAGE : DES PERSONNES, PAS UN RÉPERTOIRE (étape 10)
+ *
+ * Une personne n'apparaît qu'une fois au réseau ; les courses font bouger
+ * les relations et y font entrer les pilotes croisés ; chaque message vient
+ * d'un contact, et y répondre change la relation ; chaque contact a un
+ * trait de caractère, une humeur et la mémoire de vos échanges ; l'écran
+ * Entourage les présente, avec une fiche et des actions.
+ * ==================================================================== */
+async function suiteEntourage() {
+  S.suite("Entourage");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+
+    /* Doublons : la même personne sous deux clés n'en fait qu'une. */
+    const doublons = await page.evaluate(() => {
+      G.currentTeam = G.currentTeam || "Williams";
+      syncNetworkFromSources();
+      const net = Object.values(G._network || {});
+      const tp = net.find(c => c.role === "tp" && c.team === G.currentTeam);
+      if (tp) G._network["team_" + G.currentTeam + "_double"] = Object.assign({}, tp, { key: "team_" + G.currentTeam + "_double", relation: 77, roleLabel: "Ancien contact", role: "contact" });
+      syncNetworkFromSources();
+      const noms = Object.values(G._network).map(c => c.name);
+      const repetes = noms.filter((n, i) => noms.indexOf(n) !== i);
+      const garde = tp && Object.values(G._network).find(c => c.name === tp.name);
+      return { tp: !!tp, repetes, relation: garde && Math.round(garde.relation), role: garde && garde.role };
+    });
+    S.verifier("une personne n'apparaît qu'une fois au réseau", doublons.tp && doublons.repetes.length === 0, JSON.stringify(doublons));
+    S.verifier("la fusion garde le rôle officiel et la meilleure relation", doublons.role === "tp" && doublons.relation >= 77, JSON.stringify(doublons));
+
+    /* Courses : le réseau bouge et s'enrichit. */
+    const avant = await page.evaluate(() => ({ pilotes: Object.values(G._network).filter(c => c.role === "pilote").length,
+      memoire: Object.values(G._network).reduce((s, c) => s + ((c.memoire || []).length), 0) }));
+    for (let k = 0; k < 4; k++) await S.courirUneCourse(page, { categorie: "Formule 1", reinitialiserRivaux: false, grille: 3 + k });
+    const apres = await page.evaluate(() => ({ pilotes: Object.values(G._network).filter(c => c.role === "pilote").length,
+      memoire: Object.values(G._network).reduce((s, c) => s + ((c.memoire || []).length), 0) }));
+    S.verifier("les courses font entrer des pilotes au réseau", apres.pilotes > avant.pilotes, avant.pilotes + " → " + apres.pilotes);
+    S.verifier("les courses laissent des souvenirs aux contacts", apres.memoire > avant.memoire, avant.memoire + " → " + apres.memoire);
+
+    /* Messages : chaque message vient d'un contact, la réponse compte. */
+    const mail = await page.evaluate(() => {
+      pushMail({ from: "Team Principal", role: "team_boss", subject: "Un service à te demander", body: "Peux-tu venir au simulateur ?",
+        actions: [{ label: "J'y vais", kind: "accept" }, { label: "Pas cette semaine", kind: "refuse" }] });
+      const m = getMailbox()[0], c = m.contactKey && G._network[m.contactKey];
+      const rel0 = c ? c.relation : null;
+      handleMailAction(m.id, 0);
+      return { cle: m.contactKey || null, role: c && c.role, avant: rel0, apres: c && c.relation, souvenir: c && (c.memoire || [])[0] && c.memoire[0].t };
+    });
+    S.verifier("un message du team principal vient du team principal du réseau", mail.cle && mail.role === "tp", JSON.stringify(mail));
+    S.verifier("accepter un service rapproche", mail.apres > mail.avant && /simulateur|service|J'y vais/i.test(mail.souvenir || ""), JSON.stringify(mail));
+
+    /* Traits : chacun a le sien, et il pèse. */
+    const traits = await page.evaluate(() => {
+      const net = Object.values(G._network);
+      const sans = net.filter(c => !c.trait).length;
+      const a = { relation: 50, trait: "rancunier" }, b = { relation: 50, trait: "loyal" };
+      _rj101.bouger(a, -4, "test"); _rj101.bouger(b, -4, "test");
+      return { sans, rancunier: a.relation, loyal: b.relation, humeur: _rj101.humeur(a).lbl };
+    });
+    S.verifier("chaque contact a un trait de caractère", traits.sans === 0, traits.sans + " sans trait");
+    S.verifier("un rancunier encaisse plus mal qu'un loyal", traits.rancunier < traits.loyal, JSON.stringify(traits));
+
+    /* Écran Entourage : groupes, fiche, action. */
+    await page.evaluate(() => { navTo("S-contracts", null); ctab("reseau"); });
+    await page.waitForTimeout(300);
+    const ecran = await page.evaluate(() => ({ groupes: [...document.querySelectorAll(".rj122-groupe-titre")].map(e => e.textContent.trim()),
+      cartes: document.querySelectorAll(".rj122-carte").length }));
+    S.verifier("l'écran Entourage groupe les personnes", ecran.groupes.length >= 3 && ecran.cartes >= 4, JSON.stringify(ecran));
+    await page.click(".rj122-carte[data-cle]");
+    await page.waitForTimeout(300);
+    const fiche = await page.evaluate(() => {
+      const f = document.querySelector(".rj122-fiche"), cle = f && f.getAttribute("data-cle"), c = cle && G._network[cle];
+      G.pa = Math.max(G.pa || 0, 2);
+      return { ouverte: !!f, trait: !!(f && f.querySelector(".rj122-trait")), cle, rel: c && c.relation, pa: G.pa };
+    });
+    await page.click(".rj122-fiche [data-act='nouvelles']");
+    await page.waitForTimeout(200);
+    const action = await page.evaluate(cle => ({ rel: G._network[cle].relation, pa: G.pa, memoire: (G._network[cle].memoire || [])[0] }), fiche.cle);
+    S.verifier("la fiche montre la personne et son trait", fiche.ouverte && fiche.trait, JSON.stringify(fiche));
+    S.verifier("prendre des nouvelles coûte 1 PA et rapproche", action.pa === fiche.pa - 1 && action.rel >= fiche.rel, JSON.stringify({ avant: fiche, apres: action }));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
  * 8 decies. L'ARRIVÉE RESPECTE LA COURSE
  *
  * Défaut constaté en jeu : P17 au dernier tour, P1 à l'arrivée. Le temps
@@ -2391,6 +2476,7 @@ const SUITES = {
   chronometre: suiteChronometre,
   ecrans: suiteEcrans,
   reglages: suiteReglages,
+  entourage: suiteEntourage,
   decisions: suiteDecisions
 };
 

@@ -524,6 +524,36 @@ Suite `ecrans` : application figée, liste ouverte en panneau titré, choix
 appliqué avec son onchange. Suite `equite` : le joueur moyen est mesuré sans
 les leviers mérités de la sauvegarde de test (forme, ingénieur).
 
+## Étape 10 (l'entourage : des personnes, pas un répertoire) — v235
+
+- **Réseau réparé** (`js/social/101-reseau.js`) : le crochet d'après-course
+  était poussé comme fonction nue dans `RACE_POST_HOOKS`, qui appelle
+  `h.run(e)` — il plantait à chaque course, en silence : ni les résultats ni
+  les rencontres en piste ne touchaient le réseau. Il est désormais
+  `{ id, run }`. Le staff, inscrit sous deux clés (`team_…` par le cœur,
+  `paddock_…` par 101), est fusionné par nom à chaque synchronisation : la
+  fiche au rôle officiel, la meilleure relation, toute la mémoire.
+- **Des personnes** : chaque contact a un trait de caractère (loyal,
+  rancunier, exigeant, chaleureux, ambitieux, discret ; stable, tiré de son
+  nom) qui pondère ce qu'il gagne ou perd, une mémoire datée de vos échanges
+  (victoire, abandon, conférence de presse, réponse à un message…) et une
+  humeur tirée de ses trois derniers souvenirs. Toute variation passe par
+  `_rj101.bouger(c, delta, texte)`.
+- **Les messages viennent de quelqu'un** : un message du team principal est
+  rattaché au team principal du réseau (de même l'agent, un rival, un
+  journaliste ou un sponsor nommés, `contactKey` sur le message) ; accepter
+  rapproche, refuser ou ignorer éloigne, selon le trait, avec un souvenir.
+- **Écran Entourage** (`js/social/122-entourage.js`, onglet Contrats ›
+  Réseau) : les personnes par cercle (ton écurie, agent et partenaires,
+  presse, grille, paddock), une carte avec relation et humeur ; la fiche dit
+  ce que la personne peut pour toi, son trait, ce qu'elle retient de toi, et
+  propose « prendre des nouvelles » ou « demander conseil » (1 PA, une fois
+  par semaine et par personne ; conseil dès 60 de relation).
+
+Suite `entourage` : pas de doublon et fusion fidèle, pilotes et souvenirs
+après des courses, message rattaché et réponse qui compte, traits pour tous
+et qui pèsent, écran groupé, fiche, action à 1 PA.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
