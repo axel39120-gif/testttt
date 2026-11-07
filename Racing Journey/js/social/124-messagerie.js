@@ -17,6 +17,9 @@
  *     débriefe.
  *  5. Écrire : depuis la fiche d'un contact (122), on lui écrit sur un sujet
  *     propre à son rôle ; il répond la semaine suivante.
+ *  7. Volume : délai entre deux messages d'un même expéditeur secondaire,
+ *     pas de redite d'un sujet avant six mois, boîte pleine qui garde les
+ *     décisions en attente.
  *  6. Pas de faux choix : un seul bouton sans effet (« Compris ») fait une
  *     info ; un seul bouton à petit effet s'applique à la réception.
  *
@@ -78,6 +81,39 @@
     if (e && !EFFETS_AUTO[e.type]) return;
     if (e) { try { applyMailEffect(e); } catch (err) { console.warn(TAG, "effet :", err && err.message); } }
     o.actions = null;
+  }
+
+  /* ------------------------------------------------- volume et redites --- */
+  /* Mesuré sur 8 manches : 40 messages, la boîte pleine qui efface les plus
+     anciens, et les mêmes sollicitations deux fois (« Alors, on se couche ? »).
+     Les expéditeurs secondaires ont un délai entre deux messages, un même
+     sujet ne revient pas avant six mois de jeu, et une boîte pleine efface
+     d'abord les infos lues, jamais une décision en attente. */
+  var DELAI = { fans: 3, promoter: 4, rival: 3, press: 2, journalist: 2, palier: 4 };
+  var REDITE = 24, BOITE = 38;
+  function semAbs() { return (G.saison || 1) * 48 + (G.semaine || 1); }
+  function famille(o) {
+    if (/^(Re :|Interview d'après-course)/.test(o.subject || "")) return null;
+    if (o.role === "agent" && /\(\d+\/100\)\s*$/.test(o.subject || "")) return "palier";
+    return DELAI[o.role] ? o.role : null;
+  }
+  function deTrop(o) {
+    var fam = o && famille(o);
+    if (!fam) return false;
+    var v = etat().vol || (etat().vol = { roles: {}, sujets: {} }), now = semAbs();
+    var cle = o.role + "|" + o.subject;
+    if (v.sujets[cle] != null && now - v.sujets[cle] < REDITE) return true;
+    if (v.roles[fam] != null && now - v.roles[fam] < DELAI[fam]) return true;
+    v.sujets[cle] = now; v.roles[fam] = now;
+    return false;
+  }
+  function faireDeLaPlace() {
+    var b = getMailbox();
+    for (var passe = 0; passe < 2 && b.length > BOITE; passe++) {
+      for (var i = b.length - 1; i >= 0 && b.length > BOITE; i--) {
+        if (priorite(b[i]) !== "urgent" && (passe || b[i].read)) b.splice(i, 1);
+      }
+    }
   }
 
   /* -------------------------------------------------- envoi d'un contact --- */
@@ -192,7 +228,12 @@
     var ing = R().tous().filter(function (c) { return c.role === "ing_course" && c.team === G.currentTeam; })[0];
     if (!ing) return null;
     var cle = Object.keys(G._network).filter(function (k) { return G._network[k] === ing; })[0];
-    var lieu = r.circuit || r.nom || "la course", gain = (r.qualiPos || 0) - (r.pos || 0), corps;
+    var lieu = r.circuit || r.nom || "la course", gain = r.qualiPos ? r.qualiPos - (r.pos || 0) : 0, corps;
+    /* Un débrief par course doublait le courrier : l'ingénieur n'écrit
+       qu'après une course qui compte (podium, abandon, trois places
+       gagnées ou perdues). Sans place de départ connue, pas de comparaison. */
+    var marquante = !r.pos || r.dnf || r.pos <= 3 || Math.abs(gain) >= 3;
+    if (!marquante) return null;
     if (!r.pos || r.dnf) corps = "Course terminée trop tôt à " + lieu + ". On démonte tout pour comprendre, je te tiens au courant.";
     else corps = "P" + r.pos + " à " + lieu + (r.qualiPos ? ", parti P" + r.qualiPos : "") + ". " +
       (gain > 2 ? "Belle remontée : ton rythme en course est vraiment bon." : gain < -2 ? "On a perdu des places en course, on regarde la gestion des pneus." : "Course propre, sans surprise.") +
@@ -255,7 +296,12 @@
       etat().attente.push({ cle: m.contactKey, ticks: 1, type: "suite", objet: m.subject || "ton message", kind: a.kind });
     } });
     /* Plus intérieur que 62 (-5100) : un message que 62 bloque comme doublon n'applique pas son effet. */
-    rjInscrire("pushMail", { id: "124-messagerie:pushMail", ordre: 0, remplace: function (args, suite) { sansFauxChoix(args[0]); return suite(); } });
+    rjInscrire("pushMail", { id: "124-messagerie:pushMail", ordre: 0, remplace: function (args, suite) {
+      if (deTrop(args[0])) return null;
+      faireDeLaPlace();
+      sansFauxChoix(args[0]);
+      return suite();
+    } });
     rjInscrire("renderMailbox", { id: "124-messagerie:renderMailbox", apres: function () { habiller(); } });
     if (typeof window._rj64Champs === "function") window._rj64Champs("_rj124");
     return true;
@@ -268,7 +314,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 
-  window._rj124 = { sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
+  window._rj124 = { deTrop: deTrop, sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
   window._rj124Uninstall = function () {
     window.WEEKLY_TICK_HOOKS = (window.WEEKLY_TICK_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });
     window.RACE_POST_HOOKS = (window.RACE_POST_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });

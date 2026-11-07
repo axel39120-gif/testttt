@@ -2353,6 +2353,32 @@ async function suiteMessagerie() {
     S.verifier("un seul bouton à petit effet s'applique à la réception", faux.soutien === 0 && faux.bonheur === 2, JSON.stringify(faux));
     S.verifier("les vrais choix, drapeaux et liens restent", faux.vrai === 2 && faux.drapeau === 1 && faux.lien === 1, JSON.stringify(faux));
 
+    /* Volume : une seule sollicitation par expéditeur secondaire et par période. */
+    const volume = await page.evaluate(() => {
+      G.semaine += 4;
+      const n0 = getMailbox().length;
+      for (let k = 0; k < 3; k++) pushMail({ from: "Fan " + k, role: "fans", subject: "Cadeau de fan " + k, body: "!", actions: [{ label: "Merci", kind: "accept", effect: { type: "happiness", data: { delta: 1 } } }, { label: "Non", kind: "refuse" }] });
+      const fans = getMailbox().length - n0;
+      pushMail({ from: "Rival", role: "rival", subject: "Alors, on se couche ?", body: "?", actions: [{ label: "Ignorer", kind: "dismiss" }, { label: "Répondre", kind: "reply" }] });
+      const r1 = getMailbox()[0].subject;
+      G.semaine += 6;
+      const n1 = getMailbox().length;
+      pushMail({ from: "Rival", role: "rival", subject: "Alors, on se couche ?", body: "?", actions: [{ label: "Ignorer", kind: "dismiss" }, { label: "Répondre", kind: "reply" }] });
+      return { fans, rival: r1, repete: getMailbox().length - n1 };
+    });
+    S.verifier("une seule sollicitation de fans par période", volume.fans === 1, JSON.stringify(volume));
+    S.verifier("un même message ne revient pas dans la saison", volume.rival === "Alors, on se couche ?" && volume.repete === 0, JSON.stringify(volume));
+
+    /* La boîte pleine efface d'abord les infos lues, jamais une décision en attente. */
+    const pleine = await page.evaluate(() => {
+      const b = getMailbox(); b.length = 0;
+      pushMail({ from: "Sponsor X", role: "sponsor", subject: "Contrat à signer", body: "?", actions: [{ label: "Signer", kind: "accept", effect: { type: "money", data: { delta: 1000 } } }, { label: "Non", kind: "refuse" }] });
+      const decision = getMailbox()[0].id;
+      for (let k = 0; k < 45; k++) { pushMail({ from: "Équipe", role: "team", subject: "Note " + k, body: "info " + k }); getMailbox()[0].read = true; }
+      return { garde: getMailbox().some(m => m.id === decision), taille: getMailbox().length };
+    });
+    S.verifier("une boîte pleine garde les décisions en attente", pleine.garde && pleine.taille <= 40, JSON.stringify(pleine));
+
     /* Expiration : trois semaines sans réponse. */
     const exp = await page.evaluate(() => {
       const envoyer = (o) => { pushMail(o); return getMailbox()[0]; };
@@ -2381,16 +2407,20 @@ async function suiteMessagerie() {
     });
     S.verifier("répondre amène la réponse du contact la semaine suivante, sans choix", conv.immediat === 0 && conv.suite && conv.sansChoix && /simulateur/i.test(conv.objet + conv.corps), JSON.stringify(conv));
 
-    /* Une course : le débrief de l'ingénieur, sans choix. */
-    const n0 = await page.evaluate(() => getMailbox().map(m => m.id));
+    /* Le débrief de l'ingénieur, sans choix, après une course qui compte. */
     await S.courirUneCourse(page, { categorie: "Formule 1", reinitialiserRivaux: false, grille: 4 });
-    const debrief = await page.evaluate((ids) => {
-      const neufs = getMailbox().filter(m => ids.indexOf(m.id) < 0), c = G.races[G.races.length - 1];
-      const d = neufs.find(m => m.rj124 === "debrief");
-      return { neufs: neufs.length, debrief: !!d, sansChoix: d && !(d.actions && d.actions.length), contact: d && G._network[d.contactKey] && G._network[d.contactKey].role,
-        circuit: d && (d.subject + d.body).indexOf(c.circuit || "") >= 0 };
-    }, n0);
-    S.verifier("après une course, l'ingénieur débriefe sans rien demander", debrief.debrief && debrief.sansChoix && debrief.contact === "ing_course" && debrief.circuit, JSON.stringify(debrief));
+    const debrief = await page.evaluate(() => {
+      const course = G.races[G.races.length - 1];
+      const n0 = getMailbox().length;
+      Object.assign(course, { pos: 2, qualiPos: 9, circuit: "Monza", dnf: false });
+      const d = _rj124.debrief();
+      Object.assign(course, { pos: 8, qualiPos: 8, circuit: "Spa" });
+      const banal = _rj124.debrief();
+      return { debrief: !!d, sansChoix: d && !(d.actions && d.actions.length), contact: d && G._network[d.contactKey] && G._network[d.contactKey].role,
+        circuit: d && /Monza/.test(d.subject + d.body), remontee: d && /remontée/i.test(d.body), banal: !!banal };
+    });
+    S.verifier("après une course qui compte, l'ingénieur débriefe sans rien demander", debrief.debrief && debrief.sansChoix && debrief.contact === "ing_course" && debrief.circuit && debrief.remontee, JSON.stringify(debrief));
+    S.verifier("pas de débrief après une course sans histoire", !debrief.banal, JSON.stringify(debrief));
 
     /* Écrire à un contact depuis sa fiche. */
     await page.evaluate(() => { navTo("S-contracts", null); ctab("reseau"); });
@@ -2424,6 +2454,83 @@ async function suiteMessagerie() {
         filtre: visibles.every(c => c.getAttribute("data-rj124") === "personnel"), visibles: visibles.length };
     });
     S.verifier("la boîte montre la priorité de chaque conversation et se filtre", boite.filtres >= 4 && boite.badges === boite.cartes && boite.cartes >= 3 && boite.filtre, JSON.stringify(boite));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* ==================================================================== *
+ * 8 octodecies. LA VIE PERSO, FAITE DE MOMENTS (étape 13)
+ *
+ * Les proches ne s'éloignent plus d'un cran chaque semaine : seulement
+ * après des semaines sans nouvelles, et jamais sous un plancher. La saison
+ * apporte des moments — anniversaire, mariage d'un ami, tes parents au
+ * Grand Prix de ton pays, une rencontre — où ta décision pèse sur tes
+ * proches, ton bonheur et ton mental ; et les proches écrivent d'eux-mêmes
+ * après une course marquante.
+ * ==================================================================== */
+async function suiteViePerso() {
+  S.suite("Vie perso");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+
+    /* Plus d'érosion fixe. */
+    const erosion = await page.evaluate(() => {
+      const R = getRelations();
+      R.friends.closeness = 55; R.friends.lastContact = G.semaine = 2; R.parents.closeness = 65; R.parents.lastContact = 2;
+      for (let k = 0; k < 16; k++) { G.semaine++; runWeeklyTicks(1); }
+      return { amis: R.friends.closeness, parents: R.parents.closeness };
+    });
+    S.verifier("seize semaines sans nouvelles n'effondrent plus les amitiés", erosion.amis >= 40 && erosion.parents >= 55, JSON.stringify(erosion));
+
+    /* Une saison de moments. */
+    const plan = await page.evaluate(() => {
+      G.cat = "Formule 1"; G.pilot.nat = "IT"; G.relations.partner = null; G.age = 20;
+      window.CAL_RACES = []; buildCalendar();
+      const p = _rj125.planifier(true);
+      return p.map(m => m.type + "@" + m.w + (m.circuit ? ":" + m.circuit : ""));
+    });
+    S.verifier("la saison prévoit anniversaire, Grand Prix à domicile et rencontre", ["anniversaire", "gp_maison", "rencontre"].every(t => plan.some(x => x.indexOf(t) === 0)) && plan.some(x => /gp_maison@\d+:(Imola|Monza)/.test(x)), JSON.stringify(plan));
+
+    /* Un moment arrive, et y être compte. */
+    const anniv = await page.evaluate(() => {
+      const m = G._rj125.moments.find(x => x.type === "anniversaire");
+      G.semaine = m.w; G.pa = 3; G.happiness = 50; const R = getRelations(); R.parents.closeness = 50;
+      runWeeklyTicks(1);
+      const mail = getMailbox().find(x => x.rj125 === "anniversaire");
+      if (!mail) return { mail: false };
+      handleMailAction(mail.id, 0);
+      return { mail: true, role: mail.role, choix: mail.actions.length, parents: R.parents.closeness, bonheur: G.happiness, pa: G.pa };
+    });
+    S.verifier("l'anniversaire arrive par message, avec un vrai choix", anniv.mail && anniv.role === "family" && anniv.choix >= 2, JSON.stringify(anniv));
+    S.verifier("rentrer pour l'anniversaire rapproche et rend heureux", anniv.parents > 50 && anniv.bonheur > 50 && anniv.pa === 2, JSON.stringify(anniv));
+
+    /* La rencontre peut faire naître une relation. */
+    const rencontre = await page.evaluate(() => {
+      const m = G._rj125.moments.find(x => x.type === "rencontre");
+      G.semaine = m.w; runWeeklyTicks(1);
+      const mail = getMailbox().find(x => x.rj125 === "rencontre");
+      if (!mail) return { mail: false };
+      handleMailAction(mail.id, 0);
+      return { mail: true, partenaire: !!(G.relations.partner && G.relations.partner.name) };
+    });
+    S.verifier("une rencontre acceptée fait naître une relation", rencontre.mail && rencontre.partenaire, JSON.stringify(rencontre));
+
+    /* Les proches écrivent d'eux-mêmes après une course marquante. */
+    const proches = await page.evaluate(() => {
+      G.semaine += 4;
+      const n = getMailbox().length;
+      _rj125.apresCourse({ pos: 1, circuit: "Monza" });
+      const m = getMailbox()[0];
+      return { nouveau: getMailbox().length > n, perso: ["family", "friends"].indexOf(m.role) >= 0, sansChoix: !(m.actions && m.actions.length), texte: m.body.slice(0, 80) };
+    });
+    S.verifier("après une victoire, les proches écrivent d'eux-mêmes", proches.nouveau && proches.perso && proches.sansChoix, JSON.stringify(proches));
+
+    /* Écran : les moments à venir. */
+    await page.evaluate(() => { navTo("S-lifestyle", null); if (typeof lstab === "function") lstab("vieperso"); renderVieperso(); });
+    await page.waitForTimeout(300);
+    const ecran = await page.evaluate(() => document.querySelectorAll("#vp-content .rj125-moment").length);
+    S.verifier("Vie perso montre les moments à venir", ecran >= 1, String(ecran));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -2682,6 +2789,7 @@ const SUITES = {
   entourage: suiteEntourage,
   presse: suitePresse,
   messagerie: suiteMessagerie,
+  vieperso: suiteViePerso,
   decisions: suiteDecisions
 };
 
