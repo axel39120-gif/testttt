@@ -216,8 +216,11 @@ async function courirUneCourse(page, options) {
 
       window.CAL_RACES = [];
       buildCalendar();
-      G.semaine = 6; G.seasonOver = false;
-      CAL_RACES.forEach(c => { c.done = c.week < 6; c.result = null; });
+      /* rang : courir la n-ième manche du calendrier, à sa semaine (par défaut
+         la première à partir de la semaine 6). */
+      const cible = o.rang != null ? CAL_RACES[o.rang] : null;
+      G.semaine = cible ? cible.week : 6; G.seasonOver = false;
+      CAL_RACES.forEach(c => { c.done = c.week < G.semaine; c.result = null; });
 
       const course = getNextRace();
       if (!course) { journal.anomalies.push("calendrier vide"); return journal; }

@@ -2332,6 +2332,27 @@ async function suiteMessagerie() {
     }));
     S.verifier("chaque message a une priorité", prio.urgent === "urgent" && prio.perso === "personnel" && prio.info === "info", JSON.stringify(prio));
 
+    /* Pas de faux choix : un seul bouton sans effet n'est pas une décision. */
+    const faux = await page.evaluate(() => {
+      const dernier = () => getMailbox()[0];
+      const h0 = G.happiness || 50;
+      pushMail({ from: "Agent", role: "agent", subject: "Tu comptes dans les médias (50/100)", body: "Bravo.", actions: [{ label: "Compris", kind: "dismiss" }] });
+      const accuse = dernier();
+      pushMail({ from: "Fan", role: "fans", subject: "Un message de soutien", body: "Allez !", actions: [{ label: "Merci !", kind: "reply", effect: { type: "happiness", data: { delta: 2 } } }] });
+      const soutien = dernier(), h1 = G.happiness;
+      pushMail({ from: "Presse", role: "press", subject: "Proposition de portrait", body: "?", actions: [{ label: "J'accepte", kind: "accept", effect: { type: "rep", data: { delta: 3 } } }, { label: "Je décline", kind: "refuse" }] });
+      const vrai = dernier();
+      pushMail({ from: "Team Principal", role: "team_boss", subject: "Idée au simulateur", body: "?", actions: [{ label: "Tester", kind: "accept", effect: { type: "flag", data: { key: "_x" } } }] });
+      const drapeau = dernier();
+      pushMail({ from: "Agent", role: "agent", subject: "Une décision t'attend", body: "?", actions: [{ label: "Ouvrir", kind: "nav", effect: { type: "nav", data: {} } }] });
+      const lien = dernier();
+      const n = m => (m.actions || []).length;
+      return { accuse: n(accuse), accusePrio: _rj124.priorite(accuse), soutien: n(soutien), bonheur: h1 - h0, vrai: n(vrai), drapeau: n(drapeau), lien: n(lien) };
+    });
+    S.verifier("un accusé de réception sans effet devient une info", faux.accuse === 0 && faux.accusePrio === "info", JSON.stringify(faux));
+    S.verifier("un seul bouton à petit effet s'applique à la réception", faux.soutien === 0 && faux.bonheur === 2, JSON.stringify(faux));
+    S.verifier("les vrais choix, drapeaux et liens restent", faux.vrai === 2 && faux.drapeau === 1 && faux.lien === 1, JSON.stringify(faux));
+
     /* Expiration : trois semaines sans réponse. */
     const exp = await page.evaluate(() => {
       const envoyer = (o) => { pushMail(o); return getMailbox()[0]; };

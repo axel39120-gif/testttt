@@ -603,7 +603,14 @@ réponse, course réelle qui fait titrer et grandir l'audience, sauvegarde,
   ton avenir, l'ingénieur pour un débrief…). La réponse arrive la semaine
   suivante et dépend de votre relation.
 
-Suite `messagerie` : priorités, expiration (et négociation épargnée),
+- **Moins de faux choix** (v238) : mesuré sur 8 vraies manches, 29 messages
+  sur 40 imposaient un bouton, dont la moitié un seul « Compris » ou
+  « Merci » sans effet. Un seul bouton sans effet fait désormais une info ;
+  un seul bouton à petit effet (bonheur, mental, réputation, confiance)
+  s'applique à la réception. Vrais choix, liens vers un écran et drapeaux
+  restent : 18 messages à choix sur 40, dont 2 liens.
+
+Suite `messagerie` : faux choix retirés, priorités, expiration (et négociation épargnée),
 souvenir de l'expéditeur, réponse différée sans choix, débrief après une
 course, écrire depuis la fiche, filtres de la boîte.
 
