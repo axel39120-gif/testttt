@@ -2777,6 +2777,48 @@ async function suiteAvatars() {
   } finally { await navigateur.close(); }
 }
 
+/* ==================================================================== *
+ * 8 duovicies. UNE CARRIÈRE NEUVE A DES RIVAUX
+ *
+ * Le vivier des pilotes lisait ses listes dans le relais initRivals au
+ * lieu de _initRivalsCoeur : il restait vide, et une carrière neuve
+ * n'avait aucun rival (classement réduit au joueur). On crée une carrière
+ * par l'écran de création, on court, et on répare une sauvegarde touchée.
+ * ==================================================================== */
+async function suiteRivaux() {
+  S.suite("Rivaux d'une carrière neuve");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ charger: false, dev: false });
+  try {
+    await S.repondeurAutomatique(page);
+    const neuve = await page.evaluate(async () => {
+      try { if (typeof startNewGame === "function") startNewGame(); else go("S-create"); } catch (e) {}
+      await new Promise(r => setTimeout(r, 300));
+      const val = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+      val("p-fn", "Lucas"); val("p-ln", "Martin"); window.selNatVal = "FR";
+      for (let k = 0; k < 7 && document.querySelector(".scr.on").id === "S-create"; k++) {
+        val("p-birthcity", "Lyon"); val("p-dob-year", "2012"); val("p-startyear", "2024");
+        creNext(); await new Promise(r => setTimeout(r, 250));
+      }
+      navTo("S-champ", "ni-champ"); chtab("classement");
+      await new Promise(r => setTimeout(r, 300));
+      return { rivaux: (G.rivals || []).length, lignes: document.querySelectorAll("#champ-table .cr, #S-champ .cr").length, vivier: (G.driverPool || []).length, cat: G.cat };
+    });
+    S.verifier("une carrière neuve a des rivaux, et le classement les montre", neuve.rivaux >= 10 && neuve.lignes >= 11 && neuve.vivier > 50, JSON.stringify(neuve));
+
+    await S.courirUneCourse(page, { categorie: neuve.cat, reinitialiserRivaux: false, grille: 5 });
+    const course = await page.evaluate(() => ({ marquent: (G.rivals || []).filter(r => (r.pts || 0) > 0).length, joueur: G.champPts }));
+    S.verifier("après une course, des rivaux marquent des points", course.marquent >= 5, JSON.stringify(course));
+
+    const repare = await page.evaluate(() => {
+      G.rivals = []; G.driverPool = []; G._rjPoolInitialized = true;
+      G._slot = 1; saveGame(1); loadSave(1);
+      return { rivaux: (G.rivals || []).length, vivier: (G.driverPool || []).length };
+    });
+    S.verifier("une sauvegarde sans rivaux est réparée au chargement", repare.rivaux >= 10, JSON.stringify(repare));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3035,6 +3077,7 @@ const SUITES = {
   habillage: suiteHabillage,
   amour: suiteAmour,
   avatars: suiteAvatars,
+  rivaux: suiteRivaux,
   decisions: suiteDecisions
 };
 

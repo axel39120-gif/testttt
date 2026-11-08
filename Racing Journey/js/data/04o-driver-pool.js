@@ -213,7 +213,11 @@
     // On utilise PRIORITAIREMENT la référence sauvegardée à la fonction
     // legacy. Sinon on tombe sur la version wrappée qui ne contient pas
     // les rosters.
-    var srcFn = _rjOrigInitRivalsRef || (typeof window !== "undefined" ? window.initRivals : null);
+    /* Depuis la restructuration (00-hooks), initRivals n'est plus qu'un relais
+       vers _initRivalsCoeur : c'est là que sont les listes. Lire le relais
+       donnait un vivier vide, donc une carrière neuve sans aucun rival. */
+    var srcFn = (typeof window !== "undefined" && typeof window._initRivalsCoeur === "function") ? window._initRivalsCoeur
+      : _rjOrigInitRivalsRef || (typeof window !== "undefined" ? window.initRivals : null);
     if (typeof srcFn !== "function") return null;
     
     var src = srcFn.toString();
@@ -326,7 +330,9 @@
     });
     
     G.driverPool = pool;
-    G._rjPoolInitialized = true;
+    /* Un vivier vide n'est pas « initialisé » : on retentera, et les listes
+       d'origine prennent le relais en attendant. */
+    G._rjPoolInitialized = pool.length > 0;
     G._rjPoolVersion = 1;
     
     if (window._rjVerbose) {
@@ -1026,8 +1032,9 @@
       
       _rjEnsurePool();
       
-      if (!G._rjPoolInitialized) {
-        // Premier appel : initialise le pool
+      if (!G._rjPoolInitialized || !G.driverPool.length) {
+        // Premier appel (ou vivier resté vide, ancien bug) : initialise le pool
+        G._rjPoolInitialized = false;
         _rjInitializePoolFromRosters();
       }
       

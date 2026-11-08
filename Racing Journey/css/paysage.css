@@ -254,16 +254,16 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
    le trait vertical gris des titres de styles.css (t-sec, apex-sec, sec-lbl,
    écran titre), ceux des rêves (114), des paramètres (02) et de
    l'entraînement (34). */
-:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .apex-splash-section-title, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre) {
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .apex-splash-section-title, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre, #S-create .rj80-stepname) {
   display: flex !important; align-items: center; gap: 9px;
   font: 800 11px/1 var(--font-display) !important; letter-spacing: .16em !important; text-transform: uppercase;
   color: #fff !important; opacity: 1 !important; padding: 14px 0 8px !important;
 }
-:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre)::before {
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre, #S-create .rj80-stepname)::before {
   content: "" !important; flex: 0 0 auto; width: 17px !important; height: 9px !important; opacity: 1 !important;
   border-radius: 0 !important; background: repeating-linear-gradient(115deg, var(--red, #FF1801) 0 3px, transparent 3px 6px) !important;
 }
-:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre)::after {
+:is(.t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rjf-kicker, .rj122-groupe-titre, .rj122-sous, .rj123-sous, .rj125-titre, #S-create .rj80-stepname)::after {
   content: "" !important; flex: 1; height: 1px !important;
   background: linear-gradient(90deg, rgba(255, 24, 1, .5), rgba(255, 255, 255, .07) 35%, transparent) !important;
 }
@@ -1249,3 +1249,47 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 /* Conversations : visage à gauche, texte à droite (un module retire le display:flex en ligne). */
 #mailbox-list .rj124-carte { display: flex !important; align-items: center; gap: 12px; }
 #mailbox-list .rj124-carte > div:nth-child(2) { flex: 1; min-width: 0; }
+
+/* =====================================================================
+ * Création du pilote : la DA du reste de l'application.
+ * L'écran a son propre bandeau (apex-create-hdr) et ses propres cartes :
+ * ils prennent le bandeau commun et la tuile de l'accueil.
+ * =================================================================== */
+#S-create > .apex-create-hdr {
+  position: relative; display: flex !important; align-items: center; gap: 4px; padding: 0 12px 0 10px !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+#S-create > .apex-create-hdr::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 170px; height: 1px; background: linear-gradient(90deg, #FF1801, transparent); }
+#S-create .apex-back-btn { width: auto !important; height: 22px !important; padding: 0 8px 0 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; color: #6b6b78 !important; }
+#S-create .apex-create-title { font: 800 15px/1.15 var(--font-display) !important; letter-spacing: .6px !important; text-transform: uppercase; color: #fff !important; }
+#S-create .apex-create-step { font-size: 10px !important; letter-spacing: .4px !important; color: #6b6b78 !important; text-transform: none !important; }
+#S-create .rj80-stepname { margin-top: 6px; }
+
+#S-create :is(.trait-opt, .continent-opt, .nat-opt, .rj115-milieu, .apex-ecurie-opt, .rj80-fav-opt) {
+  --t: #94A3B8;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t) 14%, transparent), transparent 60%), linear-gradient(160deg, #18181d, #101014) !important;
+  border: 1px solid color-mix(in srgb, var(--t) 26%, rgba(255, 255, 255, .06)) !important; border-radius: var(--r) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .3) !important;
+  transition: transform .12s ease, border-color .15s ease;
+}
+#S-create :is(.trait-opt, .continent-opt, .nat-opt, .rj115-milieu, .apex-ecurie-opt, .rj80-fav-opt):active { transform: scale(.98); }
+#S-create :is(.trait-opt.on, .continent-opt.on, .continent-opt.sel, .nat-opt.on, .nat-opt.sel, .rj115-milieu.sel, .rj80-fav-opt.on) {
+  --t: #FF1801;
+  background: radial-gradient(120% 160% at 0% 0%, rgba(255, 24, 1, .3), transparent 62%), linear-gradient(160deg, #1d1416, #120d0f) !important;
+  border-color: rgba(255, 24, 1, .75) !important; box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 0 0 1px rgba(255, 24, 1, .25), 0 6px 18px rgba(255, 24, 1, .15) !important;
+}
+#S-create .inp {
+  min-height: 44px; border-radius: var(--r) !important; background: linear-gradient(160deg, #18181d, #121216) !important;
+  border: 1px solid rgba(255, 255, 255, .1) !important; box-shadow: inset 0 1px rgba(255, 255, 255, .04) !important; color: #fff !important;
+  font: 600 15px/1.2 var(--font-body) !important;
+}
+#S-create .inp:focus { outline: none; border-color: var(--red, #FF1801) !important; box-shadow: 0 0 0 3px rgba(255, 24, 1, .18) !important; }
+#S-create .inp-label { font: 800 10px/1 var(--font-display) !important; letter-spacing: .14em !important; text-transform: uppercase; color: var(--muted, #80808a) !important; margin-bottom: 7px !important; }
+#S-create .apex-create-btn { border-radius: var(--r) !important; font-family: var(--font-display) !important; letter-spacing: .08em; text-transform: uppercase; }
+#S-create .apex-create-btn-prim { background: linear-gradient(160deg, #ff3b1f, #c81400) !important; box-shadow: 0 6px 20px rgba(255, 24, 1, .28) !important; }
+#S-create .apex-create-btn-sec { background: rgba(255, 255, 255, .04) !important; border: 1px solid rgba(255, 255, 255, .14) !important; }
+/* Récapitulatif et encadrés des étapes : la tuile commune, l'arrondi commun. */
+#S-create [id^="cs"] > div[style*="border"]:not(.rj80-banner):not(.trait-grid):not(.nat-grid) {
+  background: radial-gradient(120% 140% at 0% 0%, rgba(255, 24, 1, .1), transparent 60%), linear-gradient(160deg, #18181d, #101014) !important;
+  border-radius: var(--r) !important; box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .3) !important;
+}

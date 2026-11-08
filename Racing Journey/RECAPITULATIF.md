@@ -641,6 +641,14 @@ Suites `habillage` et `amour`.
 
 Suite `avatars`.
 
+## Correctif — une carrière neuve sans rivaux (v242)
+
+- **Le symptôme** : dans une carrière créée depuis l'écran de création, le classement des pilotes ne montrait que le joueur.
+- **La cause** : le vivier des pilotes (`04o-driver-pool.js`) lit les listes de pilotes dans le code de `initRivals`. Depuis la restructuration des points d'extension (00-hooks), `initRivals` n'est plus qu'un relais vers `_initRivalsCoeur` : le vivier restait vide, tout en étant marqué « initialisé ». La voie de secours (`_buildRivalsFromPool`, 03) calculait alors « 0 rival à créer » et s'arrêtait là.
+- **Le correctif** : le vivier lit `_initRivalsCoeur` ; un vivier vide n'est plus marqué initialisé et se reconstruit ; la voie de secours rend la main aux listes d'origine quand le vivier n'a personne pour la catégorie ; au chargement, une partie sans rivaux est réparée.
+
+Suite `rivaux` : carrière créée par l'écran de création, classement complet, rivaux qui marquent, sauvegarde réparée.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

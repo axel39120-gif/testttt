@@ -427,7 +427,7 @@
     if (typeof window.updateUI === "function") rjInscrire("updateUI", { id: "128-avatars:updateUI", apres: function () { try { rafraichirBandeau(); decorerClassement(); } catch (e) {} } });
     if (typeof window.renderChamp === "function") rjInscrire("renderChamp", { id: "128-avatars:renderChamp", apres: function () { try { decorerClassement(); } catch (e) {} } });
     if (typeof window._refreshAvatar === "function") rjInscrire("_refreshAvatar", { id: "128-avatars:refresh", apres: function () { try { rafraichirBandeau(); } catch (e) {} } });
-    if (typeof window.updateCreUI === "function") rjInscrire("updateCreUI", { id: "128-avatars:creation", apres: function () { try { if (window.creStep === 5) brancherCreation(); } catch (e) { console.warn(TAG, e && e.message); } } });
+    if (typeof window.updateCreUI === "function") rjInscrire("updateCreUI", { id: "128-avatars:creation", apres: function () { try { if (window.creStep === 5) brancherCreation(); rafraichirBandeau(); } catch (e) { console.warn(TAG, e && e.message); } } });
     if (typeof window._showAvatarMenu === "function") rjInscrire("_showAvatarMenu", { id: "128-avatars:menu", apres: function () {
       var carte = document.querySelector("#apex-avatar-menu .apex-avatar-menu-card");
       if (!carte || carte.querySelector(".rja-menu")) return;

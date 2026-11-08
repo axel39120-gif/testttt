@@ -62,6 +62,7 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `habillage` | notification en haut au centre, file pendant la course puis affichage regroupé au retour, messages courts dans la même pile, plus de widgets course et rêves, tuile du duel au face-à-face, titres communs, cartes en tuile |
 | `amour` | pas de rencontre avant 18 ans, profil selon la réputation, couple avec une célébrité et presse people, emménagement, enfant (proposition puis naissance), rupture après une relation glacée, rubrique Vie privée, foyer dans Vie perso |
 | `avatars` | même visage pour un même personnage, cheveux selon le pays, trente portraits en moins d'une seconde et demie, éditeur à la création qui enregistre, portraits dans le bandeau, la messagerie, l'entourage, les classements et le face-à-face, modification depuis le bandeau, sauvegarde |
+| `rivaux` | carrière créée par l'écran de création avec des rivaux et un classement complet, rivaux qui marquent après une course, sauvegarde sans rivaux réparée au chargement |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |
