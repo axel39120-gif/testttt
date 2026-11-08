@@ -216,7 +216,7 @@
   /* Épargnés : la navigation et les onglets (repères, pas actions), et les
      sélecteurs de nationalité, où le drapeau EST l'information — le retirer
      transformerait une grille de pays en liste de mots. */
-  var EXCLUS = "#rj-logo-modal,.nav,.navbar,.tabs,.tab,.apex-nav,.apex-tabbar,.ni,#main-nav,#nav,.seg,.segmented," +
+  var EXCLUS = "#rj-logo-modal,#mb-contacts,.nav,.navbar,.tabs,.tab,.apex-nav,.apex-tabbar,.ni,#main-nav,#nav,.seg,.segmented," +
                ".nat-opt,.continent-opt,#nat-grid,#continent-grid,#selected-nat-badge,.flag,.team-logo," +
                ".rj80-fav-opt,#rj80-fav-grid,.rj122-carte";   /* écusson d'écurie, jauge de relation : information, pas décoration */
   var EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{1F000}-\u{1F2FF}]/gu;

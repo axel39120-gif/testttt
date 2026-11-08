@@ -2903,6 +2903,28 @@ async function suiteLogos() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteContacts() {
+  S.suite("Messagerie › Contacts");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const att = () => new Promise(r => setTimeout(r, 300));
+      navTo("S-mailbox", null); mbtab("contacts"); await att();
+      const cartes = document.querySelectorAll("#mb-contacts-list .rj131-carte").length, attendu = getContactList().length;
+      const id = getContactList().find(c => c.available).id;
+      openContactChat(id); await att();
+      const sujets = document.querySelectorAll(".rj131-sujet:not(:disabled)").length, apercus = document.querySelectorAll(".rj131-sujet .rj131-fx").length;
+      document.querySelector(".rj131-sujet:not(:disabled)").click(); await att();
+      return { cartes, attendu, sujets, apercus, bulles: document.querySelectorAll(".rj131-bulle.recent").length, bloque: document.querySelectorAll(".rj131-sujet:disabled").length > 0, portraits: document.querySelectorAll(".rj131-av").length };
+    });
+    S.verifier("une fiche par contact, chacune avec son portrait ou son pictogramme", r.cartes === r.attendu && r.cartes > 0, JSON.stringify(r));
+    S.verifier("la conversation propose les sujets avec leurs effets possibles", r.sujets > 0 && r.apercus >= r.sujets, JSON.stringify(r));
+    S.verifier("envoyer un sujet ajoute l échange au fil et bloque les envois jusqu à la semaine suivante", r.bulles === 2 && r.bloque, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3165,6 +3187,7 @@ const SUITES = {
   vides: suiteVides,
   circuits: suiteCircuits,
   logos: suiteLogos,
+  contacts: suiteContacts,
   decisions: suiteDecisions
 };
 

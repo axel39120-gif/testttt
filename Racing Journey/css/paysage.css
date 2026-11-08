@@ -1398,3 +1398,64 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 :is(.scr > .scroll > :has(> :nth-child(5)), .scr > .scroll > * > :only-child:has(> :nth-child(5))) > :is(.mg, #pilot-rating-card):first-child { padding-top: 0 !important; }
 :is(.scr > .scroll > :has(> :nth-child(5)), .scr > .scroll > * > :only-child:has(> :nth-child(5))) > :first-child:empty + .mg { padding-top: 0 !important; }
 .rjf > .rjf-rest { margin-top: 0 !important; }
+
+/* Messagerie › Contacts (131) : une colonne, comme une appli de messages. */
+#mb-contacts, #mb-contacts-list, #mb-contacts-list > * { column-width: auto !important; columns: auto !important; }
+#S-mailbox:has(#mb-contacts.rj131-mode-fil:not([style*="none"])) :is(.rj119-w, .rj119-rangee) { display: none !important; }
+.rj131-liste, .rj131-fil { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.rj131-carte {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto 14px; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
+  padding: 11px 12px; border-radius: var(--r); color: inherit; font: inherit;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--c) 13%, transparent), transparent 60%), linear-gradient(160deg, #18181d, #101014);
+  border: 1px solid color-mix(in srgb, var(--c) 26%, rgba(255, 255, 255, .06)); box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 4px 14px rgba(0, 0, 0, .35);
+}
+.rj131-carte:active { transform: scale(.99); }
+.rj131-av { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: color-mix(in srgb, var(--c) 14%, #121216); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 55%, transparent); }
+.rj131-av img { width: 100%; height: 100%; display: block; }
+.rj131-corps { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rj131-role { font: 800 9px/1.2 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
+.rj131-nom { font: 800 15px/1.2 var(--font-display); color: #fff; }
+.rj131-dernier { font-size: 11.5px; color: var(--text2, #b0b0bc); font-style: italic; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rj131-dernier.vide { color: var(--muted, #80808a); font-style: normal; }
+.rj131-droite { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.rj131-rel { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted, #80808a); }
+.rj131-jauge { width: 62px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; display: inline-block; }
+.rj131-jauge i { display: block; height: 100%; border-radius: 3px; }
+.rj131-jv { font: 800 11px var(--font-display); color: #fff; }
+.rj131-pastille { font: 800 9.5px/1 var(--font-display); letter-spacing: .06em; padding: 4px 8px; border-radius: 999px; color: var(--muted, #80808a); background: rgba(255, 255, 255, .05); white-space: nowrap; }
+.rj131-pastille.libre { color: #34D399; background: rgba(52, 211, 153, .1); }
+.rj131-chev { color: var(--muted, #80808a); font-size: 18px; }
+/* conversation */
+.rj131-tete {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--r);
+  background: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 62%), linear-gradient(160deg, #18181d, #101014);
+  border: 1px solid color-mix(in srgb, var(--c) 28%, rgba(255, 255, 255, .06));
+}
+.rj131-retour { background: none; border: 0; color: var(--red3, #ff3b30); font: 800 11px var(--font-display); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; padding: 6px 6px 6px 0; }
+.rj131-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rj131-desc { font-size: 11px; color: var(--text2, #b0b0bc); }
+.rj131-messages { display: flex; flex-direction: column; gap: 5px; padding: 6px 2px; }
+.rj131-debut, .rj131-date { align-self: center; font: 800 9px/1.4 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--muted, #80808a); margin: 10px 0 4px; }
+.rj131-bulle { max-width: 78%; padding: 9px 12px; font-size: 13px; line-height: 1.45; border-radius: 16px; }
+.rj131-bulle.moi { align-self: flex-end; color: #fff; background: linear-gradient(160deg, #ff3b1f, #b51200); border-bottom-right-radius: 5px; }
+.rj131-bulle.lui { align-self: flex-start; color: #e8e8ee; background: #1b1b22; border: 1px solid rgba(255, 255, 255, .07); border-bottom-left-radius: 5px; }
+.rj131-bulle.recent { animation: rj131-arrive .3s ease both; }
+@keyframes rj131-arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rj131-effets { display: flex; flex-wrap: wrap; gap: 5px; align-self: flex-start; margin: 2px 0 4px; }
+.rj131-fx { font: 800 10px/1 var(--font-display); padding: 4px 7px; border-radius: 4px; color: var(--muted, #9a9aa8); background: rgba(255, 255, 255, .05); }
+.rj131-fx.plus { color: #34D399; background: rgba(52, 211, 153, .1); }
+.rj131-fx.moins { color: #F87171; background: rgba(239, 68, 68, .1); }
+.rj131-composer { display: flex; flex-direction: column; gap: 7px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .06); }
+.rj131-titre { font: 800 10px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #fff; margin: 4px 0 2px; }
+.rj131-attente { font-size: 12px; color: #FFC107; background: rgba(255, 193, 7, .08); border: 1px solid rgba(255, 193, 7, .25); border-radius: var(--r); padding: 8px 10px; }
+.rj131-sujet {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px; text-align: left; cursor: pointer; width: 100%; font: inherit; color: inherit;
+  padding: 10px 12px; border-radius: var(--r); background: linear-gradient(160deg, #18181d, #101014); border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: inset 3px 0 0 var(--c);
+}
+.rj131-sujet:not(:disabled):active { transform: scale(.99); }
+.rj131-sujet:disabled { opacity: .45; cursor: default; }
+.rj131-sujet-l { font: 800 13px/1.25 var(--font-display); color: #fff; }
+.rj131-sujet-m { font-size: 12px; color: var(--text2, #b0b0bc); font-style: italic; }
+.rj131-sujet-fx { display: flex; flex-wrap: wrap; gap: 5px; }
+.rj131-chances { font-size: 10.5px; color: var(--muted, #80808a); }
