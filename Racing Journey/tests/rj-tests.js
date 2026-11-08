@@ -2925,6 +2925,25 @@ async function suiteContacts() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteEssais() {
+  S.suite("Essais libres et qualifications");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(() => ({
+      aileron: describeFeedback("aileron_ar", { direction: "too_low", magnitude: "medium" }),
+      suspension: describeFeedback("suspension", { direction: "too_high", magnitude: "small" }),
+      el1: _buildEngineerBriefing(1, "Monza", { id: "dry" }),
+      el2: _buildEngineerBriefing(2, "Monza", { id: "dry" }),
+      el3: _buildEngineerBriefing(3, "Monza", { id: "dry" }),
+      pneus: QUALI_TYRE_CONFIG ? Object.keys(QUALI_TYRE_CONFIG).map(k => QUALI_TYRE_CONFIG[k].compound).join(",") : ""
+    }));
+    S.verifier("les retours de l ingénieur s accordent (l aileron, la suspension trop haute)", /^L.aileron arrière est sensiblement trop bas./.test(r.aileron) && /^La suspension est un peu trop haute. Réduis-la./.test(r.suspension), r.aileron + " / " + r.suspension);
+    S.verifier("l ingénieur ne dit « première séance » qu en EL1", !/Première séance/.test(r.el2) && !/Première séance/.test(r.el3) && /EL2|Deuxième/.test(r.el2) && /EL3|Dernière/.test(r.el3), r.el2.slice(0, 60) + " / " + r.el3.slice(0, 60));
+    S.verifier("les pneus de qualification portent des noms français, sans marque", !/Soft|Pirelli|Primary/.test(r.pneus), r.pneus);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3188,6 +3207,7 @@ const SUITES = {
   circuits: suiteCircuits,
   logos: suiteLogos,
   contacts: suiteContacts,
+  essais: suiteEssais,
   decisions: suiteDecisions
 };
 

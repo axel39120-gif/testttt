@@ -98,11 +98,16 @@
     window._buildEngineerBriefing = function (session, circuit, weather) {
       var ctype = (typeof RACE_STATE !== "undefined" && RACE_STATE.circuitData && RACE_STATE.circuitData.type) || "";
       var wid = (weather && weather.id) || "dry";
-      var intro = [
-        "On attaque les essais. Cale-moi la voiture, on a quelques tours pour trouver le bon équilibre.",
-        "C'est parti pour la séance. Ajuste les réglages, envoie un tour, et je te dis ce que ça donne.",
-        "Première séance : prends ton temps sur le setup. Le chrono tourne, mais on a de la marge."
-      ];
+      var num = +session || 1;
+      var parSeance = {
+        1: ["Première séance : prends ton temps sur le setup. Le chrono tourne, mais on a de la marge.",
+            "On attaque les essais. Cale-moi la voiture, on a quelques tours pour trouver le bon équilibre."],
+        2: ["Deuxième séance : on affine. Fais un relais long pour voir comment vivent les pneus.",
+            "EL2, c'est la séance de référence : simule un peu la course, je regarde la dégradation."],
+        3: ["Dernière séance avant la qualif : pneus neufs, tour lancé, on se met en conditions.",
+            "EL3 : plus le temps de tout changer. On valide le setup et on prépare le tour de qualif."]
+      };
+      var intro = parSeance[Math.min(3, Math.max(1, num))];
       var msg = intro[Math.floor(Math.random() * intro.length)];
       if (ctype === "street") msg += " Ici c'est étroit, vise la stabilité plutôt que la vitesse pure.";
       else if (ctype === "highspeed") msg += " Tracé rapide : allège les appuis pour la vitesse de pointe.";
@@ -745,7 +750,7 @@
     var FLYLAP_MS = 3900;   // tour lancé
 
     // Usure de base par tour lancé (%) avant modulateurs.
-    var BASE_WEAR = 6.2;
+    var BASE_WEAR = 3.2;   // ≈ 7 %/tour en tendres : un relais de 5 tours en use un bon tiers
 
     function esc(s) { return (typeof _ppEscSafe === "function") ? _ppEscSafe(s) : String(s == null ? "" : s); }
 
@@ -1106,9 +1111,13 @@
     // ------------------------------------------------------------------------
     // Helpers ingénieur (autonomes — n'imposent pas la présence de 12)
     // ------------------------------------------------------------------------
+    function seanceEnCours() {
+      var pr = (typeof RACE_STATE !== "undefined" && RACE_STATE.practice) || {};
+      return (pr.sessionsCompleted || 0) + 1;
+    }
     function engBriefing() {
       if (typeof window._buildEngineerBriefing === "function") {
-        try { return window._buildEngineerBriefing(0, RACE_STATE.circuit, RACE_STATE.weather); } catch (e) {}
+        try { return window._buildEngineerBriefing(seanceEnCours(), RACE_STATE.circuit, RACE_STATE.weather); } catch (e) {}
       }
       return "On attaque les essais. Cale-moi la voiture, choisis tes pneus et envoie quelques tours quand tu veux. Le chrono tourne, mais on a de la marge.";
     }
@@ -1354,6 +1363,10 @@
 
       // Composé (si choix)
       var comps = availableCompounds();
+      if (typeof L.stock[L.compound] === "number" && L.stock[L.compound] <= 0) {
+        var dispo = comps.filter(function (id) { return !(typeof L.stock[id] === "number" && L.stock[id] <= 0); });
+        if (dispo.length) L.compound = dispo[0];
+      }
       if (comps.length > 1) {
         c += '<div style="font-size:10px;color:var(--muted);font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Pneus</div>';
         c += '<div style="display:flex;gap:6px;margin-bottom:12px">';
@@ -1364,7 +1377,7 @@
           var on = L.compound === id;
           var disabled = stock <= 0;
           c += '<button data-fpl-comp="' + id + '"' + (disabled ? ' disabled' : '') + ' style="flex:1;padding:9px 4px;background:' + (on ? col + '22' : 'transparent') + ';border:1px solid ' + (on ? col : 'var(--line2)') + ';border-radius:6px;cursor:' + (disabled ? 'not-allowed' : 'pointer') + ';opacity:' + (disabled ? '.4' : '1') + '; -webkit-tap-highlight-color:transparent">';
-          c += '<div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:' + col + ';line-height:1">' + (COMPOUND_SHORT[id] || '?') + '</div>';
+          c += '<div style="line-height:0;display:flex;justify-content:center">' + (typeof rjPneu === "function" ? rjPneu({ color: col, label: prof.label, short: COMPOUND_SHORT[id] }, 30) : (COMPOUND_SHORT[id] || '?')) + '</div>';
           c += '<div style="font-size:9px;color:' + (on ? col : 'var(--muted)') + ';font-weight:700;margin-top:2px">' + esc(prof.label) + '</div>';
           c += '<div style="font-size:9px;color:var(--dim);font-family:var(--font-display);margin-top:1px">' + stock + ' set' + (stock > 1 ? 's' : '') + '</div>';
           c += '</button>';
@@ -3519,7 +3532,8 @@
 
   function resumeFeuilleTemps(bloc) {
     try {
-      var txt = (bloc.innerText || "").replace(/\s+/g, " ");
+      var corps = bloc.querySelector("#fpl-board-body") || bloc;   // la référence du circuit n'est pas un meilleur tour
+      var txt = (corps.innerText || "").replace(/\s+/g, " ");
       var m = txt.match(/(\d:\d{2}\.\d{3})/);
       var pos = txt.match(/P(\d+)/);
       var bouts = [];

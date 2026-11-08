@@ -883,7 +883,7 @@ function _showQualiPlayerLapModal(driver, session, lap, totalLaps, lapTime, sect
   }
   var lapLabel = lap + "/" + totalLaps;
   var sessLabel = "Q" + session;
-  var lapTypeLabel = lap === 1 ? "OUT LAP" : lap === totalLaps ? "PUSH LAP" : "FAST LAP";
+  var lapTypeLabel = lap === 1 && totalLaps > 1 ? "Tour de sortie" : lap === totalLaps ? "Dernière tentative" : "Tour lancé";
   // Build modal HTML
   var html = '<div style="background:linear-gradient(180deg,#0a0a0a 0%,#0d0d12 100%);border:1px solid #1a1a24;border-left:3px solid #FF1801;border-radius:var(--r);max-width:430px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,24,1,.12)">';
   // Header
@@ -1058,7 +1058,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 2,
     setsF1: false,
-    compound: "Soft"
+    compound: "Tendre"
   },
   "Formula Regional": {
     tempMin: 58,
@@ -1068,7 +1068,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 2,
     setsF1: false,
-    compound: "Soft"
+    compound: "Tendre"
   },
   "Formule 3": {
     tempMin: 60,
@@ -1078,7 +1078,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 3,
     setsF1: false,
-    compound: "Soft"
+    compound: "Tendre"
   },
   "Formule 2": {
     tempMin: 62,
@@ -1088,7 +1088,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 3,
     setsF1: false,
-    compound: "Soft"
+    compound: "Tendre"
   },
   "Formule 1": {
     tempMin: 65,
@@ -1098,7 +1098,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 3,
     setsF1: true,
-    compound: "Soft Pirelli"
+    compound: "Tendre"
   },
   "Super Formula": {
     tempMin: 62,
@@ -1108,7 +1108,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 3,
     setsF1: false,
-    compound: "Soft"
+    compound: "Tendre"
   },
   "Endurance WEC": {
     tempMin: 60,
@@ -1118,7 +1118,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 999,
     setsF1: false,
-    compound: "Soft"
+    compound: "Tendre"
   },
   "IndyCar": {
     tempMin: 60,
@@ -1128,7 +1128,7 @@ var QUALI_TYRE_CONFIG = {
     warmupLaps: 1,
     sets: 999,
     setsF1: false,
-    compound: "Primary"
+    compound: "Dur"
   }
 };
 
@@ -1221,10 +1221,10 @@ function __qualiHotLapSequenceCoeur(lapTime, session, lap, totalLaps, onDone) {
     // --- Étapes de la séquence ---
     var steps = [];
 
-    // Étape 1 : SORTIE DES STANDS — timing de sortie
-    steps.push({
+    // Étape 1 : LANCEMENT DU TOUR — trouver de l'espace en fin de tour de sortie (premier tour lancé du relais seulement)
+    if (lap <= 2) steps.push({
       id: "outlap",
-      title: "Sortie des stands",
+      title: "Lancement du tour",
       subtitle: "Tour " + lap + " / " + totalLaps,
       icon: "🔧",
       desc: (function() {
@@ -1241,8 +1241,8 @@ function __qualiHotLapSequenceCoeur(lapTime, session, lap, totalLaps, onDone) {
         return 'La piste est dégagée — fenêtre idéale pour le tour chaud.';
       })(),
       choices: [{
-        text: "Sortir maintenant",
-        note: "Risque de gêner ou d'être gêné",
+        text: "Lancer le tour maintenant",
+        note: "Risque de rattraper une voiture lente",
         delta: function() {
           // Si rivals en piste : plus de risque de trafic
           var r = (typeof G !== 'undefined' && G.rivals) || [];
@@ -1252,7 +1252,7 @@ function __qualiHotLapSequenceCoeur(lapTime, session, lap, totalLaps, onDone) {
         deltaLabel: "Trafic possible +0.2s",
         color: "#F59E0B"
       }, {
-        text: "Attendre — laisser les rivaux s'écarter",
+        text: "Ralentir — laisser de l'espace devant",
         note: "Pneus refroidissent légèrement",
         delta: function() {
           return +(0.04 + Math.random() * 0.07);
@@ -1260,7 +1260,7 @@ function __qualiHotLapSequenceCoeur(lapTime, session, lap, totalLaps, onDone) {
         deltaLabel: "+0.05s (pneus froids)",
         color: "#60A5FA"
       }, {
-        text: "Timing parfait — analyser le trafic radar",
+        text: "Caler le tour sur la fenêtre radar",
         note: "Nécessite bonne concentration",
         delta: function() {
           return Math.random() < 0.35 ? -(0.04 + Math.random() * 0.05) : (Math.random() < 0.2 ? 0.08 : 0);
@@ -1971,14 +1971,16 @@ function runQualiSession() {
       }
       // Pour les tours chauds joueur, la mise à jour est faite dans le callback _qualiHotLapSequence
       var _willUseSeq = o.isPlayer && !QUALI_STATE.spectatorMode && (a.lap > 1 || a.totalLaps === 1) && !a.isRescue && typeof _qualiHotLapSequence === "function";
-      if (!_willUseSeq) {
+      // Tour de sortie (1er tour d'un relais de plusieurs tours, hors karting) : jamais chronométré.
+      var _horsTour = a.lap === 1 && a.totalLaps > 1 && !a.isRescue && G.cat !== "Karting Junior" && G.cat !== "Karting Senior";
+      if (!_willUseSeq && !_horsTour) {
         o.improved = null !== o.bestTime && l < o.bestTime;
         (null === o.bestTime || l < o.bestTime) && (o.bestTime = l);
         o.lastTime = l;
       }
       var c, d = splitLapIntoSectors(l, QUALI_STATE.circuitName || "", .016);
       o.lastSectors = d, o.bestSectors || (o.bestSectors = [null, null, null]), QUALI_STATE.bestSectors || (QUALI_STATE.bestSectors = [null, null, null]), QUALI_STATE.bestSectorsHolder || (QUALI_STATE.bestSectorsHolder = [null, null, null]);
-      for (var p = [0, 0, 0], u = 0; u < 3; u++) {
+      for (var p = [0, 0, 0], u = 0; u < (_horsTour ? 0 : 3); u++) {
         var f = d[u];
         if (null === QUALI_STATE.bestSectors[u] || f < QUALI_STATE.bestSectors[u]) {
           QUALI_STATE.bestSectors[u] = f;
@@ -2044,13 +2046,15 @@ function runQualiSession() {
                 renderTimingBoard(e, t, false);
               });
             })(l, d, x, _bestBefore);
-          } else {
+          } else if (!_horsTour) {
             try {
               _showQualiPlayerLapModal(o, e, a.lap, a.totalLaps, l, d, x, _bestBefore);
             } catch (_e) {}
           }
         }
-        if (o.isPlayer) {
+        if (o.isPlayer && _horsTour) {
+          h.innerHTML = '<span style="color:#F59E0B">' + G.pilot.nom + " — tour de sortie : pneus en température, le tour lancé arrive.</span>";
+        } else if (o.isPlayer) {
           var y = x <= n ? "#4ADE80" : "var(--red-light)",
             b = o.improved ? " ↗ Amélioration !" : a.lap > 1 ? " → Pas d'amélioration" : "";
           h.innerHTML = '<span style="color:' + y + '">' + G.pilot.nom + " (T" + a.lap + ") : P" + x + " — " + formatQualiTime(l) + b + (x <= n ? " " : e < 3 ? " " : "") + "<span style='font-size:9px;color:var(--text3);font-style:italic;margin-left:4px'>(provisoire)</span>" + "</span>"
