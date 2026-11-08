@@ -338,6 +338,11 @@ function appliquerCoeur(t, e) {
   renderHomeEvents();
   G.driverPool = t.driverPool || G.driverPool || null;
   if ((!G.driverPool || !Object.keys(G.driverPool).length) && typeof _initDriverPool === "function") _initDriverPool();
+  /* Réparation : des carrières créées avec un vivier vide (bug de 04o)
+     n'avaient aucun rival, et le classement ne montrait que le joueur. */
+  if ((!G.rivals || !G.rivals.length) && G.cat && typeof initRivals === "function") {
+    try { initRivals(); renderChamp(); } catch (err) { console.warn("[sauvegarde] rivaux :", err && err.message); }
+  }
   if (typeof applyRaceLockUI === "function") applyRaceLockUI();
   navTo("S-home", "ni-home");
 }

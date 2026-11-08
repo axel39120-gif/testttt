@@ -2863,9 +2863,10 @@
     /* On regénère l'en-tête entier : le retoucher nœud par nœud dépendait
        d'une structure interne qui n'a pas à être un contrat. */
     host.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px">' +
-        '<div>' +
-          '<div style="font-size:16px;font-weight:800;color:' + coul + '">' + info.titre + '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0 6px">' +
+        '<div style="flex:1;min-width:0">' +
+          /* Titre de section commun ; la couleur de la session reste sur le badge. */
+          '<div class="t-sec" style="padding:0 0 4px">' + info.titre + '</div>' +
           '<div style="font-size:11px;color:var(--text3);margin-top:1px">' + bouts.join(" \u00b7 ") + '</div>' +
           '<div style="font-size:11px;color:var(--text3);margin-top:2px;opacity:.85">' + info.detail + '</div>' +
         '</div>' +

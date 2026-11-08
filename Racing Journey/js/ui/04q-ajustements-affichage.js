@@ -710,16 +710,11 @@
   function _badge(compound, w) {
     var info = TI(); if (!info) return '';
     var t = info[compound]; if (!t) return '';
-    w = w || 20;
-    return '<span title="' + (t.label || '') + '" style="display:inline-flex;align-items:center;justify-content:center;width:' + w + 'px;height:' + w + 'px;border-radius:50%;background:' + (t.bg || 'transparent') + ';border:1.5px solid ' + t.color + ';color:' + t.color + ';font-size:11px;font-weight:800;font-family:var(--font-display,sans-serif);line-height:1;flex-shrink:0">' + t.short + '</span>';
+    return typeof rjPneu === 'function' ? rjPneu(t, w || 20) : '';
   }
 
-  // Variante sans rond : juste la lettre, à la couleur du composé (classement de course).
-  function _letter(compound) {
-    var info = TI(); if (!info) return '';
-    var t = info[compound]; if (!t) return '';
-    return '<span title="' + (t.label || '') + '" style="font-weight:900;font-size:13px;color:' + t.color + ';font-family:var(--font-display,sans-serif);line-height:1;flex-shrink:0">' + t.short + '</span>';
-  }
+  // Classement de course : le même pneu, en petit.
+  function _letter(compound) { return _badge(compound, 16); }
 
   // Convertit les pastilles pneus (ronds 14px) du classement live, rendues par le
   // cœur (renderLiveLeaderboard), en simples lettres colorées. Idempotent.

@@ -13039,7 +13039,8 @@ function _buildRivalsFromPool() {
   var hasTeams = teams.length > 0;
   var rivalsCount = hasTeams ? (2 * teams.length - 1) : Math.min(actives.length, 30);
   // Si le pool ne contient pas assez de pilotes, on laisse initRivals utiliser sa liste hardcodée
-  if (actives.length < rivalsCount) return false;
+  // (un vivier vide pour la catégorie donnait « 0 rival à créer » et une grille sans personne).
+  if (!actives.length || actives.length < rivalsCount) return false;
   // Tri par skill descendant pour distribution cohérente
   actives.sort(function(a, b) {
     return (b.skill || 0) - (a.skill || 0)

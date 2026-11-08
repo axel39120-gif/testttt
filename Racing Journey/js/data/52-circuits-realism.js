@@ -212,6 +212,7 @@
       if (window.CIRCUITS[pn] && PATHS[pn]) { window.CIRCUITS[pn].path = PATHS[pn]; nPath++; }
     }
     applied = true;
+    window._rj52Applique = true;
     console.log("[52-circuits-realism] " + nSec + " découpages de secteurs + " +
                 nTime + " temps de référence + " + nPath + " tracés appliqués");
     return true;

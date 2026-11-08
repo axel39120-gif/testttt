@@ -641,6 +641,40 @@ Suites `habillage` et `amour`.
 
 Suite `avatars`.
 
+## Correctif — une carrière neuve sans rivaux (v242)
+
+- **Le symptôme** : dans une carrière créée depuis l'écran de création, le classement des pilotes ne montrait que le joueur.
+- **La cause** : le vivier des pilotes (`04o-driver-pool.js`) lit les listes de pilotes dans le code de `initRivals`. Depuis la restructuration des points d'extension (00-hooks), `initRivals` n'est plus qu'un relais vers `_initRivalsCoeur` : le vivier restait vide, tout en étant marqué « initialisé ». La voie de secours (`_buildRivalsFromPool`, 03) calculait alors « 0 rival à créer » et s'arrêtait là.
+- **Le correctif** : le vivier lit `_initRivalsCoeur` ; un vivier vide n'est plus marqué initialisé et se reconstruit ; la voie de secours rend la main aux listes d'origine quand le vivier n'a personne pour la catégorie ; au chargement, une partie sans rivaux est réparée.
+
+Suite `rivaux` : carrière créée par l'écran de création, classement complet, rivaux qui marquent, sauvegarde réparée.
+
+## DA de la création et du week-end — v243
+
+- **Création du pilote** : bandeau commun (titre en capitales, flèche de retour simple, filet rouge), nom de chaque étape en titre de section à rayures, tuiles pour les choix (continent, pays, milieu, style, trait) avec un éclat rouge sur le choix retenu, champs et boutons du jeu ; plus d'initiales posées sur le portrait du récapitulatif.
+- **Classements sans visages** : les portraits des pilotes rivaux n'apparaissent plus dans les classements (championnat, accueil), seulement sur leur fiche (ouverte depuis le classement).
+- **Week-end de course** (parcouru en photos : conférence, préparation, essais, qualifications, course, résultats) :
+  - les titres de section masqués par un module restaient visibles et vides (le `display:flex !important` commun l'emportait) — corrigé pour tout le jeu (Media Day, Vie perso) ;
+  - Media Day : l'ancien contenu reste masqué même quand le jeu régénère l'écran ; portrait du journaliste ; « Votre réponse » en titre de section ;
+  - qualifications : « Q1 — Élimination » en titre de section (la couleur de la session reste sur le badge) ;
+  - résultats : récit corrigé (accents, plus de « Course compliquee — course compliquee ») ;
+  - trophées en bandeaux compacts.
+
+## Écran des modes et sections vides — v244
+
+- **Écran des modes** (avant la création) : en-tête commun (surtitre gris, titre en capitales, filet rouge), cartes en tuiles du jeu, choix retenu en rouge au lieu du cyan, bouton au dégradé rouge. Le rouge remplace aussi le cyan dans la pastille « Mode Carrière — changer », la carte « Mode de jeu » du récapitulatif et le bloc « Écurie de cœur ».
+- **Sections vides** (module `129-sections-vides.js`) : sur l'écran affiché, un sous-titre sans rien dessous reçoit une courte phrase d'attente, propre au sujet (« Aucun titre pour l'instant : ton palmarès s'écrira au fil des saisons. », rivalités, décisions, trophées, offres, messages…) ou générique (« Rien à afficher pour l'instant. »). Elle disparaît dès que la section a du contenu. Le module observe l'écran, sans toucher aux modules qui dessinent les sections. Parcours de tous les écrans et onglets (sauvegarde de test et carrière neuve) : les sections ont toutes déjà un contenu ou leur propre phrase ; le module sert de filet (contenu pas encore dessiné, nouveaux écrans). Test : suite `vides`.
+- **Onglets du bandeau inaccessibles** : les notifications et trophées du haut (v240) se posaient sur le bandeau et captaient le clic ; comme la file se renouvelle, les onglets restaient couverts presque tout le temps. Ils laissent désormais passer le clic (ils se ferment seuls). Test : suite `vides`.
+- **Colonnes alignées en haut** : en mise en colonnes, la marge haute du premier bloc décalait la première colonne vers le bas (ex. « Relations »). Marge retirée au premier bloc et à ses premiers enfants, ainsi qu'aux enveloppes rembourrées (`.mg`, fiche de note) ; parcours de tous les écrans et onglets : plus aucun écart.
+- **Pneus dessinés** : un seul dessin (`rjPneu`, moteur de course) remplace les ronds « S/M/H/I/W » partout — gomme noire, bande de la couleur du composé sur le flanc, jante à cinq branches ; la lettre reste au centre sur les grandes cartes de choix du composé.
+
+## Tracés inventés et course en direct — v244
+
+- **Tracés de circuits** (module `130-traces-circuits.js`) : chaque circuit (70, karting compris) reçoit un tracé original, tiré d'une graine (son nom), donc identique d'une partie à l'autre. C'est un polygone de virages arrondis, avec des replis vers l'intérieur, au moins une épingle, des chicanes sur les longues lignes droites et des rayons selon le caractère du lieu (urbain : angles droits serrés ; rapide : grandes courbes ; karting : court et sinueux) ; les ovales sont des ovales. Le tirage s'inspire de la longueur et du nombre de virages du lieu réel ; le meilleur de 60 candidats sans croisement est gardé. Un même lieu sous deux noms (Barcelone/Barcelona, Budapest/Hungaroring, Spielberg/Red Bull Ring, Monterey/Laguna Seca) a un seul tracé.
+- **Infos mesurées sur le tracé** : longueur, virages, plus longue ligne droite, zones DRS (lignes droites ≥ 500 m, pour les lieux qui en ont), gros freinages, freinage, appui (part du tour passée pied au plancher, rangée d'un circuit à l'autre), dépassement, secteurs (temps aux tiers de la distance), temps de référence (celui du lieu, ajusté de ±12 % par le tracé pour garder des chronos crédibles). La note du circuit commence par ces faits et garde les phrases d'ambiance du lieu (climat, nuit, altitude…).
+- **Course en direct** : la ligne d'arrivée est au milieu de la ligne droite principale ; chaque voiture est un rond aux couleurs de l'écurie avec les trois premières lettres du nom du pilote (le joueur : plus grand, cerclé de blanc, avec sa position) ; la voie des stands longe la ligne droite (entrée et sortie raccordées à la piste, muret, garages), et les voitures arrêtées s'y rangent.
+- Tests : suite `circuits`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
