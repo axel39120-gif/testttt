@@ -216,7 +216,7 @@
   /* Épargnés : la navigation et les onglets (repères, pas actions), et les
      sélecteurs de nationalité, où le drapeau EST l'information — le retirer
      transformerait une grille de pays en liste de mots. */
-  var EXCLUS = ".nav,.navbar,.tabs,.tab,.apex-nav,.apex-tabbar,.ni,#main-nav,#nav,.seg,.segmented," +
+  var EXCLUS = "#rj-logo-modal,.nav,.navbar,.tabs,.tab,.apex-nav,.apex-tabbar,.ni,#main-nav,#nav,.seg,.segmented," +
                ".nat-opt,.continent-opt,#nat-grid,#continent-grid,#selected-nat-badge,.flag,.team-logo," +
                ".rj80-fav-opt,#rj80-fav-grid,.rj122-carte";   /* écusson d'écurie, jauge de relation : information, pas décoration */
   var EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{1F000}-\u{1F2FF}]/gu;
@@ -309,7 +309,7 @@
   /* L'observateur ne rattrape pas tout : certaines tuiles sont réinjectées
      par d'autres modules après coup, hors du flux de mutations que nous
      voyons. Un balayage déterministe après chaque rendu d'écran ferme le
-     trou, sans observateur supplémentaire ni risque de boucle. */
+     trou, sans observateur supplémentaire ni risque de boucle. */
   function wrapRendu(nom) {
     if (typeof window[nom] !== "function" || window[nom]._rj57btn) return;
     rjInscrire(nom, { id: "57-boutons-" + nom, ordre: -2450, apres: function () { nettoyerBoutons(document.body); } });

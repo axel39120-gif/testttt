@@ -1209,6 +1209,7 @@ async function suiteCircuit() {
         points: document.querySelectorAll("#rj111-carte .rj111-voiture:not([hidden])").length,
         enCourse: LIVE_RACE.drivers.filter(d => !d.dnf).length,
         actif: window.RJVueCircuit ? RJVueCircuit.actif() : false,
+        tour: (() => { const L = [...document.querySelectorAll("#rj111-carte .rj111-tour li")], moi = document.querySelector("#rj111-carte .rj111-tour li.moi"), o = document.querySelector("#rj111-carte .rj111-tour"); return { lignes: L.length, moi: !!moi && moi.getBoundingClientRect().bottom <= o.getBoundingClientRect().bottom + 1, ecussons: document.querySelectorAll("#rj111-carte .rj111-tour li .l svg").length }; })(),
         cadre: b ? { haut: Math.round(b.top), bas: Math.round(b.bottom), larg: Math.round(b.width), haut2: Math.round(b.height) } : null
       };
     });
@@ -1217,6 +1218,7 @@ async function suiteCircuit() {
     S.verifier("le tracé est celui du circuit couru", depart.trace);
     S.verifier("un point par voiture en course", depart.points === depart.enCourse && depart.points > 1, depart.points + " / " + depart.enCourse);
     S.verifier("l'animation tourne pendant la course", depart.actif);
+    S.verifier("la tour montre vingt pilotes au plus, le joueur toujours visible, avec les écussons", depart.tour.lignes > 1 && depart.tour.lignes <= 20 && depart.tour.moi && depart.tour.ecussons > 0, JSON.stringify(depart.tour));
     S.verifier("la carte tient dans l'écran", !!depart.cadre && depart.cadre.bas <= 430 && depart.cadre.haut2 >= 140, JSON.stringify(depart.cadre));
 
     /* Les points avancent, sans jamais reculer (hors passage au stand). */
@@ -2869,6 +2871,34 @@ async function suiteCircuits() {
     });
     S.verifier("chaque circuit a un tracé fermé, partant d une ligne droite, et des infos tirées de ce tracé", r.n > 40 && r.ko.length === 0, JSON.stringify(r.ko.slice(0, 5)));
     S.verifier("le tracé d un circuit est le même à chaque partie, et un même lieu a un seul tracé", r.stable && r.memeLieu, JSON.stringify(r));
+    const themes = await page.evaluate(() => { const c = G.cat, t = ["Formule 1", "Formule 2", "Formule 4", "Super Formula", "IndyCar", "Endurance WEC", "Karting Junior"].map(x => { G.cat = x; return RJVueCircuit.theme().id; }); G.cat = c; return t.join(","); });
+    S.verifier("la tour de classement a l habillage de chaque catégorie", themes === "f1,f2,f4,sf,indy,wec,kart", themes);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteLogos() {
+  S.suite("Logos d'écuries");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await page.waitForFunction(() => !!document.getElementById("rjlogo-defs"), null, { timeout: 15000 });
+    const r = await page.evaluate(() => {
+      const ko = [], hote = document.getElementById("rjlogo-defs");
+      Object.keys(TEAM_LOGOS).forEach(t => {
+        const svg = TEAM_LOGOS[t], refs = (svg.match(/url(#([^)]+))/g) || []).map(x => x.slice(5, -1));
+        if (!/rjlogo/.test(svg)) ko.push(t + " : pas de blason");
+        const formes = x => (x.match(/<(path|circle|ellipse|rect|text|polygon|use)/g) || []).length;
+        if (formes(svg) < formes(RJLogos.original(t))) ko.push(t + " : dessin d'origine perdu");
+        refs.forEach(id => { if (!hote.querySelector("[id=\"" + id + "\"]") && svg.indexOf("id=\"" + id + "\"") < 0) ko.push(t + " : " + id + " introuvable"); });
+      });
+      const modeles = RJLogos.modeles(), vides = modeles.filter(id => !/<path|<circle|<rect|<text|<ellipse/.test(RJLogos.dessiner(id, "#1E5BC6", 40, "Scuderia Vittoria").split("</defs>").pop()));
+      return { n: Object.keys(TEAM_LOGOS).length, ko, modeles: modeles.length, vides, ferrari: RJLogos.parDefaut("Ferrari").color, plaque: modeles.indexOf("plaque_lettrage") >= 0 };
+    });
+    S.verifier("chaque écurie garde son logo d'origine, retouché (coins, reflet), et ses références se résolvent", r.n > 50 && r.ko.length === 0, JSON.stringify(r.ko.slice(0, 4)));
+    S.verifier("l'éditeur propose tous les modèles, plaque à lettrage comprise, chacun dessiné", r.modeles > 40 && r.vides.length === 0 && r.plaque, JSON.stringify(r.vides));
+    S.verifier("une écurie connue garde sa couleur (Ferrari en rouge)", r.ferrari === "#DC0000", r.ferrari);
+    const audi = await page.evaluate(() => { const ancien = JSON.parse(JSON.stringify(G)); G.rivals[0].team = "Kick Sauber"; G._testHisto = { "Kick Sauber": 3 }; RJRenommerEcurie("Kick Sauber", "Audi"); const ok = G.rivals[0].team === "Audi" && G._testHisto.Audi === 3 && !("Kick Sauber" in G._testHisto); delete G._testHisto; return { ok, f1: (TEAMS_BY_CAT["Formule 1"] || []).indexOf("Audi") >= 0 && (TEAMS_BY_CAT["Formule 1"] || []).indexOf("Kick Sauber") < 0, logo: !!TEAM_LOGOS.Audi }; });
+    S.verifier("Kick Sauber devient Audi (équipe de F1, logo, ancienne sauvegarde renommée)", audi.ok && audi.f1 && audi.logo, JSON.stringify(audi));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -3134,6 +3164,7 @@ const SUITES = {
   rivaux: suiteRivaux,
   vides: suiteVides,
   circuits: suiteCircuits,
+  logos: suiteLogos,
   decisions: suiteDecisions
 };
 

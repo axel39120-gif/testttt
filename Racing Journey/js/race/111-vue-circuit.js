@@ -70,7 +70,8 @@
     if (!donnees || !donnees.path) { c.hidden = true; return null; }
     c.hidden = false;
     c.innerHTML = '<div class="rj111-tete"><span class="rj111-nom">' + esc(circuit) + "</span>" +
-      '<span class="rj111-neutre" hidden></span></div><div class="rj111-corps"><ol class="rj111-tour"></ol></div>';
+      '<span class="rj111-neutre" hidden></span></div><div class="rj111-corps"><div class="rj111-colonne" data-theme="' + theme().id + '">' +
+      '<div class="rj111-entete"><b>' + theme().sigle + '</b><span class="rj111-tours"></span></div><ol class="rj111-tour"></ol></div></div>';
     var corps = c.querySelector(".rj111-corps");
 
     var svg = element("svg", { "class": "rj111-svg", role: "img", "aria-label": "Course en direct sur " + circuit });
@@ -153,7 +154,7 @@
 
     voitures = {};
     return { circuit: circuit, svg: svg, piste: piste, longueur: L, groupe: groupe, etiquette: etiquette, stand: stand,
-             tour: c.querySelector(".rj111-tour"), majTour: 0, neutre: c.querySelector(".rj111-neutre") };
+             tour: c.querySelector(".rj111-tour"), tours: c.querySelector(".rj111-tours"), majTour: 0, neutre: c.querySelector(".rj111-neutre") };
   }
 
   /* Une voiture : un rond aux couleurs de l'écurie, avec les initiales du pilote. */
@@ -180,20 +181,43 @@
     return (mots[mots.length - 1] || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3).toUpperCase() || "???";
   }
 
+  /* Habillage de la tour selon la catégorie, à la manière des retransmissions. */
+  function theme() {
+    var cat = String((typeof G !== "undefined" && G && G.cat) || "");
+    if (/karting/i.test(cat)) return { id: "kart", sigle: "KART", dec: 1 };
+    if (/indy/i.test(cat)) return { id: "indy", sigle: "INDY", dec: 3 };
+    if (/wec|endurance|mans/i.test(cat)) return { id: "wec", sigle: "WEC", dec: 3 };
+    if (/super formula/i.test(cat)) return { id: "sf", sigle: "SF", dec: 3 };
+    var n = cat.match(/formule\s*(\d)/i);
+    return n ? { id: "f" + n[1], sigle: "F" + n[1], dec: 3 } : { id: "f1", sigle: "F1", dec: 3 };
+  }
+
+  /* L'écusson de l'écurie, ou sa couleur quand elle n'en a pas. */
+  var LIGNES = 20;
+  function ecusson(equipe, nom) {
+    var svg = equipe && window.TEAM_LOGOS && window.TEAM_LOGOS[equipe];
+    return svg ? '<span class="l">' + svg + "</span>" : '<span class="c" style="background:' + couleur(equipe, nom) + '"></span>';
+  }
+
   /* Tour de classement : l'ordre sur la piste à cet instant (108). */
   function majTourDeClassement(lr, e) {
     var parNom = {};
     lr.drivers.forEach(function (d) { parNom[d.name] = d; });
+    var th = theme(), total = lr.total || lr.totalLaps || 0, tourEnCours = lr.finished ? total : Math.max(1, Math.min(total || 1e9, lr.cur || 0));   // même compte que la barre de progression (90)
+    if (vue.tours) vue.tours.innerHTML = (lr.finished ? "ARRIVÉE" : "TOUR <b>" + tourEnCours + "</b>" + (total ? "/" + total : ""));
     var vivants = e.voitures.filter(function (v) { return !v.abandon; })
       .sort(function (a, b) { return (a.autreCategorie - b.autreCategorie) || (a.pos - b.pos); });
-    vue.tour.innerHTML = vivants.map(function (v, i) {
-      var d = parNom[v.nom] || {};
+    // vingt lignes ; le joueur toujours visible (à la dernière ligne s'il est plus loin)
+    var montres = vivants.slice(0, LIGNES), iJoueur = vivants.findIndex(function (v) { return v.joueur; });
+    if (iJoueur >= LIGNES) montres[LIGNES - 1] = vivants[iJoueur];
+    vue.tour.innerHTML = montres.map(function (v, k) {
+      var i = vivants.indexOf(v), d = parNom[v.nom] || {};
       var tete = i === 0 || vivants[i - 1].autreCategorie !== v.autreCategorie;
-      var ecart = tete ? "Leader"
-        : v.ecart >= e.tempsTour ? "+" + Math.floor(v.ecart / e.tempsTour) + " T" : "+" + Math.max(0.1, v.ecart).toFixed(1);
-      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + '"><span class="p">' + v.pos + "</span>" +
-        '<span class="c" style="background:' + couleur(d.team, v.nom) + '"></span>' +
-        '<span class="n">' + esc(v.joueur ? "TOI" : abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? "STAND" : ecart) + "</span></li>";
+      var ecart = tete ? "TÊTE"
+        : v.ecart >= e.tempsTour ? "+" + Math.floor(v.ecart / e.tempsTour) + " T" : "+" + Math.max(Math.pow(10, -th.dec), v.ecart).toFixed(th.dec);
+      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + (tete ? " tete" : "") + (k === LIGNES - 1 && i >= LIGNES ? " detache" : "") + '"><span class="p">' + v.pos + "</span>" +
+        ecusson(d.team, v.nom) +
+        '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? '<i class="pit">PIT</i>' : ecart) + "</span></li>";
     }).join("");
   }
 
@@ -289,7 +313,7 @@
       window.RJ_RACE_TAB_HOOKS.push({ id: "111-circuit", apres: function () { setTimeout(demarrer, 0); } });
     }
     document.addEventListener("visibilitychange", demarrer);
-    window.RJVueCircuit = { actif: function () { return !!boucle; }, etat: etat };
+    window.RJVueCircuit = { actif: function () { return !!boucle; }, etat: etat, theme: theme };
     window._rj111Uninstall = function () {
       ["RJ_RACE_START_HOOKS", "RJ_LAP_HOOKS", "RJ_SCREEN_HOOKS", "RJ_RACE_TAB_HOOKS"].forEach(function (r) {
         window[r] = window[r].filter(function (h) { return !(h && h.id === "111-circuit"); });

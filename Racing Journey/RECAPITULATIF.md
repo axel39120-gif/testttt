@@ -675,6 +675,24 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - **Course en direct** : la ligne d'arrivée est au milieu de la ligne droite principale ; chaque voiture est un rond aux couleurs de l'écurie avec les trois premières lettres du nom du pilote (le joueur : plus grand, cerclé de blanc, avec sa position) ; la voie des stands longe la ligne droite (entrée et sortie raccordées à la piste, muret, garages), et les voitures arrêtées s'y rangent.
 - Tests : suite `circuits`.
 
+## Classement en direct façon télé — v245
+
+- La tour de classement à côté du circuit prend l'allure d'une retransmission : en-tête avec la catégorie et le tour en cours (ou « ARRIVÉE »), position dans une case, liseré de l'écurie, code pilote en capitales, écart au millième (au dixième en karting), « TÊTE » pour le leader, badge « PIT » au stand, ligne du joueur surlignée.
+- Un habillage par catégorie, sans logo réel : F1 rouge, F2 bleu, F3 argent, F4 vert, Super Formula rose, IndyCar jaune, WEC turquoise, karting orange. Test : suite `circuits`.
+- Vingt pilotes affichés sans défilement ; le joueur reste toujours visible (à la dernière ligne, détachée, s'il est plus loin). L'écusson de l'écurie remplace le liseré de couleur quand l'écurie en a un. Le nom du circuit n'est plus répété au-dessus de la carte (il est dans le bandeau).
+
+## Logos d'écuries — v246-v249
+
+- **v249 : logos de F1 repris avec plus de matière** (dégradés, chrome, ombres, lettrages), dans l'esprit des logos d'origine sans copier les marques ; les variantes de nom (Scuderia Ferrari, Mercedes AMG F1…) reprennent le même dessin. Les dégradés propres à un logo sont rangés eux aussi dans le bloc commun, avec des identifiants uniques.
+- **Kick Sauber devient Audi** : données (équipes de F1, staff, notes, radio, couleur), logo argent et rouge inventé (sans les anneaux), et migration des anciennes sauvegardes au chargement (toutes les valeurs et clés « Kick Sauber » de la partie deviennent « Audi »).
+
+- **v248 : retour aux logos d'origine**, jugés plus réalistes : chaque écurie garde son dessin d'origine, légèrement retouché (coins arrondis, reflet sur le haut, liseré clair et ombre intérieure). Les modèles ci-dessous restent proposés dans l'éditeur pour personnaliser une écurie ; « Rétablir le blason d'origine » ramène au logo d'origine retouché.
+
+- Toutes les écuries reçoivent un blason inventé dans l'esprit du sport auto (aucune marque réelle reprise) : lettrage penché avec traits de vitesse, monogramme rapide souligné, écu à bandes de course, ailes balayées, drapeau à damier, doubles chevrons, bandes de capot, plaque numérotée. Le modèle est tiré du nom de l'écurie ; la couleur est celle de l'écurie (rouge Ferrari, orange McLaren… ; sinon la couleur dominante de son ancien logo).
+- Rendu commun à tous les modèles, éditeur compris : fond teinté, contour métal, ombre portée, monogramme gravé, reflet. Les dégradés sont rangés dans un bloc unique toujours rendu (un logo présent dans un écran masqué devenait invisible partout).
+- Éditeur : section « Sport auto » en tête du sélecteur, plaque au nom de l'écurie et écu à damier en plus ; « Rétablir le blason d'origine » revient vraiment au blason par défaut et montre sa vignette (le nettoyeur d'icônes du module 57 l'effaçait).
+- Test : suite `logos`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
