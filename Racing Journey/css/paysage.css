@@ -1498,3 +1498,7 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 @container app (max-width: 599px) { .rj132-carte { grid-template-columns: minmax(0, 1fr); } }
 .rj132-mini { width: 64px; height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .rj132-mini svg { width: 64px; height: auto; }
+
+/* Débrief des essais : le ressenti du pilote présenté comme dans Préparation. */
+.rja-debrief { margin: 10px 14px 4px; }
+.rja-debrief-titre { padding: 10px 12px 0; font: 800 9px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #8a8a96); }

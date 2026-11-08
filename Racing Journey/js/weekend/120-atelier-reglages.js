@@ -138,6 +138,24 @@
       '<div class="rja-anneau-val" style="color:' + teinte + '">' + (v === null ? "—" : v + "<small>%</small>") + "</div>";
   }
 
+  /* La tête de l'atelier (confiance + cinq ressentis) seule, pour la montrer
+     ailleurs à l'identique (débrief des essais). */
+  function ressentisHTML() {
+    var dispo = params();
+    if (!dispo.length) return "";
+    var h = '<div class="rja-tete"><div class="rja-conf">' + anneau(confiance()) + '<div class="rja-conf-lbl">Confiance<br>du pilote</div></div><div class="rja-ressentis">';
+    RESSENTIS.forEach(function (r) {
+      var x = ressenti(r, dispo);
+      if (!x) return;
+      var v = verdict(x), largeur = Math.max(6, 6 + 60 * x.doute);
+      h += '<div class="rja-r"><div class="rja-r-tete"><span class="nom">' + esc(r.nom) + '</span><span class="rja-verdict ' + v.c + '">' + v.t + "</span></div>" +
+        '<div class="rja-barre"><span class="zone" style="left:' + (50 - largeur / 2) + "%;width:" + largeur + '%"></span>' +
+        '<span class="marque" style="left:' + (50 + 46 * x.pos).toFixed(1) + '%"></span></div>' +
+        '<div class="rja-bornes"><span>' + esc(r.bornes[0]) + "</span><span>" + esc(r.bornes[1]) + "</span></div></div>";
+    });
+    return h + "</div></div>";
+  }
+
   /* ------------------------------------------------------------------ */
   function rendre(conteneur) {
     var dispo = params();
@@ -229,7 +247,7 @@
       try { rendre(c); } catch (e) { console.warn(TAG, e && e.message); }
     } });
     document.addEventListener("click", surClic, true);
-    window.RJAtelier = { ressenti: ressenti, confiance: confiance, parole: parole, RESSENTIS: RESSENTIS };
+    window.RJAtelier = { ressenti: ressenti, confiance: confiance, parole: parole, ressentisHTML: ressentisHTML, RESSENTIS: RESSENTIS };
     window._rj120Uninstall = function () {
       rjDesinscrire(["120-atelier:"], "renderAdvancedSetupUI");
       document.removeEventListener("click", surClic, true);

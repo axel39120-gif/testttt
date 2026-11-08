@@ -708,6 +708,11 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - **Casque du pilote** (module `132-casque.js`, Carrière › Stats › Personnalisation) : éditeur avec aperçu dessiné (profil, visière, aération, numéro), trois couleurs (principale, secondaire, accent, plus une teinte libre), dix motifs (uni, bande centrale, bandes, chevron, flammes, damier, étoiles, éclair, diagonale, dégradé), quatre visières (fumée, iridium bleu, or, argent), trois finitions (brillant, mat, chromé) et le numéro. Enregistré avec le pilote ; la carte de Stats montre le casque.
 - Tests : suites `contacts`, `essais`, `casque`.
 
+## Retouches — v253
+
+- **Pilote › Stats** : l'icône et la note des cartes (Performance, Technique, Mental, Physique…) touchaient le bord de la carte (en-tête sans marge intérieure) ; elles ont désormais le même retrait que les lignes.
+- **Débrief des essais libres** : le réglage y était présenté réglage par réglage (aileron avant, antiroulis…), autrement qu'en début de séance. Il reprend la présentation de l'onglet Préparation : confiance du pilote, cinq ressentis (équilibre, freinage, appui, traction, vitesse) avec leur verdict, et la parole du pilote.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
