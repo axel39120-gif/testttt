@@ -63,6 +63,8 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `amour` | pas de rencontre avant 18 ans, profil selon la réputation, couple avec une célébrité et presse people, emménagement, enfant (proposition puis naissance), rupture après une relation glacée, rubrique Vie privée, foyer dans Vie perso |
 | `avatars` | même visage pour un même personnage, cheveux selon le pays, trente portraits en moins d'une seconde et demie, éditeur à la création qui enregistre, portraits dans le bandeau, la messagerie, l'entourage, les classements et le face-à-face, modification depuis le bandeau, sauvegarde |
 | `rivaux` | carrière créée par l'écran de création avec des rivaux et un classement complet, rivaux qui marquent après une course, sauvegarde sans rivaux réparée au chargement |
+| `vides` | un sous-titre sans contenu reçoit une phrase d’attente, retirée quand le contenu arrive |
+| `circuits` | chaque circuit a un tracé fermé partant de la ligne droite principale, des infos (longueur, virages, secteurs, note) mesurées sur ce tracé ; tracé stable d’une partie à l’autre |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |

@@ -2,10 +2,11 @@
  * 111-vue-circuit.js — LA COURSE EN DIRECT, SUR LE TRACÉ
  *
  * Pendant la course, l'écran montre le circuit couru (getCircuitData().path)
- * avec ses secteurs et sa ligne d'arrivée, une silhouette par voiture aux
- * couleurs de son écurie, orientée dans le sens de la piste, et une tour de
- * classement en direct (position, écurie, écart au leader, tours de retard).
- * La voiture du joueur est plus grande, cerclée de blanc, avec sa position.
+ * avec ses secteurs, sa ligne d'arrivée et sa voie des stands (entrée,
+ * muret, garages, sortie), un rond par voiture aux couleurs de son écurie
+ * avec les initiales du pilote, et une tour de classement en direct
+ * (position, écurie, écart au leader, tours de retard). La voiture du joueur
+ * est plus grande, cerclée de blanc, avec sa position.
  *
  * POSITIONS
  * RJModelePiste.etat() (108) rejoue la course en temps réel : distance,
@@ -107,11 +108,43 @@
     var angle = Math.atan2(r0.ny, r0.nx) * 180 / Math.PI;
     svg.appendChild(element("rect", { x: -3, y: -0.6, width: 6, height: 1.2, fill: "url(#rj111-damier)",
       transform: "translate(" + r0.x.toFixed(2) + "," + r0.y.toFixed(2) + ") rotate(" + angle.toFixed(1) + ")" }));
-    var stand = { x: r0.x + r0.nx * 9 + r0.tx * 8, y: r0.y + r0.ny * 9 + r0.ty * 8, w: 22, h: 7 };
-    svg.appendChild(element("rect", { x: stand.x - stand.w / 2, y: stand.y - stand.h / 2, width: stand.w, height: stand.h, rx: 1.5, "class": "rj111-stand" }));
-    var lib = element("text", { x: stand.x, y: stand.y + stand.h / 2 + 4.5, "class": "rj111-stand-lib" });
-    lib.textContent = "STAND";
+    /* Voie des stands : parallèle à la ligne droite d'arrivée, côté intérieur,
+       avec une entrée et une sortie qui rejoignent la piste, un muret et des
+       garages. s = distance au départ (négative avant la ligne). */
+    var vs = donnees.voieStands, ENTREE = vs ? Math.max(8, Math.min(18, vs.avant, vs.apres)) : 18, PLEIN = ENTREE - 5, ECART = 6.2;
+    function surVoie(sd, decal) {
+      var r = repere(((sd % L) + L) % L), a = Math.abs(sd);
+      var k = a <= PLEIN ? 1 : Math.max(0, (ENTREE - a) / (ENTREE - PLEIN));
+      var o = (decal == null ? ECART : decal) * k;
+      return { x: r.x + r.nx * o, y: r.y + r.ny * o, r: r };
+    }
+    var pts = [];
+    for (var sd = -ENTREE; sd <= ENTREE; sd += 1) pts.push(surVoie(sd));
+    var trace = "M" + pts.map(function (p) { return p.x.toFixed(2) + "," + p.y.toFixed(2); }).join(" L");
+    svg.appendChild(element("path", { d: trace, "class": "rj111-voie-bord" }));
+    svg.appendChild(element("path", { d: trace, "class": "rj111-voie" }));
+    var muret = [];
+    for (sd = -PLEIN + 1; sd <= PLEIN - 1; sd += 1) muret.push(surVoie(sd, ECART / 2));
+    svg.appendChild(element("path", { d: "M" + muret.map(function (p) { return p.x.toFixed(2) + "," + p.y.toFixed(2); }).join(" L"), "class": "rj111-muret" }));
+    var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    for (sd = -PLEIN + 2; sd <= PLEIN - 2; sd += 2.4) {
+      var g0 = surVoie(sd, ECART + 2.6), ang = Math.atan2(g0.r.ty, g0.r.tx) * 180 / Math.PI;
+      svg.appendChild(element("rect", { x: -1, y: -1, width: 2, height: 2, rx: .3, "class": "rj111-garage",
+        transform: "translate(" + g0.x.toFixed(2) + "," + g0.y.toFixed(2) + ") rotate(" + ang.toFixed(1) + ")" }));
+    }
+    pts.forEach(function (p, i) {
+      if (Math.abs(i - ENTREE) > PLEIN) return;
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    });
+    // Boîte qui englobe la voie (API et tests) ; les voitures arrêtées s'y rangent.
+    var stand = { x: (minX + maxX) / 2, y: (minY + maxY) / 2, w: Math.max(2, maxX - minX), h: Math.max(2, maxY - minY),
+                  place: function (i) { return surVoie(-PLEIN + 2 + (i % 10) * ((2 * PLEIN - 4) / 9)); } };
+    var lieu = surVoie(0, ECART + 6.5);
+    var lib = element("text", { x: lieu.x.toFixed(2), y: (lieu.y + 1.2).toFixed(2), "class": "rj111-stand-lib" });
+    lib.textContent = "STANDS";
     svg.appendChild(lib);
+    var tout = svg.getBBox();   // la voie peut déborder du cadre de la piste
+    svg.setAttribute("viewBox", [tout.x - 4, tout.y - 4, tout.width + 8, tout.height + 8].join(" "));
 
     var groupe = element("g", { "class": "rj111-voitures" });
     svg.appendChild(groupe);
@@ -123,12 +156,16 @@
              tour: c.querySelector(".rj111-tour"), majTour: 0, neutre: c.querySelector(".rj111-neutre") };
   }
 
-  /* Une voiture : silhouette aux couleurs de l'écurie, orientée dans le sens de la piste. */
-  function silhouette(joueur, autre, teinte) {
+  /* Une voiture : un rond aux couleurs de l'écurie, avec les initiales du pilote. */
+  function pastille(joueur, autre, teinte, nom) {
     var g = element("g", { "class": "rj111-voiture" + (joueur ? " rj111-joueur" : "") + (autre ? " rj111-autre" : "") });
-    var l = joueur ? 4.4 : autre ? 2.6 : 3.4, h = joueur ? 2.2 : autre ? 1.3 : 1.7;
-    g.appendChild(element("rect", { x: -l / 2, y: -h / 2, width: l, height: h, rx: h / 2.5, fill: teinte, "class": "rj111-caisse" }));
-    g.appendChild(element("rect", { x: l / 2 - l * 0.28, y: -h / 2, width: l * 0.12, height: h, fill: "rgba(0,0,0,.45)" }));   // aileron avant
+    var rayon = joueur ? 4.4 : autre ? 2.6 : 3.6;
+    g.appendChild(element("circle", { r: rayon, fill: teinte, "class": "rj111-caisse" }));
+    if (!autre) {
+      var t = element("text", { y: 0.95, "class": "rj111-initiales", "font-size": joueur ? 3 : 2.6 });
+      t.textContent = abrege(nom);
+      g.appendChild(t);
+    }
     return g;
   }
 
@@ -181,17 +218,15 @@
       var r = voitures[cle];
       if (!r) {
         var d = parNom[cle];
-        r = voitures[cle] = { el: silhouette(v.joueur, v.autreCategorie, couleur(d && d.team, cle)) };
+        r = voitures[cle] = { el: pastille(v.joueur, v.autreCategorie, couleur(d && d.team, cle), cle), rang: Object.keys(voitures).length };
         vue.groupe.appendChild(r.el);
       }
       r.d = v.distance; r.pos = v.pos; r.stand = v.auStand; r.autre = v.autreCategorie;
       if (v.joueur) joueur = r;
       var lg = vue.longueur, ici = (((r.d % 1) + 1) % 1) * lg;
-      var p = r.stand ? vue.stand : vue.piste.getPointAtLength(ici);
-      var q = r.stand ? { x: p.x + 1, y: p.y } : vue.piste.getPointAtLength(Math.min(lg, ici + 0.8));
-      var cap = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+      var p = r.stand ? vue.stand.place(r.rang) : vue.piste.getPointAtLength(ici);
       r.x = p.x; r.y = p.y;
-      r.el.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ") rotate(" + cap.toFixed(1) + ")");
+      r.el.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ")");
     });
     Object.keys(voitures).forEach(function (nom) {
       if (!presents[nom]) { voitures[nom].el.remove(); delete voitures[nom]; }
@@ -199,8 +234,8 @@
     // Le joueur au premier plan, avec sa position.
     if (joueur) {
       vue.groupe.appendChild(joueur.el);
-      vue.etiquette.setAttribute("x", (joueur.x + 4).toFixed(2));
-      vue.etiquette.setAttribute("y", (joueur.y - 3.5).toFixed(2));
+      vue.etiquette.setAttribute("x", (joueur.x + 5).toFixed(2));
+      vue.etiquette.setAttribute("y", (joueur.y - 4.5).toFixed(2));
       vue.etiquette.textContent = "P" + joueur.pos;
     }
     if (t - vue.majTour > 250 || e.fini) {

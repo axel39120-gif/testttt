@@ -12735,6 +12735,29 @@ function _pitConfigForCat(cat) {
    strategies en paliers carres. Bouton "Demander à l'ingénieur" pour
    pre-remplir intelligemment selon le circuit et la meteo.
    ===================================================================== */
+
+/* Un pneu vu de profil : gomme noire, bande de la couleur du composé sur le
+   flanc, jante et écrou. La lettre n'apparaît qu'en grand (choix du composé) ;
+   en petit, la couleur et l'infobulle suffisent, comme sur un vrai pneu. */
+function rjPneu(info, taille) {
+  info = info || {};
+  var t = taille || 16, c = info.color || "#9CA3AF", lettre = t >= 36 && info.short;
+  var rayons = "";
+  for (var i = 0; i < 5; i++) {
+    var a = (i * 72 - 90) * Math.PI / 180;
+    rayons += '<line x1="50" y1="50" x2="' + (50 + 22 * Math.cos(a)).toFixed(1) + '" y2="' + (50 + 22 * Math.sin(a)).toFixed(1) + '" stroke="#5b5b66" stroke-width="5" stroke-linecap="round"/>';
+  }
+  return '<span class="rj-pneu" title="' + (info.label || "") + '" style="display:inline-flex;flex-shrink:0;width:' + t + 'px;height:' + t + 'px;vertical-align:middle">' +
+    '<svg viewBox="0 0 100 100" width="' + t + '" height="' + t + '" aria-hidden="true">' +
+      '<circle cx="50" cy="50" r="49" fill="#0b0b0e"/>' +
+      '<circle cx="50" cy="50" r="46" fill="none" stroke="#202027" stroke-width="3" stroke-dasharray="6 4"/>' +
+      '<circle cx="50" cy="50" r="38" fill="none" stroke="' + c + '" stroke-width="5"/>' +
+      '<circle cx="50" cy="50" r="29" fill="#26262d"/>' +
+      (lettre ? '<circle cx="50" cy="50" r="21" fill="#15151a"/><text x="50" y="58" text-anchor="middle" font-size="24" font-weight="900" font-family="sans-serif" fill="' + c + '">' + lettre + '</text>'
+              : rayons + '<circle cx="50" cy="50" r="7" fill="#9a9aa6"/>') +
+      '<path d="M18 30 A38 38 0 0 1 40 13" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="3" stroke-linecap="round"/>' +
+    '</svg></span>';
+}
 var TYRE_COMPOUND_INFO = {
   soft: {
     label: "Tendre",
@@ -13012,7 +13035,7 @@ function _renderTyreSquare(key, selected, onclick) {
   var info = TYRE_COMPOUND_INFO[key];
   if (!info) return "";
   var sel = selected ? 'border:3px solid ' + info.border + ';box-shadow:0 0 0 2px rgba(255,255,255,0.15), 0 4px 12px ' + info.border + '66' : 'border:2px solid ' + info.border + '77';
-  return '<div onclick="' + onclick + '" style="cursor:pointer;background:' + info.bg + ';' + sel + ';border-radius:var(--r);padding:12px 8px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="width:50px;height:50px;margin:0 auto;background:' + info.color + ';border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #00000033;box-shadow:inset 0 -4px 8px rgba(0,0,0,0.25)"><span style="font-family:var(--font-display);font-size:22px;font-weight:900;color:' + info.text + ';letter-spacing:0;line-height:1">' + info.short + '</span></div>' + '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:var(--text);letter-spacing:.06em;text-transform:uppercase;margin-top:8px">' + info.label + '</div>' + '<div style="font-size:9px;color:var(--text3);margin-top:2px">' + info.pace + '</div>' + '</div>'
+  return '<div onclick="' + onclick + '" style="cursor:pointer;background:' + info.bg + ';' + sel + ';border-radius:var(--r);padding:12px 8px;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent">' + '<div style="width:54px;height:54px;margin:0 auto">' + rjPneu(info, 54) + '</div>' + '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:var(--text);letter-spacing:.06em;text-transform:uppercase;margin-top:8px">' + info.label + '</div>' + '<div style="font-size:9px;color:var(--text3);margin-top:2px">' + info.pace + '</div>' + '</div>'
 }
 
 function _renderStratLevelSquare(key, selected, onclick) {
@@ -13972,7 +13995,7 @@ function renderPitWall() {
 
         html += '<div onclick="_pwSelectCompound(this,\'' + comp + '\')" data-compound="' + comp + '" style="flex:1;padding:8px 6px 7px;border-radius:var(--r);border:' + border + ';background:' + bg + ';cursor:pointer;text-align:center;position:relative">';
         if (isSugg) html += '<div style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:var(--green,#34D399);color:#0a0510;font-size:7px;font-weight:800;padding:1px 6px;border-radius:3px;letter-spacing:.04em;white-space:nowrap">Conseillé</div>';
-        html += '<div style="width:16px;height:16px;border-radius:50%;background:' + ci.color + ';margin:4px auto 5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:' + textC + ';border:1px solid rgba(255,255,255,0.15)">' + (ci.short || 'M') + '</div>';
+        html += '<div style="width:18px;height:18px;margin:4px auto 5px">' + rjPneu(ci, 18) + '</div>';
         html += '<div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.2">' + (ci.label || comp) + '</div>';
         html += '<div style="font-family:var(--font-display);font-size:9px;color:' + (eff.paceBonus < 0 ? 'var(--green,#34D399)' : eff.paceBonus > 0 ? 'var(--text3)' : 'var(--text2)') + ';margin-top:2px">' + paceTxt + '</div>';
         html += '<div style="font-size:8px;color:var(--text3);margin-top:1px">~' + lapsEst + 't · ' + wearTxt + '</div>';
@@ -14086,7 +14109,7 @@ function renderPitWall() {
         html += '<div style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-bottom:1px solid rgba(255,255,255,0.04)">';
         html += '<span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + posColor2 + ';width:22px;flex-shrink:0">P' + d.pos + '</span>';
         html += '<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + dName + oppBadge + '</span>';
-        html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:' + ci.color + ';font-size:7px;font-weight:900;color:' + textC2 + ';flex-shrink:0;border:1px solid rgba(255,255,255,0.12)">' + (ci.short || 'M') + '</span>';
+        html += rjPneu(ci, 16);
         if (life !== null) {
           html += '<div style="width:40px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;flex-shrink:0"><div style="width:' + lifeW + '%;height:100%;background:' + lifeColor + ';border-radius:2px"></div></div>';
           html += '<span style="font-family:var(--font-display);font-size:9px;font-weight:700;color:' + lifeColor + ';width:26px;text-align:right;flex-shrink:0">' + lifeW + '%</span>';
@@ -15725,7 +15748,7 @@ function _renderLiveLeaderboardCoeur() {
     var _tl = Math.max(0, Math.round(_p._tyreLife));
     var _tlC = _tl > 60 ? "var(--green)" : _tl > 30 ? "var(--amber)" : "var(--red)";
     _tyreHtml = '<div style="display:flex;align-items:center;justify-content:center;gap:3px">' +
-      '<span style="width:17px;height:17px;border-radius:50%;background:' + _ci.color + ';color:' + (_ci.text || "#000") + ';flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:9px;font-weight:900;line-height:1;border:1px solid rgba(255,255,255,0.25)">' + (_ci.short || "?") + '</span>' +
+      rjPneu(_ci, 20) +
       '<span style="font-family:var(--font-display);font-size:14px;font-weight:800;color:' + _tlC + '">' + _tl + '%</span>' +
       '</div>' +
       '<div style="font-size:8px;color:var(--dim);margin-top:1px">' + (_ci.label || _ci.short || _cmp) + '</div>';
@@ -15979,7 +16002,7 @@ function _renderLiveLeaderboardCoeur() {
     var _cmpDot = "";
     if (d._tyreCompound) {
       var _dci = _cmpInfo(d._tyreCompound);
-      _cmpDot = '<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:' + _dci.color + ';font-size:7px;font-weight:900;color:' + (_dci.text || "#000") + ';flex-shrink:0;border:1px solid rgba(255,255,255,0.15)">' + (_dci.short || "M") + '</span>';
+      _cmpDot = rjPneu(_dci, 16);
     }
 
     // Flèche mouvement
@@ -17993,8 +18016,8 @@ function buildRaceStory(e, t, r) {
     s = RACE_STATE.eventsLog.filter(function(e) {
       return "+" === e.sign
     }).length,
-    l = o > 0 ? s >= o / 2 ? " — bonne gestion des incidents" : " — course compliquee" : "";
-  return 1 === e ? (n = "Victoire" + (i ? " " + i : "") + " !", a = "Course maitrisee de bout en bout" + l + ".") : e <= 3 ? (n = "Podium — P" + e + (i ? " " + i : ""), a = "Beau resultat" + l + ".") : e <= 5 ? (n = "P" + e + (i ? " " + i : ""), a = "Course correcte" + l + ". Des points utiles.") : (n = "P" + e + (i ? " " + i : " — journee difficile"), a = "Course compliquee" + l + "."), {
+    l = o > 0 ? s >= o / 2 ? " — bonne gestion des incidents" : " — des incidents mal négociés" : "";
+  return 1 === e ? (n = "Victoire" + (i ? " " + i : "") + " !", a = "Course maîtrisée de bout en bout" + l + ".") : e <= 3 ? (n = "Podium — P" + e + (i ? " " + i : ""), a = "Beau résultat" + l + ".") : e <= 5 ? (n = "P" + e + (i ? " " + i : ""), a = "Course correcte" + l + ". Des points utiles.") : (n = "P" + e + (i ? " " + i : " — journée difficile"), a = "Course compliquée" + l + "."), {
     short: n,
     long: a
   }

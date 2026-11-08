@@ -31,7 +31,7 @@
   "use strict";
 
   var TAG = "[80-mode-de-jeu]";
-  var CYAN = "#00D4FF", GOLD = "#F0B41E", GREEN = "#34D399";
+  var ROUGE = "#FF1801", GOLD = "#F0B41E", GREEN = "#34D399";
 
   function G_() { return typeof window.G !== "undefined" ? window.G : null; }
   function fn(n) { return typeof window[n] === "function"; }
@@ -88,7 +88,7 @@
       "Budget, contrats et réputation à construire",
       "Aucune facilité : c'est le mode de référence"
     ],
-    couleur: CYAN,
+    couleur: ROUGE,
     defaut: true,
     onStart: function () { try { window.SANDBOX_ACTIVE = false; } catch (e) {} }
   });
@@ -121,14 +121,14 @@
       "#S-mode .rj80-wrap{max-width:560px;margin:0 auto;padding:0 14px 40px}",
       "#S-mode .rj80-head{padding:16px 2px 6px;display:flex;align-items:flex-start;gap:12px}",
       "#S-mode .rj80-back{background:none;border:none;color:var(--muted);font-family:inherit;font-size:20px;cursor:pointer;padding:2px 6px 2px 0;line-height:1}",
-      "#S-mode .rj80-eyebrow{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:" + CYAN + "}",
+      "#S-mode .rj80-eyebrow{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:" + ROUGE + "}",
       "#S-mode .rj80-title{font-family:var(--font-display);font-size:23px;font-weight:900;color:var(--white);margin-top:5px;line-height:1.15}",
       "#S-mode .rj80-sub{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;font-family:var(--font-body)}",
       ".rj80-card{position:relative;display:block;width:100%;text-align:left;margin-bottom:11px;padding:15px 14px;cursor:pointer;" +
         "background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 100%);border:2px solid var(--line);border-radius:var(--r);" +
         "font-family:inherit;transition:border-color .15s,background .15s}",
       ".rj80-card:hover{border-color:var(--border-hi)}",
-      ".rj80-card.on{border-color:var(--sel,#00D4FF);background:linear-gradient(160deg,var(--bg3) 0%,var(--bg) 100%)}",
+      ".rj80-card.on{border-color:var(--sel,#FF1801);background:linear-gradient(160deg,var(--bg3) 0%,var(--bg) 100%)}",
       ".rj80-card .mt{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}",
       ".rj80-card .mn{font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--white);letter-spacing:.02em}",
       ".rj80-card .mtag{font-family:var(--font-display);font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:3px}",
@@ -137,7 +137,7 @@
       ".rj80-card .mp span{font-size:11.5px;color:var(--muted);line-height:1.45;font-family:var(--font-body);padding-left:14px;position:relative}",
       ".rj80-card .mp span:before{content:'';position:absolute;left:2px;top:6px;width:4px;height:4px;border-radius:50%;background:var(--border-hi)}",
       ".rj80-card .mcheck{position:absolute;top:14px;right:13px;width:19px;height:19px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center}",
-      ".rj80-card.on .mcheck{border-color:var(--sel,#00D4FF);background:var(--sel,#00D4FF)}",
+      ".rj80-card.on .mcheck{border-color:var(--sel,#FF1801);background:var(--sel,#FF1801)}",
       ".rj80-card.on .mcheck:after{content:'';width:7px;height:7px;border-radius:50%;background:#08131a}",
       ".rj80-soon{margin-top:6px;padding:13px 14px;border:1px dashed var(--line);border-radius:var(--r);" +
         "font-size:12px;color:var(--text3);line-height:1.5;font-family:var(--font-body);text-align:center}",
@@ -155,7 +155,7 @@
       ".rj80-fav-opt{display:flex;align-items:center;gap:8px;padding:8px 9px;background:var(--bg3);border:1.5px solid var(--line);" +
         "border-radius:var(--r);cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s,background .15s}",
       ".rj80-fav-opt:hover{border-color:var(--border-hi)}",
-      ".rj80-fav-opt.on{border-color:" + CYAN + ";background:rgba(0,212,255,.10)}",
+      ".rj80-fav-opt.on{border-color:" + ROUGE + ";background:rgba(255,24,1,.10)}",
       ".rj80-fav-opt .rj80-fav-logo{display:inline-flex;width:22px;height:22px;border-radius:4px;overflow:hidden;flex-shrink:0}",
       ".rj80-fav-opt .rj80-fav-nom{font-size:11.5px;font-weight:600;color:var(--text);line-height:1.25;font-family:var(--font-body)}",
       ".rj80-fav-opt.on .rj80-fav-nom{color:var(--white)}",
@@ -213,12 +213,12 @@
     MODES.forEach(function (m) {
       var on = (m.id === choixTemporaire);
       h += '<button class="rj80-card' + (on ? " on" : "") + '" data-mode="' + esc(m.id) + '"' +
-           ' style="--sel:' + (m.couleur || CYAN) + '">' +
+           ' style="--sel:' + (m.couleur || ROUGE) + '">' +
              '<span class="mcheck"></span>' +
              '<span class="mt">' +
                '<span class="mn">' + esc(m.nom) + '</span>' +
-               (m.tagline ? '<span class="mtag" style="color:' + (m.couleur || CYAN) + ';border:1px solid ' +
-                 (m.couleur || CYAN) + '55;background:' + (m.couleur || CYAN) + '18">' + esc(m.tagline) + '</span>' : '') +
+               (m.tagline ? '<span class="mtag" style="color:' + (m.couleur || ROUGE) + ';border:1px solid ' +
+                 (m.couleur || ROUGE) + '55;background:' + (m.couleur || ROUGE) + '18">' + esc(m.tagline) + '</span>' : '') +
              '</span>' +
              '<span class="md">' + esc(m.description || "") + '</span>' +
              (m.points && m.points.length
@@ -404,7 +404,7 @@
         if (ev.target && ev.target.tagName === "BUTTON") ouvrirEcranMode();
       });
     }
-    var c = m.couleur || CYAN;
+    var c = m.couleur || ROUGE;
     ban.style.color = c;
     ban.style.border = "1px solid " + c + "55";
     ban.style.background = c + "14";
@@ -550,7 +550,7 @@
     var anc = document.getElementById("rj80-recap");
     if (anc && anc.parentNode) anc.parentNode.removeChild(anc);
     var m = modeCourant();
-    var c = m.couleur || CYAN;
+    var c = m.couleur || ROUGE;
     var div = document.createElement("div");
     div.id = "rj80-recap";
     div.style.cssText = "margin:0 0 14px;padding:12px 14px;border:1px solid " + c + "44;border-left:3px solid " + c +
@@ -598,10 +598,10 @@
 
     var bloc = document.createElement("div");
     bloc.id = "rj80-fav";
-    bloc.style.cssText = "margin-top:14px;padding:13px 14px;background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,212,255,.02));" +
-      "border:1px solid rgba(0,212,255,.3);border-radius:var(--r)";
+    bloc.style.cssText = "margin-top:14px;padding:13px 14px;background:linear-gradient(135deg,rgba(255,24,1,.07),rgba(255,24,1,.02));" +
+      "border:1px solid rgba(255,24,1,.3);border-radius:var(--r)";
     bloc.innerHTML =
-      '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + CYAN +
+      '<div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + ROUGE +
         ';letter-spacing:.08em;text-transform:uppercase">Écurie de cœur</div>' +
       '<div style="font-size:11px;color:var(--text2);margin:3px 0 9px;line-height:1.45">' +
         'L\'écurie de Formule 1 que ton pilote rêve de rejoindre. Facultatif.</div>' +

@@ -17,8 +17,9 @@
  *    nom ; le teint suit son pays.
  * Ton pilote se compose dans la création de carrière (étape « numéro »), et
  * se modifie depuis l'avatar du bandeau. Les avatars remplacent les
- * initiales : bandeau, classements, entourage, messagerie, face-à-face,
- * réseaux sociaux, vie perso.
+ * initiales : bandeau, fiche d'un pilote, entourage, messagerie,
+ * face-à-face, réseaux sociaux, vie perso. Les classements restent sans
+ * visages (lisibilité).
  *
  * Rendu : chaque portrait devient une image (data URL), mise en cache ; en
  * petit, une version allégée (moins de mèches). Réversible :
@@ -402,30 +403,27 @@
     return '<div class="rja-rond" style="width:40px;height:40px">' + html(me ? joueur() : personnage(nom, { role: "pilote" }), 40) + "</div>";
   }
 
-  /* Classement (championnat et accueil) : un visage devant chaque nom. */
-  function decorerClassement() {
-    var cibles = document.querySelectorAll("#S-champ .cr, .apex-champ-mini-row");
-    cibles.forEach(function (row) {
-      if (row.querySelector(".rja")) return;
-      var nomEl = row.querySelector(".cr-name, .nom");
-      if (!nomEl) return;
-      var nom = (nomEl.textContent || "").trim(), plein = G.pilot ? ((G.pilot.prenom || "") + " " + (G.pilot.nom || "")).trim() : "@@";
-      var moi = row.classList.contains("moi") || nom === plein || /background:var\(--red-lo\)/.test(row.getAttribute("style") || "");
-      var riv = (G.rivals || []).filter(function (x) { return x.name && nom.indexOf(x.name.split(" ").pop()) >= 0; })[0];
-      var o = moi ? joueur() : personnage(riv ? riv.name : nom, { role: "pilote", equipe: riv && riv.team, nat: riv && riv.nat, age: riv && riv.age });
-      var t = document.createElement("span");
-      t.className = "rja-rond rja-classement";
-      t.innerHTML = html(o, 32);
-      nomEl.insertBefore(t, nomEl.firstChild);   // dans le nom : la grille de la ligne ne bouge pas
-    });
+  /* Fiche d'un pilote (ouverte depuis le classement) : son portrait à la
+     place des initiales. Les classements eux-mêmes restent sans visages. */
+  function decorerFiche() {
+    var m = document.getElementById("driver-profile-modal");
+    var tete = m && m.firstElementChild && m.firstElementChild.firstElementChild;
+    var boite = tete && tete.firstElementChild;
+    if (!boite || boite.querySelector(".rja")) return;
+    var nomEl = tete.querySelector("div[style*='font-size:16px']"), nom = nomEl ? nomEl.textContent.trim() : "";
+    var plein = G.pilot ? ((G.pilot.prenom || "") + " " + (G.pilot.nom || "")).trim() : "@@";
+    var riv = (G.rivals || []).filter(function (x) { return x.name === nom; })[0];
+    var o = nom === plein ? joueur() : personnage(nom, { role: "pilote", equipe: riv && riv.team, nat: riv && riv.nat, age: riv && riv.age });
+    boite.classList.add("rja-fiche");
+    boite.innerHTML = html(o, 64);
   }
 
   /* ------------------------------------------------------ installation --- */
   function installer() {
     if (typeof rjInscrire !== "function" || typeof window.G === "undefined") return false;
     if (typeof window._renderMailAvatar === "function") rjInscrire("_renderMailAvatar", { id: "128-avatars:mail", remplace: function (args, suite) { var h = null; try { h = avatarMail(args[0], args[1] || 40); } catch (e) {} return h || suite(); } });
-    if (typeof window.updateUI === "function") rjInscrire("updateUI", { id: "128-avatars:updateUI", apres: function () { try { rafraichirBandeau(); decorerClassement(); } catch (e) {} } });
-    if (typeof window.renderChamp === "function") rjInscrire("renderChamp", { id: "128-avatars:renderChamp", apres: function () { try { decorerClassement(); } catch (e) {} } });
+    if (typeof window.updateUI === "function") rjInscrire("updateUI", { id: "128-avatars:updateUI", apres: function () { try { rafraichirBandeau(); } catch (e) {} } });
+    if (typeof window.showDriverProfileModal === "function") rjInscrire("showDriverProfileModal", { id: "128-avatars:fiche", apres: function () { try { decorerFiche(); } catch (e) { console.warn(TAG, e && e.message); } } });
     if (typeof window._refreshAvatar === "function") rjInscrire("_refreshAvatar", { id: "128-avatars:refresh", apres: function () { try { rafraichirBandeau(); } catch (e) {} } });
     if (typeof window.updateCreUI === "function") rjInscrire("updateCreUI", { id: "128-avatars:creation", apres: function () { try { if (window.creStep === 5) brancherCreation(); rafraichirBandeau(); } catch (e) { console.warn(TAG, e && e.message); } } });
     if (typeof window._showAvatarMenu === "function") rjInscrire("_showAvatarMenu", { id: "128-avatars:menu", apres: function () {
@@ -439,7 +437,7 @@
     } });
     window._rj66Avatar = avatarSocial;
     if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
-    window.RJ_SCREEN_HOOKS.push({ id: "128-avatars", ecran: "*", apres: function () { setTimeout(function () { try { decorerClassement(); rafraichirBandeau(); } catch (e) {} }, 60); } });
+    window.RJ_SCREEN_HOOKS.push({ id: "128-avatars", ecran: "*", apres: function () { setTimeout(function () { try { rafraichirBandeau(); } catch (e) {} }, 60); } });
     rafraichirBandeau();
     return true;
   }

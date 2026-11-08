@@ -2745,13 +2745,17 @@ async function suiteAvatars() {
       navTo("S-champ", "ni-champ"); chtab("classement");
       await new Promise(r => setTimeout(r, 300));
       const classement = document.querySelectorAll("#S-champ .cr .rja").length;
+      _openDriverProfileFromChamp(2);
+      await new Promise(r => setTimeout(r, 300));
+      const fiche = document.querySelectorAll("#driver-profile-modal img.rja").length;
+      if (typeof closeDriverProfileModal === "function") closeDriverProfileModal();
       chtab("h2h");
       await new Promise(r => setTimeout(r, 300));
       const duel = document.querySelectorAll(".rj126-visage img.rja").length;
-      return { bandeau, mini, mail, entourage, classement, duel };
+      return { bandeau, mini, mail, entourage, classement, fiche, duel };
     });
     S.verifier("les portraits remplacent les initiales (bandeau, messagerie, entourage)", partout.bandeau && partout.mail >= 1 && partout.entourage >= 3, JSON.stringify(partout));
-    S.verifier("les classements et le face-à-face montrent les visages", partout.mini >= 3 && partout.classement >= 5 && partout.duel === 2, JSON.stringify(partout));
+    S.verifier("les classements restent sans visages ; la fiche d'un pilote et le face-à-face les montrent", partout.mini === 0 && partout.classement === 0 && partout.fiche === 1 && partout.duel === 2, JSON.stringify(partout));
 
     const menu = await page.evaluate(async () => {
       navTo("S-home", "ni-home"); _showAvatarMenu();
@@ -2815,6 +2819,56 @@ async function suiteRivaux() {
       return { rivaux: (G.rivals || []).length, vivier: (G.driverPool || []).length };
     });
     S.verifier("une sauvegarde sans rivaux est réparée au chargement", repare.rivaux >= 10, JSON.stringify(repare));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteVides() {
+  S.suite("Sections vides");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const attendre = () => new Promise(r => setTimeout(r, 400));
+      navTo("S-pilot", null); document.querySelector("#S-pilot [data-tab=rep]").click(); await attendre();
+      const contenu = document.getElementById("palmares-content"), avant = contenu.innerHTML;
+      contenu.innerHTML = ""; await attendre();
+      const phrase = [...document.querySelectorAll("#S-pilot .rj-vide")].map(v => v.textContent).join(" | ");
+      contenu.innerHTML = avant; await attendre();
+      return { phrase, apres: document.querySelectorAll("#S-pilot .rj-vide").length };
+    });
+    S.verifier("un titre sans contenu reçoit une phrase d attente, qui part quand le contenu revient", /palmarès/i.test(r.phrase) && r.apres === 0, JSON.stringify(r));
+    const clic = await page.evaluate(async () => {
+      navTo("S-pilot", null); await new Promise(r => setTimeout(r, 300));
+      _pushHomeToastCoeur("Test", "Une notification posée sur le bandeau", "#60A5FA");
+      document.querySelectorAll("#rj-toast-container .rj-toast").forEach(t => t.style.minHeight = "60px");
+      await new Promise(r => setTimeout(r, 100));
+      return [...document.querySelectorAll("#S-pilot .tab")].filter(t => t.offsetParent).every(t => { const b = t.getBoundingClientRect(), e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return e === t || t.contains(e); });
+    });
+    S.verifier("une notification en haut laisse les onglets du bandeau cliquables", clic === true, String(clic));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteCircuits() {
+  S.suite("Tracés de circuits");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await page.waitForFunction(() => window.RJTraces && RJTraces.applique(), null, { timeout: 15000 });
+    const r = await page.evaluate(() => {
+      const ko = [];
+      Object.keys(CIRCUITS).forEach(n => {
+        const c = CIRCUITS[n], sec = CIRCUIT_SECTORS[n] || [], somme = sec.reduce((a, x) => a + x, 0);
+        if (!/^M[0-9.,-]+ L/.test(c.path) || !/Z$/.test(c.path) || /[^MLQZ0-9., -]/.test(c.path)) ko.push(n + " : tracé");
+        if (!(c.length > 0.5) || !(c.corners >= 4) || !(c.refLapF1 > 0)) ko.push(n + " : infos");
+        if (Math.abs(somme - 1) > .01) ko.push(n + " : secteurs");
+        if (c.note.indexOf("Tracé de " + c.length.toFixed(c.length < 2 ? 2 : 3).replace(".", ",") + " km, " + c.corners + " virages") !== 0) ko.push(n + " : note");
+      });
+      const a = RJTraces.inventer("Essai", { type: "mixed", length: 4.5, corners: 14 }).longueur, b = RJTraces.inventer("Essai", { type: "mixed", length: 4.5, corners: 14 }).longueur;
+      return { n: Object.keys(CIRCUITS).length, ko, stable: a === b, memeLieu: CIRCUITS.Barcelona.path === CIRCUITS.Barcelone.path };
+    });
+    S.verifier("chaque circuit a un tracé fermé, partant d une ligne droite, et des infos tirées de ce tracé", r.n > 40 && r.ko.length === 0, JSON.stringify(r.ko.slice(0, 5)));
+    S.verifier("le tracé d un circuit est le même à chaque partie, et un même lieu a un seul tracé", r.stable && r.memeLieu, JSON.stringify(r));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -3078,6 +3132,8 @@ const SUITES = {
   amour: suiteAmour,
   avatars: suiteAvatars,
   rivaux: suiteRivaux,
+  vides: suiteVides,
+  circuits: suiteCircuits,
   decisions: suiteDecisions
 };
 

@@ -1232,7 +1232,7 @@
       '<div class="rj100-salle">' +
         GUILLEMET +
         '<div class="rj100-jrn">' +
-          '<span class="rj100-ini">' + esc(initiales(j)) + '</span>' +
+          '<span class="rj100-ini">' + (window.RJAvatar ? RJAvatar.html(RJAvatar.personnage(j.prenom + " " + j.nom, { role: "presse", nat: j.pays, fond: j.couleur, lisere: j.couleur }), 60) : esc(initiales(j))) + '</span>' +
           '<span class="rj100-qui">' +
             '<span class="rj100-nom">' + esc(j.prenom + " " + j.nom) + '</span>' +
             '<span class="rj100-med"><span class="m">' + esc(j.media) + '</span>' +
