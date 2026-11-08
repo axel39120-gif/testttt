@@ -357,6 +357,76 @@
     }
   };
 
+  /* ------------------------------------------- famille « sport auto » -----
+   * Ce qui fait un logo de course : un lettrage penché, des traits de
+   * vitesse, des bandes de capot, un damier, des ailes, un numéro. Toutes
+   * ces compositions sont inventées ; aucune ne reprend une marque réelle.
+   * ------------------------------------------------------------------ */
+  function penche(txt, x, y, taille, fill, largeur) {
+    return '<g transform="translate(' + x + ' ' + y + ') skewX(-14)"><text x="0" y="0" text-anchor="middle" font-family="' + POLICE +
+      '" font-size="' + taille + '" font-weight="900"' + (largeur ? ' textLength="' + largeur + '" lengthAdjust="spacingAndGlyphs"' : '') +
+      ' fill="' + fill + '" stroke="#050507" stroke-width=".8" paint-order="stroke">' + txt + '</text></g>';
+  }
+  function vitesse(x, y, C, L) {   // trois traits de vitesse, du plus long au plus court
+    return '<path d="M' + x + ' ' + y + ' h9 l-1.6 2.4 h-9z" fill="' + C + '"/>' +
+           '<path d="M' + (x + 2) + ' ' + (y + 4) + ' h7 l-1.6 2.4 h-7z" fill="' + L + '"/>' +
+           '<path d="M' + (x + 4) + ' ' + (y + 8) + ' h5 l-1.6 2.4 h-5z" fill="' + C + '" opacity=".7"/>';
+  }
+  var COURSE = {
+    course_lettrage: function (C, D, L, ini, nom) {
+      var mot = motCourt(nom), larg = Math.min(21, 3.2 * mot.length + 3);
+      return '<rect x="2" y="9" width="36" height="22" rx="3" fill="' + (u("plein") || D) + '" stroke="' + (u("metal") || C) + '" stroke-width="1.4"/>' +
+             vitesse(4, 13, C, L) +
+             penche(mot, 24, 23, 9.5, u("lettre") || L, larg) +
+             '<path d="M12 27 Q24 24.5 36 25.5" fill="none" stroke="' + C + '" stroke-width="1.6" stroke-linecap="round"/>';
+    },
+    course_monogramme: function (C, D, L, ini) {
+      return '<path d="M3 13 h9 l-1.4 2 h-9z M2 18 h7 l-1.4 2 h-7z M3 23 h5 l-1.4 2 h-5z" fill="' + C + '"/>' +
+             penche(ini, 23, 26, ini.length > 2 ? 14 : 19, u("lettre") || L) +
+             '<path d="M8 32 Q22 27.5 37 29" fill="none" stroke="' + C + '" stroke-width="2.4" stroke-linecap="round"/>' +
+             '<path d="M12 33.6 Q24 30 36 31" fill="none" stroke="' + L + '" stroke-width=".9" stroke-linecap="round" opacity=".8"/>';
+    },
+    course_ecu_bandes: function (C, D, L, ini) {
+      return bouclier(C, D) +
+             '<path d="M15.5 5 h3.4 v30 l-3.4-1.6z M21.1 5 h3.4 v28.4 l-3.4 1.6z" fill="' + L + '" opacity=".45"/>' +
+             penche(ini, 20, 26, ini.length > 2 ? 11 : 15, u("lettre") || L);
+    },
+    course_ailes: function (C, D, L, ini) {
+      var aile = 'M18 19 L3 12 L7 16.5 L2 17.5 L8 20.5 L4 22.5 L17 23.5z';
+      return '<path d="' + aile + '" fill="' + (u("metal") || C) + '"/>' +
+             '<path d="' + aile + '" fill="' + (u("metal") || C) + '" transform="translate(40 0) scale(-1 1)"/>' +
+             '<circle cx="20" cy="21" r="7.4" fill="' + (u("plein") || D) + '" stroke="' + C + '" stroke-width="1.6"/>' +
+             penche(ini, 20.4, 24.2, ini.length > 2 ? 6 : 8.5, u("lettre") || L);
+    },
+    course_damier: function (C, D, L, ini, nom) {
+      var cases = "";
+      for (var y = 0; y < 3; y++) for (var x = 0; x < 5; x++)
+        cases += '<rect x="' + (x * 4) + '" y="' + (y * 4) + '" width="4" height="4" fill="' + ((x + y) % 2 ? C : "#f2f2f4") + '"/>';
+      return '<path d="M8 6 v26" stroke="' + (u("metal") || C) + '" stroke-width="1.6" stroke-linecap="round"/>' +
+             '<g transform="translate(9 7) skewY(-8)">' + cases + '</g>' +
+             (motCourt(nom).length <= 6 ? penche(motCourt(nom), 20, 33, 7, u("lettre") || L, Math.min(24, 4 * motCourt(nom).length + 2)) : penche(ini, 21, 34, 9, u("lettre") || L));
+    },
+    course_chevrons: function (C, D, L, ini) {
+      return '<path d="M3 12 L11 20 L3 28 h5 L16 20 L8 12z" fill="' + C + '"/>' +
+             '<path d="M10 12 L18 20 L10 28 h4 L22 20 L14 12z" fill="' + L + '" opacity=".85"/>' +
+             penche(ini, 30, 25, ini.length > 2 ? 9 : 13, u("lettre") || L);
+    },
+    course_bandes_capot: function (C, D, L, ini) {
+      return '<rect x="5" y="4" width="30" height="32" rx="9" fill="' + (u("plein") || D) + '" stroke="' + (u("metal") || C) + '" stroke-width="1.6"/>' +
+             '<path d="M15 4.6 h4 v30.8 h-4z M21 4.6 h4 v30.8 h-4z" fill="' + C + '"/>' +
+             '<rect x="8" y="23" width="24" height="9" rx="2" fill="#050507" opacity=".75"/>' +
+             penche(ini, 20, 30.8, ini.length > 2 ? 7.5 : 9.5, u("lettre") || L);
+    },
+    course_numero: function (C, D, L, ini, nom) {
+      var n = String(hache(nom || ini) % 98 + 2);
+      return '<ellipse cx="20" cy="20" rx="16.5" ry="13" fill="#f4f4f6" stroke="' + (u("metal") || C) + '" stroke-width="2.6"/>' +
+             '<ellipse cx="20" cy="20" rx="13.6" ry="10.2" fill="none" stroke="' + C + '" stroke-width="1"/>' +
+             '<g transform="translate(20.6 25.6) skewX(-12)"><text x="0" y="0" text-anchor="middle" font-family="' + POLICE + '" font-size="' + (n.length > 1 ? 15 : 17) + '" font-weight="900" fill="#0b0b0e">' + n + '</text></g>';
+    }
+  };
+  Object.keys(COURSE).forEach(function (k) { MODELES[k] = COURSE[k]; });
+  var IDS_COURSE = Object.keys(COURSE);
+
   // Les emblèmes ne reçoivent pas de monogramme : signature à 3 arguments.
   Object.keys(EMBLEMES).forEach(function (k) {
     var f = EMBLEMES[k];
@@ -399,9 +469,8 @@
   }
 
   /* ---------------------------------------- blason par défaut ------ */
-  var PAR_DEFAUT = ["plaque_lettrage", "bouclier_mono", "ecu_partage", "medaillon_laurier", "bande_diagonale", "bouclier_aile",
-                    "bouclier_damier", "medaillon_etoile", "hexa_mono", "ovale_chevron", "cocarde", "losange_barre", "noeud_hexa", "aile_abstraite",
-                    "plaque_lettrage", "double_bande", "medaillon_rapace", "triple_chevron"];
+  var PAR_DEFAUT = ["course_lettrage", "course_monogramme", "course_ecu_bandes", "course_ailes", "course_damier", "course_chevrons",
+                    "course_bandes_capot", "course_numero", "course_lettrage", "course_monogramme", "course_ailes", "course_ecu_bandes"];
   var ORIGINE = {};
   function couleurDuLogo(svg) {
     var best = null, score = -1, compte = {};
@@ -558,7 +627,7 @@
           genLogo(id, C, 46, team) + '</button>';
       }).join("");
     }
-    var blasons = IDS.filter(function (id) { return IDS_EMBLEMES.indexOf(id) < 0; });
+    var blasons = IDS.filter(function (id) { return IDS_EMBLEMES.indexOf(id) < 0 && IDS_COURSE.indexOf(id) < 0; });
     var titre = function (t) {
       return '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
              'letter-spacing:.14em;text-transform:uppercase;margin:12px 0 7px">' + t + '</div>';
@@ -574,6 +643,8 @@
       'border:' + (perso ? "1px solid var(--border)" : "2px solid " + C) + '">' +
       '<span style="flex:0 0 40px;width:40px;height:40px;line-height:0">' + genLogo(blasonParDefaut(team).logo, blasonParDefaut(team).color, 40, team) + '</span>' +
       '<span style="font-size:12px;color:var(--text2)">Rétablir le blason d\'origine</span></button>' +
+      titre("Sport auto") +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(IDS_COURSE) + '</div>' +
       titre("Emblèmes") +
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(IDS_EMBLEMES) + '</div>' +
       titre("Blasons à monogramme") +

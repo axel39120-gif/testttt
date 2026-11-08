@@ -681,6 +681,13 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - Un habillage par catégorie, sans logo réel : F1 rouge, F2 bleu, F3 argent, F4 vert, Super Formula rose, IndyCar jaune, WEC turquoise, karting orange. Test : suite `circuits`.
 - Vingt pilotes affichés sans défilement ; le joueur reste toujours visible (à la dernière ligne, détachée, s'il est plus loin). L'écusson de l'écurie remplace le liseré de couleur quand l'écurie en a un. Le nom du circuit n'est plus répété au-dessus de la carte (il est dans le bandeau).
 
+## Logos d'écuries façon sport auto — v246-v247
+
+- Toutes les écuries reçoivent un blason inventé dans l'esprit du sport auto (aucune marque réelle reprise) : lettrage penché avec traits de vitesse, monogramme rapide souligné, écu à bandes de course, ailes balayées, drapeau à damier, doubles chevrons, bandes de capot, plaque numérotée. Le modèle est tiré du nom de l'écurie ; la couleur est celle de l'écurie (rouge Ferrari, orange McLaren… ; sinon la couleur dominante de son ancien logo).
+- Rendu commun à tous les modèles, éditeur compris : fond teinté, contour métal, ombre portée, monogramme gravé, reflet. Les dégradés sont rangés dans un bloc unique toujours rendu (un logo présent dans un écran masqué devenait invisible partout).
+- Éditeur : section « Sport auto » en tête du sélecteur, plaque au nom de l'écurie et écu à damier en plus ; « Rétablir le blason d'origine » revient vraiment au blason par défaut et montre sa vignette (le nettoyeur d'icônes du module 57 l'effaçait).
+- Test : suite `logos`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
