@@ -1459,3 +1459,42 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj131-sujet-m { font-size: 12px; color: var(--text2, #b0b0bc); font-style: italic; }
 .rj131-sujet-fx { display: flex; flex-wrap: wrap; gap: 5px; }
 .rj131-chances { font-size: 10.5px; color: var(--muted, #80808a); }
+
+/* Éditeur de casque (132). */
+#rj132-modale { position: fixed; inset: 0; z-index: 9996; display: flex; align-items: center; justify-content: center; padding: 10px; background: rgba(0, 0, 0, .72); backdrop-filter: blur(4px); }
+.rj132-carte {
+  width: min(760px, 100%); max-height: calc(var(--app-h, 100vh) - 20px); overflow-y: auto; border-radius: var(--r); padding: 14px;
+  display: grid; grid-template-columns: 250px minmax(0, 1fr); grid-template-rows: auto 1fr auto; gap: 10px 16px;
+  background: radial-gradient(120% 140% at 0% 0%, rgba(255, 24, 1, .12), transparent 60%), linear-gradient(160deg, #18181d, #0d0d11);
+  border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+}
+.rj132-tete { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-start; }
+.rj132-kicker { font: 800 9.5px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--red, #FF1801); }
+.rj132-titre { font: 900 18px/1.1 var(--font-display); text-transform: uppercase; color: #fff; }
+.rj132-fermer { background: none; border: 0; color: var(--muted, #80808a); font-size: 24px; cursor: pointer; line-height: 1; }
+.rj132-apercu { position: sticky; top: 0; align-self: start; display: flex; justify-content: center; padding: 10px 0; border-radius: var(--r);
+  background: radial-gradient(circle at 50% 60%, rgba(255, 255, 255, .07), transparent 65%); }
+.rj132-apercu svg { width: 100%; height: auto; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .6)); }
+.rj132-corps { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rj132-lbl { font: 800 9.5px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #8a8a96); margin-top: 4px; }
+.rj132-ligne { display: flex; align-items: center; justify-content: space-between; }
+.rj132-num { display: flex; align-items: center; gap: 10px; }
+.rj132-num b { font: 900 18px var(--font-display); color: #fff; min-width: 46px; text-align: center; }
+.rj132-num button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: #fff; font-size: 18px; cursor: pointer; }
+.rj132-palette { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rj132-pastille { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255, 255, 255, .12); padding: 0; }
+.rj132-pastille.on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255, 24, 1, .7); }
+.rj132-libre { width: 32px; height: 26px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 6px; background: transparent; padding: 0; cursor: pointer; }
+.rj132-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+.rj132-rang { display: flex; flex-wrap: wrap; gap: 6px; }
+.rj132-choix { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px; border-radius: 8px; cursor: pointer; color: var(--text2, #b0b0bc);
+  background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .08); font: 700 10.5px var(--font-body, sans-serif); }
+.rj132-rang .rj132-choix { flex-direction: row; padding: 7px 12px; }
+.rj132-choix.on { color: #fff; border-color: var(--red, #FF1801); background: rgba(255, 24, 1, .1); }
+.rj132-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.rj132-actions button { padding: 10px 18px; border-radius: var(--r); font: 800 12px var(--font-display); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.rj132-annuler { background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .14); color: #fff; }
+.rj132-valider { background: linear-gradient(160deg, #ff3b1f, #c81400); border: 0; color: #fff; box-shadow: 0 6px 20px rgba(255, 24, 1, .28); }
+@container app (max-width: 599px) { .rj132-carte { grid-template-columns: minmax(0, 1fr); } }
+.rj132-mini { width: 64px; height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.rj132-mini svg { width: 64px; height: auto; }

@@ -68,6 +68,7 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `logos` | chaque écurie a un blason généré dont les dégradés sont rangés dans un bloc toujours rendu ; tous les modèles de l’éditeur se dessinent ; couleurs d’écurie connues |
 | `contacts` | Messagerie › Contacts : une fiche par contact, sujets avec effets possibles, envoi qui ajoute l’échange au fil et bloque jusqu’à la semaine suivante |
 | `essais` | retours de l’ingénieur accordés, briefing propre à chaque séance (EL1/EL2/EL3), pneus de qualif nommés en français |
+| `casque` | éditeur de casque : motifs dessinés, choix enregistrés avec le pilote (couleurs, motif, visière, numéro), casque visible dans Stats |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |

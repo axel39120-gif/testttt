@@ -2944,6 +2944,31 @@ async function suiteEssais() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteCasque() {
+  S.suite("Casque du pilote");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const att = () => new Promise(r => setTimeout(r, 200));
+      navTo("S-pilot", null); await att();
+      openPersonalizationModal(); await att();
+      const motifs = document.querySelectorAll(".rj132-choix[data-cle=motif] svg").length;
+      document.querySelector(".rj132-choix[data-cle=motif][data-val=damier]").click(); await att();
+      document.querySelector(".rj132-pastille[data-cle=base][data-val=\"#1E5BC6\"]").click(); await att();
+      document.querySelector(".rj132-choix[data-cle=visiere][data-val=or]").click(); await att();
+      document.querySelector("[data-num=\"1\"]").click(); const num = G.pilot.number;
+      document.querySelector(".rj132-valider").click(); await att();
+      const h = G.pilot.helmet || {};
+      navTo("S-home", null); navTo("S-pilot", null); await att();
+      return { motifs, h, num, apres: G.pilot.number, couleur: G.pilot.helmetColor, carte: !!document.querySelector("#S-pilot .rj132-mini svg"), ferme: !document.getElementById("rj132-modale") };
+    });
+    S.verifier("l éditeur montre chaque motif dessiné aux couleurs du casque", r.motifs === 10, String(r.motifs));
+    S.verifier("le casque choisi est enregistré avec le pilote (motif, couleur, visière, numéro)", r.h.motif === "damier" && r.h.base === "#1E5BC6" && r.h.visiere === "or" && r.apres === Math.min(99, r.num + 1) && r.couleur === "blue" && r.ferme, JSON.stringify(r));
+    S.verifier("la carte Personnalisation de Stats montre le casque", r.carte, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3208,6 +3233,7 @@ const SUITES = {
   logos: suiteLogos,
   contacts: suiteContacts,
   essais: suiteEssais,
+  casque: suiteCasque,
   decisions: suiteDecisions
 };
 
