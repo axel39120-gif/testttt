@@ -675,6 +675,12 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - **Course en direct** : la ligne d'arrivée est au milieu de la ligne droite principale ; chaque voiture est un rond aux couleurs de l'écurie avec les trois premières lettres du nom du pilote (le joueur : plus grand, cerclé de blanc, avec sa position) ; la voie des stands longe la ligne droite (entrée et sortie raccordées à la piste, muret, garages), et les voitures arrêtées s'y rangent.
 - Tests : suite `circuits`.
 
+## Classement en direct façon télé — v245
+
+- La tour de classement à côté du circuit prend l'allure d'une retransmission : en-tête avec la catégorie et le tour en cours (ou « ARRIVÉE »), position dans une case, liseré de l'écurie, code pilote en capitales, écart au millième (au dixième en karting), « TÊTE » pour le leader, badge « PIT » au stand, ligne du joueur surlignée.
+- Un habillage par catégorie, sans logo réel : F1 rouge, F2 bleu, F3 argent, F4 vert, Super Formula rose, IndyCar jaune, WEC turquoise, karting orange. Test : suite `circuits`.
+- Vingt pilotes affichés sans défilement ; le joueur reste toujours visible (à la dernière ligne, détachée, s'il est plus loin). L'écusson de l'écurie remplace le liseré de couleur quand l'écurie en a un. Le nom du circuit n'est plus répété au-dessus de la carte (il est dans le bandeau).
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

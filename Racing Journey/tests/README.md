@@ -65,6 +65,7 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `rivaux` | carrière créée par l'écran de création avec des rivaux et un classement complet, rivaux qui marquent après une course, sauvegarde sans rivaux réparée au chargement |
 | `vides` | un sous-titre sans contenu reçoit une phrase d’attente, retirée quand le contenu arrive |
 | `circuits` | chaque circuit a un tracé fermé partant de la ligne droite principale, des infos (longueur, virages, secteurs, note) mesurées sur ce tracé ; tracé stable d’une partie à l’autre |
+| `logos` | chaque écurie a un blason généré dont les dégradés sont rangés dans un bloc toujours rendu ; tous les modèles de l’éditeur se dessinent ; couleurs d’écurie connues |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |

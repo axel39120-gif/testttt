@@ -597,23 +597,63 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj111-feux i { width: 10px; height: 10px; border-radius: 50%; background: #2a0a0a; border: 1px solid #3a1414; }
 .rj111-feux i.on { background: #ff2a2a; border-color: #ff6a6a; box-shadow: 0 0 6px #ff2a2a; }
 /* Corps : tour de classement à gauche, circuit à droite. */
-.rj111-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px; margin-top: 6px; }
+.rj111-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 10px; margin-top: 6px; }
 .rj111-svg { width: 100%; height: 100%; min-height: 0; }
 /* Écran étroit : le circuit d’abord ; les voisins restent dans le mini-classement à droite. */
-@container app (max-width: 799px) { .rj111-corps { grid-template-columns: minmax(0, 1fr); } .rj111-tour { display: none; } }
+@container app (max-width: 799px) { .rj111-corps { grid-template-columns: minmax(0, 1fr); } .rj111-colonne { display: none; } }
+
+/* Tour de classement façon retransmission : un en-tête (catégorie, tours),
+   la position dans une case, le liseré de l’écurie, le code pilote et l’écart.
+   Chaque catégorie a son accent. */
+.rj111-colonne {
+  --acc: #e10600; --fond: rgba(12, 12, 16, .92); --case: #f2f2f2; --case-txt: #0b0b0e; --ligne: rgba(255, 255, 255, .06);
+  display: flex; flex-direction: column; min-height: 0; border-radius: 6px; overflow: hidden;
+  background: var(--fond); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 6px 18px rgba(0, 0, 0, .4);
+}
+.rj111-colonne[data-theme="f2"] { --acc: #1e6bff; --fond: rgba(8, 14, 30, .94); }
+.rj111-colonne[data-theme="f3"] { --acc: #c7cbd4; --fond: rgba(16, 17, 20, .94); }
+.rj111-colonne[data-theme="f4"] { --acc: #22c55e; --fond: rgba(8, 18, 12, .94); }
+.rj111-colonne[data-theme="sf"] { --acc: #ff2d87; --fond: rgba(20, 8, 16, .94); }
+.rj111-colonne[data-theme="indy"] { --acc: #ffd400; --fond: rgba(6, 6, 6, .95); --case: #ffd400; }
+.rj111-colonne[data-theme="wec"] { --acc: #00b4d8; --fond: rgba(6, 16, 24, .94); }
+.rj111-colonne[data-theme="kart"] { --acc: #ff7a00; --fond: rgba(20, 12, 6, .94); --case: #ff7a00; --case-txt: #140c06; }
+.rj111-entete {
+  display: flex; align-items: stretch; justify-content: space-between; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--acc) 0 38px, #15151b 38px); border-bottom: 2px solid var(--acc);
+  font: 800 10px/1 var(--font-display); letter-spacing: .08em; color: #fff; height: 22px;
+}
+.rj111-entete > b { width: 38px; display: flex; align-items: center; justify-content: center; font-style: italic; font-weight: 900; color: var(--case-txt); }
+.rj111-colonne[data-theme="f1"] .rj111-entete > b, .rj111-colonne[data-theme="f2"] .rj111-entete > b, .rj111-colonne[data-theme="f4"] .rj111-entete > b,
+.rj111-colonne[data-theme="sf"] .rj111-entete > b, .rj111-colonne[data-theme="wec"] .rj111-entete > b { color: #fff; }
+.rj111-tours { display: flex; align-items: center; padding: 0 8px; color: #9a9aa8; font-weight: 700; }
+.rj111-tours b { color: #fff; font-weight: 900; margin-left: 3px; }
 .rj111-tour {
-  list-style: none; margin: 0; padding: 0; overflow-y: auto; scrollbar-width: none;
-  font: 700 10px/1 var(--font-display); letter-spacing: .02em;
+  list-style: none; margin: 0; padding: 0; overflow: hidden; flex: 1; min-height: 0;
+  display: grid; grid-template-rows: repeat(20, minmax(0, 1fr));   /* vingt lignes, sans défilement */
+  font: 800 10px/1 var(--font-display); letter-spacing: .03em;
 }
 .rj111-tour::-webkit-scrollbar { display: none; }
-.rj111-tour li { display: grid; grid-template-columns: 18px 3px 30px 1fr; align-items: center; gap: 4px; height: 17px; color: var(--text2, #b0b0bc); }
-.rj111-tour li .p { text-align: right; color: var(--muted, #80808a); }
-.rj111-tour li .c { width: 3px; height: 11px; border-radius: 1px; }
-.rj111-tour li .e { text-align: right; font-weight: 600; color: var(--muted, #80808a); font-variant-numeric: tabular-nums; }
-.rj111-tour li.moi { background: rgba(255, 255, 255, .08); border-radius: 4px; color: #fff; }
-.rj111-tour li.moi .p, .rj111-tour li.moi .e { color: #fff; }
+.rj111-tour li {
+  display: grid; grid-template-columns: 20px 14px minmax(0, 1fr) auto; align-items: center; gap: 5px;
+  min-height: 0; padding-right: 7px; color: #e8e8ee; border-bottom: 1px solid var(--ligne);
+}
+.rj111-tour li .p { height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .06); color: #fff; font-weight: 900; font-variant-numeric: tabular-nums; }
+.rj111-tour li.tete .p { background: var(--case); color: var(--case-txt); }
+.rj111-tour li .c { width: 3px; height: 70%; max-height: 12px; border-radius: 1px; justify-self: center; }
+.rj111-tour li .l { width: 14px; height: 14px; max-height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 2px; overflow: hidden; }
+.rj111-tour li .l svg { width: 100%; height: 100%; display: block; }
+.rj111-tour li.detache { border-top: 2px dashed rgba(255, 255, 255, .25); }
+/* Le nom du circuit est déjà dans le bandeau : la carte ne le répète pas. */
+.rj111-nom { display: none; }
+.rj111-tour li .n { overflow: hidden; white-space: nowrap; }
+.rj111-tour li .e { text-align: right; font-weight: 700; font-size: 9.5px; color: #a6a6b4; font-variant-numeric: tabular-nums; }
+.rj111-tour li.tete .e { color: var(--acc); font-weight: 900; letter-spacing: .08em; }
+.rj111-colonne[data-theme="f3"] li.tete .e { color: #fff; }
+.rj111-tour li.moi { background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 34%, transparent), color-mix(in srgb, var(--acc) 10%, transparent)); color: #fff; }
+.rj111-tour li.moi .p { background: #fff; color: #0b0b0e; }
+.rj111-tour li.moi .e { color: #fff; }
 .rj111-tour li.autre { opacity: .5; }
-.rj111-tour li.stand .e { color: #FFC107; }
+.rj111-tour li .pit { font-style: normal; font-weight: 900; font-size: 8.5px; letter-spacing: .1em; padding: 2px 4px; border-radius: 2px; background: #ffc107; color: #111; }
 /* Piste : bordure, limites blanches, bitume, repères de secteurs. */
 .rj111-bord { fill: none; stroke: #23232d; stroke-width: 7.5; stroke-linejoin: round; }
 .rj111-limite { fill: none; stroke: #4b4b58; stroke-width: 5.4; stroke-linejoin: round; }

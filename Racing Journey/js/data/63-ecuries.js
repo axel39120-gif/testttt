@@ -53,6 +53,14 @@
    * l'impression d'une vraie marque plutôt que d'une icône.
    * ---------------------------------------------------------------- */
 
+  /* Le mot qui porte l'écurie (« Scuderia Rossa » → ROSSA), pour la plaque à lettrage. */
+  function motCourt(nom) {
+    var n = String(nom || "RJ").replace(/\b(racing|team|motorsport|f1|gp|sport|scuderia|ecurie|écurie|engineering|works|kart|corse|grand|prix|competition)\b/gi, " ").trim();
+    var mots = n.split(/[\s\-\/]+/).filter(function (m) { return m.length > 1; });
+    var m = (mots.sort(function (a, b) { return b.length - a.length; })[0] || n || "RJ").toUpperCase();
+    return m.length > 8 ? m.slice(0, 8) : m;
+  }
+
   function initiales(nom) {
     var n = String(nom || "").trim();
     if (!n) return "RJ";
@@ -71,14 +79,34 @@
 
   var POLICE = "Impact, 'Arial Black', 'Helvetica Neue', sans-serif";
 
+  /* Contexte du logo en cours de dessin : identifiants des dégradés. */
+  var R = null, _uid = 0;
+  function contexte(C, D, L) {
+    // préfixe propre aux logos : un id court (« rjf24 ») croisait ceux d'autres modules
+    var n = ++_uid, p = "rjlogo" + n + "-", id = { fond: p + "fond", metal: p + "metal", plein: p + "plein", lettre: p + "lettre", reflet: p + "reflet", ombre: p + "ombre" };
+    return { C: C, L: L, id: id, extra: "", def: '<defs>' +
+      '<radialGradient id="' + id.fond + '" cx="28%" cy="18%" r="95%"><stop offset="0" stop-color="' + melange(C, "#15151b", .78) + '"/><stop offset="1" stop-color="#08080b"/></radialGradient>' +
+      '<linearGradient id="' + id.metal + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfbfd"/><stop offset=".42" stop-color="' + L + '"/><stop offset=".58" stop-color="' + C + '"/><stop offset="1" stop-color="' + D + '"/></linearGradient>' +
+      '<linearGradient id="' + id.plein + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + melange(C, "#000000", .42) + '"/><stop offset="1" stop-color="' + melange(C, "#000000", .86) + '"/></linearGradient>' +
+      '<linearGradient id="' + id.lettre + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="' + L + '"/><stop offset="1" stop-color="' + C + '"/></linearGradient>' +
+      '<linearGradient id="' + id.reflet + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>' +
+      '<filter id="' + id.ombre + '" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation=".7" flood-color="#000" flood-opacity=".7"/></filter>' +
+      '</defs>' };
+  }
+  function u(cle) { return R ? "url(#" + R.id[cle] + ")" : null; }
+
   function mono(txt, x, y, taille, fill) {
+    // Aux couleurs de l'écurie : lettres gravées (dégradé clair, contour sombre).
+    var grave = R && (fill === R.C || fill === R.L);
+    if (grave) fill = u("lettre");
     // Une lettre seule peut être plus grande ; trois lettres doivent rétrécir
     // pour ne pas déborder du blason.
     var n = String(txt || "").length;
     if (n <= 1) taille = taille * 1.22;
     else if (n >= 3) taille = taille * 0.74;
     return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-family="' + POLICE +
-           '" font-size="' + taille + '" font-weight="900" letter-spacing="-0.5" fill="' + fill + '">' + txt + '</text>';
+           '" font-size="' + taille + '" font-weight="900" letter-spacing="-0.5" fill="' + fill + '"' +
+           (grave ? ' stroke="#050507" stroke-width=".9" paint-order="stroke"' : '') + '>' + txt + '</text>';
   }
 
   /* Emblèmes réutilisables, dessinés pour tenir dans un blason. */
@@ -122,22 +150,17 @@
     }
   };
 
-  /* Formes contenantes. */
-  function bouclier(C, D) {
-    return '<path d="M20 3 L34 8 v13c0 9-7 14-14 16-7-2-14-7-14-16V8z" fill="' + D + '" stroke="' + C + '" stroke-width="2"/>';
+  /* Formes contenantes : plein en dégradé, contour en métal, liseré intérieur. */
+  function relief(debut, C, D) {
+    if (!R) return debut + ' fill="' + D + '" stroke="' + C + '" stroke-width="2"/>';
+    return debut + ' fill="' + u("plein") + '" stroke="' + u("metal") + '" stroke-width="2.4"/>' +
+           debut + ' fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".6" transform="translate(20 20) scale(.84) translate(-20 -20)"/>';
   }
-  function medaillon(C, D) {
-    return '<circle cx="20" cy="20" r="16" fill="' + D + '" stroke="' + C + '" stroke-width="2.2"/>';
-  }
-  function ovale(C, D) {
-    return '<ellipse cx="20" cy="20" rx="17" ry="12" fill="' + D + '" stroke="' + C + '" stroke-width="2.2"/>';
-  }
-  function ecusson(C, D) {
-    return '<path d="M6 7 h28 v18 l-14 9 -14-9z" fill="' + D + '" stroke="' + C + '" stroke-width="2"/>';
-  }
-  function hexa(C, D) {
-    return '<path d="M20 3 L34 11 v18 L20 37 L6 29 V11z" fill="' + D + '" stroke="' + C + '" stroke-width="2"/>';
-  }
+  function bouclier(C, D) { return relief('<path d="M20 3 L34 8 v13c0 9-7 14-14 16-7-2-14-7-14-16V8z"', C, D); }
+  function medaillon(C, D) { return relief('<circle cx="20" cy="20" r="16"', C, D); }
+  function ovale(C, D) { return relief('<ellipse cx="20" cy="20" rx="17" ry="12"', C, D); }
+  function ecusson(C, D) { return relief('<path d="M6 7 h28 v18 l-14 9 -14-9z"', C, D); }
+  function hexa(C, D) { return relief('<path d="M20 3 L34 11 v18 L20 37 L6 29 V11z"', C, D); }
 
   var MODELES = {
     // --- blasons à monogramme ---
@@ -179,6 +202,19 @@
              mono(ini, 20, 26, 13, L);
     },
 
+    // --- plaque à lettrage : le nom de l'écurie, comme un logo de marque ---
+    plaque_lettrage: function (C, D, L, ini, nom) {
+      var mot = motCourt(nom), larg = Math.min(29, 4.2 * mot.length + 4);
+      return '<rect x="3" y="11" width="34" height="18" rx="3" fill="' + (u("plein") || D) + '" stroke="' + (u("metal") || C) + '" stroke-width="1.8"/>' +
+             '<rect x="3" y="25.5" width="34" height="2" fill="' + C + '"/>' +
+             '<text x="20" y="23.2" text-anchor="middle" font-family="' + POLICE + '" font-size="9" font-weight="900" textLength="' + larg + '" lengthAdjust="spacingAndGlyphs" fill="' + (u("lettre") || L) + '" stroke="#050507" stroke-width=".7" paint-order="stroke">' + mot + '</text>';
+    },
+    bouclier_damier: function (C, D, L, ini) {
+      var cases = "";
+      for (var y = 0; y < 3; y++) for (var x = 0; x < 3; x++) if ((x + y) % 2 === 0) cases += '<rect x="' + (8 + x * 3.6) + '" y="' + (9 + y * 3.6) + '" width="3.6" height="3.6" fill="#f2f2f4" opacity=".85"/>';
+      return bouclier(C, D) + cases + mono(ini, 24, 30, 12, C);
+    },
+
     // --- emblèmes sans contenant, façon marque ---
     aile_libre: function (C, D, L, ini) {
       return '<path d="M4 21 h32 v3.4 H4z" fill="' + C + '"/>' +
@@ -208,13 +244,12 @@
 
   var _gradN = 0;
   function grad(C, L) {
-    var id = "rjg" + (++_gradN);
-    return {
-      id: id,
-      def: '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
+    var id = "rjlogo-g" + (++_gradN);
+    var def = '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
            '<stop offset="0%" stop-color="' + L + '"/><stop offset="100%" stop-color="' + C + '"/>' +
-           '</linearGradient></defs>'
-    };
+           '</linearGradient></defs>';
+    if (R) { R.extra += def; def = ""; }   // rangé avec les autres définitions du logo
+    return { id: id, def: def };
   }
 
   var EMBLEMES = {
@@ -331,16 +366,78 @@
 
   var IDS = Object.keys(MODELES);
 
+  function ranger(defs) {
+    if (typeof document === "undefined" || !document.body) return defs;
+    var hote = document.getElementById("rjlogo-defs");
+    if (!hote) {
+      hote = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      hote.id = "rjlogo-defs"; hote.setAttribute("aria-hidden", "true");
+      hote.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden");
+      document.body.appendChild(hote);
+    }
+    hote.insertAdjacentHTML("beforeend", defs.split("<defs>").join("").split("</defs>").join(""));
+    return "";
+  }
+
   function genLogo(id, couleur, taille, nom) {
     var C = couleur || "#FF1801";
     var D = sombre(C, 0.72), L = clair(C, 0.45);
     var f = MODELES[id] || MODELES.bouclier_mono;
     var t = taille || 40;
     var ini = initiales(nom);
-    return '<svg viewBox="0 0 40 40" width="' + t + '" height="' + t + '">' +
-           '<rect width="40" height="40" rx="7" fill="#0d0d12"/>' +
-           f(C, D, L, ini) + '</svg>';
+    R = contexte(C, D, L);
+    var corps;
+    try { corps = f(C, D, L, ini, nom); } finally { var ctx = R; R = null; }
+    // Les dégradés vont dans un bloc unique, toujours rendu : un logo répété dans un écran masqué
+    // (display:none) rendait ses dégradés invisibles pour tous ses exemplaires.
+    var defs = ranger(ctx.def + ctx.extra);
+    return '<svg viewBox="0 0 40 40" width="' + t + '" height="' + t + '">' + defs +
+           '<rect width="40" height="40" rx="7" fill="url(#' + ctx.id.fond + ')"/>' +
+           '<g filter="url(#' + ctx.id.ombre + ')">' + corps + '</g>' +
+           '<path d="M0 7 a7 7 0 0 1 7-7 h26 a7 7 0 0 1 7 7 v11 C26 14 14 14 0 18z" fill="url(#' + ctx.id.reflet + ')"/>' +
+           '<rect x=".5" y=".5" width="39" height="39" rx="6.5" fill="none" stroke="rgba(255,255,255,.09)"/></svg>';
   }
+
+  /* ---------------------------------------- blason par défaut ------ */
+  var PAR_DEFAUT = ["plaque_lettrage", "bouclier_mono", "ecu_partage", "medaillon_laurier", "bande_diagonale", "bouclier_aile",
+                    "bouclier_damier", "medaillon_etoile", "hexa_mono", "ovale_chevron", "cocarde", "losange_barre", "noeud_hexa", "aile_abstraite",
+                    "plaque_lettrage", "double_bande", "medaillon_rapace", "triple_chevron"];
+  var ORIGINE = {};
+  function couleurDuLogo(svg) {
+    var best = null, score = -1, compte = {};
+    (String(svg || "").match(/#[0-9A-Fa-f]{6}\b/g) || []).forEach(function (h) { h = h.toUpperCase(); compte[h] = (compte[h] || 0) + 1; });
+    // la couleur dominante : saturée, assez claire, et la plus présente dans le logo
+    Object.keys(compte).forEach(function (h) {
+      var c = hex2rgb(h), mx = Math.max.apply(null, c), mn = Math.min.apply(null, c);
+      var lum = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255, chroma = mx - mn;
+      if (lum < 0.2) return;
+      var sc = chroma + lum * 30 + compte[h] * 45;
+      if (sc > score) { score = sc; best = h; }
+    });
+    return best || "#C0C0C8";
+  }
+  function hache(t) { var h = 0; t = String(t); for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; }
+  // Couleurs d'écurie bien connues ; les autres sont lues dans l'ancien logo.
+  var COULEURS = {
+    "Ferrari": "#DC0000", "Scuderia Ferrari": "#DC0000", "Ferrari AF Corse": "#DC0000", "AF Corse": "#DC0000",
+    "Red Bull Racing": "#1E41FF", "Racing Bulls": "#6692FF", "Mercedes": "#00D2BE", "Mercedes AMG F1": "#00D2BE",
+    "McLaren": "#FF8000", "McLaren F1 Team": "#FF8000", "Arrow McLaren": "#FF8000", "Aston Martin": "#00806E", "Aston Martin F1": "#00806E",
+    "Alpine": "#0093CC", "Alpine F1 Team": "#0093CC", "Alpine Endurance": "#0093CC", "Williams": "#005AFF", "Williams Racing": "#005AFF",
+    "Haas F1 Team": "#B6BABD", "Kick Sauber": "#52E252"
+  };
+  function blasonParDefaut(team) {
+    if (!ORIGINE[team]) ORIGINE[team] = { logo: PAR_DEFAUT[hache(team) % PAR_DEFAUT.length], color: COULEURS[team] || couleurDuLogo(TEAM_LOGOS[team]) };
+    return ORIGINE[team];
+  }
+  function refaireTout() {
+    if (typeof TEAM_LOGOS === "undefined") return;
+    Object.keys(TEAM_LOGOS).forEach(function (team) {
+      var o = blasonParDefaut(team);
+      TEAM_LOGOS[team] = genLogo(o.logo, o.color, 40, team);
+    });
+  }
+
+  window.RJLogos = { dessiner: genLogo, modeles: function () { return IDS.slice(); }, parDefaut: function (t) { return blasonParDefaut(t); } };
 
   /* ------------------------------------------------ persistance ---- */
   function styles() {
@@ -352,7 +449,8 @@
 
   function appliquer(team) {
     var st = styleDe(team);
-    if (!st || typeof TEAM_LOGOS === "undefined") return;
+    if (typeof TEAM_LOGOS === "undefined") return;
+    if (!st) { var o = blasonParDefaut(team); TEAM_LOGOS[team] = genLogo(o.logo, o.color, 40, team); return; }
     TEAM_LOGOS[team] = genLogo(st.logo || IDS[0], st.color || "#FF1801", 40, team);
   }
   function appliquerTout() {
@@ -362,17 +460,17 @@
 
   function definir(team, color, logo) {
     var s = styles();
-    var cur = s[team] || {};
-    s[team] = { color: color || cur.color || "#FF1801", logo: logo || cur.logo || IDS[0] };
+    var cur = s[team] || {}, o = blasonParDefaut(team);
+    s[team] = { color: color || cur.color || o.color, logo: logo || cur.logo || o.logo };
     appliquer(team);
     try { if (typeof saveGame === "function" && typeof CURRENT_SLOT !== "undefined" && CURRENT_SLOT >= 0) saveGame(CURRENT_SLOT); } catch (e) {}
   }
 
   /* --------------------------------------------- éditeur : panneau -- */
   function panneauHTML(team) {
-    var st = styleDe(team) || {};
-    var C = st.color || "#FF1801";
-    var logoId = st.logo || IDS[0];
+    var st = styleDe(team) || {}, o = blasonParDefaut(team);
+    var C = st.color || o.color;
+    var logoId = st.logo || o.logo;
     var nuances = NUANCIER.map(function (c) {
       var actif = (c.toLowerCase() === C.toLowerCase());
       return '<button type="button" onclick="_rjTeamSetColor(\'' + c + '\')" title="' + c + '" style="' +
@@ -429,7 +527,9 @@
   window._rjTeamResetLogo = function () {
     var team = (typeof GE_SELECTED_TEAM !== "undefined") ? GE_SELECTED_TEAM : null;
     if (!team) return;
-    definir(team, (styleDe(team) || {}).color, null);
+    delete styles()[team];
+    appliquer(team);
+    try { if (typeof saveGame === "function" && typeof CURRENT_SLOT !== "undefined" && CURRENT_SLOT >= 0) saveGame(CURRENT_SLOT); } catch (e) {}
     window._rjTeamCloseLogos();
     rafraichirFiche();
   };
@@ -446,8 +546,8 @@
     var team = (typeof GE_SELECTED_TEAM !== "undefined") ? GE_SELECTED_TEAM : null;
     if (!team) return;
     window._rjTeamCloseLogos();
-    var st = styleDe(team) || {};
-    var C = st.color || "#FF1801";
+    var st = styleDe(team) || {}, o = blasonParDefaut(team);
+    var C = st.color || o.color;
     function vignettes(liste) {
       return liste.map(function (id) {
         var actif = (id === st.logo);
@@ -472,7 +572,7 @@
       'align-items:center;gap:10px;padding:9px 11px;border-radius:var(--r);cursor:pointer;' +
       'background:' + (perso ? "transparent" : "rgba(255,255,255,.07)") + ';' +
       'border:' + (perso ? "1px solid var(--border)" : "2px solid " + C) + '">' +
-      ((typeof TEAM_LOGOS !== "undefined" && TEAM_LOGOS[team]) ? TEAM_LOGOS[team] : "") +
+      '<span style="flex:0 0 40px;width:40px;height:40px;line-height:0">' + genLogo(blasonParDefaut(team).logo, blasonParDefaut(team).color, 40, team) + '</span>' +
       '<span style="font-size:12px;color:var(--text2)">Rétablir le blason d\'origine</span></button>' +
       titre("Emblèmes") +
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(IDS_EMBLEMES) + '</div>' +
@@ -498,7 +598,7 @@
         '</div>' +
         choix +
         '<div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.45">' +
-        'Les ' + IDS.length + ' modèles se teintent à la couleur de l\'écurie. Les emblèmes se passent d\'initiales.</div>' +
+        'Les ' + IDS.length + ' modèles se teintent à la couleur de l\'écurie. Les emblèmes se passent d\'initiales ; la plaque porte le nom de l\'écurie.</div>' +
       '</div>';
     ov.addEventListener("click", function (e) { if (e.target === ov) window._rjTeamCloseLogos(); });
     document.body.appendChild(ov);
@@ -552,6 +652,7 @@
       window.RJ_SAVE_HOOKS.push({ cle: "__logos63", lire: function () { setTimeout(appliquerTout, 60); } });
     }
 
+    refaireTout();
     appliquerTout();
     return true;
   }
