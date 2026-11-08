@@ -2887,15 +2887,18 @@ async function suiteLogos() {
       Object.keys(TEAM_LOGOS).forEach(t => {
         const svg = TEAM_LOGOS[t], refs = (svg.match(/url(#([^)]+))/g) || []).map(x => x.slice(5, -1));
         if (!/rjlogo/.test(svg)) ko.push(t + " : pas de blason");
-        if (/<defs>/.test(svg)) ko.push(t + " : dégradés dans le logo");
-        refs.forEach(id => { if (!hote.querySelector("[id=\"" + id + "\"]")) ko.push(t + " : " + id + " introuvable"); });
+        const formes = x => (x.match(/<(path|circle|ellipse|rect|text|polygon|use)/g) || []).length;
+        if (formes(svg) < formes(RJLogos.original(t))) ko.push(t + " : dessin d'origine perdu");
+        refs.forEach(id => { if (!hote.querySelector("[id=\"" + id + "\"]") && svg.indexOf("id=\"" + id + "\"") < 0) ko.push(t + " : " + id + " introuvable"); });
       });
       const modeles = RJLogos.modeles(), vides = modeles.filter(id => !/<path|<circle|<rect|<text|<ellipse/.test(RJLogos.dessiner(id, "#1E5BC6", 40, "Scuderia Vittoria").split("</defs>").pop()));
       return { n: Object.keys(TEAM_LOGOS).length, ko, modeles: modeles.length, vides, ferrari: RJLogos.parDefaut("Ferrari").color, plaque: modeles.indexOf("plaque_lettrage") >= 0 };
     });
-    S.verifier("chaque écurie a un blason, dont les dégradés sont rangés dans un bloc toujours rendu", r.n > 50 && r.ko.length === 0, JSON.stringify(r.ko.slice(0, 4)));
+    S.verifier("chaque écurie garde son logo d'origine, retouché (coins, reflet), et ses références se résolvent", r.n > 50 && r.ko.length === 0, JSON.stringify(r.ko.slice(0, 4)));
     S.verifier("l'éditeur propose tous les modèles, plaque à lettrage comprise, chacun dessiné", r.modeles > 40 && r.vides.length === 0 && r.plaque, JSON.stringify(r.vides));
     S.verifier("une écurie connue garde sa couleur (Ferrari en rouge)", r.ferrari === "#DC0000", r.ferrari);
+    const audi = await page.evaluate(() => { const ancien = JSON.parse(JSON.stringify(G)); G.rivals[0].team = "Kick Sauber"; G._testHisto = { "Kick Sauber": 3 }; RJRenommerEcurie("Kick Sauber", "Audi"); const ok = G.rivals[0].team === "Audi" && G._testHisto.Audi === 3 && !("Kick Sauber" in G._testHisto); delete G._testHisto; return { ok, f1: (TEAMS_BY_CAT["Formule 1"] || []).indexOf("Audi") >= 0 && (TEAMS_BY_CAT["Formule 1"] || []).indexOf("Kick Sauber") < 0, logo: !!TEAM_LOGOS.Audi }; });
+    S.verifier("Kick Sauber devient Audi (équipe de F1, logo, ancienne sauvegarde renommée)", audi.ok && audi.f1 && audi.logo, JSON.stringify(audi));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }

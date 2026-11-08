@@ -492,21 +492,82 @@
     "Red Bull Racing": "#1E41FF", "Racing Bulls": "#6692FF", "Mercedes": "#00D2BE", "Mercedes AMG F1": "#00D2BE",
     "McLaren": "#FF8000", "McLaren F1 Team": "#FF8000", "Arrow McLaren": "#FF8000", "Aston Martin": "#00806E", "Aston Martin F1": "#00806E",
     "Alpine": "#0093CC", "Alpine F1 Team": "#0093CC", "Alpine Endurance": "#0093CC", "Williams": "#005AFF", "Williams Racing": "#005AFF",
-    "Haas F1 Team": "#B6BABD", "Kick Sauber": "#52E252"
+    "Haas F1 Team": "#B6BABD", "Audi": "#E4002B"
   };
   function blasonParDefaut(team) {
-    if (!ORIGINE[team]) ORIGINE[team] = { logo: PAR_DEFAUT[hache(team) % PAR_DEFAUT.length], color: COULEURS[team] || couleurDuLogo(TEAM_LOGOS[team]) };
+    if (!ORIGINE[team]) ORIGINE[team] = { logo: PAR_DEFAUT[hache(team) % PAR_DEFAUT.length], color: COULEURS[team] || couleurDuLogo(original(team)) };
     return ORIGINE[team];
+  }
+  /* Logo d'origine de chaque écurie (dessiné à la main dans 03), gardé tel
+     quel puis légèrement retouché : coins arrondis, reflet, liseré et ombre
+     intérieure. Les modèles de l'éditeur restent pour qui personnalise. */
+  var ORIGINAUX = {};
+  /* Écuries de F1 : dessins repris avec plus de matière (dégradés, chrome,
+     ombres), dans l'esprit des logos d'origine sans copier les marques. */
+  var DESSINS_F1 = {"Red Bull Racing":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#22306b\"/><stop offset=\"1\" stop-color=\"#0a1233\"/></linearGradient><radialGradient id=\"s\" cx=\"45%\" cy=\"40%\" r=\"60%\"><stop offset=\"0\" stop-color=\"#ffe680\"/><stop offset=\"1\" stop-color=\"#f5b400\"/></radialGradient><linearGradient id=\"t\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ff4a3d\"/><stop offset=\"1\" stop-color=\"#b3120c\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><circle cx=\"20\" cy=\"19\" r=\"7.2\" fill=\"url(#s)\"/><g id=\"b\" fill=\"url(#t)\" stroke=\"#5c0703\" stroke-width=\".35\"><path d=\"M3 22.2 C3 20.2 5.2 19 8.4 19 L13 18.6 C14.4 17.3 16 17 17.1 17.7 L19.8 16.8 L18.2 18.7 C18.8 19.7 18.5 20.9 17.4 21.5 L16.1 21.7 L15.5 25.6 L14 25.6 L13.6 22.7 L9.2 23.1 L8.3 26.8 L6.8 26.8 L6.9 23.2 C5.7 23.4 4.7 24.6 4.5 26.2 L3.3 26.2 C3.1 24.8 3.5 23.5 4.1 22.7 Z\"/></g><use href=\"#b\" transform=\"translate(40 0) scale(-1 1)\"/><rect x=\"6\" y=\"31\" width=\"28\" height=\"4.4\" rx=\"1\" fill=\"#0a1233\" stroke=\"#f5b400\" stroke-width=\".5\"/><text x=\"20\" y=\"34.4\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"3.4\" font-weight=\"900\" fill=\"#fff\" letter-spacing=\".4\">RED BULL</text></svg>",
+    "Ferrari":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e3201b\"/><stop offset=\"1\" stop-color=\"#8f0a07\"/></linearGradient><linearGradient id=\"j\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffe45c\"/><stop offset=\"1\" stop-color=\"#f0b000\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M9 5 h22 v17 c0 7-5 11-11 13 c-6-2-11-6-11-13z\" fill=\"url(#j)\" stroke=\"#5a0000\" stroke-width=\".8\"/><path d=\"M9.4 5.4 h7.1 v3 h-7.1z\" fill=\"#009246\"/><path d=\"M16.5 5.4 h7 v3 h-7z\" fill=\"#f4f4f4\"/><path d=\"M23.5 5.4 h7.1 v3 h-7.1z\" fill=\"#ce2b37\"/><path d=\"M16.6 30 L17.2 25.6 C15.6 24.7 14.8 23.1 15.2 21.3 L12.6 18.3 C12.2 17.7 12.6 17.1 13.2 17.3 L15.8 18.5 L16 15.7 L14.4 13.9 C14.2 13.3 14.8 12.9 15.4 13.1 L17.4 14.3 C18.2 12.7 19.8 11.9 21.4 12.3 L22.6 11.1 L23 12.9 C24.4 13.7 25 15.1 24.6 16.7 L22.6 17.5 L23.2 20.1 C24.8 21.1 25.6 22.9 25.2 24.7 L27.2 28.5 L25.6 28.9 L23.6 25.9 L22 27.3 L21.6 30 Z\" fill=\"#111\"/><text x=\"20\" y=\"33\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"3.6\" font-weight=\"900\" fill=\"#111\">S F</text></svg>",
+    "McLaren":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#2a2a2e\"/><stop offset=\"1\" stop-color=\"#0c0c0e\"/></linearGradient><linearGradient id=\"p\" x1=\"0\" y1=\"1\" x2=\"1\" y2=\"0\"><stop offset=\"0\" stop-color=\"#ff6a00\"/><stop offset=\".6\" stop-color=\"#ff8a1f\"/><stop offset=\"1\" stop-color=\"#ffb35c\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M6 25 C10 14 22 9.5 34 11.5 C26 12.5 17 16.5 11.5 25.5 Z\" fill=\"url(#p)\"/><path d=\"M11.5 25.5 C17 18.5 25 14 34 11.5\" fill=\"none\" stroke=\"#fff\" stroke-width=\".5\" opacity=\".45\"/><g transform=\"translate(20 32) skewX(-10)\"><text x=\"0\" y=\"0\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"5\" font-weight=\"900\" fill=\"#f4f4f6\" letter-spacing=\".2\">McLAREN</text></g></svg>",
+    "Mercedes":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#1b1d20\"/><stop offset=\"1\" stop-color=\"#050607\"/></linearGradient><linearGradient id=\"m\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\".45\" stop-color=\"#c9cdd2\"/><stop offset=\".55\" stop-color=\"#8e949b\"/><stop offset=\"1\" stop-color=\"#e6e8eb\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><circle cx=\"20\" cy=\"20\" r=\"15.6\" fill=\"none\" stroke=\"#00d2be\" stroke-width=\".8\" opacity=\".55\"/><circle cx=\"20\" cy=\"20\" r=\"13.4\" fill=\"none\" stroke=\"url(#m)\" stroke-width=\"2.2\"/><path d=\"M20 7.8 L21.6 18.8 L31 26.4 L20 22.4 L9 26.4 L18.4 18.8 Z\" fill=\"url(#m)\" stroke=\"#6b7076\" stroke-width=\".3\"/><path d=\"M20 7.8 L20 22.4 M20 22.4 L31 26.4 M20 22.4 L9 26.4\" stroke=\"#ffffff\" stroke-width=\".35\" opacity=\".6\"/></svg>",
+    "Aston Martin":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#0e5a49\"/><stop offset=\"1\" stop-color=\"#022a21\"/></linearGradient><linearGradient id=\"a\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4f6f5\"/><stop offset=\"1\" stop-color=\"#a9b5b0\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M20 16 C14 14 8 13.6 3 14.6 C7 15.6 9.6 17 11 18.6 C8 18.4 6 18.8 4.6 19.6 C8.4 19.8 11.4 20.6 13.6 22 L20 22 Z\" fill=\"url(#a)\"/><path d=\"M20 16 C26 14 32 13.6 37 14.6 C33 15.6 30.4 17 29 18.6 C32 18.4 34 18.8 35.4 19.6 C31.6 19.8 28.6 20.6 26.4 22 L20 22 Z\" fill=\"url(#a)\"/><rect x=\"13.5\" y=\"16.4\" width=\"13\" height=\"5.2\" rx=\".6\" fill=\"#022a21\" stroke=\"url(#a)\" stroke-width=\".6\"/><text x=\"20\" y=\"20.4\" text-anchor=\"middle\" font-family=\"Arial,sans-serif\" font-size=\"2.6\" font-weight=\"700\" fill=\"#f4f6f5\" letter-spacing=\".25\">ASTON MARTIN</text><text x=\"20\" y=\"31\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"3.4\" font-weight=\"900\" fill=\"#cedc00\" letter-spacing=\".5\">F1 TEAM</text></svg>",
+    "Alpine":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#0b3f8f\"/><stop offset=\"1\" stop-color=\"#051a3d\"/></linearGradient><linearGradient id=\"a\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"1\" stop-color=\"#7fc4ff\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M20 6.5 L33 29 H26.6 L20 17.4 L13.4 29 H7 Z\" fill=\"url(#a)\"/><path d=\"M20 21.6 L23.6 28 H16.4 Z\" fill=\"#ff4fa3\"/><text x=\"20\" y=\"35\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"4\" font-weight=\"900\" fill=\"#f4f8ff\" letter-spacing=\".6\">ALPINE</text></svg>",
+    "Williams":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#0a2a6e\"/><stop offset=\"1\" stop-color=\"#03112e\"/></linearGradient><linearGradient id=\"w\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#7fe0ff\"/><stop offset=\"1\" stop-color=\"#00a0de\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M6 10 h5.2 l3.6 13 l3.4-13 h3.6 l3.4 13 l3.6-13 H34 l-6.4 19 h-4.6 l-3-11 l-3 11 h-4.6 Z\" fill=\"url(#w)\"/><text x=\"20\" y=\"35\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"3.8\" font-weight=\"900\" fill=\"#ffffff\" letter-spacing=\".5\">WILLIAMS</text></svg>",
+    "Racing Bulls":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f2f5fb\"/><stop offset=\"1\" stop-color=\"#c9d3e6\"/></linearGradient><linearGradient id=\"b\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#3b6cff\"/><stop offset=\"1\" stop-color=\"#1534a8\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M8 22 C8 14 13 9 20 9 C27 9 32 14 32 22\" fill=\"none\" stroke=\"url(#b)\" stroke-width=\"2.6\"/><path d=\"M12 15 L15.6 18 L24.4 18 L28 15 L26.6 20 C26 24 23.4 26.6 20 27.4 C16.6 26.6 14 24 13.4 20 Z\" fill=\"url(#b)\"/><circle cx=\"17.4\" cy=\"21\" r=\"1\" fill=\"#f2f5fb\"/><circle cx=\"22.6\" cy=\"21\" r=\"1\" fill=\"#f2f5fb\"/><text x=\"20\" y=\"35\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"3.6\" font-weight=\"900\" fill=\"#1534a8\" letter-spacing=\".4\">RACING BULLS</text></svg>",
+    "Haas F1 Team":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#3a3d42\"/><stop offset=\"1\" stop-color=\"#121315\"/></linearGradient><linearGradient id=\"c\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"1\" stop-color=\"#b9bdc3\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M5 9 h30 v5 H5z\" fill=\"#e10600\"/><path d=\"M5 15.4 h30 v5 H5z\" fill=\"url(#c)\"/><text x=\"20\" y=\"31\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"9\" font-weight=\"900\" fill=\"url(#c)\" letter-spacing=\".8\">HAAS</text><text x=\"20\" y=\"35.6\" text-anchor=\"middle\" font-family=\"Arial,sans-serif\" font-size=\"2.8\" font-weight=\"700\" fill=\"#e10600\" letter-spacing=\"1\">F1 TEAM</text></svg>",
+    "Audi":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#34363a\"/><stop offset=\"1\" stop-color=\"#0c0d0f\"/></linearGradient><linearGradient id=\"c\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\".5\" stop-color=\"#c3c7cc\"/><stop offset=\".55\" stop-color=\"#8b9096\"/><stop offset=\"1\" stop-color=\"#e2e4e7\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M4 10 h32 v20 H4z\" fill=\"none\" stroke=\"url(#c)\" stroke-width=\"1.2\"/><text x=\"20\" y=\"23.6\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"10\" font-weight=\"900\" fill=\"url(#c)\" letter-spacing=\"1.2\">AUDI</text><path d=\"M8 26.6 h24\" stroke=\"#f50537\" stroke-width=\"1.6\"/><text x=\"20\" y=\"35.4\" text-anchor=\"middle\" font-family=\"Arial,sans-serif\" font-size=\"2.8\" font-weight=\"700\" fill=\"#f50537\" letter-spacing=\"1.4\">F1 TEAM</text></svg>"};
+  var ALIAS_F1 = {"Scuderia Ferrari":"Ferrari","Mercedes AMG F1":"Mercedes","McLaren F1 Team":"McLaren","Aston Martin F1":"Aston Martin","Alpine F1 Team":"Alpine","Williams Racing":"Williams"};
+  function original(team) {
+    var dessin = DESSINS_F1[team] || DESSINS_F1[ALIAS_F1[team]];
+    if (dessin) return dessin;
+    if (!(team in ORIGINAUX)) ORIGINAUX[team] = (typeof TEAM_LOGOS !== "undefined" && TEAM_LOGOS[team]) || "";
+    return ORIGINAUX[team];
+  }
+  function poli(svg, taille) {
+    var tete = String(svg || "").match(/^<svg[^>]*>/);
+    if (!tete) return svg;
+    var t = taille || 40, n = ++_uid, p = "rjlogo" + n + "-";
+    var corps = svg.slice(tete[0].length, svg.lastIndexOf("</svg>")), internes = "";
+    corps = corps.replace(/<defs>([\s\S]*?)<\/defs>/g, function (_, d) { internes += d; return ""; });
+    (internes.match(/\sid="[^"]+"/g) || []).concat(corps.match(/\sid="[^"]+"/g) || []).forEach(function (a) {
+      var id = a.slice(5, -1), nouv = p + "i-" + id;
+      function ren(t) { return t.split('id="' + id + '"').join('id="' + nouv + '"').split("url(#" + id + ")").join("url(#" + nouv + ")").split('href="#' + id + '"').join('href="#' + nouv + '"'); }
+      internes = ren(internes); corps = ren(corps);
+    });
+    var ouverture = tete[0].replace(/swidth="[^"]*"/, " width=\"" + t + "\"").replace(/sheight="[^"]*"/, " height=\"" + t + "\"");
+    var defs = ranger('<defs>' + internes + '<clipPath id="' + p + 'coins"><rect width="40" height="40" rx="7"/></clipPath>' +
+      '<linearGradient id="' + p + 'reflet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".2"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient></defs>');
+    return ouverture + defs + '<g clip-path="url(#' + p + 'coins)">' + corps +
+      '<path d="M0 0 h40 v15 C27 11.5 13 11.5 0 15z" fill="url(#' + p + 'reflet)"/>' +
+      '<rect x=".7" y=".7" width="38.6" height="38.6" rx="6.4" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.4"/>' +
+      '<rect x=".4" y=".4" width="39.2" height="39.2" rx="6.7" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".7"/></g></svg>';
   }
   function refaireTout() {
     if (typeof TEAM_LOGOS === "undefined") return;
-    Object.keys(TEAM_LOGOS).forEach(function (team) {
-      var o = blasonParDefaut(team);
-      TEAM_LOGOS[team] = genLogo(o.logo, o.color, 40, team);
-    });
+    var equipes = Object.keys(TEAM_LOGOS);
+    equipes.forEach(original);                       // on garde les originaux avant de toucher à quoi que ce soit
+    equipes.forEach(function (team) { TEAM_LOGOS[team] = poli(original(team)); });
   }
+  if (typeof TEAM_LOGOS !== "undefined") Object.keys(TEAM_LOGOS).forEach(original);   // dès le chargement, avant tout autre module
 
-  window.RJLogos = { dessiner: genLogo, modeles: function () { return IDS.slice(); }, parDefaut: function (t) { return blasonParDefaut(t); } };
+  window.RJLogos = { original: original, dessiner: genLogo, modeles: function () { return IDS.slice(); }, parDefaut: function (t) { return blasonParDefaut(t); } };
+
+  /* Renomme une écurie dans toute la partie (valeurs et clés), y compris l'historique. */
+  function renommerPartout(ancien, nouveau) {
+    var vus = typeof WeakSet === "function" ? new WeakSet() : null;
+    function marche(o, prof) {
+      if (!o || typeof o !== "object" || prof > 14 || (vus && vus.has(o))) return;
+      if (vus) vus.add(o);
+      Object.keys(o).forEach(function (k) {
+        var v = o[k];
+        if (v === ancien) o[k] = nouveau;
+        else if (v && typeof v === "object") marche(v, prof + 1);
+        if (k === ancien && !Object.prototype.hasOwnProperty.call(o, nouveau)) { o[nouveau] = o[k]; delete o[k]; }
+      });
+    }
+    try { if (typeof G !== "undefined") marche(G, 0); } catch (e) {}
+    try { if (typeof CAREER_HISTORY !== "undefined") marche(CAREER_HISTORY, 0); } catch (e) {}
+    try { if (window.PLAYER_ACADEMY) marche(window.PLAYER_ACADEMY, 0); } catch (e) {}
+  }
+  window.RJRenommerEcurie = renommerPartout;
 
   /* ------------------------------------------------ persistance ---- */
   function styles() {
@@ -519,7 +580,7 @@
   function appliquer(team) {
     var st = styleDe(team);
     if (typeof TEAM_LOGOS === "undefined") return;
-    if (!st) { var o = blasonParDefaut(team); TEAM_LOGOS[team] = genLogo(o.logo, o.color, 40, team); return; }
+    if (!st) { TEAM_LOGOS[team] = poli(original(team)); return; }
     TEAM_LOGOS[team] = genLogo(st.logo || IDS[0], st.color || "#FF1801", 40, team);
   }
   function appliquerTout() {
@@ -553,7 +614,7 @@
         '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">' +
           '<button type="button" onclick="_rjTeamOpenLogos()" title="Changer de logo" style="' +
           'padding:0;border:1px solid ' + C + '66;border-radius:var(--r);background:transparent;cursor:pointer;line-height:0">' +
-          genLogo(logoId, C, 54, team) + '</button>' +
+          (st.logo ? genLogo(logoId, C, 54, team) : poli(original(team), 54)) + '</button>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:12px;color:var(--text);font-weight:700">' + team + '</div>' +
             '<div style="font-size:11px;color:var(--text3);margin-top:2px">Touche le logo pour en choisir un autre</div>' +
@@ -641,7 +702,7 @@
       'align-items:center;gap:10px;padding:9px 11px;border-radius:var(--r);cursor:pointer;' +
       'background:' + (perso ? "transparent" : "rgba(255,255,255,.07)") + ';' +
       'border:' + (perso ? "1px solid var(--border)" : "2px solid " + C) + '">' +
-      '<span style="flex:0 0 40px;width:40px;height:40px;line-height:0">' + genLogo(blasonParDefaut(team).logo, blasonParDefaut(team).color, 40, team) + '</span>' +
+      '<span style="flex:0 0 40px;width:40px;height:40px;line-height:0">' + poli(original(team), 40) + '</span>' +
       '<span style="font-size:12px;color:var(--text2)">Rétablir le blason d\'origine</span></button>' +
       titre("Sport auto") +
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + vignettes(IDS_COURSE) + '</div>' +
@@ -721,6 +782,10 @@
     // réappliquer les logos personnalisés au chargement d'une partie
     if (!window.RJ_SAVE_HOOKS.some(function (h) { return h.cle === "__logos63"; })) {
       window.RJ_SAVE_HOOKS.push({ cle: "__logos63", lire: function () { setTimeout(appliquerTout, 60); } });
+    }
+    // Kick Sauber est devenue Audi : une ancienne sauvegarde est renommée au chargement.
+    if (!window.RJ_SAVE_HOOKS.some(function (h) { return h.cle === "__audi"; })) {
+      window.RJ_SAVE_HOOKS.push({ cle: "__audi", lire: function () { renommerPartout("Kick Sauber", "Audi"); } });
     }
 
     refaireTout();

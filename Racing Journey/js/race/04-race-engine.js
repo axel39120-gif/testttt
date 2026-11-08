@@ -609,7 +609,7 @@ var _TEAM_PROFILES_F1 = {
   "Williams": [0.3, -0.3, -0.1, 0.0],
   "Racing Bulls": [0.0, 0.0, 0.0, 0.0],
   "Haas F1 Team": [0.1, -0.2, -0.1, 0.1],
-  "Kick Sauber": [-0.2, -0.1, 0.0, -0.1]
+  "Audi": [-0.2, -0.1, 0.0, -0.1]
 };
 
 // Hash déterministe pour générer des profils pour les écuries hors F1
@@ -6811,6 +6811,11 @@ var TEAM_RADIO_PERSONALITY = {
     tone: "professional",
     lang: ["Push", "Stay smooth", "Keep it up"],
     engineer: "James"
+  },
+  Audi: {
+    tone: "professional",
+    lang: ["Gut so", "Weiter so", "Push now"],
+    engineer: "Jonas"
   },
   Sauber: {
     tone: "swiss",
@@ -21696,7 +21701,7 @@ var TEAM_PRESTIGE = {
   Williams: 92,
   Alpine: 89,
   "Aston Martin": 88,
-  "Kick Sauber": 87,
+  "Audi": 87,
   "Racing Bulls": 86,
   "Haas F1 Team": 86,
   "Prema Racing": 85,
@@ -21841,7 +21846,7 @@ var TEAMS_BY_CAT = {
   "Formula Regional": ["ART Grand Prix", "Prema Racing", "R-ace GP", "MP Motorsport", "Trident", "Hitech GP", "Bhaitech Racing", "Jenzer Motorsport", "US Racing", "Cram Motorsport", "G4 Racing", "EFC Sports", "Campos Racing", "Van Amersfoort Racing"],
   "Formule 3": ["Prema Racing", "ART Grand Prix", "Hitech GP", "DAMS", "Trident", "MP Motorsport", "Campos Racing", "Jenzer Motorsport", "PHM Racing", "Van Amersfoort Racing", "Carlin", "Rodin Motorsport", "AIX Racing", "Charouz Racing", "Monolite Racing"],
   "Formule 2": ["Prema Racing", "ART Grand Prix", "Virtuosi Racing", "MP Motorsport", "Hitech GP", "DAMS", "Trident", "Campos Racing", "Carlin", "Van Amersfoort Racing", "PHM Racing"],
-  "Formule 1": ["Red Bull Racing", "Ferrari", "McLaren", "Mercedes", "Aston Martin", "Alpine", "Williams", "Racing Bulls", "Haas F1 Team", "Kick Sauber"],
+  "Formule 1": ["Red Bull Racing", "Ferrari", "McLaren", "Mercedes", "Aston Martin", "Alpine", "Williams", "Racing Bulls", "Haas F1 Team", "Audi"],
   "Super Formula": ["Toyota Gazoo Racing", "Honda Racing", "Nakajima Racing", "Kondoh Racing", "Cerumo Inging", "Mugen", "TGM Grand Prix", "Itochu Enex Team Impul", "Kygnus Sunoco Team", "Real Racing"],
   "Endurance WEC": ["Toyota Gazoo Racing", "Ferrari AF Corse", "Porsche Penske Motorsport", "Cadillac Racing", "BMW M Team", "Peugeot TotalEnergies", "Alpine Endurance", "Glickenhaus Racing", "United Autosports", "AF Corse", "Proton Competition", "Cool Racing", "Inter Europol Competition", "Richard Mille Racing", "Inception Racing"],
   IndyCar: ["Team Penske", "Chip Ganassi Racing", "Andretti Global", "Arrow McLaren", "Rahal Letterman Lanigan", "Ed Carpenter Racing", "Dale Coyne Racing", "AJ Foyt Enterprises", "Dreyer Reinbold Racing", "Juncos Hollinger Racing", "ECR / Foyt", "Meyer Shank Racing"]
