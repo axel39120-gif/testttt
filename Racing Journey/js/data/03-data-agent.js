@@ -20058,7 +20058,11 @@ function describeFeedback(e, t) {
       repartition_frein: "répartition freinage"
     } [e] || e,
     a;
-  return "perfect" === t.direction ? "Le " + n + " est parfait." : "close" === t.direction ? "Le " + n + " est très proche du bon réglage." : (a = "large" === t.magnitude ? "beaucoup " : "medium" === t.magnitude ? "sensiblement " : "small" === t.magnitude ? "un peu " : "", "too_high" === t.direction ? "Le " + n + " est " + a + "trop haut. Réduis-le." : "too_low" === t.direction ? "Le " + n + " est " + a + "trop bas. Augmente-le." : "Je n'arrive pas à juger le " + n + " clairement.")
+  // article et accords : « l'aileron », « la suspension est trop basse, augmente-la »
+  var fem = /^(suspension|pression|répartition)/.test(n);
+  var Le = /^[aeiouyhéèêàâîôû]/i.test(n) ? "L'" : fem ? "La " : "Le ";
+  var phrase = "perfect" === t.direction ? Le + n + " est parfait." : "close" === t.direction ? Le + n + " est très proche du bon réglage." : (a = "large" === t.magnitude ? "beaucoup " : "medium" === t.magnitude ? "sensiblement " : "small" === t.magnitude ? "un peu " : "", "too_high" === t.direction ? Le + n + " est " + a + "trop haut. Réduis-le." : "too_low" === t.direction ? Le + n + " est " + a + "trop bas. Augmente-le." : "Je n'arrive pas à juger le " + n + " clairement.");
+  return fem ? phrase.replace(/trop haut\b/g, "trop haute").replace(/trop bas\b/g, "trop basse").replace(/est parfait\./, "est parfaite.").replace(/-le\./g, "-la.") : phrase;
 }
 var SETUP_COUPLINGS = {
   aileron_av: {

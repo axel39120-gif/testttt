@@ -2903,6 +2903,72 @@ async function suiteLogos() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteContacts() {
+  S.suite("Messagerie › Contacts");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const att = () => new Promise(r => setTimeout(r, 300));
+      navTo("S-mailbox", null); mbtab("contacts"); await att();
+      const cartes = document.querySelectorAll("#mb-contacts-list .rj131-carte").length, attendu = getContactList().length;
+      const id = getContactList().find(c => c.available).id;
+      openContactChat(id); await att();
+      const sujets = document.querySelectorAll(".rj131-sujet:not(:disabled)").length, apercus = document.querySelectorAll(".rj131-sujet .rj131-fx").length;
+      document.querySelector(".rj131-sujet:not(:disabled)").click(); await att();
+      return { cartes, attendu, sujets, apercus, bulles: document.querySelectorAll(".rj131-bulle.recent").length, bloque: document.querySelectorAll(".rj131-sujet:disabled").length > 0, portraits: document.querySelectorAll(".rj131-av").length };
+    });
+    S.verifier("une fiche par contact, chacune avec son portrait ou son pictogramme", r.cartes === r.attendu && r.cartes > 0, JSON.stringify(r));
+    S.verifier("la conversation propose les sujets avec leurs effets possibles", r.sujets > 0 && r.apercus >= r.sujets, JSON.stringify(r));
+    S.verifier("envoyer un sujet ajoute l échange au fil et bloque les envois jusqu à la semaine suivante", r.bulles === 2 && r.bloque, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteEssais() {
+  S.suite("Essais libres et qualifications");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(() => ({
+      aileron: describeFeedback("aileron_ar", { direction: "too_low", magnitude: "medium" }),
+      suspension: describeFeedback("suspension", { direction: "too_high", magnitude: "small" }),
+      el1: _buildEngineerBriefing(1, "Monza", { id: "dry" }),
+      el2: _buildEngineerBriefing(2, "Monza", { id: "dry" }),
+      el3: _buildEngineerBriefing(3, "Monza", { id: "dry" }),
+      pneus: QUALI_TYRE_CONFIG ? Object.keys(QUALI_TYRE_CONFIG).map(k => QUALI_TYRE_CONFIG[k].compound).join(",") : ""
+    }));
+    S.verifier("les retours de l ingénieur s accordent (l aileron, la suspension trop haute)", /^L.aileron arrière est sensiblement trop bas./.test(r.aileron) && /^La suspension est un peu trop haute. Réduis-la./.test(r.suspension), r.aileron + " / " + r.suspension);
+    S.verifier("l ingénieur ne dit « première séance » qu en EL1", !/Première séance/.test(r.el2) && !/Première séance/.test(r.el3) && /EL2|Deuxième/.test(r.el2) && /EL3|Dernière/.test(r.el3), r.el2.slice(0, 60) + " / " + r.el3.slice(0, 60));
+    S.verifier("les pneus de qualification portent des noms français, sans marque", !/Soft|Pirelli|Primary/.test(r.pneus), r.pneus);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteCasque() {
+  S.suite("Casque du pilote");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const att = () => new Promise(r => setTimeout(r, 200));
+      navTo("S-pilot", null); await att();
+      openPersonalizationModal(); await att();
+      const motifs = document.querySelectorAll(".rj132-choix[data-cle=motif] svg").length;
+      document.querySelector(".rj132-choix[data-cle=motif][data-val=damier]").click(); await att();
+      document.querySelector(".rj132-pastille[data-cle=base][data-val=\"#1E5BC6\"]").click(); await att();
+      document.querySelector(".rj132-choix[data-cle=visiere][data-val=or]").click(); await att();
+      document.querySelector("[data-num=\"1\"]").click(); const num = G.pilot.number;
+      document.querySelector(".rj132-valider").click(); await att();
+      const h = G.pilot.helmet || {};
+      navTo("S-home", null); navTo("S-pilot", null); await att();
+      return { motifs, h, num, apres: G.pilot.number, couleur: G.pilot.helmetColor, carte: !!document.querySelector("#S-pilot .rj132-mini svg"), ferme: !document.getElementById("rj132-modale") };
+    });
+    S.verifier("l éditeur montre chaque motif dessiné aux couleurs du casque", r.motifs === 10, String(r.motifs));
+    S.verifier("le casque choisi est enregistré avec le pilote (motif, couleur, visière, numéro)", r.h.motif === "damier" && r.h.base === "#1E5BC6" && r.h.visiere === "or" && r.apres === Math.min(99, r.num + 1) && r.couleur === "blue" && r.ferme, JSON.stringify(r));
+    S.verifier("la carte Personnalisation de Stats montre le casque", r.carte, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3165,6 +3231,9 @@ const SUITES = {
   vides: suiteVides,
   circuits: suiteCircuits,
   logos: suiteLogos,
+  contacts: suiteContacts,
+  essais: suiteEssais,
+  casque: suiteCasque,
   decisions: suiteDecisions
 };
 

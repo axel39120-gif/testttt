@@ -693,6 +693,21 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - Éditeur : section « Sport auto » en tête du sélecteur, plaque au nom de l'écurie et écu à damier en plus ; « Rétablir le blason d'origine » revient vraiment au blason par défaut et montre sa vignette (le nettoyeur d'icônes du module 57 l'effaçait).
 - Test : suite `logos`.
 
+## Contacts, essais et qualifs, casque — v250-v252
+
+- **Messagerie › Contacts** (module `131-contacts.js`) : une colonne de fiches (portrait ou pictogramme, rôle, jauge de relation, disponibilité, aperçu de la dernière réponse). La conversation a un en-tête (retour, portrait, jauge), un fil daté (tes bulles à droite, les siennes à gauche, effets obtenus sous chaque échange) et « Que veux-tu lui écrire ? » : chaque sujet montre le message envoyé, ses effets possibles et, s'il y a plusieurs réponses, leurs chances. L'ancien affichage (en colonnes) faisait chevaucher l'en-tête et les messages et y glissait des widgets.
+- **Audit des essais libres et des qualifications** (week-end joué en entier, comme un joueur) — corrigé :
+  - le tour de sortie des qualifs était chronométré et comptait comme meilleur tour (« premier tour chrono, P7 ») : il ne l'est plus, pour personne ; le joueur voit « tour de sortie : pneus en température » ;
+  - la décision « Sortie des stands » tombait au 2ᵉ tour et revenait à chaque tour : elle devient « Lancement du tour », posée au premier tour lancé du relais ;
+  - en essais, un composé épuisé laissait « Envoyer en piste » sans effet : on passe sur un composé disponible ;
+  - usure des pneus en essais divisée par deux (≈ 7 %/tour en tendres au lieu de 14 %) ;
+  - l'ingénieur disait « Première séance » en EL2 et EL3 : une phrase propre à chaque séance ;
+  - la feuille de temps annonçait « meilleur 1:25.100 » (la référence du circuit) avant le moindre tour ;
+  - retours de réglage accordés (« L'aileron… », « La suspension est un peu trop haute. Réduis-la. ») ;
+  - pneus de qualif nommés en français (« Tendre », plus de « Soft Pirelli »), libellés de tour en français (« Tour lancé », « Dernière tentative »), pneus dessinés dans le choix des composés en essais.
+- **Casque du pilote** (module `132-casque.js`, Carrière › Stats › Personnalisation) : éditeur avec aperçu dessiné (profil, visière, aération, numéro), trois couleurs (principale, secondaire, accent, plus une teinte libre), dix motifs (uni, bande centrale, bandes, chevron, flammes, damier, étoiles, éclair, diagonale, dégradé), quatre visières (fumée, iridium bleu, or, argent), trois finitions (brillant, mat, chromé) et le numéro. Enregistré avec le pilote ; la carte de Stats montre le casque.
+- Tests : suites `contacts`, `essais`, `casque`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
