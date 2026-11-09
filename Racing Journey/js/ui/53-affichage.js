@@ -1298,7 +1298,7 @@
        prix — et on gagne uniquement sur les espacements. */
     "#p-stat-bars .p-row{padding:3px 0 !important}",
     "#p-stat-bars .pillar-block{margin-bottom:8px !important}",
-    "#p-stat-bars .pillar-head{padding:6px 0 !important}",
+    "#p-stat-bars .pillar-head{padding:8px 15px !important}",   // même retrait que les lignes : l'icône et la note ne touchent plus le bord
     "#pilot-rating-card{padding:12px 14px !important}",
 
     /* ---------------------------------------------------------------

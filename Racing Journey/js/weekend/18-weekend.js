@@ -1786,9 +1786,14 @@
         h += '</div>';
         h += '</div>';
       }
-      // Feedback setup
+      // Réglages : la même présentation que l'onglet Préparation (confiance + cinq ressentis + parole du pilote)
       var fKeys = Object.keys(feedback);
-      if (fKeys.length) {
+      var atelier = window.RJAtelier && typeof RJAtelier.ressentisHTML === "function" ? RJAtelier.ressentisHTML() : "";
+      if (atelier) {
+        var ditPilote = typeof RJAtelier.parole === "function" ? RJAtelier.parole() : null;
+        h += '<div class="rja rja-debrief"><div class="rja-debrief-titre">Ressenti du pilote</div>' + atelier +
+          (ditPilote ? '<div class="rja-pilote"><div class="rja-bulle">« ' + esc(ditPilote) + " »</div></div>" : "") + "</div>";
+      } else if (fKeys.length) {
         h += '<div style="padding:10px 14px 6px"><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Réglages</div>';
         fKeys.forEach(function (k) {
           var fb = feedback[k];

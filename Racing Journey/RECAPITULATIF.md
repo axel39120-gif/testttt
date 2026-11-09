@@ -708,6 +708,19 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - **Casque du pilote** (module `132-casque.js`, Carrière › Stats › Personnalisation) : éditeur avec aperçu dessiné (profil, visière, aération, numéro), trois couleurs (principale, secondaire, accent, plus une teinte libre), dix motifs (uni, bande centrale, bandes, chevron, flammes, damier, étoiles, éclair, diagonale, dégradé), quatre visières (fumée, iridium bleu, or, argent), trois finitions (brillant, mat, chromé) et le numéro. Enregistré avec le pilote ; la carte de Stats montre le casque.
 - Tests : suites `contacts`, `essais`, `casque`.
 
+## Retouches — v253
+
+- **Pilote › Stats** : l'icône et la note des cartes (Performance, Technique, Mental, Physique…) touchaient le bord de la carte (en-tête sans marge intérieure) ; elles ont désormais le même retrait que les lignes.
+- **Débrief des essais libres** : le réglage y était présenté réglage par réglage (aileron avant, antiroulis…), autrement qu'en début de séance. Il reprend la présentation de l'onglet Préparation : confiance du pilote, cinq ressentis (équilibre, freinage, appui, traction, vitesse) avec leur verdict, et la parole du pilote.
+
+## Casque, réseaux sociaux, notes des pilotes — v254-v256
+
+- **Casque plus réaliste** : profil d'un casque intégral de course redessiné — coque haute et ronde, nuque qui redescend, mentonnière avancée, volume par reflet et ombre de pourtour, bande au-dessus de la visière, visière avec pivot et languette d'arrachage, aileron arrière, prises d'air au sommet et à la mentonnière, bourrelet de nuque. Les motifs et finitions suivent la nouvelle forme.
+- **Réseaux sociaux** : une seule colonne centrée comme une vraie appli ; profil avec bannière aux couleurs de l'écurie et portrait du pilote ; visages pour les fans et les pilotes ; @mentions et #hashtags en couleur ; une partie des publications des médias et de l'écurie porte une « photo » de course ; compteur de vues ; rangée de tendances (#Catégorie, #Nom, #Écurie, #GPCircuit).
+- **Notes des pilotes** (module `133-notes-pilotes.js`) : quatre notes à la manière des jeux de F1 — Expérience, Combativité, Vigilance, Rythme — et une note générale. Chaque catégorie a sa fourchette (F1 74–96, IndyCar 70–91, WEC 68–89, Super Formula 66–87, F2 64–84, F3 56–78, F4 48–70, karting senior 42–64, junior 34–56). La place dans la grille vient de la compétence ; les points forts des statistiques détaillées différencient les quatre notes ; l'expérience suit l'âge et les saisons. La fiche d'un pilote (et du joueur) montre la carte des notes ; la note générale est la même en fiche, au classement et au mercato. Affichage seulement : la simulation n'en dépend pas.
+- Corrigé au passage : « Offre de le garage familial » devient « Offre du garage familial ».
+- Tests : suites `notes`, `reseaux`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

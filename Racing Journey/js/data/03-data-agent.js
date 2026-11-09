@@ -7595,7 +7595,7 @@ var EVENT_ANNOUNCEMENTS = {
     return {
       from: _fp.from,
       role: "family",
-      subject: "Offre de " + r,
+      subject: "Offre " + (/^le /i.test(r) ? "du " + r.slice(3) : /^les /i.test(r) ? "des " + r.slice(4) : /^[aeiouyhé]/i.test(r) ? "d'" + r : "de " + r),
       body: _intro + "<strong>" + r + "</strong> te propose un petit sponsoring dans <strong>" + t + " semaine" + (t > 1 ? "s" : "") + "</strong>.<br><br>" + renderIcon("paddock", 14, "#9CA3AF") + " <strong>Sponsor :</strong> " + r + "<br>" + renderIcon("money", 14, "#F59E0B") + " <strong>Contrepartie :</strong> petit kit offert + autocollant sur ton kart<br>⭐ <strong>Estimation :</strong> +500 €, +2 réputation<br><br>C'est symbolique mais c'est ton premier sponsor. À toi de voir si tu acceptes fièrement ou si tu préfères attendre mieux."
     }
   },

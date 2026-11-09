@@ -69,6 +69,8 @@ plus près, pas à l'identique. Exemple : `RJ_GRAINE=437695854 node tests/rj-tes
 | `contacts` | Messagerie › Contacts : une fiche par contact, sujets avec effets possibles, envoi qui ajoute l’échange au fil et bloque jusqu’à la semaine suivante |
 | `essais` | retours de l’ingénieur accordés, briefing propre à chaque séance (EL1/EL2/EL3), pneus de qualif nommés en français |
 | `casque` | éditeur de casque : motifs dessinés, choix enregistrés avec le pilote (couleurs, motif, visière, numéro), casque visible dans Stats |
+| `notes` | notes des pilotes façon jeu de F1 : fourchette par catégorie, quatre notes + note générale, identique en fiche et au classement |
+| `reseaux` | réseaux sociaux : bannière et portrait du profil, tendances, visages et vues dans le fil |
 | `superlicence` | barème, fenêtre de trois saisons, âge, licence conservée, offre de F1 changée en réserviste sans licence, carte affichée |
 | `mercato` | rumeurs une fois par saison et fondées, relevé fidèle de l'intersaison, verdicts, sauvegarde, onglet |
 | `heritage` | rêves (trois au plus), Triple Couronne, pas de double comptage, réussite célébrée une fois, sauvegarde, onglet et frise |
