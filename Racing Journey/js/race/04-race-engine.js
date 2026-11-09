@@ -150,7 +150,11 @@ function _getPtsTable() {
     "Endurance WEC": [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
     "IndyCar": [50, 40, 35, 32, 30, 28, 26, 24, 22, 20, 19, 18, 17, 16, 15, 14, 13, 12, 10, 8]
   };
-  return _T[_c] || _T["Formule 1"];
+  var _t = _T[_c] || _T["Formule 1"];
+  try {
+    if (_c === "Endurance WEC" && /le ?mans/i.test((typeof RACE_STATE !== "undefined" && RACE_STATE && RACE_STATE.circuit) || "")) _t = _t.map(function(p) { return p * 2; });
+  } catch (_e) {}
+  return _t;
 }
 
 function _getSprintPtsTable() {
@@ -525,10 +529,12 @@ function _startQualCoeur() {
       improved: !1,
       eliminated: !1,
       team: G.currentTeam || "Indépendant"
-    }), G.rivals.forEach(function(e) {
+    }), G.rivals.forEach(function(e, _ri) {
+      if (!rivalAuDepart(e)) return;
       var r = e.team || "",
         n, a = teamRatingToBonus(r ? getEffectiveTeamRating(r) : 72);
       QUALI_STATE.drivers.push({
+        rivalIdx: _ri,
         name: e.name,
         nat: e.nat || "FR",
         isPlayer: !1,
@@ -2166,10 +2172,10 @@ function finishQuali(e, t) {
         var _rivIdx = 0;
         _drv.forEach(function(d, i) {
           if (d.isPlayer) return;
-          if (G.rivals[_rivIdx]) {
-            G.rivals[_rivIdx].qualiHistory = G.rivals[_rivIdx].qualiHistory || [];
-            G.rivals[_rivIdx].qualiHistory.push(_posMap[i] || 0);
-            _rivIdx++
+          var _k = typeof d.rivalIdx === "number" ? d.rivalIdx : _rivIdx++;
+          if (G.rivals[_k]) {
+            G.rivals[_k].qualiHistory = G.rivals[_k].qualiHistory || [];
+            G.rivals[_k].qualiHistory.push(_posMap[i] || 0)
           }
         })
       } catch (_e) {}
@@ -2894,6 +2900,11 @@ var PHASE_LABELS = ["Formation lap", "Debut de course", "Mi-course", "Duels", "S
    (0 par défaut), jamais en enveloppant runRaceLive. */
 if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
 
+/* Un pilote remplacé ce week-end (_rj79Gele) ou qui a quitté son baquet en
+   cours de saison (_rj79Sorti) garde ses points au classement mais ne prend
+   plus le départ, ni en qualifications ni en course. */
+function rivalAuDepart(r) { return !!r && !r._rj79Gele && !r._rj79Sorti; }
+
 function declencherHooksDepart(moment, lr) {
   window.RJ_RACE_START_HOOKS
     .map(function (h, i) { return { h: h, i: i }; })
@@ -3026,6 +3037,7 @@ function _runRaceLiveCoeur() {
       prevPos: o
     }];
   G.rivals.forEach(function(e, t) {
+    if (!rivalAuDepart(e)) return;
     var r = Math.min(Infinity, Math.max(.02, e.skill / 100 + l + teamRatingToBonus(e.team ? getEffectiveTeamRating(e.team) : 72) + .7 * effetPluie(a.rainMod, talentPluie(e)) + .2 * (Math.random() - .5) * (1 - e.consistency + .25) + (function() {
       try {
         return (typeof _getTeamCircuitAffinity === 'function' ? _getTeamCircuitAffinity(e.team, G.cat, RACE_STATE.circuit) : 0) * 0.012
@@ -3094,7 +3106,7 @@ function _runRaceLiveCoeur() {
           var cnt = 0;
           for (var qi = 0; qi < QUALI_STATE.drivers.length; qi++) {
             if (QUALI_STATE.drivers[qi].isPlayer) continue;
-            if (cnt === ri) {
+            if (typeof QUALI_STATE.drivers[qi].rivalIdx === "number" ? QUALI_STATE.drivers[qi].rivalIdx === ri : cnt === ri) {
               qIdx = qi;
               break
             }
@@ -14776,7 +14788,7 @@ function _isIndyOval(circuitName) {
   if (!circuitName || (typeof G === "undefined") || G.cat !== "IndyCar") return false;
   var n = String(circuitName).toLowerCase();
   return n.indexOf("texas") >= 0 || n.indexOf("indianapolis 500") >= 0 || n.indexOf("indy 500") >= 0 ||
-    n.indexOf("iowa") >= 0 || n.indexOf("gateway") >= 0 || n.indexOf("nashville") >= 0;
+    n.indexOf("iowa") >= 0 || n.indexOf("gateway") >= 0 || n.indexOf("milwaukee") >= 0;
 }
 
 function _isOvalRace() {
@@ -18622,8 +18634,8 @@ function buildCalendar() {
       "Formule 2": ["Bahrain", "Jeddah", "Melbourne", "Baku", "Monaco", "Silverstone", "Budapest", "Spa", "Monza", "Abu Dhabi"],
       "Formule 1": ["Bahrain", "Jeddah", "Miami", "Imola", "Monaco", "Barcelone", "Silverstone", "Budapest", "Spa", "Zandvoort", "Monza", "Singapore", "Suzuka", "Austin", "Mexico", "Sao Paulo", "Las Vegas", "Abu Dhabi"],
       "Super Formula": ["Suzuka", "Okayama", "Autopolis", "Sugo", "Fuji Speedway", "Motegi", "Sapporo", "Okayama Round 2", "Fuji Round 2", "Suzuka Final"],
-      "Endurance WEC": ["Sebring 12h", "Portimao 6h", "Spa 6h", "24h Le Mans", "Monza 6h", "Fuji 6h", "Bahrain 8h", "Bahrain Final"],
-      IndyCar: ["St. Petersburg", "Texas", "Long Beach", "Indianapolis 500", "Detroit", "Road America", "Iowa", "Nashville", "Portland", "Laguna Seca", "Gateway", "Monterey"]
+      "Endurance WEC": ["Sebring 12h", "Portimao 6h", "Spa 6h", "24h Le Mans", "Sao Paulo 6h", "Monza 6h", "Fuji 6h", "Bahrain 8h"],
+      IndyCar: ["St. Petersburg", "Texas", "Long Beach", "Indianapolis 500", "Detroit", "Road America", "Iowa", "Nashville", "Portland", "Laguna Seca", "Gateway", "Milwaukee"]
     }, t = e[G.cat] || e["Karting Junior"], r = Math.floor(46 / t.length), n = 0; n < t.length; n++) {
     var a = {
         name: t[n],
@@ -19418,12 +19430,12 @@ function _buildTransferOffersCoeur() {
       var t = CAT_MIN_AGE[e.cat];
       if (!(void 0 !== t && o < t)) {
         var n = e.cat === G.cat,
-          a = !n && getCatNextOptions(G.cat).indexOf(e.cat) >= 0,
+          a = !n && (getCatNextOptions(G.cat).indexOf(e.cat) >= 0 || !!e._lateral),
           i = n && e.team === G.currentTeam,
           s = null !== e.cSalary && void 0 !== e.cSalary ? e.cSalary : e.salary || 0;
         s = Number(s) || 0;
         var l = TEAM_LOGOS[e.team] ? '<span style="display:inline-flex;width:18px;height:18px;border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:5px">' + TEAM_LOGOS[e.team].replace('width="40" height="40"', 'width="18" height="18"') + "</span>" : "",
-          c = a ? e.team + " — " + e.cat + " ↑" : i ? "Prolonger — " + e.team : e.team;
+          c = a ? e.team + " — " + e.cat + (e._lateral ? " ↔" : " ↑") : i ? "Prolonger — " + e.team : e.team;
         r.push({
           name: l + c,
           team: e.team,
@@ -21756,6 +21768,8 @@ var TEAM_PRESTIGE = {
   "Lenze Kart": 44,
   "Toyota Gazoo Racing": 85,
   "Honda Racing": 82,
+  "TOM'S": 85,
+  "Dandelion Racing": 82,
   Mugen: 78,
   "Nakajima Racing": 74,
   "Itochu Enex Team Impul": 72,
@@ -21851,9 +21865,9 @@ var TEAMS_BY_CAT = {
   "Formule 3": ["Prema Racing", "ART Grand Prix", "Hitech GP", "DAMS", "Trident", "MP Motorsport", "Campos Racing", "Jenzer Motorsport", "PHM Racing", "Van Amersfoort Racing", "Carlin", "Rodin Motorsport", "AIX Racing", "Charouz Racing", "Monolite Racing"],
   "Formule 2": ["Prema Racing", "ART Grand Prix", "Virtuosi Racing", "MP Motorsport", "Hitech GP", "DAMS", "Trident", "Campos Racing", "Carlin", "Van Amersfoort Racing", "PHM Racing"],
   "Formule 1": ["Red Bull Racing", "Ferrari", "McLaren", "Mercedes", "Aston Martin", "Alpine", "Williams", "Racing Bulls", "Haas F1 Team", "Audi"],
-  "Super Formula": ["Toyota Gazoo Racing", "Honda Racing", "Nakajima Racing", "Kondoh Racing", "Cerumo Inging", "Mugen", "TGM Grand Prix", "Itochu Enex Team Impul", "Kygnus Sunoco Team", "Real Racing"],
-  "Endurance WEC": ["Toyota Gazoo Racing", "Ferrari AF Corse", "Porsche Penske Motorsport", "Cadillac Racing", "BMW M Team", "Peugeot TotalEnergies", "Alpine Endurance", "Glickenhaus Racing", "United Autosports", "AF Corse", "Proton Competition", "Cool Racing", "Inter Europol Competition", "Richard Mille Racing", "Inception Racing"],
-  IndyCar: ["Team Penske", "Chip Ganassi Racing", "Andretti Global", "Arrow McLaren", "Rahal Letterman Lanigan", "Ed Carpenter Racing", "Dale Coyne Racing", "AJ Foyt Enterprises", "Dreyer Reinbold Racing", "Juncos Hollinger Racing", "ECR / Foyt", "Meyer Shank Racing"]
+  "Super Formula": ["TOM'S", "Dandelion Racing", "Nakajima Racing", "Kondoh Racing", "Cerumo Inging", "Mugen", "TGM Grand Prix", "Itochu Enex Team Impul", "Kygnus Sunoco Team", "Real Racing"],
+  "Endurance WEC": ["Toyota Gazoo Racing", "Ferrari AF Corse", "Porsche Penske Motorsport", "Cadillac Racing", "BMW M Team", "Peugeot TotalEnergies", "Alpine Endurance", "Glickenhaus Racing", "AF Corse", "Proton Competition"],
+  IndyCar: ["Team Penske", "Chip Ganassi Racing", "Andretti Global", "Arrow McLaren", "Rahal Letterman Lanigan", "Ed Carpenter Racing", "Dale Coyne Racing", "AJ Foyt Enterprises", "Dreyer Reinbold Racing", "Juncos Hollinger Racing", "Meyer Shank Racing"]
 };
 
 function hasTeamPerf() {
@@ -22669,6 +22683,10 @@ function _getCircuitCountry(n) {
       flag: "🇺🇸"
     },
     "Monterey": {
+      name: "États-Unis",
+      flag: "🇺🇸"
+    },
+    "Milwaukee": {
       name: "États-Unis",
       flag: "🇺🇸"
     },

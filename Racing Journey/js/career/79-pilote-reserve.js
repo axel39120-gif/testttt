@@ -66,11 +66,51 @@
 
   /* Catégories dans lesquelles un baquet de réserve a du sens : celles qui
      ont une vraie structure d'écurie. Le karting en est exclu. */
-  var CATS_RESERVE = [
+  var CATS_RESERVE = ["Formule 1", "Endurance WEC"];
+  function catAdmetReserve(c) { return CATS_RESERVE.indexOf(c) >= 0; }
+  /* Catégories où un baquet peut se libérer en cours de saison. */
+  var CATS_BAQUETS = [
     "Formule 1", "Formule 2", "Formule 3", "Formula Regional",
     "Super Formula", "Endurance WEC", "IndyCar"
   ];
-  function catAdmetReserve(c) { return CATS_RESERVE.indexOf(c) >= 0; }
+
+  /* Calendriers des catégories où l'on est réserviste en parallèle d'un autre
+     baquet : la course du remplacement et le circuit des essais en viennent.
+     shortcut: copie des listes de buildCalendar (04), à tenir à jour si elles changent. */
+  var CALENDRIERS = {
+    "Formule 1": ["Bahrain", "Jeddah", "Miami", "Imola", "Monaco", "Barcelone", "Silverstone", "Budapest", "Spa", "Zandvoort", "Monza", "Singapore", "Suzuka", "Austin", "Mexico", "Sao Paulo", "Las Vegas", "Abu Dhabi"],
+    "Endurance WEC": ["Sebring 12h", "Portimao 6h", "Spa 6h", "24h Le Mans", "Sao Paulo 6h", "Monza 6h", "Fuji 6h", "Bahrain 8h"]
+  };
+  /* La course de la catégorie cat la plus proche (à venir) de la semaine donnée. */
+  function courseDuCalendrier(cat, sem) {
+    var l = CALENDRIERS[cat]; if (!l) return null;
+    var pas = Math.floor(46 / l.length), meilleure = l[l.length - 1];
+    for (var n = 0; n < l.length; n++) {
+      if (2 + n * pas + (n % 3 === 0 ? 1 : 0) >= sem) { meilleure = l[n]; break; }
+    }
+    return meilleure;
+  }
+  /* La confiance de l'écurie de réserve : celle du baquet principal quand on
+     y est réserviste pur, la sienne propre pour un contrat cumulé. */
+  function changerConfiance(delta, raison) {
+    var d = RD(); if (!delta) return;
+    if (d && d.cumul) { d.confiance = clamp((typeof d.confiance === "number" ? d.confiance : 50) + delta, 0, 100); return; }
+    if (fn("changeTrust")) { try { window.changeTrust(delta, raison, delta > 0 ? "↑" : "↓"); } catch (e) {} }
+  }
+  function confianceReserve() {
+    var d = RD();
+    if (d && d.cumul) return typeof d.confiance === "number" ? d.confiance : 50;
+    return (has("TEAM_TRUST") && window.TEAM_TRUST) ? (window.TEAM_TRUST.value || 0) : 50;
+  }
+  /* Une sous-statistique du joueur qui progresse d'un point (les clés réelles du jeu). */
+  function progresser(cle, libelle) {
+    var G = G_();
+    if (!G || !G.substats || typeof G.substats[cle] !== "number") return null;
+    G.substats[cle] = Math.min(99, G.substats[cle] + 1);
+    if (fn("computeLegacyStats")) { try { window.computeLegacyStats(); } catch (e) {} }
+    return { txt: libelle + " +1", ton: "pos" };
+  }
+  function auDepart(r) { return fn("rivalAuDepart") ? window.rivalAuDepart(r) : !!r && !r._rj79Gele && !r._rj79Sorti; }
 
   /* ==================================================================
    * 1. ÉTAT DU CONTRAT DE RÉSERVE
@@ -95,6 +135,7 @@
   function estReservistePur() {
     var G = G_(), d = RD();
     if (!G) return false;
+    if (d && d.issue === "promu") return false;
     if (d && !d.cumul) return true;
     /* rôle N°3 hérité du module 14 sans contrat encore matérialisé */
     return G._playerRole === "num3" && !!G.currentTeam && G.currentTeam !== "Indépendant";
@@ -190,8 +231,22 @@
      rapide des deux pilotes de l'écurie. */
   function titulaireReference(team) {
     var l = titulairesDe(team);
+    var d = RD(), G = G_();
+    if (!l.length && d && G && team === d.team && d.cat !== G.cat) return referenceHorsGrille(d.cat, team);
     if (!l.length) return null;
     return l.slice().sort(function (a, b) { return (b.skill || 0) - (a.skill || 0); })[0];
+  }
+
+  /* Le meilleur pilote de l'écurie dans une autre catégorie, lu dans le vivier
+     des pilotes (04o) ; à défaut, le niveau du haut de grille de la catégorie. */
+  function referenceHorsGrille(cat, team) {
+    var G = G_(), pool = (G && Array.isArray(G.driverPool)) ? G.driverPool : [];
+    var cat_ = pool.filter(function (p) { return p && p.cat === cat && !p.retired; });
+    var eq = cat_.filter(function (p) { return p.team === team; })
+      .sort(function (a, b) { return (b.skill || 0) - (a.skill || 0); });
+    if (eq.length) return { name: eq[0].name, skill: eq[0].skill || 80, team: team };
+    var sk = cat_.map(function (p) { return p.skill || 0; }).sort(function (a, b) { return b - a; });
+    return sk.length ? { name: "le titulaire", skill: sk[Math.min(4, sk.length - 1)], team: team } : null;
   }
 
   /* Stature d'un pilote IA : sert à décider qui l'écurie protège. Combine
@@ -262,9 +317,10 @@
     var G = G_(); if (!G || !G.rivals || !G.rivals.length) return null;
     var pts = tablePoints();
 
-    var classement = G.rivals.map(function (r, idx) {
+    var classement = G.rivals.filter(auDepart).map(function (r, idx) {
       var sk = (r.skill || 70) / 100;
-      var reg = (r.consistency || r.co || 70) / 100;
+      var reg = r.consistency || r.co || 0.7;
+      if (reg > 1) reg = reg / 100;                      // anciennes données en pourcentage
       var forme = (typeof r.formIndex === "number") ? r.formIndex : 0;
       /* variance inversement proportionnelle à la régularité */
       var alea = (Math.random() - 0.5) * (0.34 - 0.18 * reg);
@@ -393,8 +449,8 @@
     var dc = changeCredibilite(gains.cred, "Séance d'essais — " + verdict.label);
     if (dc) effets.push({ txt: "Crédibilité " + (dc > 0 ? "+" : "") + dc, ton: dc > 0 ? "pos" : "neg" });
 
-    if (gains.trust && fn("changeTrust")) {
-      try { window.changeTrust(gains.trust, "Séance d'essais (réserve)", gains.trust > 0 ? "↑" : "↓"); } catch (e) {}
+    if (gains.trust) {
+      changerConfiance(gains.trust, "Séance d'essais (réserve)");
       effets.push({ txt: "Confiance de l'écurie " + (gains.trust > 0 ? "+" : "−") + Math.abs(gains.trust),
                     ton: gains.trust > 0 ? "pos" : "neg" });
     }
@@ -405,15 +461,10 @@
       effets.push({ txt: "Réputation paddock +" + gains.rep, ton: "pos" });
     }
 
-    /* Le programme d'endurance nourrit les sous-stats techniques. */
-    if (prog && prog.technique && G && G.substats) {
-      try {
-        ["technical", "simu"].forEach(function (k) {
-          if (typeof G.substats[k] === "number") G.substats[k] = Math.min(99, G.substats[k] + 1);
-        });
-        if (fn("computeLegacyStats")) window.computeLegacyStats();
-        effets.push({ txt: "Compréhension technique +1", ton: "pos" });
-      } catch (e) {}
+    /* Le programme d'endurance (relais longs) fait progresser la gestion des pneus. */
+    if (prog && prog.technique) {
+      var ef = progresser("gestion_pneus", "Gestion des pneus");
+      if (ef) effets.push(ef);
     }
 
     return effets;
@@ -676,9 +727,12 @@
     if (WE.etape === "seance") {
       h += '<div class="rj79-card accent">';
       h += '<div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--white);' +
-        'letter-spacing:.02em;margin-bottom:6px">Tu prends le volant en essais libres</div>';
+        'letter-spacing:.02em;margin-bottom:6px">' + (WE.el1 ? "EL1 officielle : tu prends la voiture de course" : "Tu prends le volant en essais libres") + '</div>';
       h += '<div style="font-size:12.5px;color:var(--soft);line-height:1.5;font-family:var(--font-body);margin-bottom:12px">' +
-        'Une heure, une voiture que tu ne connais pas, et deux titulaires qui regardent ton chrono. ' +
+        (WE.el1
+          ? "Le règlement oblige l'écurie à confier une voiture à un jeune pilote en EL1, deux fois par saison. " +
+            "C'est ta séance : un vrai week-end de Grand Prix, la presse dans le garage, et un chrono que tout le paddock verra. "
+          : "Une heure, une voiture que tu ne connais pas, et deux titulaires qui regardent ton chrono. ") +
         'Choisis ton programme.</div>';
       PROGRAMMES.forEach(function (p, i) {
         h += '<button class="rj79-opt" data-rj79="programme" data-arg="' + i + '">' +
@@ -755,6 +809,22 @@
     return '<div class="rj79-card"><div class="rj79-empty">Week-end terminé.</div></div>';
   }
 
+  /* Le travail au simulateur fait avancer la voiture de l'écurie de réserve :
+     +0,25 de note par séance, +1,5 au plus sur la saison. */
+  var DEVEL_PAR_SEANCE = 0.25, DEVEL_MAX = 1.5;
+  function apporterDeveloppement() {
+    var G = G_(), d = RD(); if (!G || !d) return null;
+    var m = G._reserveMeta = G._reserveMeta || {};
+    if (!m.devel || m.devel.saison !== saison() || m.devel.team !== d.team) m.devel = { saison: saison(), team: d.team, bonus: 0 };
+    if (m.devel.bonus >= DEVEL_MAX) return null;
+    m.devel.bonus = Math.min(DEVEL_MAX, Math.round((m.devel.bonus + DEVEL_PAR_SEANCE) * 100) / 100);
+    return { txt: "Développement de la " + d.team + " +" + String(DEVEL_PAR_SEANCE).replace(".", ","), ton: "pos" };
+  }
+  function bonusDeveloppement(team) {
+    var G = G_(), m = G && G._reserveMeta, dv = m && m.devel;
+    return dv && dv.team === team && dv.saison === saison() ? (dv.bonus || 0) : 0;
+  }
+
   var OCCUPATIONS = [
     {
       id: "simulateur", titre: "Simulateur en direct",
@@ -763,13 +833,12 @@
         var G = G_(), out = [];
         var dc = changeCredibilite(4, "Travail au simulateur pendant la course");
         out.push({ txt: "Crédibilité +" + dc, ton: "pos" });
-        if (G && G.substats && typeof G.substats.simu === "number") {
-          G.substats.simu = Math.min(99, G.substats.simu + 1);
-          if (fn("computeLegacyStats")) { try { window.computeLegacyStats(); } catch (e) {} }
-          out.push({ txt: "Simulateur +1", ton: "pos" });
-        }
-        if (fn("changeTrust")) { try { window.changeTrust(2, "Appui simulateur (réserve)", "↑"); } catch (e) {} }
+        var ef = progresser("decision", "Prise de décision");
+        if (ef) out.push(ef);
+        changerConfiance(2, "Appui simulateur (réserve)");
         out.push({ txt: "Confiance de l'écurie +2", ton: "pos" });
+        var dv = apporterDeveloppement();
+        if (dv) out.push(dv);
         return out;
       },
       message: "Tu as passé deux heures dans le baquet du simulateur pendant que la course se jouait. L'ingénieur stratégie a repris deux de tes fenêtres d'arrêt."
@@ -800,15 +869,12 @@
       desc: "Tu épluches les données du matin avec le staff technique. Ingrat, mais on s'en souvient.",
       effets: function () {
         var G = G_(), out = [];
-        if (fn("changeTrust")) { try { window.changeTrust(4, "Travail technique (réserve)", "↑"); } catch (e) {} }
+        changerConfiance(4, "Travail technique (réserve)");
         out.push({ txt: "Confiance de l'écurie +4", ton: "pos" });
         var dc = changeCredibilite(3, "Débrief technique");
         out.push({ txt: "Crédibilité +" + dc, ton: "pos" });
-        if (G && G.substats && typeof G.substats.technical === "number") {
-          G.substats.technical = Math.min(99, G.substats.technical + 1);
-          if (fn("computeLegacyStats")) { try { window.computeLegacyStats(); } catch (e) {} }
-          out.push({ txt: "Compréhension technique +1", ton: "pos" });
-        }
+        var ef = progresser("grip", "Lecture du grip et des réglages");
+        if (ef) out.push(ef);
         return out;
       },
       message: "Personne ne te verra à la télévision pour ça. Mais le directeur technique sait maintenant que tu lis une trace de télémétrie aussi bien que ses titulaires."
@@ -871,11 +937,34 @@
     WE.refNom = res.ref ? res.ref.name : "le titulaire";
     WE.etape = "resultat";
 
+    /* EL1 officielle : la séance compte davantage et se voit dans le paddock. */
+    if (WE.el1) {
+      var bonus = Math.round(((GAIN_SEANCE[v.cle] || GAIN_SEANCE.correct).cred || 0) * 0.5);
+      if (bonus > 0) {
+        var db = changeCredibilite(bonus, "EL1 officielle");
+        if (db) effets.push({ txt: "EL1 officielle : crédibilité +" + db, ton: "pos" });
+        var G = G_();
+        if (G && G.rep) {
+          G.rep.medias = clamp((G.rep.medias || 0) + 2, 0, 100);
+          if (fn("recomputeGlobalRep")) { try { window.recomputeGlobalRep(); } catch (e) {} }
+          effets.push({ txt: "Réputation médias +2", ton: "pos" });
+        }
+      }
+      if (fn("_addFeedPost") && has("SOCIAL_PRESS_ACCOUNTS")) {
+        try {
+          var acc = window.SOCIAL_PRESS_ACCOUNTS[Math.floor(Math.random() * window.SOCIAL_PRESS_ACCOUNTS.length)];
+          window._addFeedPost({ type: "press", author: acc.name, handle: acc.handle, color: acc.color,
+            body: "EL1 · " + WE.circuit + " : " + nomPilote() + " au volant de la " + d.team + ", à " +
+              (res.ecart <= 0 ? "devant " : String(Math.abs(res.ecart).toFixed(3)).replace(".", ",") + " s de ") + WE.refNom + "." });
+        } catch (e) {}
+      }
+    }
+
     d.sessions = d.sessions || [];
     d.sessions.push({
       saison: saison(), week: semaine(), circuit: WE.circuit,
       delta: res.ecart, verdict: v.label, cle: v.cle,
-      ref: WE.refNom, programme: prog.id
+      ref: WE.refNom, programme: prog.id, el1: !!WE.el1
     });
 
     if (fn("updateUI")) { try { window.updateUI(); } catch (e) {} }
@@ -941,6 +1030,15 @@
   /* ------------------------------------------------------------------
    * Ouverture d'un week-end de réserviste (catégorie principale)
    * ---------------------------------------------------------------- */
+  /* En F1, l'écurie doit confier une voiture à un jeune pilote en EL1 deux
+     fois par saison : la première séance après la semaine 8, la première
+     après la semaine 26. */
+  function estEL1Officielle() {
+    var d = RD(); if (!d || d.cat !== "Formule 1") return false;
+    var faites = (d.sessions || []).filter(function (x) { return x && x.el1 && x.saison === saison(); }).length;
+    return (faites === 0 && semaine() >= 8) || (faites === 1 && semaine() >= 26);
+  }
+
   function ouvrirWeekEndReserve() {
     var G = G_(), d = RD();
     if (!G || !d) return false;
@@ -956,6 +1054,7 @@
       circuit: nomCircuit,
       course: course,
       cumul: false,
+      el1: estEL1Officielle(),
       sim: sim,
       resultatsEcurie: resultatEcurie(sim, d.team)
     };
@@ -1099,7 +1198,7 @@
     var G = G_(), d = RD(); if (!G || !d) return false;
     var c = cause || CAUSES_REMPLACEMENT[Math.floor(Math.random() * CAUSES_REMPLACEMENT.length)];
     var qui = titulaire || titulaireReference(d.team);
-    var nom = qui ? qui.name : "Le titulaire";
+    var nom = qui && qui.name && qui.name !== "le titulaire" ? qui.name : "Le titulaire";
 
     G._rj79Remplacement = {
       cause: c.id,
@@ -1114,7 +1213,7 @@
     d.meta = d.meta || {};
     d.meta.dernierRemplacement = saison() + ":" + semaine();
 
-    if (qui) qui._rj79Gele = true;                 // il ne prend pas le départ
+    if (qui && (G.rivals || []).indexOf(qui) >= 0) qui._rj79Gele = true;   // il ne prend pas le départ
 
     if (fn("pushMail")) {
       try {
@@ -1148,8 +1247,11 @@
     if (!r || r.prepare) return;
     r.prepare = true;
     if (r.cumul) {
-      var circuit = r.circuit || "Grand Prix";
-      basculerContexte(r.cat, r.team, circuit);
+      var circuit = r.circuit || courseDuCalendrier(r.cat, semaine()) || "Grand Prix";
+      r.circuit = circuit;
+      /* Le joueur prend un des deux baquets de l'écurie (initRivals lui en
+         réserve un) : l'autre titulaire court, il n'y a pas de troisième voiture. */
+      if (!basculerContexte(r.cat, r.team, circuit)) { G._rj79Remplacement = null; return; }
     }
   }
 
@@ -1183,9 +1285,7 @@
     else                { gain = -6;  msg = "Un week-end à oublier. Les places de titulaire ne se gagnent pas comme ça."; }
 
     changeCredibilite(gain, "Remplacement — " + (dnf ? "abandon" : "P" + pos));
-    if (fn("changeTrust")) {
-      try { window.changeTrust(Math.round(gain / 3), "Remplacement en course", gain > 0 ? "↑" : "↓"); } catch (e) {}
-    }
+    changerConfiance(Math.round(gain / 3), "Remplacement en course");
     if (G && G.rep && gain > 15) {
       G.rep.paddock = clamp((G.rep.paddock || 0) + 6, 0, 100);
       G.rep.medias = clamp((G.rep.medias || 0) + 4, 0, 100);
@@ -1334,13 +1434,24 @@
     var cred = credibilite();
 
     /* Cas 1 — c'est l'écurie du réserviste : il prend le volant. */
-    if (d && seat.team === d.team) {
+    if (d && seat.team === d.team && !d.cumul && !d.issue) {
+      /* Le baquet ne revient pas : l'écurie se tourne vers son réserviste s'il
+         a fait ses preuves, sinon elle recrute ailleurs et il reste en réserve. */
+      G._rj79SiegeVacant = { team: seat.team, cat: seat.cat, depuis: semaine() };
       seat.comble = true;
-      declencherRemplacement({ id: "baquet", texte: "ne fait plus partie de l'effectif" },
-        { name: seat.pilote });
-      /* Baquet vacant durablement : la porte est grande ouverte. */
-      if (seat.cause === "rupture" || seat.cause === "retraite" || seat.cause === "resultats") {
-        G._rj79SiegeVacant = { team: seat.team, cat: seat.cat, depuis: semaine() };
+      if (cred >= 40 && confianceReserve() >= 35) { promouvoirTitulaire(true, seat); return; }
+      recruterRemplacant(seat);
+      G._rj79SiegeVacant = null;
+      if (fn("pushMail")) {
+        try {
+          window.pushMail({
+            from: "Direction sportive — " + d.team, role: "team_boss",
+            subject: "Le baquet de " + nomFamille(seat.pilote),
+            body: seat.pilote + " " + seat.causeTitre + ". Nous avons choisi " + (seat.remplacant || "un pilote extérieur") +
+                  " pour finir la saison.\n\nTu restes notre réserviste. Ta crédibilité n'était pas encore suffisante pour qu'on te confie la voiture : à toi de nous faire regretter ce choix.",
+            actions: [{ label: "Compris", kind: "dismiss", responseBody: "Je serai prêt la prochaine fois." }]
+          });
+        } catch (e) {}
       }
       return;
     }
@@ -1348,9 +1459,10 @@
     /* Cas 2 — une autre écurie cherche un pilote. Il faut être crédible. */
     var seuil = 45;
     if (!d) seuil = 62;                                 // sans contrat de réserve, il faut plus
-    if (cred < seuil && !(G.reputation >= 70)) return;
+    if (cred < seuil && !(G.reputation >= 70)) { recruterRemplacant(seat); return; }
 
     seat.comble = true;
+    seat.offreJoueur = true;
     proposerBaquetLibre(seat);
   }
 
@@ -1417,11 +1529,62 @@
     return offre;
   }
 
+  /* Une écurie qui perd un pilote en cours de saison en recrute un autre, pris
+     dans la catégorie inférieure (vivier 04o). Le partant garde ses points au
+     classement mais ne court plus. */
+  var VIVIER_DE = {
+    "Formule 1": ["Formule 2"], "Formule 2": ["Formule 3"], "Formule 3": ["Formula Regional"],
+    "Formula Regional": ["Formule 4"], "Super Formula": ["Formule 2", "Formule 3"],
+    "Endurance WEC": ["Formule 2", "Super Formula"], "IndyCar": ["Formule 2", "Super Formula"]
+  };
+  function recruterRemplacant(seat) {
+    var G = G_(); if (!G || !seat || seat.remplacant || seat.cat !== G.cat) return null;
+    var pris = {}; (G.rivals || []).forEach(function (r) { if (r) pris[r.name] = true; });
+    var pool = Array.isArray(G.driverPool) ? G.driverPool : [];
+    var cands = [];
+    (VIVIER_DE[seat.cat] || []).forEach(function (c) {
+      pool.forEach(function (p) { if (p && p.cat === c && !p.retired && !pris[p.name]) cands.push(p); });
+    });
+    cands.sort(function (a, b) { return (b.skill || 0) - (a.skill || 0); });
+    var p = cands[Math.floor(Math.random() * Math.min(4, cands.length))];
+    if (!p) return null;
+    p.cat = seat.cat; p.team = seat.team; p.seasonsInCat = 0;
+    G.rivals.push({
+      name: p.name, nat: p.nat, pts: 0, skill: p.skill, consistency: p.consistency,
+      lastPos: 0, team: seat.team, qualiHistory: [], raceHistory: [], _poolId: p.id, _rj79Recrue: true
+    });
+    seat.remplacant = p.name;
+    seat.comble = true;
+    if (fn("_addFeedPost") && has("SOCIAL_PRESS_ACCOUNTS")) {
+      try {
+        var acc = window.SOCIAL_PRESS_ACCOUNTS[Math.floor(Math.random() * window.SOCIAL_PRESS_ACCOUNTS.length)];
+        window._addFeedPost({ type: "press", author: acc.name, handle: acc.handle, color: acc.color,
+          body: seat.team + " confirme " + p.name + " pour remplacer " + seat.pilote + " jusqu'à la fin de la saison." });
+      } catch (e) {}
+    }
+    return p.name;
+  }
+
+  /* Chaque semaine : un baquet libéré qui n'a pas trouvé preneur (offre au
+     joueur expirée ou refusée) revient à une recrue. */
+  function pourvoirBaquets() {
+    var G = G_(); if (!G || !G.rivals) return;
+    seatsLibres().forEach(function (seat) {
+      if (!seat || seat.remplacant || seat.saison !== saison() || seat.cat !== G.cat) return;
+      if (seat.team === G.currentTeam) return;                         // le joueur l'a pris
+      if (G._rj79SiegeVacant && G._rj79SiegeVacant.team === seat.team) return;
+      var enAttente = (G.offers || []).some(function (o) { return o && o._rj79Seat === seat; }) ||
+        (G.offers || []).some(function (o) { return o && o._rj79Immediate && o.team === seat.team && o.cat === seat.cat; });
+      if (seat.offreJoueur && enAttente) return;
+      recruterRemplacant(seat);
+    });
+  }
+
   /* Balayage hebdomadaire de la grille. */
   function balayerGrille() {
     var G = G_();
     if (!G || !G.rivals || !G.rivals.length) return;
-    if (!catAdmetReserve(G.cat) && !aContratReserve()) return;
+    if (CATS_BAQUETS.indexOf(G.cat) < 0) return;
     if (G.seasonOver) return;
 
     /* Deux baquets libérés par saison au maximum : l'événement doit rester
@@ -1484,6 +1647,7 @@
       cumul: cumul,
       salary: offre.salary || 0,
       credibilite: 35,
+      confiance: 50,
       sessions: [],
       remplacements: [],
       issue: null,
@@ -1685,17 +1849,13 @@
     if (dot) dot.style.display = "block";
   }
 
-  /* La réserve visée. Ordre de préférence : la catégorie immédiatement
-     au-dessus (c'est tout le sens du rôle — mettre un pied dans l'étage
-     supérieur), à défaut la catégorie courante. */
+  /* La réserve visée. Comme dans la réalité, on est réserviste en F1 tout en
+     gardant son baquet en F2, en Super Formula, en WEC ou en IndyCar (contrat
+     cumulé). Un pilote de F1 ne peut viser qu'une réserve en F1 (sans baquet). */
   function choisirCatReserve() {
     var G = G_(); if (!G) return null;
-    var cats = has("CATEGORIES") ? window.CATEGORIES : null;
-    if (cats) {
-      var i = cats.indexOf(G.cat);
-      if (i >= 0 && i + 1 < cats.length && catAdmetReserve(cats[i + 1])) return cats[i + 1];
-    }
-    if (catAdmetReserve(G.cat)) return G.cat;
+    if (G.cat === "Formule 1") return "Formule 1";
+    if (["Formule 2", "Super Formula", "Endurance WEC", "IndyCar"].indexOf(G.cat) >= 0) return "Formule 1";
     return null;
   }
 
@@ -1762,18 +1922,17 @@
     var G = G_(), d = RD();
     if (!G || !d) { if (entry) entry.resolved = true; return; }
 
-    var circuit = "Journée d'essais " + d.team;
-    try {
-      if (has("CIRCUITS") && window.CIRCUITS) {
-        var noms = Object.keys(window.CIRCUITS);
-        if (noms.length) circuit = noms[Math.floor(Math.random() * noms.length)];
-      }
-    } catch (e) {}
+    /* Un circuit du calendrier de la catégorie de réserve, jamais un tracé de karting ou un ovale. */
+    var liste = CALENDRIERS[d.cat] || [];
+    var circuit = liste.length ? liste[Math.floor(Math.random() * liste.length)] : "Journée d'essais " + d.team;
+    var el1 = estEL1Officielle();
+    if (el1) circuit = courseDuCalendrier(d.cat, semaine()) || circuit;   // l'EL1 d'un vrai Grand Prix
 
     WE = {
       etape: "seance",
       circuit: circuit,
       cumul: true,
+      el1: el1,
       schedEntry: entry,
       course: null,
       sim: null,
@@ -1790,7 +1949,7 @@
     var G = G_(), d = RD();
     if (!G || !d || d.issue) return false;
     var cred = credibilite();
-    var trust = (has("TEAM_TRUST") && window.TEAM_TRUST) ? (window.TEAM_TRUST.value || 0) : 50;
+    var trust = confianceReserve();
     var vacant = G._rj79SiegeVacant && G._rj79SiegeVacant.team === d.team;
 
     var seuilCred = immediate ? 68 : 62;
@@ -1801,7 +1960,7 @@
     return true;
   }
 
-  function promouvoirTitulaire(vacant) {
+  function promouvoirTitulaire(vacant, seat) {
     var G = G_(), d = RD(); if (!G || !d) return;
 
     if (d.cumul) {
@@ -1822,6 +1981,19 @@
         };
       }
     } else {
+      /* Le joueur prend un baquet : si aucun n'est vacant, le titulaire le
+         moins performant de l'écurie le lui laisse (sinon trois voitures). */
+      if (!vacant) {
+        var restants = titulairesDe(d.team).filter(function (x) { return !x._rj79Sorti; })
+          .sort(function (a, b) { return (a.skill || 0) - (b.skill || 0); });
+        if (restants.length >= 2) {
+          var partant = restants[0];
+          partant._rj79Sorti = { cause: "promotion", saison: saison(), week: semaine() };
+          seatsLibres().push({ team: d.team, cat: G.cat, pilote: partant.name, cause: "promotion",
+            causeTitre: "laisse sa place au réserviste", saison: saison(), week: semaine(), comble: true, remplacant: nomPilote() });
+        }
+      } else if (seat) seat.remplacant = nomPilote();
+      G._rj79SiegeVacant = null;
       G._playerRole = "num2";
       G.revenue = Math.round((G.revenue || 3000) * 2.2);
       G.contractDur = Math.max(G.contractDur || 0, 1);
@@ -1880,6 +2052,7 @@
     if (!G || !d) return;
     if (d.saison > saison()) return;                     // contrat pas encore commencé
 
+    if (d.issue === "promu") { cloreContratReserve("promu"); return; }   // promu en cours de saison
     if (evaluerPromotion(false)) { cloreContratReserve("promu"); return; }
 
     var cred = credibilite();
@@ -2194,6 +2367,22 @@
     return true;
   }
 
+  /* Contrat cumulé : le réserviste peut être appelé pour un Grand Prix de la
+     catégorie de réserve, une semaine où son propre championnat ne court pas. */
+  function tenterRemplacementCumul() {
+    var G = G_(), d = RD();
+    if (!d || !d.cumul || d.issue || !peutEtreRemplacant()) return false;
+    var prochaine = fn("getNextRace") ? window.getNextRace() : null;
+    if (prochaine && prochaine.week <= semaine()) return false;          // son propre week-end passe d'abord
+    var faits = (d.remplacements || []).filter(function (r) { return r.saison === saison(); }).length;
+    if (faits >= 2) return false;
+    var cred = credibilite(), seances = (d.sessions || []).length;
+    var p = clamp(0.04 + (cred - 40) * 0.0012, 0.02, 0.10);
+    if (faits === 0 && seances >= 3 && semaine() >= 36) p = 1;           // une occasion au moins par saison
+    if (Math.random() >= p) return false;
+    return declencherRemplacement(null, null);
+  }
+
   function tenterRemplacement() {
     var G = G_(), d = RD();
     if (!peutEtreRemplacant()) return false;
@@ -2228,6 +2417,7 @@
       assurerContrat();
       majObjectifs();
       balayerGrille();
+      pourvoirBaquets();
       /* Le mercato de réserve s'ouvre en seconde moitié de saison. */
       if (semaine() >= 24 && semaine() % 6 === 0) genererOffresReserve();
       if (G.seasonOver) bilanFinDeSaison();
@@ -2270,10 +2460,16 @@
         if (G && estReservistePur() && !G._rj79Remplacement) {
           assurerContrat();
           tenterRemplacement();
+        } else if (G && RD() && RD().cumul && !G._rj79Remplacement) {
+          tenterRemplacementCumul();
         }
-        if (G && G._rj79Remplacement) {
-          var course = fn("getNextRace") ? window.getNextRace() : null;
-          G._rj79Remplacement.circuit = course ? (course.name || "Grand Prix") : "Grand Prix";
+        if (G && G._rj79Remplacement && !G._rj79Remplacement.prepare) {
+          if (G._rj79Remplacement.cumul) {
+            G._rj79Remplacement.circuit = courseDuCalendrier(G._rj79Remplacement.cat, semaine()) || "Grand Prix";
+          } else {
+            var course = fn("getNextRace") ? window.getNextRace() : null;
+            G._rj79Remplacement.circuit = course ? (course.name || "Grand Prix") : "Grand Prix";
+          }
           preparerRemplacement();
         }
     } });
@@ -2310,6 +2506,15 @@
     }
   }
 
+  function installDeveloppement() {
+    if (!fn("rjInscrire") || !fn("getEffectiveTeamRating")) return false;
+    rjInscrire("getEffectiveTeamRating", { id: "79-pilote-reserve:developpement", apres: function (res, args) {
+      var b = bonusDeveloppement(args && args[0]);
+      return b && typeof res === "number" ? Math.min(99, res + b) : res;
+    } });
+    return true;
+  }
+
   function install() {
     if (window._rj79Installed) return;
     window._rj79Installed = true;
@@ -2322,6 +2527,7 @@
       var d = installEvenementsPlanifies();
       var e = installObjectifs();
       var f = installAvancementTemps();
+      if (!window._rj79Devel) window._rj79Devel = installDeveloppement();
       installPersistance();
       installHistorique();
       installBadge();
@@ -2345,7 +2551,12 @@
       remplacer: declencherRemplacement, tenter: tenterRemplacement,
       promouvoir: evaluerPromotion, bilan: bilanFinDeSaison,
       offres: genererOffresReserve, planifier: planifierSeancesCumul,
-      histoire: histReserve, seats: seatsLibres
+      histoire: histReserve, seats: seatsLibres,
+      choisirCat: choisirCatReserve, reference: titulaireReference, recruter: recruterRemplacant,
+      pourvoir: pourvoirBaquets, tenterCumul: tenterRemplacementCumul, effetsSeance: appliquerEffetsSeance,
+      occupations: function () { return OCCUPATIONS; }, developpement: bonusDeveloppement,
+      course: courseDuCalendrier, confiance: confianceReserve, reservistePur: estReservistePur,
+      el1: estEL1Officielle, ouvrirWeekEnd: ouvrirWeekEndReserve, jouer: function (i) { jouerSeance(PROGRAMMES[i || 0]); }, programmes: PROGRAMMES
     };
 
     window._rj79Uninstall = function () {
@@ -2355,6 +2566,7 @@
         rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "saveSeasonToHistory");
         rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "renderPalmares");
         rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "renderChamp");
+        rjDesinscrire(["79-pilote-reserve:"], "getEffectiveTeamRating"); window._rj79Devel = false;
         var bn = document.getElementById("rj79-champ-note"); if (bn && bn.parentNode) bn.parentNode.removeChild(bn);
         ["WEEKLY_TICK_HOOKS", "RACE_POST_HOOKS"].forEach(function (k) {
           if (!window[k]) return;

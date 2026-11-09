@@ -3053,6 +3053,145 @@ async function suiteArrivee() {
 /* ==================================================================== *
  * 9. DÉCISIONS EN COURSE ET MINI-CLASSEMENT (module 107)
  * ==================================================================== */
+async function suiteReserve() {
+  S.suite("Pilote de réserve");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const out = {};
+      SETTINGS.simSpeed = "instant";
+      // Réserviste pur chez Ferrari : l'écurie aligne ses deux titulaires
+      G.cat = "Formule 1"; G.currentTeam = "Ferrari"; G._playerRole = "num3"; initRivals();
+      out.titulaires = G.rivals.filter(x => x.team === "Ferrari").length;
+      _rj79.setDeal({ team: "Ferrari", cat: G.cat, saison: G.saison, cumul: false, credibilite: 60, sessions: [], remplacements: [] });
+      _rj79.remplacer(null, null);
+      const gele = G.rivals.filter(x => x._rj79Gele).map(x => x.name);
+      window.CAL_RACES = []; buildCalendar(); G.semaine = 6; G.seasonOver = false; CAL_RACES.forEach(c => { c.done = c.week < 6; });
+      const c = getNextRace(); RACE_STATE.circuit = c.name; RACE_STATE.circuitData = getCircuitData(c.name); RACE_STATE.weather = generateWeather(0);
+      RACE_STATE.qualiPos = 10; G.totalLaps = 5;
+      window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+      try { confirmStrategy(); } catch (e) {}
+      runRaceLive();
+      out.voituresFerrari = LIVE_RACE.drivers.filter(d => d.team === "Ferrari" || d.isPlayer).length;
+      out.geleEnPiste = LIVE_RACE.drivers.some(d => gele.indexOf(d.name) >= 0);
+      for (let i = 0; i < 400 && !LIVE_RACE.finished; i++) await new Promise(r => setTimeout(r, 25));
+      G._rj79Remplacement = null; G.rivals.forEach(x => delete x._rj79Gele);
+      // Course simulée sans le joueur : la régularité compte
+      const sauve = JSON.parse(JSON.stringify(G.rivals)); let dnf = 0, n = 0;
+      for (let k = 0; k < 40; k++) _rj79.simuler("Monza").resultats.forEach(x => { n++; if (x.dnf) dnf++; });
+      out.abandons = dnf / n; G.rivals = sauve;
+      // Baquet libéré ailleurs : une recrue le prend, le partant ne court plus
+      const v = G.rivals.find(x => x.team === "Williams"), seat = { team: "Williams", cat: G.cat, pilote: v.name, cause: "rupture", causeTitre: "rupture", saison: G.saison, week: G.semaine, comble: false };
+      v._rj79Sorti = { cause: "rupture" }; _rj79.seats().push(seat); _rj79.recruter(seat);
+      out.williams = G.rivals.filter(x => x.team === "Williams" && rivalAuDepart(x)).length; out.recrue = !!seat.remplacant;
+      // Promotion dans la même catégorie : deux voitures, plus réserviste
+      _rj79.setDeal({ team: "Ferrari", cat: G.cat, saison: G.saison, cumul: false, credibilite: 70, sessions: [], remplacements: [] });
+      G._rj79SiegeVacant = null; TEAM_TRUST.value = 60; _rj79.promouvoir(false);
+      out.ferrariApresPromo = G.rivals.filter(x => x.team === "Ferrari" && rivalAuDepart(x)).length; out.promuCourt = !_rj79.reservistePur();
+      // EL1 officielle : deux fois par saison en F1, une séance qui compte davantage
+      G._playerRole = "num3"; _rj79.setDeal({ team: "Ferrari", cat: "Formule 1", saison: G.saison, cumul: false, credibilite: 40, sessions: [], remplacements: [] });
+      G.semaine = 10; out.el1 = _rj79.el1();
+      _rj79.ouvrirWeekEnd(); await new Promise(r => setTimeout(r, 200));
+      out.el1Ecran = /EL1 officielle/.test((document.getElementById("S-reserve") || {}).textContent || "");
+      const c0 = _rj79.cred(); _rj79.jouer(0);
+      const ses = _rj79.deal().sessions; out.el1Marquee = ses.length === 1 && ses[0].el1 === true;
+      G.semaine = 12; out.el1Pas2 = !_rj79.el1(); G.semaine = 27; out.el1Second = _rj79.el1();
+      _rj79.setDeal({ team: "Prema Racing", cat: "Formule 2", saison: G.saison, cumul: false, credibilite: 40, sessions: [], remplacements: [] }); out.el1PasF2 = !_rj79.el1();
+      // Catégorie visée : la réserve se fait en F1
+      out.cibles = ["Formule 2", "IndyCar", "Super Formula", "Endurance WEC", "Formule 3"].map(k => { G.cat = k; return _rj79.choisirCat(); });
+      // Contrat cumulé : référence, confiance propre, circuit, sous-stats, développement
+      G.cat = "Formule 2"; G.currentTeam = "Prema Racing"; G._playerRole = "num2"; initRivals();
+      _rj79.setDeal({ team: "Ferrari", cat: "Formule 1", saison: G.saison, cumul: true, credibilite: 40, confiance: 50, sessions: [], remplacements: [] });
+      const ref = _rj79.reference("Ferrari"); out.ref = !!ref && ref.skill > 0;
+      const t0 = TEAM_TRUST.value, gp = G.substats.gestion_pneus;
+      _rj79.effetsSeance({ cle: "excellent", label: "x" }, { technique: true });
+      out.confiance = _rj79.confiance() > 50 && TEAM_TRUST.value === t0; out.pneus = G.substats.gestion_pneus === gp + 1;
+      out.courseF1 = CAL_RACES && _rj79.course("Formule 1", 20);
+      const r0 = getEffectiveTeamRating("Ferrari"); _rj79.occupations().find(o => o.id === "simulateur").effets();
+      out.devel = getEffectiveTeamRating("Ferrari") > r0;
+      // Remplacement en F1 pendant la saison de F2, puis retour
+      window.CAL_RACES = []; buildCalendar(); G.semaine = 14; G.seasonOver = false; CAL_RACES.forEach(c => { c.done = c.week < 14; });
+      const p2 = getNextRace(); if (p2 && p2.week <= G.semaine) G.semaine = p2.week - 1;
+      G.champPts = 37; const av = { cal: CAL_RACES.length, races: (G.races || []).length };
+      _rj79.setDeal({ team: "Ferrari", cat: "Formule 1", saison: G.saison, cumul: true, credibilite: 55, confiance: 50, sessions: [{}, {}, {}], remplacements: [] });
+      _rj79.remplacer(null, null);
+      RJ_ADVANCE_HOOKS.find(x => x.id === "79-reserve").avant();
+      out.bascule = G.cat === "Formule 1" && CAL_RACES.length === 1;
+      G.totalLaps = 5;
+      const c2 = getNextRace(); RACE_STATE.circuit = c2.name; RACE_STATE.circuitData = getCircuitData(c2.name); RACE_STATE.weather = generateWeather(0);
+      window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+      try { confirmStrategy(); } catch (e) {}
+      runRaceLive();
+      out.voituresFerrariCumul = LIVE_RACE.drivers.filter(d => d.team === "Ferrari" || d.isPlayer).length;
+      for (let i = 0; i < 400 && !LIVE_RACE.finished; i++) await new Promise(r => setTimeout(r, 25));
+      for (let i = 0; i < 60 && G._rj79Remplacement; i++) await new Promise(r => setTimeout(r, 60));
+      out.retour = G.cat === "Formule 2" && G.currentTeam === "Prema Racing" && CAL_RACES.length === av.cal && G.champPts === 37 && (G.races || []).length === av.races && !G.seasonOver;
+      out.compte = ((_rj79.deal() || {}).remplacements || []).length === 1;
+      return out;
+    });
+    S.verifier("réserviste pur : l'écurie aligne ses deux titulaires", r.titulaires === 2, JSON.stringify(r));
+    S.verifier("remplacement : le titulaire absent ne court pas, l'écurie a deux voitures", r.voituresFerrari === 2 && !r.geleEnPiste, JSON.stringify(r));
+    S.verifier("course simulée sans le joueur : la régularité réduit les abandons (< 7 %)", r.abandons < 0.07, String(r.abandons));
+    S.verifier("baquet libéré : une recrue le prend, le partant ne court plus", r.recrue && r.williams === 2, JSON.stringify(r));
+    S.verifier("promotion : le joueur court, l'écurie garde deux voitures", r.ferrariApresPromo === 1 && r.promuCourt, JSON.stringify(r));
+    S.verifier("EL1 officielle : deux séances par saison en F1, marquées et mises en avant", r.el1 && r.el1Ecran && r.el1Marquee && r.el1Pas2 && r.el1Second && r.el1PasF2, JSON.stringify(r));
+    S.verifier("la réserve se fait en F1 depuis la F2, l'IndyCar, la Super Formula et le WEC", r.cibles.slice(0, 4).every(x => x === "Formule 1") && r.cibles[4] === null, JSON.stringify(r.cibles));
+    S.verifier("contrat cumulé : vraie référence, confiance propre, sous-statistiques réelles", r.ref && r.confiance && r.pneus, JSON.stringify(r));
+    S.verifier("le travail au simulateur améliore la voiture de l'écurie", r.devel, "");
+    S.verifier("remplacement en F1 pendant une saison de F2, puis retour intact", r.bascule && r.voituresFerrariCumul === 2 && r.retour && r.compte, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteParalleles() {
+  S.suite("IndyCar, WEC, Super Formula");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const out = {}, ecuries = () => [...new Set(G.rivals.map(x => x.team))];
+      G.currentTeam = "Indépendant"; G._playerRole = "num2";
+      G.cat = "IndyCar"; initRivals();
+      out.indySansEcurie = G.rivals.filter(x => !x.team).length; out.ecr = ecuries().indexOf("ECR / Foyt") >= 0;
+      window.CAL_RACES = []; buildCalendar(); out.calIndy = CAL_RACES.map(c => c.name);
+      out.ovales = ["Texas", "Iowa", "Gateway", "Milwaukee", "Indianapolis 500"].every(c => getCircuitData(c).type === "oval" && _isIndyOval(c)) && !_isIndyOval("Nashville");
+      G.cat = "Endurance WEC"; initRivals(); window.CAL_RACES = []; buildCalendar();
+      out.calWEC = CAL_RACES.map(c => c.name); out.lmp2 = ecuries().some(t => /United|Cool|Inter Europol|Inception|Richard Mille/.test(t));
+      RACE_STATE.circuit = "24h Le Mans"; out.leMans = _getPtsTable()[0]; RACE_STATE.circuit = "Spa 6h"; out.spa = _getPtsTable()[0];
+      out.memesLieux = getCircuitData("Fuji 6h") === CIRCUITS["Fuji Speedway"] && getCircuitData("Fuji Round 2") === CIRCUITS["Fuji Speedway"] && getCircuitData("Suzuka Final") === CIRCUITS.Suzuka;
+      G.cat = "Super Formula"; initRivals(); out.sf = ecuries();
+      out.voies = CAT_PATHS.IndyCar.indexOf("Super Formula") >= 0 && CAT_PATHS["Super Formula"].indexOf("IndyCar") >= 0;
+      // Offres latérales depuis la F1 (une saison qui se passe mal)
+      G.cat = "Formule 1"; G.currentTeam = "Williams"; initRivals(); window.CAL_RACES = []; buildCalendar();
+      G.races = new Array(12).fill({}); G.reputation = 60; G.pendingTransfer = null; G.champPts = 0;
+      let nb = 0; for (let k = 0; k < 8 && !nb; k++) { G.offers = []; G._rj134Lateral = 0; nb = RJParalleles.offresLaterales(); }
+      out.laterales = G.offers.filter(o => o._lateral && ["IndyCar", "Endurance WEC", "Super Formula"].indexOf(o.cat) >= 0).length;
+      // Bonus IndyCar : pole, tours menés
+      G.cat = "IndyCar"; G.currentTeam = "Team Penske"; initRivals(); G.champPts = 0;
+      const pts0 = G.rivals[0].pts || 0;
+      const drivers = [{ name: "moi", isPlayer: true, pos: 1 }, { name: G.rivals[0].name, rivalIdx: 0, pos: 2 }];
+      window.LIVE_RACE = { drivers, cur: 0, total: 3 };
+      RJParalleles.surTour(); RJParalleles.surTour(); drivers[0].pos = 2; drivers[1].pos = 1; RJParalleles.surTour();
+      RJParalleles.bonusIndyCar({ isPole: true, drivers });
+      out.bonusJoueur = G.champPts; out.bonusRival = (G.rivals[0].pts || 0) - pts0;
+      // Migration : seule la Super Formula est renommée, la Toyota du WEC reste
+      G.cat = "Super Formula"; G.currentTeam = "Toyota Gazoo Racing"; RJParalleles.migrer(); out.migSF = G.currentTeam;
+      G.cat = "Endurance WEC"; G.currentTeam = "Toyota Gazoo Racing"; RJParalleles.migrer(); out.migWEC = G.currentTeam;
+      return out;
+    });
+    S.verifier("IndyCar : chaque pilote a une écurie, plus de doublon ECR / Foyt", r.indySansEcurie === 0 && !r.ecr, JSON.stringify(r));
+    S.verifier("calendriers sans doublon (Milwaukee, São Paulo 6h)", r.calIndy.indexOf("Monterey") < 0 && r.calIndy.indexOf("Milwaukee") >= 0 && r.calWEC.indexOf("Bahrain Final") < 0 && new Set(r.calWEC).size === r.calWEC.length, JSON.stringify([r.calIndy, r.calWEC]));
+    S.verifier("les ovales sont des ovales partout (fiche et moteur)", r.ovales, "");
+    S.verifier("WEC : classe Hypercar seule, points doublés au Mans", !r.lmp2 && r.leMans === 50 && r.spa === 25, JSON.stringify(r));
+    S.verifier("un même lieu sous plusieurs noms partage une seule fiche", r.memesLieux, "");
+    S.verifier("Super Formula : des écuries, pas des motoristes ; voies IndyCar ↔ Super Formula", r.sf.indexOf("TOM'S") >= 0 && r.sf.indexOf("Toyota Gazoo Racing") < 0 && r.voies, JSON.stringify(r.sf));
+    S.verifier("un pilote de F1 peut recevoir une offre d'IndyCar, de WEC ou de Super Formula", r.laterales >= 1, String(r.laterales));
+    S.verifier("IndyCar : +1 pole, +1 tour mené, +2 au plus de tours menés", r.bonusJoueur === 4 && r.bonusRival === 1, JSON.stringify(r));
+    S.verifier("anciennes sauvegardes : écuries renommées dans la bonne catégorie seulement", r.migSF === "TOM'S" && r.migWEC === "Toyota Gazoo Racing", JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3274,7 +3413,9 @@ const SUITES = {
   casque: suiteCasque,
   notes: suiteNotes,
   reseaux: suiteReseaux,
-  decisions: suiteDecisions
+  decisions: suiteDecisions,
+  reserve: suiteReserve,
+  paralleles: suiteParalleles
 };
 
 async function principal() {

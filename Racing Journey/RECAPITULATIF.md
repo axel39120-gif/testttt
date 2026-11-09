@@ -721,6 +721,13 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - Corrigé au passage : « Offre de le garage familial » devient « Offre du garage familial ».
 - Tests : suites `notes`, `reseaux`.
 
+## Pilote de réserve et catégories parallèles — v257
+
+- **Grilles** : un pilote remplacé ce week-end ou parti en cours de saison ne prend plus le départ (qualifs et course, `rivalAuDepart` dans 04) ; il garde ses points. Un réserviste pur n'occupe plus de baquet (04o) : son écurie aligne ses deux titulaires. Un baquet libéré est repris par une recrue de la catégorie inférieure ; promu dans sa catégorie, le joueur prend la place du titulaire le moins performant.
+- **Réserve** (79) : la réserve se fait en F1 (pure, ou cumulée avec un baquet en F2, Super Formula, WEC ou IndyCar) et en WEC ; contrat cumulé avec sa propre confiance, une vraie référence (vivier 04o), des essais sur un circuit du bon calendrier, et des remplacements en Grand Prix (bascule de contexte puis retour intact). Course simulée sans le joueur : la régularité compte à nouveau. Les séances et occupations font progresser de vraies sous-statistiques ; le simulateur améliore la note de l'écurie (+0,25 par séance, +1,5 au plus). Deux EL1 officielles par saison en F1.
+- **Catégories parallèles** (module `134-categories-paralleles.js`) : offres d'IndyCar, de WEC ou de Super Formula pour un pilote de F1 (offres « latérales ») ; voies IndyCar ↔ Super Formula ; IndyCar sans pilote sans écurie ni doublon ECR / Foyt, ovales cohérents (Texas, Iowa, Gateway, Milwaukee), Milwaukee remplace Monterey ; bonus IndyCar (pole, tours menés) ; WEC en Hypercar seule, points doublés au Mans, São Paulo 6h remplace le doublon de Bahreïn ; Super Formula avec TOM'S et Dandelion Racing au lieu des motoristes ; un même lieu sous plusieurs noms partage une fiche. Les anciennes sauvegardes sont mises à jour au chargement.
+- Tests : suites `reserve`, `paralleles`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

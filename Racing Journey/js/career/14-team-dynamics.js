@@ -336,7 +336,8 @@
     // Éventuellement un baquet de réserviste (N°3) dans une écurie plus forte,
     // si la réputation le permet — porte d'entrée vers un retour au sommet.
     var rep = G.reputation || G.rep || 0;
-    if (rep >= 45) {
+    // Le rôle de réserviste pur n'existe vraiment qu'en F1 et en endurance.
+    if (rep >= 45 && (cat === "Formule 1" || cat === "Endurance WEC")) {
       var strong = sorted[sorted.length - 1];
       pushOffer(strong, 'num3');
     }

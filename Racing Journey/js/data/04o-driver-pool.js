@@ -392,12 +392,16 @@
       
       // Si la team du joueur est dans cette cat, on réserve 1 slot pour le joueur
       var playerTeam = G.currentTeam;
-      if (playerTeam && playerTeam !== "Indépendant" && playerTeam !== "Independant") {
+      // … sauf pour un réserviste (rôle num3) : il ne court pas, l'écurie aligne ses deux titulaires
+      if (playerTeam && playerTeam !== "Indépendant" && playerTeam !== "Independant" && G._playerRole !== "num3") {
         var slot = teamSlots.find(function(s) { return s.team === playerTeam; });
         if (slot) slot.filled = 1;  // marqué comme occupé par le joueur
       }
     }
     
+    // Jamais plus de rivaux que de baquets : un pilote sans écurie n'a rien à faire sur la grille
+    if (hasTeams) quota = Math.min(quota, teamSlots.filter(function(s) { return s.filled === 0; }).length);
+
     // Construit G.rivals
     G.rivals = [];
     var teamIdx = 0;
