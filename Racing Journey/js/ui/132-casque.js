@@ -53,25 +53,32 @@
   }
   function numero() { return (typeof G !== "undefined" && G.pilot && G.pilot.number) || 23; }
 
-  /* --- Dessin : profil d'un casque intégral, tourné vers la droite -------- */
-  var COQUE = "M30 104 C25 58 60 20 110 18 C152 16 184 46 188 86 C190 104 184 118 172 124 L152 128 C148 138 138 145 124 145 L66 145 C45 145 32 128 30 104 Z";
-  var VISIERE = "M114 66 C132 58 168 61 184 76 C186 89 182 98 173 101 L120 101 C109 99 105 78 114 66 Z";
+  /* --- Dessin : profil d'un casque intégral de course, tourné vers la droite.
+     Coque haute et ronde, nuque qui redescend, mentonnière avancée ; bande de
+     visière, visière fumée ou iridium avec pivot et languette, aileron
+     arrière, prises d'air, bourrelet de nuque. Le volume vient de deux
+     dégradés (reflet en haut, ombre sur le pourtour). --------------------- */
+  var COQUE = "M46 140 C30 116 28 74 52 46 C76 18 118 8 154 15 C186 21 208 46 214 80 C218 100 217 118 210 130 C204 141 190 148 172 148 L74 150 C61 150 52 147 46 140 Z";
+  var OUVERTURE = "M134 64 C158 54 196 56 214 74 C217 87 216 98 211 105 L139 105 C128 101 125 75 134 64 Z";
+  var BANDE = "M126 60 C154 44 196 46 216 66 L216 74 C196 56 158 54 134 64 Z";
+  var NUQUE = "M48 140 C62 152 168 154 206 136 L204 146 C166 162 60 160 44 148 Z";
+  var AILERON = "M58 40 C52 34 40 32 32 36 L36 46 C42 43 50 44 56 48 Z";
   function motif(m, d) {
     var S = d.second, A = d.accent;
     switch (m) {
-      case "centrale": return '<path d="M26 92 C34 44 92 16 176 36 L182 52 C112 34 58 54 46 104 Z" fill="' + S + '"/><path d="M26 92 C34 44 92 16 176 36" fill="none" stroke="' + A + '" stroke-width="3"/><path d="M46 104 C58 54 112 34 182 52" fill="none" stroke="' + A + '" stroke-width="3"/>';
-      case "bandes": return '<path d="M20 64 L200 40 V52 L20 76 Z" fill="' + S + '"/><path d="M20 82 L200 58 V64 L20 88 Z" fill="' + A + '"/>';
-      case "chevron": return '<path d="M30 40 L120 82 L30 124 L30 104 L84 82 L30 60 Z" fill="' + S + '"/><path d="M30 60 L84 82 L30 104" fill="none" stroke="' + A + '" stroke-width="3"/>';
-      case "flammes": return '<path d="M196 112 C160 108 150 96 132 102 C140 90 122 82 104 92 C110 78 92 66 70 80 C76 64 58 54 40 66 C48 50 36 40 22 46 L22 150 L196 150 Z" fill="' + S + '"/><path d="M196 112 C160 108 150 96 132 102 C140 90 122 82 104 92 C110 78 92 66 70 80 C76 64 58 54 40 66 C48 50 36 40 22 46" fill="none" stroke="' + A + '" stroke-width="3"/>';
-      case "damier": var c = ""; for (var y = 0; y < 9; y++) for (var x = 0; x < 6; x++) if ((x + y) % 2 === 0) c += '<rect x="' + (22 + x * 11) + '" y="' + (20 + y * 14) + '" width="11" height="14" fill="' + S + '"/>';
-        return c + '<path d="M88 18 V150" stroke="' + A + '" stroke-width="3"/>';
-      case "etoiles": var e = ""; [[60, 50, 13], [92, 36, 9], [48, 86, 9], [84, 72, 16], [130, 40, 8]].forEach(function (p) {
+      case "centrale": return '<path d="M30 100 C36 50 96 16 184 34 L192 50 C120 32 60 58 52 112 Z" fill="' + S + '"/><path d="M30 100 C36 50 96 16 184 34" fill="none" stroke="' + A + '" stroke-width="3.5"/><path d="M52 112 C60 58 120 32 192 50" fill="none" stroke="' + A + '" stroke-width="3.5"/>';
+      case "bandes": return '<path d="M20 70 L220 42 V56 L20 84 Z" fill="' + S + '"/><path d="M20 90 L220 62 V69 L20 97 Z" fill="' + A + '"/>';
+      case "chevron": return '<path d="M30 40 L130 88 L30 136 L30 114 L92 88 L30 62 Z" fill="' + S + '"/><path d="M30 62 L92 88 L30 114" fill="none" stroke="' + A + '" stroke-width="3.5"/>';
+      case "flammes": return '<path d="M216 120 L176 116 L192 104 L150 108 L166 92 L124 100 L140 82 L98 92 L112 72 L72 84 L86 62 L48 76 L58 52 L24 64 L24 170 L216 170 Z" fill="' + S + '" stroke="' + A + '" stroke-width="3" stroke-linejoin="round"/>';
+      case "damier": var c = ""; for (var y = 0; y < 10; y++) for (var x = 0; x < 7; x++) if ((x + y) % 2 === 0) c += '<rect x="' + (24 + x * 12) + '" y="' + (12 + y * 15) + '" width="12" height="15" fill="' + S + '"/>';
+        return c + '<path d="M108 10 V170" stroke="' + A + '" stroke-width="3.5"/>';
+      case "etoiles": var e = ""; [[70, 56, 14], [104, 38, 10], [56, 94, 10], [96, 78, 17], [146, 40, 9]].forEach(function (p) {
           var pts = []; for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? p[2] * .45 : p[2]; pts.push((p[0] + r * Math.cos(a)).toFixed(1) + "," + (p[1] + r * Math.sin(a)).toFixed(1)); }
           e += '<polygon points="' + pts.join(" ") + '" fill="' + S + '" stroke="' + A + '" stroke-width="1.5"/>'; });
         return e;
-      case "eclair": return '<path d="M40 30 L96 30 L74 70 L110 70 L46 140 L64 88 L34 88 Z" fill="' + S + '" stroke="' + A + '" stroke-width="3" stroke-linejoin="round"/>';
-      case "diagonale": return '<path d="M20 150 L150 10 L200 10 L200 150 Z" fill="' + S + '"/><path d="M20 150 L150 10" stroke="' + A + '" stroke-width="4"/>';
-      case "degrade": return '<rect x="0" y="0" width="200" height="160" fill="url(#' + d._id + '-deg)"/>';
+      case "eclair": return '<path d="M46 30 L110 30 L84 76 L124 76 L52 152 L72 96 L38 96 Z" fill="' + S + '" stroke="' + A + '" stroke-width="3.5" stroke-linejoin="round"/>';
+      case "diagonale": return '<path d="M20 170 L164 8 L220 8 L220 170 Z" fill="' + S + '"/><path d="M20 170 L164 8" stroke="' + A + '" stroke-width="4"/>';
+      case "degrade": return '<rect x="0" y="0" width="220" height="170" fill="url(#' + d._id + '-deg)"/>';
       default: return "";
     }
   }
@@ -82,33 +89,42 @@
     d = Object.assign({}, d, { _id: id });
     var t = taille || 120, v = VISIERES[d.visiere] || VISIERES.fumee, num = String(numero());
     var stopsVis = v.slice(1).map(function (c, i, a) { return '<stop offset="' + (a.length > 1 ? i / (a.length - 1) : 0) + '" stop-color="' + c + '"/>'; }).join("");
-    var brillance = d.finition === "mat" ? .12 : d.finition === "chrome" ? .55 : .38;
+    var brillance = d.finition === "mat" ? .14 : d.finition === "chrome" ? .7 : .5;
     var defs = '<defs><clipPath id="' + id + '-coque"><path d="' + COQUE + '"/></clipPath>' +
-      '<linearGradient id="' + id + '-base" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + clair(d.base, .18) + '"/><stop offset=".6" stop-color="' + d.base + '"/><stop offset="1" stop-color="' + clair(d.base, -.45) + '"/></linearGradient>' +
+      '<linearGradient id="' + id + '-base" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + clair(d.base, .12) + '"/><stop offset=".55" stop-color="' + d.base + '"/><stop offset="1" stop-color="' + clair(d.base, -.35) + '"/></linearGradient>' +
+      '<radialGradient id="' + id + '-volume" cx="42%" cy="40%" r="64%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>' +
+      '<radialGradient id="' + id + '-eclat" cx="34%" cy="18%" r="42%"><stop offset="0" stop-color="#fff" stop-opacity="' + brillance + '"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
       '<linearGradient id="' + id + '-vis" x1="0" y1="0" x2="1" y2="1">' + stopsVis + '</linearGradient>' +
       '<linearGradient id="' + id + '-deg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + d.second + '"/><stop offset=".55" stop-color="' + d.second + '" stop-opacity="0"/></linearGradient>' +
-      '<linearGradient id="' + id + '-reflet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="' + brillance + '"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
-      '<linearGradient id="' + id + '-chrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#000" stop-opacity=".15"/><stop offset="1" stop-color="#fff" stop-opacity=".3"/></linearGradient></defs>';
-    var plaque = lum(d.accent) > .6 ? "#0B0B0E" : "#F4F4F6";
+      '<linearGradient id="' + id + '-chrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".45" stop-color="#000" stop-opacity=".2"/><stop offset=".6" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity=".15"/></linearGradient></defs>';
+    var plaque = lum(d.accent) > .6 ? "#0B0B0E" : "#F4F4F6", encre = plaque === "#F4F4F6" ? "#0B0B0E" : "#F4F4F6";
+    var sombre = clair(d.base, -.7);
     var corps =
+      '<path d="' + NUQUE + '" fill="#141418"/>' +
       '<path d="' + COQUE + '" fill="url(#' + id + '-base)"/>' +
       '<g clip-path="url(#' + id + '-coque)">' + motif(d.motif, d) +
-        (d.finition === "chrome" ? '<rect width="200" height="160" fill="url(#' + id + '-chrome)"/>' : "") +
-        '<path d="M40 60 C60 28 110 20 150 30 C110 30 70 44 52 74 Z" fill="url(#' + id + '-reflet)"/>' +
-        '<path d="M30 118 C60 136 120 140 176 122 L190 160 L20 160 Z" fill="#000" opacity=".22"/>' +   // ombre du bas
+        (d.finition === "chrome" ? '<rect width="220" height="170" fill="url(#' + id + '-chrome)"/>' : "") +
+        '<rect width="220" height="170" fill="url(#' + id + '-volume)"/>' +
+        '<rect width="220" height="170" fill="url(#' + id + '-eclat)"/>' +
+        '<path d="M58 54 C80 28 120 20 156 26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="' + (brillance * .8).toFixed(2) + '"/>' +
+        '<path d="' + BANDE + '" fill="' + d.accent + '"/>' +
       "</g>" +
-      '<path d="' + COQUE + '" fill="none" stroke="' + clair(d.base, -.6) + '" stroke-width="2"/>' +
-      // aération et mentonnière
-      '<path d="M160 112 h18 M158 118 h16" stroke="' + d.accent + '" stroke-width="3" stroke-linecap="round"/>' +
-      '<path d="M96 22 l14 -1 l-2 6 h-11 z" fill="' + d.accent + '"/>' +
+      '<path d="' + COQUE + '" fill="none" stroke="' + sombre + '" stroke-width="2"/>' +
+      '<path d="' + AILERON + '" fill="' + d.accent + '" stroke="' + sombre + '" stroke-width="1.5"/>' +
+      // prises d'air : sommet et mentonnière
+      '<path d="M120 12 l18 -1 l-2 6 h-15 z" fill="#0d0d10" stroke="' + sombre + '" stroke-width="1"/>' +
+      '<g stroke="#0d0d10" stroke-width="3.2" stroke-linecap="round"><path d="M186 116 h18"/><path d="M184 123 h17"/><path d="M182 130 h15"/></g>' +
       // visière
-      '<path d="' + VISIERE + '" fill="url(#' + id + '-vis)" stroke="' + d.accent + '" stroke-width="3"/>' +
-      '<path d="M120 70 C138 64 162 66 176 76" fill="none" stroke="#fff" stroke-width="2" opacity=".45"/>' +
-      '<circle cx="116" cy="84" r="4" fill="' + d.accent + '" stroke="' + clair(d.accent, .4) + '" stroke-width="1"/>' +
+      '<path d="' + OUVERTURE + '" fill="#08080a"/>' +
+      '<path d="M136 66 C160 57 194 59 212 76 C214 87 213 96 209 102 L141 102 C131 98 128 76 136 66 Z" fill="url(#' + id + '-vis)"/>' +
+      '<path d="M142 70 C164 62 190 64 206 77" fill="none" stroke="#fff" stroke-width="2.4" opacity=".5" stroke-linecap="round"/>' +
+      '<path d="M146 96 L204 96" stroke="#fff" stroke-width="1" opacity=".18"/>' +
+      '<rect x="207" y="92" width="7" height="9" rx="1.5" fill="' + d.accent + '"/>' +                     // languette d'arrachage
+      '<circle cx="132" cy="84" r="5" fill="#1a1a1f" stroke="' + clair(d.accent, .3) + '" stroke-width="1.6"/><circle cx="132" cy="84" r="1.6" fill="' + clair(d.accent, .3) + '"/>' +
       // numéro sur le côté
-      '<g transform="translate(66 104)"><circle r="17" fill="' + plaque + '" stroke="' + d.accent + '" stroke-width="2.5"/>' +
-      '<text y="7" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="' + (num.length > 1 ? 18 : 21) + '" font-weight="900" font-style="italic" fill="' + (plaque === "#F4F4F6" ? "#0B0B0E" : "#F4F4F6") + '">' + esc(num) + "</text></g>";
-    return '<svg viewBox="0 0 200 160" width="' + t + '" height="' + Math.round(t * .8) + '" class="rj132-casque" aria-label="Casque du pilote">' + defs + corps + "</svg>";
+      '<g transform="translate(84 112)"><circle r="18" fill="' + plaque + '" stroke="' + d.accent + '" stroke-width="2.6"/>' +
+      '<text y="7" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="' + (num.length > 1 ? 19 : 22) + '" font-weight="900" font-style="italic" fill="' + encre + '">' + esc(num) + "</text></g>";
+    return '<svg viewBox="0 0 220 170" width="' + t + '" height="' + Math.round(t * 170 / 220) + '" class="rj132-casque" aria-label="Casque du pilote">' + defs + corps + "</svg>";
   }
 
   /* --- Éditeur -------------------------------------------------------------- */

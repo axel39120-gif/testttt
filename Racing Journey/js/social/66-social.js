@@ -799,6 +799,7 @@
   function avatarBloc(cls) {
     var url = avatarUrl(), C = couleurEquipe();
     if (url) return '<div class="' + cls + '" style="background-image:url(\'' + url + '\')"></div>';
+    if (window.RJAvatar) { try { return '<div class="' + cls + ' rj66-portrait" style="border-color:' + C + '">' + RJAvatar.html(RJAvatar.joueur(), 96) + '</div>'; } catch (e) {} }
     return '<div class="' + cls + '" style="background:' + C + '22;border-color:' + C + '">' + initiales() + '</div>';
   }
 
@@ -858,7 +859,8 @@
   function enTete(res) {
     var s = S(), d = s[res];
     var suivis = abonnements();
-    return '<div class="rj66-prof">' +
+    return '<div class="rj66-banniere" style="--e:' + couleurEquipe() + '"><span class="rj66-banniere-t">' + ech((function () { try { return (G.cat || "") + (G.currentTeam && G.currentTeam !== "Indépendant" ? " · " + G.currentTeam : ""); } catch (e) { return ""; } })()) + '</span></div>' +
+      '<div class="rj66-prof">' +
       avatarBloc("rj66-av") +
       '<div class="rj66-id">' +
         '<div class="rj66-nom">' + ech(nomAffiche()) + badge(res) +
@@ -1007,7 +1009,20 @@
     });
     if (!tout.length) return '<div class="rj66-vide">Le fil est encore vide. Publie un premier message.</div>';
 
-    return tout.map(function (t) {
+    var circuit = (function () { try { var c = (window.CAL_RACES || []).filter(function (x) { return x.done; }).slice(-1)[0]; return c ? c.name : (RACE_STATE && RACE_STATE.circuit) || ""; } catch (e) { return ""; } })();
+    var tendances = ["#" + String((G && G.cat) || "F1").replace(/\s+/g, ""), "#" + String((G && G.pilot && G.pilot.nom) || "Pilote").replace(/\s+/g, ""),
+                     G && G.currentTeam && G.currentTeam !== "Indépendant" ? "#" + G.currentTeam.replace(/\s+/g, "") : null, circuit ? "#GP" + circuit.replace(/\s+/g, "") : null]
+      .filter(Boolean);
+    var lier = function (txt) { return ech(txt).replace(/(^|\s)([@#][\wÀ-ÿ_]+)/g, '$1<span class="rj66-lien">$2</span>'); };
+    var photo = function (t) {
+      if (!(t.type === "media" || t.type === "team") || empreinte(t.txt) % 5 > 1) return "";
+      var c = t.type === "team" ? couleurEquipe() : "#e10600";
+      return '<div class="rj66-photo" style="--c:' + c + '"><span class="rj66-photo-damier"></span>' +
+        '<span class="rj66-photo-t">' + ech(circuit ? "Grand Prix · " + circuit : "Paddock") + '</span><span class="rj66-photo-s">' + ech(t.nom) + '</span></div>';
+    };
+    var vues = function (t) { return Math.round(((t.likes || 0) * (8 + empreinte(t.txt) % 9)) + 40); };
+    return '<div class="rj66-tendances"><span>Tendances</span>' + tendances.map(function (h) { return '<b>' + ech(h) + '</b>'; }).join("") + '</div>' +
+    tout.map(function (t) {
       // Les écuries affichent leur blason plutôt qu'une initiale : le fil
       // devient identifiable d'un coup d'œil.
       var av;
@@ -1015,6 +1030,9 @@
         av = avatarBloc("rj66-tav");
       } else if (t.type === "team" && typeof getTeamLogo === "function") {
         av = '<div class="rj66-tav rj66-logo">' + getTeamLogo(t.nom) + '</div>';
+      } else if ((t.type === "rival" || t.type === "fan") && window.RJAvatar) {
+        /* Un visage pour chaque personne : pilotes et fans. */
+        av = '<div class="rj66-tav rj66-portrait">' + RJAvatar.html(RJAvatar.personnage(t.nom, { role: t.type === "rival" ? "pilote" : "civil", equipe: t.team }), 64) + '</div>';
       } else if (t.type === "rival") {
         /* Un pilote n'est pas son écurie : il a son propre visage. */
         av = '<div class="rj66-tav rj66-pilote">' + avatarPilote(t.nom) + '</div>';
@@ -1027,11 +1045,12 @@
       return '<div class="rj66-tw' + (t.moi ? ' moi' : '') + '">' + av + '<div class="rj66-tc">' +
         '<div class="rj66-tt"><b>' + ech(t.nom) + '</b>' + (t.v ? badge("x") : "") +
         '<span>@' + ech(t.h) + ech(quand) + '</span></div>' +
-        '<div class="rj66-txt">' + ech(t.txt) + '</div>' +
+        '<div class="rj66-txt">' + lier(t.txt) + '</div>' + photo(t) +
         '<div class="rj66-act">' +
           '<span>' + ICO.rep + fmt(t.rep) + '</span>' +
           '<span>' + ICO.rt + fmt(t.rt) + '</span>' +
           '<span>' + ICO.like + fmt(t.likes) + '</span>' +
+          '<span class="rj66-vues"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>' + fmt(vues(t)) + '</span>' +
           (t.moi ? '<span class="rj66-gain' + (t.badBuzz ? " rj66-bad" : "") + '">' +
                    (t.gain >= 0 ? "+" : "") + fmt(t.gain) + '</span>' : "") +
         '</div></div></div>';

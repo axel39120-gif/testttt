@@ -1502,3 +1502,49 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 /* Débrief des essais : le ressenti du pilote présenté comme dans Préparation. */
 .rja-debrief { margin: 10px 14px 4px; }
 .rja-debrief-titre { padding: 10px 12px 0; font: 800 9px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #8a8a96); }
+
+/* Notes des pilotes (133) : la carte façon jeu de F1. */
+.rj133-carte {
+  display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 4px 14px; align-items: center; margin: 10px 14px 4px; padding: 10px 12px;
+  border-radius: var(--r); background: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--c) 18%, transparent), transparent 62%), linear-gradient(160deg, #18181d, #0f0f13);
+  border: 1px solid color-mix(in srgb, var(--c) 35%, rgba(255, 255, 255, .06));
+}
+.rj133-gen { grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 74px;
+  clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 85%, #fff), color-mix(in srgb, var(--c) 70%, #000)); }
+.rj133-gen b { font: 900 28px/1 var(--font-display); color: #0b0b0e; }
+.rj133-gen span { font: 900 9px var(--font-display); letter-spacing: .14em; color: rgba(0, 0, 0, .65); }
+.rj133-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.rj133-n { display: grid; grid-template-columns: 30px minmax(0, 1fr) 24px; grid-template-rows: auto auto; align-items: center; column-gap: 6px; }
+.rj133-sigle { font: 900 10px var(--font-display); letter-spacing: .08em; color: #fff; }
+.rj133-barre { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.rj133-barre i { display: block; height: 100%; border-radius: 3px; }
+.rj133-n b { font: 900 13px var(--font-display); color: #fff; text-align: right; }
+.rj133-nom { grid-column: 1 / -1; font-size: 9.5px; color: var(--muted, #8a8a96); }
+.rj133-titre { grid-column: 2; font-size: 9.5px; color: var(--muted, #8a8a96); letter-spacing: .04em; }
+
+/* Réseaux sociaux (66) : une appli, une colonne. */
+#mt-reseaux, #mt-reseaux > *, #mt-reseaux .rj66 { column-width: auto !important; columns: auto !important; }
+#mt-reseaux .rj66 { max-width: 640px; margin: 0 auto; }
+.rj66-banniere { position: relative; height: 92px; margin: 6px 0 -46px; border-radius: var(--r) var(--r) 0 0; overflow: hidden;
+  background: linear-gradient(115deg, color-mix(in srgb, var(--e) 85%, #000) 0%, color-mix(in srgb, var(--e) 45%, #000) 55%, #0b0b0e 100%); }
+.rj66-banniere::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .07) 0 2px, transparent 2px 18px); }
+.rj66-banniere::after { content: ""; position: absolute; right: 0; top: 0; width: 120px; height: 100%; opacity: .35;
+  background: conic-gradient(#fff 25%, #111 0 50%, #fff 0 75%, #111 0) 0 0 / 16px 16px; mask-image: linear-gradient(90deg, transparent, #000); -webkit-mask-image: linear-gradient(90deg, transparent, #000); }
+.rj66-banniere-t { position: absolute; right: 12px; bottom: 8px; font: 800 9.5px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .85); z-index: 1; }
+.rj66-prof { position: relative; z-index: 1; padding-left: 10px; }
+.rj66-portrait { overflow: hidden; padding: 0 !important; background: #15151a !important; }
+.rj66-portrait img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.rj66-tendances { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }
+.rj66-tendances span { font: 800 9.5px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #8a8a96); margin-right: 2px; }
+.rj66-tendances b { font: 700 12px var(--font-body, sans-serif); color: #1d9bf0; background: rgba(29, 155, 240, .1); border: 1px solid rgba(29, 155, 240, .25); padding: 3px 9px; border-radius: 999px; }
+.rj66-lien { color: #1d9bf0; font-weight: 600; }
+.rj66-photo { position: relative; display: block; height: 128px; margin: 8px 0 4px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .08);
+  background: radial-gradient(90% 120% at 20% 100%, color-mix(in srgb, var(--c) 70%, transparent), transparent 60%), linear-gradient(160deg, #23232b, #0d0d11); }
+.rj66-photo::before { content: ""; position: absolute; left: -10%; right: -10%; bottom: 26px; height: 34px; transform: skewY(-6deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .14), transparent); }
+.rj66-photo-damier { position: absolute; right: 14px; top: 14px; width: 54px; height: 36px; opacity: .8; transform: skewX(-12deg);
+  background: conic-gradient(#fff 25%, #111 0 50%, #fff 0 75%, #111 0) 0 0 / 12px 12px; }
+.rj66-photo-t { position: absolute; left: 14px; bottom: 28px; font: 900 15px var(--font-display); text-transform: uppercase; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, .6); }
+.rj66-photo-s { position: absolute; left: 14px; bottom: 11px; font: 700 10.5px var(--font-body, sans-serif); color: rgba(255, 255, 255, .7); }
+.rj66-vues { color: var(--muted, #8a8a96); }
+.rj66-prof .rj66-id { padding-top: 50px; }   /* le nom sous la bannière, seul le portrait la chevauche */

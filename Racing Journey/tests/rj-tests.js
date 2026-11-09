@@ -2969,6 +2969,44 @@ async function suiteCasque() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteNotes() {
+  S.suite("Notes des pilotes");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const cat = G.cat, gen = c => { G.cat = c; return G.rivals.map(x => { const n = RJNotes.notes(Object.assign({}, x, { cat: c })); return n.gen; }); };
+      const f1 = gen("Formule 1"), f3 = gen("Formule 3"), kj = gen("Karting Junior");
+      G.cat = cat;
+      const n = RJNotes.notes(G.rivals[0]), ok4 = ["exp", "com", "vig", "ryt"].every(k => n[k] >= 20 && n[k] <= 99);
+      showDriverProfileModal({ idx: 0 }); await new Promise(r => setTimeout(r, 200));
+      const gc = document.querySelector("#driver-profile-modal .rj133-gen b"), carte = !!gc, affiche = gc ? +gc.textContent : null; closeDriverProfileModal();
+      return { f1: [Math.min(...f1), Math.max(...f1)], f3: [Math.min(...f3), Math.max(...f3)], kj: [Math.min(...kj), Math.max(...kj)], ok4, carte, coherent: calcRivalRating(G.rivals[0]) === affiche };
+    });
+    S.verifier("chaque catégorie a sa fourchette de notes (F1 au-dessus de la F3, au-dessus du karting)", r.f1[0] >= 70 && r.f1[1] <= 96 && r.f3[1] <= 78 && r.kj[1] <= 56 && r.f1[1] > r.f3[1] && r.f3[1] > r.kj[1], JSON.stringify(r));
+    S.verifier("quatre notes et une note générale, la même partout (fiche, classement)", r.ok4 && r.coherent && r.carte, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteReseaux() {
+  S.suite("Réseaux sociaux");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      navTo("S-media", null); await new Promise(r => setTimeout(r, 300));
+      const b = [...document.querySelectorAll("#S-media .tab")].find(x => /social/i.test(x.textContent)); if (b) b.click();
+      await new Promise(r => setTimeout(r, 400));
+      const h = document.getElementById("mt-reseaux");
+      return { banniere: !!h.querySelector(".rj66-banniere"), portrait: !!h.querySelector(".rj66-prof .rj66-portrait img"),
+        tendances: h.querySelectorAll(".rj66-tendances b").length, visages: h.querySelectorAll(".rj66-tw .rj66-portrait img").length,
+        vues: h.querySelectorAll(".rj66-vues").length, posts: h.querySelectorAll(".rj66-tw").length, liens: h.querySelectorAll(".rj66-lien").length };
+    });
+    S.verifier("le profil a une bannière et le portrait du pilote", r.banniere && r.portrait, JSON.stringify(r));
+    S.verifier("le fil montre les tendances, des visages, et les vues de chaque publication", r.tendances >= 2 && r.visages > 0 && r.vues === r.posts && r.posts > 0, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteArrivee() {
   S.suite("Arrivée");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3234,6 +3272,8 @@ const SUITES = {
   contacts: suiteContacts,
   essais: suiteEssais,
   casque: suiteCasque,
+  notes: suiteNotes,
+  reseaux: suiteReseaux,
   decisions: suiteDecisions
 };
 
