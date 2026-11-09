@@ -11048,9 +11048,9 @@ var PTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0],
     "Formula Regional": ["Formule 3", "Super Formula"],
     "Formule 3": ["Formule 2", "Endurance WEC", "IndyCar"],
     "Formule 2": ["Formule 1", "Super Formula", "Endurance WEC", "IndyCar"],
-    "Super Formula": ["Formule 1", "Endurance WEC"],
-    "Endurance WEC": ["Formule 1", "IndyCar"],
-    IndyCar: ["Formule 1", "Endurance WEC"],
+    "Super Formula": ["Formule 1", "Endurance WEC", "IndyCar"],
+    "Endurance WEC": ["Formule 1", "IndyCar", "Super Formula"],
+    IndyCar: ["Formule 1", "Endurance WEC", "Super Formula"],
     "Formule 1": []
   },
   CAT_PROMO_REQ = {
@@ -21995,7 +21995,7 @@ var NEG_IDX = -1,
       pts: 33
     }],
     "Super Formula": [{
-      team: "Toyota Gazoo Racing",
+      team: "TOM'S",
       cost: 0,
       salary: 83000,
       bonusWin: 30000,
@@ -22005,7 +22005,7 @@ var NEG_IDX = -1,
       repReq: 55,
       pts: 28
     }, {
-      team: "Honda Racing",
+      team: "Dandelion Racing",
       cost: 0,
       salary: 76000,
       bonusWin: 27000,
@@ -22166,16 +22166,6 @@ var NEG_IDX = -1,
       repReq: 42,
       pts: 18
     }, {
-      team: "United Autosports",
-      cost: 460000,
-      salary: 0,
-      bonusWin: 4600,
-      bonusPodium: 1800,
-      dur: 1,
-      extra: "",
-      repReq: 38,
-      pts: 15
-    }, {
       team: "AF Corse",
       cost: 370000,
       salary: 0,
@@ -22195,46 +22185,6 @@ var NEG_IDX = -1,
       extra: "",
       repReq: 30,
       pts: 10
-    }, {
-      team: "Cool Racing",
-      cost: 290000,
-      salary: 0,
-      bonusWin: 2900,
-      bonusPodium: 1200,
-      dur: 1,
-      extra: "",
-      repReq: 32,
-      pts: 11
-    }, {
-      team: "Inter Europol Competition",
-      cost: 240000,
-      salary: 0,
-      bonusWin: 2400,
-      bonusPodium: 1000,
-      dur: 1,
-      extra: "",
-      repReq: 31,
-      pts: 11
-    }, {
-      team: "Richard Mille Racing",
-      cost: 0,
-      salary: 25000,
-      bonusWin: 9000,
-      bonusPodium: 4000,
-      dur: 1,
-      extra: "Structure premium",
-      repReq: 40,
-      pts: 16
-    }, {
-      team: "Inception Racing",
-      cost: 330000,
-      salary: 0,
-      bonusWin: 3300,
-      bonusPodium: 1300,
-      dur: 1,
-      extra: "",
-      repReq: 33,
-      pts: 12
     }, {
       team: "Glickenhaus Racing",
       cost: 410000,
@@ -22356,16 +22306,6 @@ var NEG_IDX = -1,
       extra: "",
       repReq: 42,
       pts: 18
-    }, {
-      team: "ECR / Foyt",
-      cost: 1730000,
-      salary: 0,
-      bonusWin: 17300,
-      bonusPodium: 6900,
-      dur: 1,
-      extra: "",
-      repReq: 36,
-      pts: 15
     }]
   };
 
@@ -23034,7 +22974,9 @@ var TEAM_LOGOS = {
   "PHM Racing": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#100010"/><path d="M8 10 L8 30 L16 30 L16 22 L24 22 L24 30 L32 30 L32 10" stroke="#D946EF" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/></svg>',
   "MP Motorsport": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#0a0014"/><path d="M6 28 L6 12 L16 24 L20 12 L24 24 L34 12 L34 28" stroke="#8B5CF6" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/></svg>',
   "Toyota Gazoo Racing": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#0a0000"/><path d="M4 28 C4 14 12 8 20 8 C28 8 36 14 36 28" fill="none" stroke="#E60000" stroke-width="3.5"/><path d="M10 28 L30 28" stroke="#E60000" stroke-width="2"/><text x="20" y="38" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#E60000">TOYOTA</text></svg>',
+  "TOM'S": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#0a0000"/><path d="M4 28 C4 14 12 8 20 8 C28 8 36 14 36 28" fill="none" stroke="#E60000" stroke-width="3.5"/><path d="M10 28 L30 28" stroke="#E60000" stroke-width="2"/><text x="20" y="38" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#E60000">TOYOTA</text></svg>',
   "Honda Racing": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#0d0000"/><path d="M8 30 L8 10 L16 10 L16 18 L24 18 L24 10 L32 10 L32 30" stroke="#E60012" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/></svg>',
+  "Dandelion Racing": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#0d0000"/><path d="M8 30 L8 10 L16 10 L16 18 L24 18 L24 10 L32 10 L32 30" stroke="#E60012" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/></svg>',
   "Nakajima Racing": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#00001a"/><polygon points="20,6 34,30 6,30" fill="none" stroke="#4444FF" stroke-width="2.5"/><text x="20" y="26" text-anchor="middle" font-family="Arial Black" font-size="8" fill="#4444FF">NAK</text></svg>',
   "Kondoh Racing": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#0a0a00"/><path d="M8 10 L8 30 M8 20 L20 10 M8 20 L20 30" stroke="#FFD700" stroke-width="3" fill="none" stroke-linecap="square"/><path d="M22 10 L32 20 L22 30" stroke="#FFD700" stroke-width="3" fill="none" stroke-linecap="square"/></svg>',
   "Cerumo Inging": '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#001400"/><circle cx="20" cy="20" r="12" fill="none" stroke="#22C55E" stroke-width="2.5"/><path d="M14 14 L26 26" stroke="#22C55E" stroke-width="2"/></svg>',
@@ -24428,7 +24370,7 @@ var CIRCUITS = {
     note: "Hokkaido = températures basses. Piste froide = fenêtre de fonctionnement pneus difficile. Circuit temporaire. Météo variable dans le nord du Japon."
   },
   Texas: {
-    type: "mixed",
+    type: "oval",
     rain: .12,
     safety: .35,
     overtake: .5,
@@ -24480,7 +24422,7 @@ var CIRCUITS = {
     note: "Rues industrielles de Detroit = asphalte le plus dégradé d'IndyCar après Sebring. Chicanes en béton = danger aux roues. Peu de dépassements."
   },
   Iowa: {
-    type: "highspeed",
+    type: "oval",
     rain: .18,
     safety: .4,
     overtake: .48,
@@ -24558,7 +24500,7 @@ var CIRCUITS = {
     note: "Portland = ville la plus pluvieuse du calendrier IndyCar. Pluie très probable. Circuit technique permanent bien équilibré. Course intéressante sous la pluie."
   },
   Gateway: {
-    type: "mixed",
+    type: "oval",
     rain: .15,
     safety: .38,
     overtake: .42,
@@ -24608,6 +24550,32 @@ var CIRCUITS = {
     braking: 8,
     specialTrait: "corkscrew",
     note: "Le Tire-Bouchon (Corkscrew) = chute aveugle de 18m en 2 virages consécutifs = le virage le plus spectaculaire du monde motorsport. Brouillard le matin. Grip variable."
+  },
+  Milwaukee: {
+    type: "oval",
+    rain: .18,
+    safety: .38,
+    overtake: .44,
+    length: 1.637,
+    corners: 4,
+    refLapF1: 24,
+    path: "M32,44 L168,44 Q182,44 182,60 L182,66 Q182,82 168,82 L32,82 Q18,82 18,66 L18,60 Q18,44 32,44 Z",
+    downforce: 2,
+    tyreDeg: 4,
+    bumpsFactor: 4,
+    trackTemp: 6,
+    altitude: 1,
+    overtakeQ: 7,
+    nightRace: false,
+    prestige: 6,
+    drsZones: 0,
+    slopeVar: 1,
+    microClimate: false,
+    streetWalls: 5,
+    neckLoad: 2,
+    braking: 4,
+    specialTrait: "short_oval",
+    note: "Ovale d'un mile, le plus ancien circuit encore en activité au monde. Virages peu relevés : il faut freiner, contrairement aux superspeedways. Usure des pneus marquée."
   },
   "Abu Dhabi": {
     type: "mixed",
@@ -25438,6 +25406,9 @@ function _splitLapIntoSectorsCoeur(e, t, r) {
 function getCircuitData(e) {
   if (!e) return DEFAULT_CIRCUIT;
   if (CIRCUITS[e]) return CIRCUITS[e];
+  var _lieu = String(e).replace(/ (\d+ ?h|Round \d+|Final)$/i, "");
+  if (_lieu === "Fuji") _lieu = "Fuji Speedway";
+  if (CIRCUITS[_lieu]) return CIRCUITS[_lieu];
   for (var t in CIRCUITS)
     if (e.indexOf(t) >= 0 || t.indexOf(e) >= 0) return CIRCUITS[t];
   return DEFAULT_CIRCUIT
