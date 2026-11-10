@@ -56,13 +56,10 @@
   function _setBadge(id, count) {
     var el = document.getElementById(id);
     if (!el) return;
-    if (count > 0) {
-      el.style.display = 'inline-flex';
-      el.textContent = count > 9 ? '9+' : String(count);
-    } else {
-      el.style.display = 'none';
-      el.textContent = '';
-    }
+    var texte = count > 0 ? (count > 9 ? '9+' : String(count)) : '', aff = count > 0 ? 'inline-flex' : 'none';
+    // réécrire un badge à chaque minuterie remplaçait son contenu sous le doigt et annulait le clic
+    if (el.textContent !== texte) el.textContent = texte;
+    if (el.style.display !== aff) el.style.display = aff;
   }
 
   function applyHomeBadges() {

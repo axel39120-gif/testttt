@@ -167,13 +167,9 @@
       var bc = document.getElementById("h-contracts-badge");
       if (bc) {
         var nCont = countAvailableContractOffers();
-        if (nCont > 0) {
-          bc.style.display = "inline-flex";
-          bc.textContent = nCont > 9 ? "9+" : String(nCont);
-        } else {
-          bc.style.display = "none";
-          bc.textContent = "";
-        }
+        var tCont = nCont > 0 ? (nCont > 9 ? "9+" : String(nCont)) : "", aCont = nCont > 0 ? "inline-flex" : "none";
+        if (bc.textContent !== tCont) bc.textContent = tCont;   // seulement s'il change
+        if (bc.style.display !== aCont) bc.style.display = aCont;
       }
     } catch (e) {
       console.warn("[04q] applyHomeBadges error:", e);

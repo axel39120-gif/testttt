@@ -3268,7 +3268,7 @@ async function suiteAudit() {
       Object.keys(G).filter(k => /^_rjSkillsCalib_/.test(k)).forEach(k => delete G[k]);
       _rjRecalibrateSkills(G.rivals.map((r, i) => ({ name: r.name, team: r.team, skill: r.skill, rivalIdx: i })).concat([{ isPlayer: true }]));
       const moi = Math.round(computeRacePerformanceScore() * 100), sk = G.rivals.map(x => x.skill);
-      return { moi, devant: sk.filter(s => s > moi).length, max: Math.max(...sk) };
+      return { moi, devant: sk.filter(s => s >= moi).length, max: Math.max(...sk) };   // à égalité compte : le débutant ne domine pas
     });
     S.verifier("karting junior : un débutant n'est pas au-dessus de toute la grille", kart.devant >= 1, JSON.stringify(kart));
 
@@ -3318,6 +3318,37 @@ async function suiteSaison() {
     S.verifier("une saison de F1 se joue jusqu'au mercato et à la saison suivante", r.saisonsFaites === 1, JSON.stringify(r.journal) + " " + r.anomalies.slice(0, 3).join(" ; "));
     S.verifier("toutes les manches sont disputées, sprints compris", r.courses >= 10 && r.sprints >= 1, r.courses + " courses, " + r.sprints + " sprints");
     S.verifier("aucune incohérence relevée en cours de saison ni au changement de saison", r.anomalies.length === 0, r.anomalies.slice(0, 4).join(" ; "));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteAppui() {
+  S.suite("Appuis au doigt, jeu pivoté (téléphone tenu à l'horizontale, rotation verrouillée)");
+  const { navigateur, contexte, page, journal } = await S.ouvrirJeu({ viewport: { width: 390, height: 844 }, mobile: true });
+  try {
+    const cdp = await contexte.newCDPSession(page);
+    const actif = await page.evaluate(() => {
+      window.__clics = 0; document.addEventListener("click", () => window.__clics++, true);
+      navTo("S-home", "ni-home");
+      return !!(window.RJAppuiPivote && RJAppuiPivote.actif());
+    });
+    S.verifier("le jeu est pivoté et la gestion des appuis est active", actif, "");
+    const cibles = await page.evaluate(() => [...document.querySelectorAll("#main-nav .ni, .apex-action-tile")]
+      .filter(b => b.getClientRects().length && !/accueil|plus/i.test(b.innerText || ""))
+      .map(b => { const r = b.getBoundingClientRect(); return { txt: (b.innerText || "").trim().split("\n")[0].slice(0, 14), x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; }));
+    const ratés = [];
+    for (const c of cibles) {
+      await page.evaluate(() => { navTo("S-home", "ni-home"); window.__clics = 0; });
+      await page.waitForTimeout(250);
+      // un doigt réel bouge un peu : 3 px de glissé
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: c.x, y: c.y, id: 1 }] });
+      for (let k = 1; k <= 3; k++) { await page.waitForTimeout(12); await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: c.x + k, y: c.y, id: 1 }] }); }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await page.waitForTimeout(450);
+      const r = await page.evaluate(() => ({ ecran: (document.querySelector(".scr.on") || {}).id, clics: window.__clics }));
+      if (r.ecran === "S-home" || r.clics !== 1) ratés.push(c.txt + " (" + r.ecran + ", " + r.clics + " clic)");
+    }
+    S.verifier("chaque appui sur une tuile ou le rail ouvre son écran, avec un seul clic", cibles.length > 6 && ratés.length === 0, ratés.join(" ; ") || cibles.length + " cibles");
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -3547,7 +3578,8 @@ const SUITES = {
   reserve: suiteReserve,
   paralleles: suiteParalleles,
   audit: suiteAudit,
-  saison: suiteSaison
+  saison: suiteSaison,
+  appui: suiteAppui
 };
 
 async function principal() {

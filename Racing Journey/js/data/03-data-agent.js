@@ -15057,11 +15057,15 @@ function _updateHomeBadgesCoeur() {
     var pendingOffers = (G.offers || []).filter(function(o) {
       return !o.declined && !o.signed
     }).length;
+    /* Même décompte que les autres modules (offres réellement disponibles) : trois
+       minuteries écrivaient chacune leur chiffre et le badge alternait sans cesse. */
+    if (typeof countAvailableContractOffers === "function") try { pendingOffers = countAvailableContractOffers(); } catch (_e) {}
     var b = document.getElementById("h-contracts-badge");
     if (b) {
       if (pendingOffers > 0) {
-        b.style.display = "inline-flex";
-        b.textContent = pendingOffers > 99 ? "99+" : pendingOffers
+        var _t = pendingOffers > 9 ? "9+" : String(pendingOffers);
+        if (b.style.display !== "inline-flex") b.style.display = "inline-flex";
+        if (b.textContent !== _t) b.textContent = _t
       } else {
         b.style.display = "none"
       }
