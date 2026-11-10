@@ -12534,7 +12534,9 @@ function _evaluateSeasonTrustCoeur() {
     },
     c = [],
     d = 0;
-  return (TEAM_TRUST.objectives || []).forEach(function(e) {
+  /* Pas de « return » ici : il renvoyait le résultat de changeTrust (undefined)
+     et le bilan ci-dessous n'était jamais atteint — la fin de saison plantait. */
+  (TEAM_TRUST.objectives || []).forEach(function(e) {
     var t = e.check(l);
     null !== t && (!0 !== t || e.done ? !1 !== t || e.failed || (e.failed = !0, e.penalty && (d += e.penalty, c.push({
       text: " " + e.title,

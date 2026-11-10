@@ -3192,6 +3192,92 @@ async function suiteParalleles() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteAudit() {
+  S.suite("Audit : fin de saison, talents, rechargement, radio, karting");
+  const { navigateur, contexte, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    // 1. Fin de saison avec une écurie : le bilan s'ouvre
+    const fin = await page.evaluate(async () => {
+      const bilan = evaluateSeasonTrust();
+      const ok = !!bilan && Array.isArray(bilan.summary) && typeof bilan.finalTrust === "number";
+      CAL_RACES.forEach(c => { c.done = true; }); G.seasonOver = true;
+      showSeasonEnd(); await new Promise(r => setTimeout(r, 600));
+      const ecran = (document.querySelector(".scr.on") || {}).id;
+      navTo("S-home", null); G.seasonOver = false; CAL_RACES.forEach(c => { c.done = c.week < 6; });
+      return { ok, ecran };
+    });
+    S.verifier("fin de saison avec une écurie : le bilan est calculé et l'écran s'ouvre", fin.ok && fin.ecran === "S-season-end", JSON.stringify(fin));
+
+    // 2. Le talent reste au pilote : l'ordre des talents est conservé par le recalibrage
+    const talents = await page.evaluate(() => {
+      G.cat = "Formule 1"; G.currentTeam = "Williams"; initRivals();
+      Object.keys(G).filter(k => /^_rjSkillsCalib_/.test(k)).forEach(k => delete G[k]);
+      const avant = G.rivals.map(x => ({ n: x.name, s: x.skill })).sort((a, b) => b.s - a.s).map(x => x.n);
+      _rjRecalibrateSkills(G.rivals.map((r, i) => ({ name: r.name, team: r.team, skill: r.skill, rivalIdx: i })).concat([{ isPlayer: true }]));
+      const apres = G.rivals.map(x => ({ n: x.name, s: x.skill })).sort((a, b) => b.s - a.s).map(x => x.n);
+      const pool = G.rivals.every(x => { const p = (G.driverPool || []).find(q => q.id === x._poolId); return !p || p.skill === x.skill; });
+      const memePremiers = avant.slice(0, 5).filter(n => apres.slice(0, 5).indexOf(n) >= 0).length;
+      return { memePremiers, pool };
+    });
+    S.verifier("le recalibrage garde le classement des talents et l'écrit dans le vivier", talents.memePremiers >= 4 && talents.pool, JSON.stringify(talents));
+
+    // 3. Sauvegarde puis réouverture du jeu : chaque rival retrouve ses points, son écurie, son talent
+    await S.courirUneCourse(page, { categorie: "Formule 1", equipe: "Williams", reinitialiserRivaux: false, rang: 4 });
+    const avant = await page.evaluate(() => {
+      G._rj79Remplacement = null; saveGame(0, { silencieux: true });
+      return G.rivals.map(x => x.name + "|" + x.team + "|" + x.pts + "|" + x.skill).sort();
+    });
+    const p2 = await contexte.newPage();
+    await p2.goto(`http://127.0.0.1:${S.PORT}/index.html`, { waitUntil: "load" });
+    await p2.waitForTimeout(6500);
+    const apres = await p2.evaluate(async () => {
+      loadSave(0); await new Promise(r => setTimeout(r, 1500));
+      return G.rivals.map(x => x.name + "|" + x.team + "|" + x.pts + "|" + x.skill).sort();
+    });
+    await p2.close();
+    const differents = avant.filter(x => apres.indexOf(x) < 0);
+    S.verifier("rechargement : chaque rival garde ses points, son écurie et son talent", differents.length === 0 && apres.length === avant.length, differents.slice(0, 3).join(" ; "));
+    const enCours = await page.evaluate(async () => {
+      const ref = G.rivals.map(x => x.name + "|" + x.pts).sort().join();
+      G.rivals.reverse(); saveGame(0, { silencieux: true });
+      G.rivals = []; loadSave(0); await new Promise(r => setTimeout(r, 1200));
+      return G.rivals.map(x => x.name + "|" + x.pts).sort().join() === ref;
+    });
+    S.verifier("rechargement par-dessus une partie ouverte : les points ne changent pas de pilote", enCours, "");
+
+    // 4. Radio des disciplines : les messages d'identité apparaissent
+    const radio = await page.evaluate(async () => {
+      SETTINGS.simSpeed = "instant";
+      G.cat = "Endurance WEC"; G.currentTeam = "Toyota Gazoo Racing"; initRivals(); window.CAL_RACES = []; buildCalendar();
+      const c = CAL_RACES.find(x => /le mans/i.test(x.name)); G.semaine = c.week; CAL_RACES.forEach(x => { x.done = x.week < c.week; });
+      RACE_STATE.circuit = c.name; RACE_STATE.circuitData = getCircuitData(c.name); RACE_STATE.weather = generateWeather(0); RACE_STATE.qualiPos = 5; G.totalLaps = 30;
+      window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+      try { confirmStrategy(); } catch (e) {}
+      runRaceLive(); await new Promise(r => setTimeout(r, 900));
+      for (let i = 0; i < 600 && !LIVE_RACE.finished; i++) await new Promise(r => setTimeout(r, 25));
+      const feed = (LIVE_RACE.directFeed || []).map(f => (f.title || "") + " " + (f.desc || "") + " " + (f.text || ""));
+      return { identite: feed.filter(t => /relais|trafic|multi-classes|changement de pilote/i.test(t)).length };
+    });
+    S.verifier("WEC : les messages radio de relais et de trafic apparaissent", radio.identite > 0, JSON.stringify(radio));
+
+    // 5. Karting : un débutant n'est plus au-dessus de toute la grille
+    const kart = await page.evaluate(() => {
+      G.cat = "Karting Junior"; G.currentTeam = "Indépendant";
+      G.substats = initSubStats("complet", "analyste"); computeLegacyStats(); initRivals();
+      Object.keys(G).filter(k => /^_rjSkillsCalib_/.test(k)).forEach(k => delete G[k]);
+      _rjRecalibrateSkills(G.rivals.map((r, i) => ({ name: r.name, team: r.team, skill: r.skill, rivalIdx: i })).concat([{ isPlayer: true }]));
+      const moi = Math.round(computeRacePerformanceScore() * 100), sk = G.rivals.map(x => x.skill);
+      return { moi, devant: sk.filter(s => s > moi).length, max: Math.max(...sk) };
+    });
+    S.verifier("karting junior : un débutant a des rivaux plus forts que lui", kart.devant >= 2, JSON.stringify(kart));
+
+    const bruit = journal.avertissements.filter(a => /ret is not defined|prevUpd2|rjRadioPush/.test(a));
+    S.verifier("plus d'erreurs de radio ni de pénalités dans la console", bruit.length === 0, bruit[0] || "");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3415,7 +3501,8 @@ const SUITES = {
   reseaux: suiteReseaux,
   decisions: suiteDecisions,
   reserve: suiteReserve,
-  paralleles: suiteParalleles
+  paralleles: suiteParalleles,
+  audit: suiteAudit
 };
 
 async function principal() {

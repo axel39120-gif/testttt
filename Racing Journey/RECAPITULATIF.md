@@ -728,6 +728,17 @@ Suite `rivaux` : carrière créée par l'écran de création, classement complet
 - **Catégories parallèles** (module `134-categories-paralleles.js`) : offres d'IndyCar, de WEC ou de Super Formula pour un pilote de F1 (offres « latérales ») ; voies IndyCar ↔ Super Formula ; IndyCar sans pilote sans écurie ni doublon ECR / Foyt, ovales cohérents (Texas, Iowa, Gateway, Milwaukee), Milwaukee remplace Monterey ; bonus IndyCar (pole, tours menés) ; WEC en Hypercar seule, points doublés au Mans, São Paulo 6h remplace le doublon de Bahreïn ; Super Formula avec TOM'S et Dandelion Racing au lieu des motoristes ; un même lieu sous plusieurs noms partage une fiche. Les anciennes sauvegardes sont mises à jour au chargement.
 - Tests : suites `reserve`, `paralleles`.
 
+## Audit complet — v258
+
+Trouvé en jouant des saisons entières avec un joueur automatique, puis corrigé :
+- **Fin de saison bloquée avec une écurie** : `_evaluateSeasonTrustCoeur` (04) commençait par un `return` resté du reformatage du 31 octobre ; le bilan n'était jamais renvoyé, `showSeasonEnd` plantait et l'écran de fin de saison ne s'ouvrait pas.
+- **Talent des rivaux** (04k) : le recalibrage de début de saison classe les pilotes par leur propre talent (et non plus par la note de leur écurie), sans permutation au hasard ; la valeur est reportée dans le vivier et le marqueur de saison est sauvegardé (bloc « rj04k »).
+- **Rechargement** (04s) : les rivaux sont sauvegardés avec leur identité (nom, écurie, talent, statut) et recollés par nom ; le vivier sauvegardé est relu avant de reconstruire la grille.
+- **Radio des disciplines** (08) : `rjRadioPush` accepte aussi (titre, texte, options) ; les messages de relais, trafic, push-to-pass, overtake system et arrêts au stand s'affichent.
+- **Karting** (92) : talents du junior et du senior relevés ; un débutant n'est plus au-dessus de toute la grille.
+- Deux erreurs de console répétées à chaque tour supprimées (08, 04b).
+- Tests : suite `audit`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

@@ -110,17 +110,21 @@
       { tier: "milieu",   count: 10, mean: 54.0, spread: 2.0 },
       { tier: "recrue",   count: 8, mean: 49.0, spread: 2.2 }
     ],
+    /* Karting : un débutant (score ~51 avec les statistiques de départ) se
+       retrouve dans le haut du peloton du junior sans le dominer ; le senior
+       reste un cran au-dessus. Avant, le meilleur junior plafonnait à 46 et un
+       débutant gagnait presque toutes les courses de sa première saison. */
     "Karting Senior": [
-      { tier: "sommet",   count: 2, mean: 54.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 50.0, spread: 1.8 },
-      { tier: "milieu",   count: 10, mean: 44.0, spread: 2.4 },
-      { tier: "recrue",   count: 8, mean: 39.0, spread: 2.6 }
+      { tier: "sommet",   count: 2, mean: 60.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 56.0, spread: 1.6 },
+      { tier: "milieu",   count: 10, mean: 50.0, spread: 2.2 },
+      { tier: "recrue",   count: 8, mean: 45.0, spread: 2.4 }
     ],
     "Karting Junior": [
-      { tier: "sommet",   count: 2, mean: 46.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 42.0, spread: 1.8 },
-      { tier: "milieu",   count: 10, mean: 36.0, spread: 2.5 },
-      { tier: "recrue",   count: 8, mean: 31.0, spread: 2.8 }
+      { tier: "sommet",   count: 2, mean: 55.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 51.0, spread: 1.6 },
+      { tier: "milieu",   count: 10, mean: 45.0, spread: 2.3 },
+      { tier: "recrue",   count: 8, mean: 40.0, spread: 2.6 }
     ],
     "Super Formula": [
       { tier: "sommet",   count: 2, mean: 92.0, spread: 0.8 },
