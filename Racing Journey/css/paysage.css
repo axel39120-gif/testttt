@@ -61,32 +61,108 @@ body { padding: 0 !important; container: app / size; }
    reprendre (l'action principale dès qu'une sauvegarde existe), puis
    « Nouvelle carrière », plus discrète dans ce cas. Les emplacements vides
    ne s'affichent pas : il en reste toujours un pour une nouvelle carrière. */
+/* Fond : halo rouge qui respire, piste en perspective qui s'efface vers le
+   haut, filets rouges en haut et en bas (comme le réglage d'affichage). */
+#S-splash {
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 0%, rgba(255, 24, 1, .16), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(255, 24, 1, .10), transparent 70%),
+    var(--bg, #000) !important;
+}
+#S-splash::before {
+  content: ""; position: absolute; left: -50%; right: -50%; bottom: 0; height: 55%; pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(255, 24, 1, .35) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 48px);
+  transform: perspective(300px) rotateX(58deg); transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 85%); mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
+  animation: rj-splash-piste 2.4s linear infinite;
+}
+#S-splash::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, var(--red, #FF1801) 30%, var(--red, #FF1801) 70%, transparent) top / 100% 2px no-repeat,
+    linear-gradient(90deg, transparent, rgba(255, 24, 1, .5) 30%, rgba(255, 24, 1, .5) 70%, transparent) bottom / 100% 1px no-repeat;
+}
+#S-splash .apex-splash-halo { width: 640px; height: 640px; animation: rj-splash-halo 6s ease-in-out infinite; }
+@keyframes rj-splash-piste { to { background-position: 0 0, 0 0, 0 48px; } }
+@keyframes rj-splash-halo { 50% { opacity: .55; } }
+@keyframes rj-splash-entree { from { opacity: 0; transform: translateY(10px); } }
+
 #S-splash .apex-splash {
   display: flex !important; flex-direction: column; align-items: stretch; justify-content: center; gap: 10px;
   position: static !important;   /* le halo se cale sur tout l'écran, pas sur la colonne */
-  width: min(440px, 100%); height: 100%; margin: 0 auto; padding: 12px 16px !important;
+  background: transparent !important;
+  width: min(420px, 100%); height: 100%; margin: 0 auto; padding: 10px 16px !important; gap: 8px !important;
   overflow-y: auto; scrollbar-width: none;
 }
+#S-splash .apex-splash > * { position: relative; z-index: 1; animation: rj-splash-entree .5s cubic-bezier(.2, .8, .2, 1) both; }
+#S-splash .apex-splash-resume { animation-delay: .12s; }
+#S-splash .apex-splash-cta-wrap { animation-delay: .2s; }
+#S-splash .rj96-sec { animation-delay: .26s; }
+#S-splash .apex-splash-footer { animation-delay: .32s; }
 #S-splash .apex-splash::-webkit-scrollbar { display: none; }
 #S-splash .apex-splash-hero { flex: 0 0 auto; height: auto !important; margin: 0 !important; padding: 0 !important; }
-#S-splash .apex-splash-logo { width: auto !important; height: clamp(80px, 34vh, 240px) !important; display: block; margin: 0 auto; }
-#S-splash .apex-splash-sub { margin-top: 4px !important; }
+#S-splash .apex-splash-logo {
+  width: auto !important; height: clamp(72px, calc(var(--app-h, 100dvh) * .3), 220px) !important;   /* --app-h : hauteur réelle, même écran tourné */ display: block; margin: 0 auto;
+  filter: drop-shadow(0 6px 22px rgba(255, 24, 1, .28));
+}
+#S-splash .apex-splash-sub { margin-top: 2px !important; }
+#S-splash .apex-splash-sub-text { font: 700 9.5px/1 var(--font-display) !important; letter-spacing: .3em !important; color: var(--soft, #a8a8b4) !important; }
+#S-splash .apex-splash-line { width: 44px !important; background: linear-gradient(90deg, transparent, var(--red, #FF1801)) !important; }
+#S-splash .apex-splash-sub .apex-splash-line:last-child { background: linear-gradient(90deg, var(--red, #FF1801), transparent) !important; }
 #S-splash .apex-splash-resume { order: 1; flex: 0 0 auto; margin: 0 !important; padding: 0 !important; }
-#S-splash .apex-splash-cta-wrap { order: 2; flex: 0 0 auto; margin: 0 !important; padding: 0 !important; }
-#S-splash .apex-splash-footer { order: 3; flex: 0 0 auto; margin: 4px 0 0 !important; padding: 0 !important; text-align: center; font-size: 9px; }
-#S-splash .apex-splash-cta { width: 100%; height: 48px; margin: 0 !important; }
-#S-splash .apex-splash-section-title { display: none !important; }
-#S-splash #save-slots > div { margin-bottom: 6px !important; }
-#S-splash #save-slots > div[style*="dashed"] { display: none !important; }
+#S-splash .apex-splash-cta-wrap { order: 2; flex: 0 0 auto; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+#S-splash .rj96-sec { order: 3; margin: 0 !important; padding: 0 !important; }
+#S-splash .apex-splash-footer { order: 4; flex: 0 0 auto; margin: 2px 0 0 !important; padding: 6px 0 0 !important; text-align: center; border-top-color: rgba(255, 255, 255, .05) !important; }
+#S-splash .apex-splash-footer span { font-size: 8.5px !important; line-height: 1.7; color: var(--dim, #404048) !important; }
+#S-splash .apex-splash-section-title { padding: 0 0 7px !important; }
 #S-splash .apex-splash-resume:not(:has(#save-slots button)) { display: none; }
-/* Une partie existe : la reprendre est l'action principale. */
-#S-splash #save-slots button:first-of-type { padding: 9px 18px !important; font-size: 13px !important; font-weight: 800 !important; border-radius: var(--r) !important; }
+#S-splash .apex-splash-slots { gap: 6px !important; }
+#S-splash #save-slots > div[style*="dashed"] { display: none !important; }
+
+/* Carte de reprise : même famille que les tuiles de l'accueil de carrière. */
+#S-splash #save-slots > div {
+  margin: 0 !important; border: 1px solid rgba(255, 255, 255, .09) !important; border-radius: var(--r2, 12px) !important;
+  background: linear-gradient(120deg, rgba(255, 24, 1, .14), rgba(255, 255, 255, .03) 45%, rgba(255, 255, 255, .015)) !important;
+  box-shadow: inset 3px 0 0 var(--red, #FF1801), 0 8px 24px rgba(0, 0, 0, .45) !important;
+}
+#S-splash #save-slots > div > div:first-child { padding: 10px 10px 10px 16px !important; gap: 12px !important; text-align: left; }
+#S-splash #save-slots > div > div:first-child > svg { color: var(--red, #FF1801) !important; width: 20px; height: 20px; }
+#S-splash #save-slots > div > div:first-child > div > div:first-child { font: 800 15px/1.2 var(--font-display) !important; color: #fff !important; }
+#S-splash #save-slots > div > div:first-child > div > div:last-child { font-size: 11px !important; color: var(--soft, #a8a8b4) !important; margin-top: 2px; }
+/* « Jouer » : l'action principale dès qu'une partie existe. */
+#S-splash #save-slots > div > div:first-child > button:first-of-type {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; height: 40px;
+  padding: 0 16px 0 18px !important; border-radius: var(--r, 8px) !important;
+  background: linear-gradient(135deg, #FF1801 0%, #D4150A 100%) !important;
+  font: 800 14px/1 var(--font-display) !important; letter-spacing: .04em;   /* pas de capitales : innerText doit rester « Jouer » */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .08) inset, 0 6px 18px rgba(255, 24, 1, .42) !important;
+  transition: transform .15s ease;
+}
+#S-splash #save-slots > div > div:first-child > button:first-of-type::after { content: "›"; font-size: 18px; font-weight: 400; line-height: 1; }
+#S-splash #save-slots > div > div:first-child > button:active { transform: scale(.96); }
+#S-splash #save-slots > div > div:first-child > button:last-of-type { height: 30px; border-color: rgba(255, 255, 255, .1) !important; border-radius: var(--r, 8px) !important; }
+
+/* « Nouvelle carrière » : rouge sans partie, discrète s'il y en a une. */
+#S-splash .apex-splash-cta {
+  width: 100%; height: 50px; margin: 0 !important; border-radius: var(--r2, 12px) !important;
+  font: 800 13px/1 var(--font-display) !important; letter-spacing: .14em !important; text-transform: uppercase;
+}
+#S-splash .apex-splash:has(#save-slots button) .apex-splash-cta {
+  height: 42px; background: rgba(255, 255, 255, .04) !important; box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important; color: var(--text, #e8e8ec) !important; font-size: 11.5px !important;
+}
+#S-splash .apex-splash:has(#save-slots button) .apex-splash-cta-glow { display: none; }
+#S-splash .apex-splash:has(#save-slots button) .apex-splash-cta-arrow { color: var(--red, #FF1801); }
+#S-splash .rj96-entree { padding: 9px 14px !important; border-radius: var(--r2, 12px) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  #S-splash::before, #S-splash .apex-splash-halo, #S-splash .apex-splash > *, #S-splash .apex-splash-cta-glow { animation: none !important; }
+}
 /* Les notifications de la partie n'ont rien à faire sur l'écran titre. */
 body:has(#S-splash.on) :is(#rj-toast-container, #ach-unlock-stack) { display: none !important; }
-#S-splash .apex-splash:has(#save-slots button) .apex-splash-cta {
-  height: 42px; background: rgba(255, 255, 255, .05) !important; box-shadow: none !important;
-  border: 1px solid rgba(255, 255, 255, .14) !important; color: var(--text, #e8e8ec) !important;
-}
 
 /* Choix du mode : les deux formules côte à côte. */
 #S-mode .rj80-wrap { max-width: 880px !important; }
