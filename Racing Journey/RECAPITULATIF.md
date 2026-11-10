@@ -739,6 +739,16 @@ Trouvé en jouant des saisons entières avec un joueur automatique, puis corrig�
 - Deux erreurs de console répétées à chaque tour supprimées (08, 04b).
 - Tests : suite `audit`.
 
+## Saisons complètes — v259
+
+Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons entières (week-ends, sprints, événements, journées médias, fin de saison, mercato) et vérifie la cohérence à chaque course et à chaque changement de saison. Parcours joués : F1 (2 saisons), F2, F3 (4 saisons), Super Formula, IndyCar, WEC, karting depuis une carrière neuve, pilote de réserve sur 2 saisons. Corrigé au passage :
+- **Contrats** : un contrat pluriannuel se poursuit au mercato même sans nouvelle offre (avant : seule « Saison blanche » était proposée et le pilote perdait son baquet) ; l'offre de prolongation de sa propre écurie reste ouverte jusqu'au mercato ; un réserviste promu est engagé pour la saison suivante.
+- **Saison blanche** (module `135-saison-blanche.js`) : une saison peut commencer sans contrat. Le temps avance (avant : bloqué), les courses se disputent sans le joueur, et des écuries proposent un baquet au fil de la saison selon les opportunités (baquets libérés), son talent (comparé au niveau de la grille) et sa réputation. Une offre de sa catégorie prend effet tout de suite (il court dès la manche suivante, l'écurie garde deux voitures) ; celles de la catégorie inférieure valent pour la saison suivante.
+- **Fin de saison d'un réserviste** : la saison se termine quand toutes les manches sont passées (et non quand le joueur en a couru autant) ; le bilan de réserve passe au plus tard au changement de saison.
+- **Talents** (04k) : plancher abaissé de 50 à 30 — tout le plateau du karting était ramené à 50-52. Karting rééquilibré : un débutant finit dans le haut du classement sans dominer.
+- Mercato du personnel : un classement d'écuries absent ne fait plus planter le recrutement (06). Module mort de redirection de la stratégie retiré (28).
+- Tests : suite `saison` (règles de contrat et une saison complète de F1).
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

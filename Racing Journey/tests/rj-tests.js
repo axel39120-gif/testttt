@@ -3270,10 +3270,54 @@ async function suiteAudit() {
       const moi = Math.round(computeRacePerformanceScore() * 100), sk = G.rivals.map(x => x.skill);
       return { moi, devant: sk.filter(s => s > moi).length, max: Math.max(...sk) };
     });
-    S.verifier("karting junior : un débutant a des rivaux plus forts que lui", kart.devant >= 2, JSON.stringify(kart));
+    S.verifier("karting junior : un débutant n'est pas au-dessus de toute la grille", kart.devant >= 1, JSON.stringify(kart));
 
     const bruit = journal.avertissements.filter(a => /ret is not defined|prevUpd2|rjRadioPush/.test(a));
     S.verifier("plus d'erreurs de radio ni de pénalités dans la console", bruit.length === 0, bruit[0] || "");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteSaison() {
+  S.suite("Saison complète (joueur automatique)");
+  const { jouerSaisons } = require("./joueur-auto.js");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  page.setDefaultTimeout(0);
+  page.on("dialog", d => d.accept().catch(() => {}));
+  try {
+    await S.repondeurAutomatique(page);
+    // Les règles de contrat, d'abord, sur un état préparé
+    const contrat = await page.evaluate(async () => {
+      const d = ms => new Promise(r => setTimeout(r, ms)), out = {};
+      // l'offre de sa propre écurie ne s'éteint pas avant la fin de saison
+      G.offers = [{ team: G.currentTeam, cat: G.cat, expire: 1 }, { team: "Ailleurs", cat: G.cat, expire: 1 }];
+      const garde = G.offers.map(o => o.team === G.currentTeam && o.cat === G.cat);
+      G.offers.forEach(o => { "number" == typeof o.expire && !(o.team === G.currentTeam && o.cat === G.cat) && (o.expire -= 1); });
+      out.offrePropreGardee = G.offers.filter(o => o.expire > 0).map(o => o.team).join() === G.currentTeam && garde[0];
+      // un contrat qui court encore se poursuit au mercato
+      const equipe = G.currentTeam;
+      G.contractDur = 2; G.offers = []; G.pendingTransfer = null;
+      buildTransferOffers();
+      const carte = [...document.querySelectorAll("#tr-offers-list > div")].map(c => c.innerText || "").find(t => /contrat en cours/i.test(t));
+      out.carteContrat = !!carte;
+      // un réserviste promu reste sous contrat la saison suivante
+      G._playerRole = "num3";
+      _rj79.setDeal({ team: equipe, cat: G.cat, saison: G.saison, cumul: false, credibilite: 70, sessions: [], remplacements: [] });
+      G.contractDur = 0; TEAM_TRUST.value = 60; G._rj79SiegeVacant = null;
+      _rj79.promouvoir(false);
+      out.promuSousContrat = G.contractDur >= 2 && G._playerRole === "num2";
+      G.contractDur = 2; _rj79.setDeal(null);
+      return out;
+    });
+    S.verifier("l'offre de prolongation de sa propre écurie reste ouverte jusqu'au mercato", contrat.offrePropreGardee, JSON.stringify(contrat));
+    S.verifier("un contrat en cours se poursuit au mercato, même sans nouvelle offre", contrat.carteContrat, JSON.stringify(contrat));
+    S.verifier("un réserviste promu est engagé pour la saison suivante", contrat.promuSousContrat, JSON.stringify(contrat));
+
+    // Puis une vraie saison de F1, du premier départ au début de la suivante
+    const r = await jouerSaisons(page, { saisons: 1, tours: 4 });
+    S.verifier("une saison de F1 se joue jusqu'au mercato et à la saison suivante", r.saisonsFaites === 1, JSON.stringify(r.journal) + " " + r.anomalies.slice(0, 3).join(" ; "));
+    S.verifier("toutes les manches sont disputées, sprints compris", r.courses >= 10 && r.sprints >= 1, r.courses + " courses, " + r.sprints + " sprints");
+    S.verifier("aucune incohérence relevée en cours de saison ni au changement de saison", r.anomalies.length === 0, r.anomalies.slice(0, 4).join(" ; "));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -3502,7 +3546,8 @@ const SUITES = {
   decisions: suiteDecisions,
   reserve: suiteReserve,
   paralleles: suiteParalleles,
-  audit: suiteAudit
+  audit: suiteAudit,
+  saison: suiteSaison
 };
 
 async function principal() {

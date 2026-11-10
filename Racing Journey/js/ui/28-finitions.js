@@ -175,71 +175,13 @@
 
 // ===================================================================
 
-// ===== Bloc intégré : 23-dedup-strategie.js =====
+// ===== Bloc retiré : 23-dedup-strategie.js =====
 
 // ===================================================================
 
-/* =============================================================================
- * 23-dedup-strategie.js — SUPPRESSION DU DOUBLON D'ÉCRAN DE STRATÉGIE
- * =============================================================================
- * Entre la qualif et la course, deux écrans de réglages s'enchaînaient :
- *   1) l'écran de stratégie NATIF (04, renderStrategyScreen) — basique,
- *      en partie déconnecté du moteur ;
- *   2) le modal de stratégie de 04p (openStrategyModal) — complet (composé,
- *      nombre d'arrêts, style) et réellement branché au moteur (build car
- *      state, usure des pneus tour par tour). C'est aussi celui qui alimente
- *      la pastille pneu du classement et que prolonge le planner graphique.
- *
- * Ce module redirige l'écran natif vers le modal complet : où qu'on arrive
- * (après la qualif ou en cliquant l'onglet Stratégie), on ne voit plus qu'UN
- * seul écran, le bon. Aucune modification des fichiers cœur.
- *
- * Réversible : retirer la ligne <script src="js/23-dedup-strategie.js"> de
- * index.html restaure le comportement d'origine.
- * ===========================================================================*/
-(function () {
-  'use strict';
-
-  var TRIES = 0, MAX = 80;
-
-  function install() {
-    TRIES++;
-    var rss = window.renderStrategyScreen;
-    var ui = window._RJ_STRAT_UI;
-
-    var ready = (typeof rss === 'function') &&
-                ui && typeof ui.openStrategyModal === 'function';
-
-    if (ready) {
-      if (!rss._rjDedup) {
-        rjInscrire("renderStrategyScreen", { id: "28-finitions:renderStrategyScreen", ordre: -3900, remplace: function (args, suite) {
-          try {
-            // L'écran/onglet de stratégie natif déclenche le modal complet 04p.
-            window._RJ_STRAT_UI.openStrategyModal();
-            return;
-          } catch (e) {
-            // En cas de souci, on retombe sur l'écran natif d'origine.
-            console.warn('[23] redirection stratégie échouée, fallback natif :', e);
-            return suite();
-          }
-        } });
-        window.renderStrategyScreen._rjDedup = true;
-        console.log('[23] Écran stratégie natif redirigé vers le modal 04p — doublon supprimé.');
-      }
-      return true;
-    }
-
-    if (TRIES < MAX) { setTimeout(install, 250); }
-    else { console.warn('[23] renderStrategyScreen ou _RJ_STRAT_UI introuvable — déduplication non installée.'); }
-    return false;
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', install);
-  } else {
-    install();
-  }
-})();
+/* Le module 23 (redirection de l'écran de stratégie vers le modal 04p) a été
+ * retiré : la stratégie n'existe plus depuis la simulation simplifiée (82),
+ * il cherchait pendant 20 s des fonctions absentes puis l'écrivait en console. */
 
 
 

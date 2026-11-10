@@ -201,14 +201,17 @@ function _rjBuildSkillPool(category, totalDrivers) {
   distribution.forEach(function(tier) {
     for (var i = 0; i < tier.count; i++) {
       var skill = _rjGenerateGaussian(tier.mean, tier.spread);
-      skill = Math.round(Math.max(50, Math.min(cap, skill)));
+      /* Plancher à 30 : à 50, tout le plateau du karting (et le bas de la F4)
+         était ramené à 50-52, quelle que soit la distribution prévue. */
+      skill = Math.round(Math.max(30, Math.min(cap, skill)));
       skills.push({ skill: skill, tier: tier.tier });
     }
   });
   
   // Si on a généré moins de pilotes que requis (rare), complète avec des rookies
   while (skills.length < totalDrivers) {
-    skills.push({ skill: Math.round(60 + Math.random() * 8), tier: "rookie" });
+    var bas = distribution[distribution.length - 1] || { mean: 60, spread: 2 };   // le plus bas niveau de la catégorie, pas 60-68 partout
+    skills.push({ skill: Math.round(Math.max(30, Math.min(cap, bas.mean - 1 + Math.random() * 2))), tier: "rookie" });
   }
   
   // Si on a généré plus, tronque (on garde les premiers = meilleurs)
@@ -294,7 +297,7 @@ function _rjAssignSkillsByTeamRanking(driversWithTeams, skillPool) {
   Object.keys(parEquipe).forEach(function(equipe) {
     var L = parEquipe[equipe].sort(function(a, b) { return b._rjNewSkill - a._rjNewSkill; });
     for (var k = 1; k < L.length; k++) {
-      if (L[k]._rjNewSkill >= L[k - 1]._rjNewSkill) L[k]._rjNewSkill = Math.max(50, L[k - 1]._rjNewSkill - 1 - Math.floor(Math.random() * 3));
+      if (L[k]._rjNewSkill >= L[k - 1]._rjNewSkill) L[k]._rjNewSkill = Math.max(30, L[k - 1]._rjNewSkill - 1 - Math.floor(Math.random() * 3));
     }
   });
 }
