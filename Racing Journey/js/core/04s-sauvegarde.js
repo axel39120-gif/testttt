@@ -69,8 +69,13 @@ function serialiserCoeur() {
     races: G.races,
     offers: G.offers,
     totalLaps: G.totalLaps,
+    /* Chaque rival est enregistré avec son identité (nom, écurie, talent,
+       statut) : au chargement, ses points reviennent à lui, et non au pilote
+       qui occupe la même place dans une grille reconstruite. */
     rivals: G.rivals.map(function (e) {
-      return { pts: e.pts, qualiHistory: e.qualiHistory || [], raceHistory: e.raceHistory || [], careerHistory: e.careerHistory || [] };
+      return { name: e.name, nat: e.nat, team: e.team, skill: e.skill, consistency: e.consistency, poolId: e._poolId,
+               sorti: e._rj79Sorti || null, recrue: !!e._rj79Recrue,
+               pts: e.pts, qualiHistory: e.qualiHistory || [], raceHistory: e.raceHistory || [], careerHistory: e.careerHistory || [] };
     }),
     calRaces: CAL_RACES.map(function (e) { return { done: e.done, result: e.result }; }),
     owned: G.owned || [],
@@ -316,14 +321,11 @@ function appliquerCoeur(t, e) {
   CAREER_HISTORY = (t.careerHistory || []).map(function (h) { return Object.assign({ raceDetails: [] }, h); });
   RIVAL_CAREER_REGISTRY = t.rivalCareerRegistry || {};
   G._seasonTeam = t.seasonTeam || t.currentTeam || "Indépendant";
+  /* Le vivier de la partie d'abord : la grille se reconstruit à partir de lui,
+     pas de celui de la partie ouverte avant le chargement. */
+  if (Array.isArray(t.driverPool) && t.driverPool.length) { G.driverPool = t.driverPool; G._rjPoolInitialized = true; }
   initRivals();
-  if (t.rivals) t.rivals.forEach(function (r, i) {
-    if (!G.rivals[i]) return;
-    G.rivals[i].pts = r.pts || 0;
-    G.rivals[i].qualiHistory = r.qualiHistory || [];
-    G.rivals[i].raceHistory = r.raceHistory || [];
-    G.rivals[i].careerHistory = r.careerHistory || [];
-  });
+  restaurerRivaux(t.rivals);
   CAL_RACES = [];
   buildCalendar();
   if (t.calRaces) t.calRaces.forEach(function (c, i) {
@@ -336,7 +338,7 @@ function appliquerCoeur(t, e) {
   renderChamp();
   renderOffers();
   renderHomeEvents();
-  G.driverPool = t.driverPool || G.driverPool || null;
+  if (!Array.isArray(G.driverPool) || !G.driverPool.length) G.driverPool = t.driverPool || G.driverPool || null;
   if ((!G.driverPool || !Object.keys(G.driverPool).length) && typeof _initDriverPool === "function") _initDriverPool();
   /* Réparation : des carrières créées avec un vivier vide (bug de 04o)
      n'avaient aucun rival, et le classement ne montrait que le joueur. */
@@ -345,6 +347,35 @@ function appliquerCoeur(t, e) {
   }
   if (typeof applyRaceLockUI === "function") applyRaceLockUI();
   navTo("S-home", "ni-home");
+}
+
+/* Remet chaque rival sauvegardé à sa place, par son nom. Les sauvegardes
+   antérieures (sans nom) gardent l'ancienne correspondance par position. */
+function restaurerRivaux(sauves) {
+  if (!Array.isArray(sauves) || !sauves.length) return;
+  function histos(dst, r) {
+    dst.pts = r.pts || 0;
+    dst.qualiHistory = r.qualiHistory || [];
+    dst.raceHistory = r.raceHistory || [];
+    dst.careerHistory = r.careerHistory || [];
+  }
+  if (!sauves.every(function (r) { return r && r.name; })) {
+    sauves.forEach(function (r, i) { if (G.rivals[i]) histos(G.rivals[i], r); });
+    return;
+  }
+  var parNom = {};
+  (G.rivals || []).forEach(function (x) { if (x && x.name) parNom[x.name] = x; });
+  G.rivals = sauves.map(function (r) {
+    var x = parNom[r.name] || { name: r.name, nat: r.nat, lastPos: 0 };
+    x.team = r.team != null ? r.team : x.team;
+    if (typeof r.skill === "number") x.skill = r.skill;
+    if (typeof r.consistency === "number") x.consistency = r.consistency;
+    if (r.poolId) x._poolId = r.poolId;
+    if (r.sorti) x._rj79Sorti = r.sorti; else delete x._rj79Sorti;
+    if (r.recrue) x._rj79Recrue = true;
+    histos(x, r);
+    return x;
+  });
 }
 
 function loadSave(e) {

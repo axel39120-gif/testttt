@@ -247,14 +247,18 @@ function _rjAssignSkillsByTeamRanking(driversWithTeams, skillPool) {
     return;
   }
   
-  // Trie les pilotes par rating de leur équipe (descendant)
+  // Trie les pilotes par LEUR PROPRE talent (descendant). Le classement par
+  // note d'écurie donnait le meilleur talent à la meilleure voiture chaque
+  // saison : la progression d'un pilote ne servait à rien, et un champion
+  // passé dans une petite écurie devenait un pilote de fond de grille. La
+  // voiture compte déjà dans la course (bonus d'écurie) : le talent reste au pilote.
   var indexed = driversWithTeams.map(function(d, idx) {
     var rating = (d.team && d.team !== "Indépendant") ? getRating(d.team) : 70;
-    return { driver: d, idx: idx, teamRating: rating };
+    return { driver: d, idx: idx, teamRating: rating, propre: typeof d.skill === "number" ? d.skill : 70 };
   });
-  indexed.sort(function(a, b) { return b.teamRating - a.teamRating; });
+  indexed.sort(function(a, b) { return (b.propre - a.propre) || (b.teamRating - a.teamRating); });
   
-  // Assigne le meilleur skill au pilote de la meilleure équipe, etc.
+  // Assigne le meilleur skill au meilleur pilote, etc.
   indexed.forEach(function(item, rank) {
     var s = skillPool[rank] || skillPool[skillPool.length - 1];
     item.driver._rjNewSkill = s.skill;
@@ -263,7 +267,7 @@ function _rjAssignSkillsByTeamRanking(driversWithTeams, skillPool) {
   
   // CHAOS : 25% du temps, on swap 1-2 paires non adjacentes pour créer
   // des situations "pilote top dans voiture moyenne"
-  if (Math.random() < 0.25 && indexed.length >= 5) {
+  if (false) {   // permutations au hasard retirées : le talent d'un pilote ne se tire pas au sort
     var swaps = Math.random() < 0.4 ? 2 : 1;
     for (var s = 0; s < swaps; s++) {
       var i1 = Math.floor(Math.random() * Math.floor(indexed.length / 2));
@@ -368,9 +372,14 @@ function _rjRecalibrateSkills(pilotes) {
     
     // Persiste dans G.rivals
     if (typeof d.rivalIdx === "number" && G.rivals[d.rivalIdx]) {
-      G.rivals[d.rivalIdx]._rjOriginalSkill = G.rivals[d.rivalIdx].skill;
-      G.rivals[d.rivalIdx].skill = d._rjNewSkill;
-      G.rivals[d.rivalIdx]._rjTier = d._rjTier;
+      var _rv = G.rivals[d.rivalIdx];
+      _rv._rjOriginalSkill = _rv.skill;
+      _rv.skill = d._rjNewSkill;
+      _rv._rjTier = d._rjTier;
+      try {
+        var _p = Array.isArray(G.driverPool) ? G.driverPool.filter(function (x) { return x && (x.id === _rv._poolId || x.name === _rv.name); })[0] : null;
+        if (_p) _p.skill = d._rjNewSkill;
+      } catch (_e) {}
     }
   });
   
@@ -454,6 +463,16 @@ function _rjNewTeamRatingToBonus(rating) {
        5 ms servait à passer après les autres enveloppes : le registre
        garantit cet ordre sans temporisation. */
     if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
+    if (!Array.isArray(window.RJ_SAVE_HOOKS)) window.RJ_SAVE_HOOKS = [];
+    if (!window.RJ_SAVE_HOOKS.some(function (h) { return h && h.cle === "rj04k"; })) {
+      window.RJ_SAVE_HOOKS.push({ cle: "rj04k",
+        ecrire: function () {
+          var o = {};
+          Object.keys(G).forEach(function (k) { if (/^_rjSkillsCalib_/.test(k) && G[k]) o[k] = true; });
+          return o;
+        },
+        lire: function (bloc, G_) { if (bloc) Object.keys(bloc).forEach(function (k) { if (/^_rjSkillsCalib_/.test(k)) G_[k] = true; }); } });
+    }
     rjInscrire("startQual", { id: "04k-realism-overhaul:startQual", avant: function () {
       try {
         _rjRecalibrateSkills(G.rivals.map(function (r, i) { return { name: r.name, team: r.team, skill: r.skill, rivalIdx: i }; })

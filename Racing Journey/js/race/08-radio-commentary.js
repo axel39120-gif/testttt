@@ -822,7 +822,7 @@
 
         if (!LIVE_RACE || LIVE_RACE.finished || LIVE_RACE.paused) {
           _renderDirect();
-          return ret;
+          return;
         }
         _ensureFeeds();
 
@@ -830,7 +830,7 @@
         var sinceLast = LIVE_RACE.cur - (LIVE_RACE._commLastLap || -99);
         if (sinceLast < 1 && LIVE_RACE.directFeed.length > 0) {
           _renderDirect();
-          return ret;
+          return;
         }
 
         if (Math.random() > speedProb) {
@@ -839,7 +839,7 @@
           var player = LIVE_RACE.drivers.find(function(d) { return d.isPlayer; });
           _persistState(leader, player, alive);
           _renderDirect();
-          return ret;
+          return;
         }
 
         _generateCommentary();
@@ -911,8 +911,15 @@
       // API publique : pousser un message dans le fil DIRECT depuis un autre
       // module (ex. arrêts auto), puis rafraîchir. item = {text|title/desc,
       // color, isRadio, _key, lap?}.
-      window.rjRadioPush = function (item) {
-        try { if (item) { _pushDirect(item); _renderDirect(); } } catch (e) { console.warn('rjRadioPush:', e); }
+      window.rjRadioPush = function (item, texte, opts) {
+        try {
+          if (typeof item === "string") {
+            var titre = item === "ingenieur" ? "Ingénieur" : item;
+            item = { isRadio: true, title: titre, desc: String(texte || ""), color: (opts && opts.color) || '#22D3EE',
+                     _key: 'radio_' + titre.slice(0, 15).toLowerCase().replace(/s+/g, '_') + '_' + String(texte || "").slice(0, 12) };
+          }
+          if (item) { _pushDirect(item); _renderDirect(); }
+        } catch (e) { console.warn('rjRadioPush:', e); }
       };
       window.rjDebugRadio = function () {
         var f = (LIVE_RACE && LIVE_RACE.directFeed) || [];

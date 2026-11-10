@@ -436,7 +436,6 @@ function rjDebugStates() {
           });
         }
       } catch(e) {}
-      return prevUpd2.apply(this, arguments);
             }
       });
     }
