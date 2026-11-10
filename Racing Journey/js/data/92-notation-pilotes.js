@@ -115,16 +115,16 @@
        reste un cran au-dessus. Avant, le meilleur junior plafonnait à 46 et un
        débutant gagnait presque toutes les courses de sa première saison. */
     "Karting Senior": [
-      { tier: "sommet",   count: 2, mean: 60.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 56.0, spread: 1.6 },
-      { tier: "milieu",   count: 10, mean: 50.0, spread: 2.2 },
-      { tier: "recrue",   count: 8, mean: 45.0, spread: 2.4 }
+      { tier: "sommet",   count: 2, mean: 58.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 54.0, spread: 1.6 },
+      { tier: "milieu",   count: 10, mean: 48.0, spread: 2.2 },
+      { tier: "recrue",   count: 8, mean: 43.0, spread: 2.4 }
     ],
     "Karting Junior": [
-      { tier: "sommet",   count: 2, mean: 55.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 51.0, spread: 1.6 },
-      { tier: "milieu",   count: 10, mean: 45.0, spread: 2.3 },
-      { tier: "recrue",   count: 8, mean: 40.0, spread: 2.6 }
+      { tier: "sommet",   count: 2, mean: 52.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 48.0, spread: 1.6 },
+      { tier: "milieu",   count: 10, mean: 42.0, spread: 2.3 },
+      { tier: "recrue",   count: 8, mean: 37.0, spread: 2.6 }
     ],
     "Super Formula": [
       { tier: "sommet",   count: 2, mean: 92.0, spread: 0.8 },

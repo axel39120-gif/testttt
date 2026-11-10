@@ -1459,7 +1459,11 @@
     /* Cas 2 — une autre écurie cherche un pilote. Il faut être crédible. */
     var seuil = 45;
     if (!d) seuil = 62;                                 // sans contrat de réserve, il faut plus
-    if (cred < seuil && !(G.reputation >= 70)) { recruterRemplacant(seat); return; }
+    /* Un pilote en saison blanche est le premier candidat d'un baquet libéré :
+       sa réputation ou son niveau suffisent, sans contrat de réserve. */
+    var libre = G._saisonBlanche && (!G.currentTeam || G.currentTeam === "Indépendant") &&
+      ((G.reputation || 0) >= 35 || (window.RJSaisonBlanche && RJSaisonBlanche.ecart() >= -3));
+    if (cred < seuil && !(G.reputation >= 70) && !libre) { recruterRemplacant(seat); return; }
 
     seat.comble = true;
     seat.offreJoueur = true;
@@ -1996,7 +2000,12 @@
       G._rj79SiegeVacant = null;
       G._playerRole = "num2";
       G.revenue = Math.round((G.revenue || 3000) * 2.2);
-      G.contractDur = Math.max(G.contractDur || 0, 1);
+      /* Promu, il est engagé pour la fin de cette saison ET la suivante : un
+         contrat d'une saison expirait au mercato sans offre de prolongation,
+         et le pilote que l'écurie venait de promouvoir se retrouvait sans baquet. */
+      G.contractDur = Math.max(G.contractDur || 0, 2);
+      G.contractWeeksLeft = Math.max(G.contractWeeksLeft || 0, Math.max(0, 48 - semaine()) + 48);
+      G._contractExpired = false;
     }
 
     d.issue = "promu";
@@ -2436,6 +2445,16 @@
 
   function enregistrerHooks() {
     var ok = true;
+    /* Filet de sécurité : le bilan de réserve (promotion, prolongation, fin de
+       contrat) passe au plus tard au changement de saison. Il ne dépendait que
+       du tick hebdomadaire de fin de saison, qui pouvait ne jamais venir. */
+    if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
+    if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "79-reserve"; })) {
+      window.RJ_SEASON_HOOKS.push({ id: "79-reserve", avant: function () {
+        try { var d = RD(); if (d && !(d.saison > saison())) bilanFinDeSaison(); }
+        catch (e) { console.warn(TAG, "bilan au changement de saison :", e && e.message); }
+      } });
+    }
     if (has("WEEKLY_TICK_HOOKS") && window.WEEKLY_TICK_HOOKS && window.WEEKLY_TICK_HOOKS.push) {
       if (!window.WEEKLY_TICK_HOOKS.some(function (h) { return h && h.id === "reserveDriver"; })) {
         window.WEEKLY_TICK_HOOKS.push({ id: "reserveDriver", run: hookHebdo });
@@ -2567,6 +2586,7 @@
         rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "renderPalmares");
         rjDesinscrire(["79-pilote-reserve:","79-reserviste"], "renderChamp");
         rjDesinscrire(["79-pilote-reserve:"], "getEffectiveTeamRating"); window._rj79Devel = false;
+        if (Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = window.RJ_SEASON_HOOKS.filter(function (h) { return !(h && h.id === "79-reserve"); });
         var bn = document.getElementById("rj79-champ-note"); if (bn && bn.parentNode) bn.parentNode.removeChild(bn);
         ["WEEKLY_TICK_HOOKS", "RACE_POST_HOOKS"].forEach(function (k) {
           if (!window[k]) return;

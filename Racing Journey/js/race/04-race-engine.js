@@ -17875,8 +17875,11 @@ function _showResultCoeur() {
     }), w.sort(function(e, t) {
       return e.pos - t.pos
     }));
+    /* L'offre de prolongation de sa propre écurie reste ouverte jusqu'au
+       mercato : elle expirait avant la dernière manche et un pilote qui
+       attendait la fin de saison pour choisir se retrouvait sans baquet. */
     if (G.offers && G.offers.length && (G.offers.forEach(function(e) {
-        "number" == typeof e.expire && (e.expire -= 1)
+        "number" == typeof e.expire && !(e.team === G.currentTeam && e.cat === G.cat) && (e.expire -= 1)
       }), G.offers = G.offers.filter(function(e) {
         return e.signed || "number" != typeof e.expire || e.expire > 0
       })), G.sponsorOffers && G.sponsorOffers.length && (G.sponsorOffers.forEach(function(e) {
@@ -17893,7 +17896,10 @@ function _showResultCoeur() {
     } catch (e) {
       console.warn("race->relations:", e)
     }
-    var E = G.races.length >= CAL_RACES.length && CAL_RACES.length > 0;
+    /* Fin de saison : toutes les manches du calendrier sont passées. Compter les
+       seules courses du joueur ne marchait pas pour un réserviste (il ne court pas
+       chaque week-end) : sa saison ne finissait jamais et son bilan de réserve non plus. */
+    var E = CAL_RACES.length > 0 && (G.races.length >= CAL_RACES.length || CAL_RACES.every(function(c) { return c.done; }));
     E && (G.seasonOver = !0);
     var T = G.races.length;
     updateUI(), renderChamp(), renderOffers();
@@ -19451,7 +19457,28 @@ function _buildTransferOffersCoeur() {
           isRenewal: i
         })
       }
-    }), "Karting Junior" === G.cat && 0 === r.length && r.push({
+    }), (function() {
+      /* Un contrat qui court encore se poursuit, même sans nouvelle offre : sans
+         cette carte, le mercato ne proposait que « Saison blanche » et le pilote
+         perdait son baquet en plein contrat pluriannuel. */
+      var _eq = G.currentTeam;
+      if (!_eq || "Indépendant" === _eq || (G.contractDur || 0) <= 1) return;
+      if (r.some(function(x) { return x.team === _eq && x.isRenewal; })) return;
+      var _reste = G.contractDur - 1;
+      r.unshift({
+        name: _eq + " — contrat en cours",
+        team: _eq,
+        budget: 0,
+        dur: _reste,
+        repReq: 0,
+        desc: "Ton contrat continue : encore " + _reste + " saison" + (_reste > 1 ? "s" : "") + " avec " + _eq + ".",
+        boost: "Contrat en cours",
+        promotion: !1,
+        nextCat: null,
+        isRenewal: !0,
+        keepContract: !0
+      })
+    })(), "Karting Junior" === G.cat && 0 === r.length && r.push({
       name: "Continuer en Karting Junior",
       budget: 0,
       repReq: 0,
