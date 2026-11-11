@@ -143,10 +143,10 @@
              "neutraliser.",
       question: "Personne ne t'en voudra de rentrer.",
       choix: [
-        { label: "Rentrer au stand",
+        { label: "Lever le pied",
           detail: "Personne ne juge un pilote qui refuse l'impossible.",
           resultat: { gain: -4, perte: 0, abandon: 0, mental: 3,
-            texte: "Tu lèves le pied et rentres. Certains diront que c'était sage. " +
+            texte: "Tu lèves le pied et laisses passer le pire. Certains diront que c'était sage. " +
                    "Tu es de ceux-là." } },
         { label: "Continuer à l'aveugle",
           detail: "Ceux de devant ne voient pas mieux que toi.",
@@ -285,6 +285,7 @@
     {
       id: "safety_final",
       cats: ["Formule 1", "IndyCar"],
+      stand: true,          // un choix d'arrêt : écarté, les arrêts sont automatiques (82)
       /* Abou Dabi 2021 : une neutralisation tardive, un choix de pneus, et
          un championnat qui change de mains en un tour. */
       quand: function () { return avancement() > 0.82; },
@@ -523,6 +524,7 @@
     {
       id: "depart_pluie",
       cats: ["Formule 1", "Super Formula"],
+      stand: true,
       /* Hongrie 2021 : toute la grille rentre aux stands changer de pneus au
          tour de formation, et un pilote se retrouve seul sur la ligne. */
       quand: function () { return avancement() < 0.1 && pluie(); },
@@ -708,6 +710,7 @@
     {
       id: "carburant_ovale",
       cats: ["IndyCar"],
+      stand: true,
       quand: function () { return avancement() > 0.78; },
       titre: "La dernière goutte",
       recit: "Le calcul du muret est formel : il manque deux tours de carburant " +
@@ -996,6 +999,7 @@
         /* La discipline d'abord : inutile d'évaluer une situation qui ne
            peut pas exister dans ce championnat. */
         if (!dansCategorie(m.cats)) return false;
+        if (m.stand && window.RJ_ARRETS_AUTO) return false;
         if (!m.quand()) return false;
         /* Un moment déjà vécu peut revenir, mais bien plus rarement : ce
            qui fait leur prix, c'est qu'ils ne se répètent pas. */

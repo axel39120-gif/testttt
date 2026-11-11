@@ -169,6 +169,7 @@
       {
         id: "pit_undercut",
         weightFn: function (e) {
+          if (window.RJ_ARRETS_AUTO) return 0;           // les arrêts sont décidés par le muret (82)
           if (typeof _pitEnabledForCurrentRace === "function" && !_pitEnabledForCurrentRace()) return 0;
           if ((e.phase !== "mid" && e.phase !== "late") || neutralActive() || restartWindow()) return 0;
           return e.phase === "mid" ? 1.4 : 1.0;
@@ -484,20 +485,12 @@
             text: function () {
               return toRain
                 ? "Premières gouttes" + (storm ? " — et ça va tomber fort" : "") +
-                  ". La piste va changer dans les prochains tours. Tu joues comment ?"
-                : "La piste commence à sécher. Rester en pneus pluie va te coûter cher bientôt. Tu fais quoi ?";
+                  ". La piste va changer dans les prochains tours, le muret s'occupe des pneus. Tu roules comment d'ici là ?"
+                : "La piste commence à sécher, le muret va t'appeler pour les slicks. Tu roules comment d'ici là ?";
             },
             choices: [
               {
-                text: "Rentrer changer de pneus maintenant",
-                _weatherStrategy: "pit", _doPit: true,
-                mods: { player: 0.015 }, difficulty: 0.25, actionType: "adaptation",
-                successMod: 0.015, brilliantMod: 0.045, rateMinMod: -0.01, rateMajMod: -0.025,
-                paceModOnBrillant: { deltaSec: -0.6, laps: 5, reason: "Timing parfait — bon pneu au bon moment" },
-                note: "Décision tranchée"
-              },
-              {
-                text: "Parier un tour de plus sur ces pneus",
+                text: "Attaquer pendant que les autres hésitent",
                 _weatherStrategy: storm ? "stay" : "push",
                 mods: { player: 0.02 }, difficulty: storm ? 0.7 : 0.55, actionType: "adaptation",
                 successMod: 0.02, brilliantMod: 0.07, rateMinMod: -0.025, rateMajMod: -0.07,
@@ -508,7 +501,7 @@
                 note: storm ? "Pari risqué — possible sortie / DNF" : "Pari sur le bon timing"
               },
               {
-                text: "Copier la stratégie de ton équipe / ton coéquipier",
+                text: "Rester prudent le temps que ça se stabilise",
                 _weatherStrategy: toRain ? "stay" : "stay",
                 mods: { player: 0.005 }, difficulty: 0.15, actionType: "gestion",
                 successMod: 0.005, brilliantMod: 0.02, rateMinMod: -0.006, rateMajMod: -0.015,

@@ -824,6 +824,14 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Ancien catalogue de séances (TRAIN_CATALOG, doTrain), remplacé par les focus, retiré (−345 lignes).
 - Tests : suite `entrainement`. La suite de création sur téléphone devient `creationtel` : elle portait le même nom que la suite « Création d'une carrière », qui ne tournait plus depuis la v267.
 
+## Arrêts au stand automatiques — v272
+
+- Le joueur ne décide plus de ses arrêts : le bouton « Box » disparaît, et toute demande d'arrêt (bouton, choix d'un événement, texte d'un choix) est ignorée (82). Le muret fait rentrer tout le monde selon le plan de course.
+- L'ingénieur annonce chaque arrêt à la radio : « Box, box ! On change les pneus. » (en endurance, un relais sur trois environ : « On garde les pneus, ravitaillement seulement. »).
+- **Météo** : quand la piste passe du sec au mouillé (ou l'inverse), tout le plateau rentre dans les trois tours (« Box, box ! Pneus pluie. » / « On repasse en slicks. ») ; un arrêt prévu tout près est fusionné. L'événement « La pluie arrive » propose désormais une façon de rouler (attaquer, rester prudent) au lieu de l'arrêt.
+- **Événements** : les choix d'arrêt (Safety Car, VSC, undercut, couvrir un rival…) sont retirés juste avant l'affichage ; un événement qui ne parle que d'arrêt est sauté ; la Safety Car et la VSC proposent des choix de relance. Trois moments décisifs fondés sur un arrêt (neutralisation tardive, seul sur la grille, ravitaillement en ovale) ne sont plus tirés ; « Le déluge » propose « Lever le pied ».
+- Tests : suite `arrets`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

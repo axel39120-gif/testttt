@@ -16352,7 +16352,7 @@ function _resolveLiveEventCoeur(e) {
               _playerPit(true)
             }
           }
-        } else if (_strat === "stay") _radioOk = " Compris, on tient avec ces pneus. Sois prudent.";
+        } else if (_strat === "stay") _radioOk = " Compris, prudence le temps que ça se stabilise.";
         else if (_strat === "push") _radioOk = " Push push push ! Profite avant le changement !";
         LIVE_RACE.newsFeed || (LIVE_RACE.newsFeed = []);
         LIVE_RACE.newsFeed.unshift({
