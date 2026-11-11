@@ -782,6 +782,19 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Labels affichés** sur la fiche de chaque écurie (avec une phrase et « Ton profil de pilote plaît à cette écurie » le cas échéant), sur chaque offre de F1 et sur chaque académie de la page Académie. Un baquet perdu dit quand le caractère de l'écurie a pesé (« Ferrari a préféré l'expérience »).
 - Tests : suite `caracteres` ; suite `academie` adaptée.
 
+## Création du pilote sans défiler — v267
+
+- **Module `140-creation-compacte.js` et `css/creation.css`** : sur un téléphone tenu à l'horizontale (852×393), chaque étape défilait (plus de 1 000 px pour atteindre « Continuer » à la première). Désormais, une colonne centrée, plus dense :
+  - Retour et Continuer dans une barre fixe en bas, toujours visible, le message d'erreur entre les deux ; de même pour le choix du mode de jeu (la ligne « D'autres modes viendront » est retirée) ;
+  - la progression et le rappel du mode dans le bandeau ;
+  - prénom et nom sur une ligne ; date de naissance et année de début sur une ligne ; ville et âge calculé sur une ligne ;
+  - continents sur une ligne, **sans drapeaux** (seuls les pays gardent le leur) ; pays sur sept colonnes ; l'écurie de cœur, facultative, se replie en une ligne ;
+  - style et caractère en quatre tuiles par ligne (le détail du choix suit, 75) ;
+  - visage : un réglage par ligne, le numéro sous l'aperçu ; récapitulatif sans le rappel du mode (déjà dans le bandeau), statistiques sur deux colonnes.
+- Sous-titres d'étape courts, sans point final : « Identité — Nom et nationalité », « Origines — Naissance et débuts », « Style — Pilotage », « Caractère — Trait dominant », « Profil — Visage et numéro », « Récapitulatif ».
+- Résultat (852×393) : aucune étape ne défile, sauf Origines (21 px) et Profil (14 px), et la liste des pays tant qu'elle est ouverte. Sur un grand téléphone (932×430), rien ne défile.
+- Tests : suite `creation`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

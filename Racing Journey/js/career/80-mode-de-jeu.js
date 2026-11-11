@@ -364,12 +364,12 @@
    * ================================================================== */
 
   var ETAPES = [
-    { n: 1, nom: "Identité",     aide: "Ton nom et ta nationalité." },
-    { n: 2, nom: "Origines",     aide: "Date de naissance, ville et année de début." },
-    { n: 3, nom: "Style",        aide: "Ta manière de piloter." },
-    { n: 4, nom: "Caractère",    aide: "Le trait qui te définit." },
-    { n: 5, nom: "Numéro",       aide: "Le numéro qui te suivra toute ta carrière." },
-    { n: 6, nom: "Récapitulatif", aide: "Vérifie ton profil avant de te lancer." }
+    { n: 1, nom: "Identité",      aide: "Nom et nationalité" },
+    { n: 2, nom: "Origines",      aide: "Naissance et débuts" },
+    { n: 3, nom: "Style",         aide: "Pilotage" },
+    { n: 4, nom: "Caractère",     aide: "Trait dominant" },
+    { n: 5, nom: "Profil",        aide: "Visage et numéro" },
+    { n: 6, nom: "Récapitulatif", aide: "" }
   ];
 
   var _dansCreation = false;
@@ -421,7 +421,7 @@
     }
     var step = (typeof window.creStep === "number") ? window.creStep : 1;
     var e = ETAPES[step - 1];
-    if (e) nom.textContent = e.nom + " \u2014 " + e.aide;
+    if (e) nom.textContent = e.aide ? e.nom + " \u2014 " + e.aide : e.nom;
 
     majBoutonContinuer();
   }

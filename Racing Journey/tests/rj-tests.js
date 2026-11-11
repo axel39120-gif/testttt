@@ -3520,6 +3520,40 @@ async function suiteCaracteres() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteCreation() {
+  S.suite("Création du pilote sur téléphone (sans défiler)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true, charger: false });
+  try {
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(r => setTimeout(r, ms)), out = { etapes: [] };
+      goCreate(); await d(300);
+      const go = document.getElementById("rj80-go");
+      out.modeBouton = !!go && go.getBoundingClientRect().bottom <= innerHeight;
+      go.click(); await d(400);
+      out.continents = [...document.querySelectorAll("#continent-grid .continent-opt")].map(b => !!b.querySelector("svg, img")).filter(Boolean).length;
+      selContinent("Europe"); await d(100);
+      out.pays = !!document.querySelector("#nat-grid .nat-opt svg, #nat-grid .nat-opt img");
+      document.getElementById("p-fn").value = "Lou"; document.getElementById("p-ln").value = "Martin";
+      document.querySelector("#nat-grid .nat-opt").click(); await d(250);
+      for (let n = 1; n <= 6; n++) {
+        if (n === 2) { document.getElementById("p-birthcity").value = "Lyon"; document.getElementById("p-dob-year").value = "2012"; }
+        const sc = document.querySelector("#S-create > .scroll"), btn = document.getElementById("cre-next");
+        out.etapes.push({ n, defile: sc.scrollHeight - sc.clientHeight, bouton: btn.getBoundingClientRect().bottom <= innerHeight && btn.getBoundingClientRect().top >= 0,
+          titre: (document.getElementById("rj80-stepname") || {}).textContent || "" });
+        if (n < 6) { creNext(); await d(250); }
+      }
+      return out;
+    });
+    S.verifier("le choix du mode : Continuer visible sans défiler", r.modeBouton, "");
+    S.verifier("continents sans drapeau, pays avec leur drapeau", r.continents === 0 && r.pays, r.continents + " " + r.pays);
+    S.verifier("Continuer toujours visible, à chaque étape", r.etapes.every(e => e.bouton), JSON.stringify(r.etapes.map(e => e.bouton)));
+    S.verifier("identité (pays choisi), style, caractère et récapitulatif tiennent sans défiler", [1, 3, 4, 6].every(n => r.etapes[n - 1].defile <= 2), JSON.stringify(r.etapes.map(e => e.defile)));
+    S.verifier("origines et profil : au plus quelques pixels de défilement", r.etapes[1].defile <= 40 && r.etapes[4].defile <= 40, JSON.stringify(r.etapes.map(e => e.defile)));
+    S.verifier("sous-titres courts, sans point final", r.etapes.every(e => e.titre && !/\.\s*$/.test(e.titre) && e.titre.length <= 40), JSON.stringify(r.etapes.map(e => e.titre)));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3749,7 +3783,8 @@ const SUITES = {
   appui: suiteAppui,
   calendrier: suiteCalendrier,
   academie: suiteAcademie,
-  caracteres: suiteCaracteres
+  caracteres: suiteCaracteres,
+  creation: suiteCreation
 };
 
 async function principal() {

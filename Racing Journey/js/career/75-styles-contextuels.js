@@ -357,7 +357,9 @@
     }
     if (idx < 0) idx = 0;
 
-    var finRangee = Math.min(idx - (idx % 2) + 1, opts.length - 1);
+    // autant de tuiles par rangée que la grille en affiche (2, ou 4 avec la création compacte, 140)
+    var cols = Math.max(1, (getComputedStyle(grille).gridTemplateColumns || "").split(" ").filter(Boolean).length || 2);
+    var finRangee = Math.min(idx - (idx % cols) + cols - 1, opts.length - 1);
     var tmp = document.createElement("div");
     tmp.innerHTML = corps(f);
     var box = tmp.firstChild;
