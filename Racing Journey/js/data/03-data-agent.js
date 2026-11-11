@@ -8976,8 +8976,8 @@ var PRES = {
   },
   creStep = 1,
   selNatVal = "FR",
-  selStyleVal = "attaquant",
-  selTraitVal = "leader",
+  selStyleVal = null,
+  selTraitVal = null,
   AV = {
     skin: "#FDDBB4",
     eyes: "normal",
@@ -9113,7 +9113,7 @@ function formatPilotName(e, t, r) {
 
 function goCreate() { return rjAppeler("goCreate", _goCreateCoeur, this, arguments); }
 function _goCreateCoeur() {
-  creStep = 1, selNatVal = null, selStyleVal = "attaquant", selTraitVal = "leader", _selectedContinent = null;
+  creStep = 1, selNatVal = null, selStyleVal = null, selTraitVal = null, _selectedContinent = null;
   var ids = ["p-fn", "p-ln", "p-birthcity"];
   for (var i = 0; i < ids.length; i++) {
     var el = document.getElementById(ids[i]);
@@ -9138,13 +9138,9 @@ function _goCreateCoeur() {
     creErr.className = "fb err";
     creErr.innerHTML = "";
   }
-  document.querySelectorAll("#style-grid .trait-opt").forEach(function(e) {
+  /* Style et caractère : aucun choix par défaut, le joueur choisit lui-même. */
+  document.querySelectorAll("#style-grid .trait-opt, #trait-list .trait-opt").forEach(function(e) {
     e.classList.remove("on");
-    if (e.getAttribute("onclick") && e.getAttribute("onclick").indexOf("'attaquant'") >= 0) e.classList.add("on");
-  });
-  document.querySelectorAll("#trait-list .trait-opt").forEach(function(e) {
-    e.classList.remove("on");
-    if (e.getAttribute("onclick") && e.getAttribute("onclick").indexOf("'leader'") >= 0) e.classList.add("on");
   });
   var natGrid = document.getElementById("nat-grid");
   if (natGrid) {
@@ -10653,6 +10649,8 @@ function _creNextCoeur() {
       year: i
     }, G.pilot.birthCity = s, G.pilot.startYear = o, G.pilot.ageAtStart = l
   }
+  if (3 === creStep && !selStyleVal) return e.className = "fb err on", void(e.innerHTML = "Choisis ton style de pilotage.");
+  if (4 === creStep && !selTraitVal) return e.className = "fb err on", void(e.innerHTML = "Choisis ton trait de caractère.");
   if (3 === creStep && (G.pilot.style = selStyleVal), 4 === creStep && (G.pilot.trait = selTraitVal), 5 === creStep) {
     var c = parseInt(document.getElementById("p-num").value) || 23;
     if (c < 2 || c > 99) return e.className = "fb err on", void(e.innerHTML = "Choisis un numéro entre 2 et 99.");

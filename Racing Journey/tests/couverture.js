@@ -303,6 +303,7 @@ async function jouerScenario(page, rapide) {
       }
       for (let i = 0; i < 8; i++) {
         if (window.creStep === 6) break;
+        if (window.creStep === 3 && !window.selStyleVal) document.querySelector("#style-grid .trait-opt").click(); if (window.creStep === 4 && !window.selTraitVal) document.querySelector("#trait-list .trait-opt").click(); 
         creNext();
         await new Promise(r => setTimeout(r, 120));
       }

@@ -231,8 +231,10 @@
 
   function ouvrirEcranMode() {
     if (!creerEcran()) return false;
-    photographierSaisie();
     var G = G_();
+    var scr = document.getElementById("S-create");
+    if (scr && scr.classList.contains("on")) photographierSaisie();   // « changer » de mode en cours de création
+    else oublierSaisie(G);                                            // nouvelle partie : on repart de zéro
     choixTemporaire = (G && G._gameMode) || "normal";
     rendreListe();
     if (fn("navTo")) window.navTo("S-mode", null);
@@ -240,7 +242,16 @@
     return true;
   }
 
+  /* Quitter la création efface la saisie conservée : la partie suivante
+     ne reprend ni le nom, ni l'étape, ni l'écurie de cœur, ni le milieu. */
+  function oublierSaisie(G) {
+    _saisie = null;
+    choixEcurie = null;
+    if (G) delete G._milieuChoisi;
+  }
+
   function retourSplash() {
+    oublierSaisie(G_());
     if (fn("go")) window.go("S-splash");
     else if (fn("navTo")) window.navTo("S-splash", null);
   }
@@ -444,6 +455,8 @@
       return true;
     }
     if (step === 2) return !!val("p-birthcity");
+    if (step === 3) return !!window.selStyleVal;
+    if (step === 4) return !!window.selTraitVal;
     return true;
   }
 
@@ -464,12 +477,14 @@
       el.addEventListener("input", majBoutonContinuer);
       el._rj80 = true;
     });
-    /* la nationalité se choisit au clic, pas au clavier */
-    var grille = document.getElementById("nat-grid");
-    if (grille && !grille._rj80) {
-      grille.addEventListener("click", function () { setTimeout(majBoutonContinuer, 30); });
-      grille._rj80 = true;
-    }
+    /* la nationalité, le style et le caractère se choisissent au clic, pas au clavier */
+    ["nat-grid", "style-grid", "trait-list"].forEach(function (id) {
+      var grille = document.getElementById(id);
+      if (grille && !grille._rj80) {
+        grille.addEventListener("click", function () { setTimeout(majBoutonContinuer, 30); });
+        grille._rj80 = true;
+      }
+    });
   }
 
   /* Clic sur un bouton inactif : on garde le message du cœur (il est

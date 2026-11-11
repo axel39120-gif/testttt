@@ -118,6 +118,7 @@ async function suiteCreation() {
         if (v && !v.value) { v.value = "Lyon"; v.dispatchEvent(new Event("input", { bubbles: true })); }
         const aisee = [...document.querySelectorAll(".rj115-milieu")][2];
         if (window.creStep === 2 && aisee) aisee.click();
+        if (window.creStep === 3 && !window.selStyleVal) document.querySelector("#style-grid .trait-opt").click(); if (window.creStep === 4 && !window.selTraitVal) document.querySelector("#trait-list .trait-opt").click(); 
         creNext();
       });
       await page.waitForTimeout(400);
@@ -2806,6 +2807,7 @@ async function suiteRivaux() {
       val("p-fn", "Lucas"); val("p-ln", "Martin"); window.selNatVal = "FR";
       for (let k = 0; k < 7 && document.querySelector(".scr.on").id === "S-create"; k++) {
         val("p-birthcity", "Lyon"); val("p-dob-year", "2012"); val("p-startyear", "2024");
+        if (window.creStep === 3 && !window.selStyleVal) document.querySelector("#style-grid .trait-opt").click(); if (window.creStep === 4 && !window.selTraitVal) document.querySelector("#trait-list .trait-opt").click(); 
         creNext(); await new Promise(r => setTimeout(r, 250));
       }
       navTo("S-champ", "ni-champ"); chtab("classement");
@@ -3542,8 +3544,16 @@ async function suiteCreation() {
         const sc = document.querySelector("#S-create > .scroll"), btn = document.getElementById("cre-next");
         out.etapes.push({ n, defile: sc.scrollHeight - sc.clientHeight, bouton: btn.getBoundingClientRect().bottom <= innerHeight && btn.getBoundingClientRect().top >= 0,
           titre: (document.getElementById("rj80-stepname") || {}).textContent || "" });
-        if (n < 6) { creNext(); await d(250); }
+        if (n === 3 || n === 4) { const avant = document.getElementById("cre-next").classList.contains("rj80-off"); creNext(); await d(150); out["bloque" + n] = avant && window.creStep === n; }
+        if (n < 6) { if (window.creStep === 3 && !window.selStyleVal) document.querySelector("#style-grid .trait-opt").click(); if (window.creStep === 4 && !window.selTraitVal) document.querySelector("#trait-list .trait-opt").click(); creNext(); await d(250); }
       }
+      // « changer » de mode en cours de création : la saisie et l'étape restent
+      document.querySelector("#rj80-banner button").click(); await d(300); document.getElementById("rj80-go").click(); await d(500);
+      out.garde = window.creStep === 6 && document.getElementById("p-fn").value === "Lou" && window.selStyleVal !== null;
+      // quitter vers l'accueil, puis nouvelle partie : tout repart de zéro
+      document.querySelector("#rj80-banner button").click(); await d(300); document.getElementById("rj80-back").click(); await d(300);
+      goCreate(); await d(300); document.getElementById("rj80-go").click(); await d(500);
+      out.neuf = window.creStep === 1 && document.getElementById("p-fn").value === "" && !window.selNatVal && !window.selStyleVal && !window.selTraitVal;
       return out;
     });
     S.verifier("le choix du mode : Continuer visible sans défiler", r.modeBouton, "");
@@ -3551,6 +3561,9 @@ async function suiteCreation() {
     S.verifier("Continuer toujours visible, à chaque étape", r.etapes.every(e => e.bouton), JSON.stringify(r.etapes.map(e => e.bouton)));
     S.verifier("identité (pays choisi), style, caractère et récapitulatif tiennent sans défiler", [1, 3, 4, 6].every(n => r.etapes[n - 1].defile <= 2), JSON.stringify(r.etapes.map(e => e.defile)));
     S.verifier("origines et profil : au plus quelques pixels de défilement", r.etapes[1].defile <= 40 && r.etapes[4].defile <= 40, JSON.stringify(r.etapes.map(e => e.defile)));
+    S.verifier("style et caractère obligatoires : sans choix, Continuer est inactif et l'étape ne change pas", r.bloque3 && r.bloque4, JSON.stringify([r.bloque3, r.bloque4]));
+    S.verifier("changer de mode en cours de création garde la saisie et l'étape", r.garde, "");
+    S.verifier("quitter la création puis lancer une nouvelle partie repart de zéro", r.neuf, "");
     S.verifier("sous-titres courts, sans point final", r.etapes.every(e => e.titre && !/\.\s*$/.test(e.titre) && e.titre.length <= 40), JSON.stringify(r.etapes.map(e => e.titre)));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
