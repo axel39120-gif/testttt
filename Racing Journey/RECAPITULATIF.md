@@ -795,6 +795,11 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Résultat (852×393) : aucune étape ne défile, sauf Origines (21 px) et Profil (14 px), et la liste des pays tant qu'elle est ouverte. Sur un grand téléphone (932×430), rien ne défile.
 - Tests : suite `creation`.
 
+## Logos des académies — v268
+
+- Les sept logos d'académies sont redessinés comme ceux des écuries de F1 : tuile 40×40 en dégradé, emblème qui rappelle l'écurie mère, plaque de texte en bas, et la même finition (coins arrondis, reflet, double liseré, appliquée par 63). Ferrari : l'écu jaune et le tricolore, monogramme FDA, « Driver Academy » ; Red Bull : le soleil et un taureau, « Junior Team » ; Mercedes : l'étoile dans son anneau pétrole, « Junior » ; Alpine : le A et son triangle rose, « Academy » ; McLaren : la virgule papaye, « Development » ; Haas : les bandes rouge et blanche, « Academy » ; Williams : le W bleu ciel, « Academy ».
+- Tests : suite `logos` (finition des logos d'académies).
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
