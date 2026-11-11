@@ -31,8 +31,10 @@
 #S-create .rj140-droite .rj80-banner { margin: 0 !important; padding: 4px 10px !important; font-size: 9px !important; white-space: nowrap; }
 
 /* --- Contenu ---------------------------------------------------------------- */
-#S-create > .scroll { padding-top: 8px !important; padding-bottom: 8px !important; }
-#S-create .apex-create-body { padding-top: 0 !important; padding-bottom: 4px !important; margin-top: 0 !important; }
+/* Le bloc est centré entre le bandeau et la barre ; s'il est plus haut que la
+   place, les marges automatiques tombent à zéro et il défile depuis le haut. */
+#S-create > .scroll { padding-top: 8px !important; padding-bottom: 8px !important; display: flex !important; flex-direction: column; }
+#S-create .apex-create-body { padding-top: 0 !important; padding-bottom: 0 !important; margin-top: auto !important; margin-bottom: auto !important; width: 100%; flex: 0 0 auto; min-height: 0 !important; }
 #S-create .rj80-stepname { margin: 0 0 10px !important; }
 .rj140-cache { display: none !important; }
 #S-create .inp { min-height: 38px !important; padding-top: 7px !important; padding-bottom: 7px !important; margin-bottom: 0 !important; }

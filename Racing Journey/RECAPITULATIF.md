@@ -800,6 +800,13 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Les sept logos d'académies sont redessinés comme ceux des écuries de F1 : tuile 40×40 en dégradé, emblème qui rappelle l'écurie mère, plaque de texte en bas, et la même finition (coins arrondis, reflet, double liseré, appliquée par 63). Ferrari : l'écu jaune et le tricolore, monogramme FDA, « Driver Academy » ; Red Bull : le soleil et un taureau, « Junior Team » ; Mercedes : l'étoile dans son anneau pétrole, « Junior » ; Alpine : le A et son triangle rose, « Academy » ; McLaren : la virgule papaye, « Development » ; Haas : les bandes rouge et blanche, « Academy » ; Williams : le W bleu ciel, « Academy ».
 - Tests : suite `logos` (finition des logos d'académies).
 
+## Création du pilote : centrage et corrections — v269
+
+- Le contenu de chaque étape est centré entre le bandeau et la barre d'action (il défile depuis le haut s'il est plus grand que la place).
+- **Style de pilotage et caractère obligatoires** : plus de choix par défaut (Attaquant, Leader né) ; Continuer reste inactif tant que le joueur n'a pas choisi, et la création refuse de passer l'étape sinon (« Choisis ton style de pilotage », « Choisis ton trait de caractère »).
+- **Nouvelle partie remise à zéro** : quitter la création vers l'accueil puis relancer une partie reprenait l'ancienne saisie et l'étape où l'on s'était arrêté (la saisie conservée pour un aller-retour par « changer » de mode n'était jamais effacée), ce qui pouvait aussi afficher un titre d'étape décalé. La saisie n'est désormais conservée que pour « changer » de mode ; quitter ou relancer repart de zéro (écurie de cœur et milieu familial compris).
+- Tests : suite `creation` (choix obligatoires, « changer » garde la saisie, nouvelle partie à zéro).
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

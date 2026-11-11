@@ -392,8 +392,8 @@
         try {
           setTimeout(function () {
             var e = (typeof creStep !== "undefined") ? creStep : 0;
-            if (e === 3) majStyle((typeof selStyleVal !== "undefined" && selStyleVal) || "attaquant");
-            if (e === 4) majTrait((typeof selTraitVal !== "undefined" && selTraitVal) || "leader");
+            if (e === 3) majStyle((typeof selStyleVal !== "undefined" && selStyleVal) || null);
+            if (e === 4) majTrait((typeof selTraitVal !== "undefined" && selTraitVal) || null);
           }, 40);
         } catch (e) {}
         return r;
@@ -405,8 +405,8 @@
         try {
           setTimeout(function () {
             var e = (typeof creStep !== "undefined") ? creStep : 0;
-            if (e === 3) majStyle((typeof selStyleVal !== "undefined" && selStyleVal) || "attaquant");
-            if (e === 4) majTrait((typeof selTraitVal !== "undefined" && selTraitVal) || "leader");
+            if (e === 3) majStyle((typeof selStyleVal !== "undefined" && selStyleVal) || null);
+            if (e === 4) majTrait((typeof selTraitVal !== "undefined" && selTraitVal) || null);
           }, 40);
         } catch (e) {}
         return r;
