@@ -378,7 +378,8 @@
 
     var TT = has('TEAM_TRUST') ? window.TEAM_TRUST : null;
     if (!TT) return;
-    var trust = TT.value;
+    // Patience de l'écurie (139) : Mercedes attend plus longtemps que Red Bull.
+    var trust = TT.value + (window.RJCaracteres ? RJCaracteres.patience(G.currentTeam) : 0);
     var role = G._playerRole || 'num2';
     var mains = (TT.objectives || []).filter(function (o) { return o.type === 'main'; });
     var failedMains = mains.filter(function (o) { return o.failed; }).length;

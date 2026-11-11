@@ -94,11 +94,16 @@
 
   function prixPlace(cat, offre) { return offre && offre.cost ? offre.cost : 0; }
 
+  /* Caractère de l'écurie (139) : points ajoutés à la note d'un candidat. */
+  function ajC(cat, equipe, c) { return window.RJCaracteres && c ? RJCaracteres.ajustement(cat, equipe, c) : 0; }
+
   /* Ce que l'écurie regarde, selon son rang et la catégorie. */
   function priorites(cat, equipe, payant) {
     var p = rang(cat, equipe);
     // Baquet payant : même les grandes écuries regardent l'argent, mais misent sur un talent.
     var argent = payant ? 0.12 + 0.33 * (1 - p) : 0.55 * Math.pow(1 - p, 1.5);
+    var car = window.RJCaracteres && RJCaracteres.ecurie(equipe, cat);
+    if (car) argent = Math.min(0.6, argent * car.argent);
     return { talent: 0.85 - argent, argent: argent, image: 0.15 };
   }
 
@@ -119,7 +124,8 @@
     var reste = actifs.filter(function (d) { return d.cat === cat; }).sort(function () { return Math.random() - 0.5; }).slice(0, 3);
     var candidats = monte.concat(reste).map(function (d) {
       var argent = soutien(d, cat);
-      return { nom: d.name, talent: d.skill, argent: argent, score: note(d.skill, argent, 0.5) };
+      var rookie = d.cat !== cat;                                  // il arrive de la catégorie inférieure
+      return { nom: d.name, talent: d.skill, argent: argent, rookie: rookie, score: note(d.skill + ajC(cat, equipe, { rookie: rookie }), argent, 0.5) };
     });
     var bonusResultats = G.cat === cat || (VIVIERS[cat] || []).indexOf(G.cat) >= 0
       ? (G.champPos === 1 ? 10 : G.champPos === 2 ? 7 : G.champPos === 3 ? 5 : G.champPos <= 5 ? 3 : 0) : 0;
@@ -127,7 +133,7 @@
     var academie = typeof isAcademyAffiliate === "function" && isAcademyAffiliate(equipe, cat);
     var argentJoueur = academie && payant ? besoin : apportJoueur();
     candidats.push({ nom: "joueur", joueur: true, talent: talentJoueur, argent: argentJoueur,
-      score: note(talentJoueur, argentJoueur, Math.min(1, (G.reputation || 0) / 100)) });
+      score: note(talentJoueur + ajC(cat, equipe, window.RJCaracteres && RJCaracteres.joueur(cat, equipe)), argentJoueur, Math.min(1, (G.reputation || 0) / 100)) });
     candidats.sort(function (a, b) { return b.score - a.score; });
     return { priorites: w, besoin: besoin, academie: academie, candidats: candidats,
              rangJoueur: candidats.map(function (c) { return !!c.joueur; }).indexOf(true) + 1 };
@@ -153,7 +159,8 @@
       var premier = c.candidats.filter(function (x) { return !x.joueur; })[0];
       if (!gagne) {
         E.perdus.push({ equipe: o.team, cat: o.cat, raison: "concurrence", choisi: premier && premier.nom,
-          atout: premier && premier.argent >= c.besoin && c.priorites.argent >= 0.3 ? "argent" : "talent", argent: premier && premier.argent });
+          atout: premier && premier.argent >= c.besoin && c.priorites.argent >= 0.3 ? "argent" : "talent", argent: premier && premier.argent,
+          motif: window.RJCaracteres ? RJCaracteres.motif(o.cat, o.team, premier) : null });
         return;
       }
       var moi = c.candidats.filter(function (x) { return x.joueur; })[0];
@@ -242,7 +249,8 @@
     if (marquant && typeof pushHomeToast === "function") {
       perdus.forEach(function (p) { p._annonce = true; });
       pushHomeToast("Baquet perdu — " + marquant.equipe, marquant.choisi + " a été préféré" +
-        (marquant.atout === "argent" ? ", avec " + (marquant.argent / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " M€ de soutien." : " pour son talent."), "#F97316");
+        (marquant.atout === "argent" ? ", avec " + (marquant.argent / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " M€ de soutien." : " pour son talent.") +
+        (marquant.motif ? " (" + marquant.motif + ".)" : ""), "#F97316");
     }
   }
 

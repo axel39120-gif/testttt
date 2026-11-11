@@ -2338,6 +2338,9 @@ async function suiteMessagerie() {
     const faux = await page.evaluate(() => {
       const dernier = () => getMailbox()[0];
       const h0 = G.happiness || 50;
+      // la partie de test a pu recevoir un message de presse : on neutralise l'espacement des messages (124, 62)
+      if (G._rj124) G._rj124.vol = { roles: {}, sujets: {} };
+      if (G._rjMailLog) Object.keys(G._rjMailLog).forEach(x => { if (/^s:/.test(x)) delete G._rjMailLog[x]; });
       pushMail({ from: "Agent", role: "agent", subject: "Tu comptes dans les médias (50/100)", body: "Bravo.", actions: [{ label: "Compris", kind: "dismiss" }] });
       const accuse = dernier();
       pushMail({ from: "Fan", role: "fans", subject: "Un message de soutien", body: "Allez !", actions: [{ label: "Merci !", kind: "reply", effect: { type: "happiness", data: { delta: 2 } } }] });
@@ -3406,32 +3409,38 @@ async function suiteAcademie() {
     const r = await page.evaluate(async () => {
       const d = ms => new Promise(r => setTimeout(r, ms)), out = {};
       out.donnees = Object.keys(ACADEMIES).flatMap(n => [ACADEMIES[n].f1Team].concat(ACADEMIES[n].f1Alt || []).filter(t => !(TEAM_OFFERS["Formule 1"] || []).some(o => o.team === t)));
-      const prep = (cat, place, rel) => {
+      const histo = CAREER_HISTORY.slice();
+      const prep = (cat, place, rel, acad) => {
+        CAREER_HISTORY.length = 0; histo.forEach(h => CAREER_HISTORY.push(h));
         G.cat = cat; G.currentTeam = (TEAM_OFFERS[cat] || [])[0].team; G._seasonTeam = G.currentTeam; G._playerRole = "num2"; initRivals();
         window.CAL_RACES = []; buildCalendar(); G.offers = []; G.pendingTransfer = null; G._baquets = null;
         Object.keys(G).filter(k => /^w[123]_/.test(k)).forEach(k => delete G[k]);
-        G.age = 19; PLAYER_ACADEMY.id = null; joinAcademy("Ferrari Driver Academy"); PLAYER_ACADEMY.relation = rel; PLAYER_ACADEMY.f1Offer = true; PLAYER_ACADEMY._rj138 = {};
+        G.age = 19; PLAYER_ACADEMY.id = null; joinAcademy(acad || "Ferrari Driver Academy"); PLAYER_ACADEMY.relation = rel; PLAYER_ACADEMY.f1Offer = true; PLAYER_ACADEMY._rj138 = {};
         G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = place === 1 ? 999 : 200 - (place - 1) * 10 + 1;
         G.races = new Array(CAL_RACES.length - 2).fill({ pos: 3, pts: 15 });
       };
       const f1 = () => G.offers.filter(o => o.cat === "Formule 1" && o._academie).map(o => o.team + ":" + o.role);
       prep("Formule 2", 2, 80); generateTeamOffers(); generateTeamOffers();
-      out.f2Podium = f1(); out.canLeave = PLAYER_ACADEMY.canLeave;
-      prep("Formule 2", 1, 95); generateTeamOffers(); out.f2Champion = f1();
+      out.fdaPodium = f1(); out.canLeave = PLAYER_ACADEMY.canLeave;
+      prep("Formule 2", 1, 80); generateTeamOffers(); out.fdaChampion = f1();
+      prep("Formule 2", 1, 95); generateTeamOffers(); out.fdaProtege = f1();
       prep("Formule 2", 9, 80); generateTeamOffers(); out.f2Milieu = f1();
+      prep("Formule 2", 4, 80, "Red Bull Junior Team"); CAREER_HISTORY.push({ saison: G.saison - 1, cat: "Formule 3", pos: 1 }); generateTeamOffers(); out.rbjt = f1();
       prep("Formule 3", 1, 80); generateTeamOffers(); out.f3Champion = f1();
       prep("Formule 3", 3, 80); generateTeamOffers(); out.f3Podium = f1();
       prep("Formula Regional", 1, 80); generateTeamOffers(); out.fr = f1();
-      // revue de fin de saison : avertissement puis renvoi
+      // revue de fin de saison : avertissement puis renvoi (Ferrari), renvoi immédiat (Red Bull)
       prep("Formule 2", 18, 50); const s0 = G.saison;
       out.revue1 = RJAcademie.revueSaison(); G.saison = s0 + 1; out.revue2 = RJAcademie.revueSaison(); G.saison = s0;
       out.apresRenvoi = PLAYER_ACADEMY.id;
+      prep("Formule 2", 10, 60, "Red Bull Junior Team"); out.revueRB = RJAcademie.revueSaison();
       prep("Formule 2", 2, 60); const rel0 = PLAYER_ACADEMY.relation; out.bonne = RJAcademie.revueSaison(); out.bonus = PLAYER_ACADEMY.relation - rel0;
       // départ : réputation et porte fermée
       prep("Formule 2", 2, 60); G.rep = G.rep || {}; G.rep.paddock = 40;
       leaveAcademy("Séparation volontaire"); out.paddock = G.rep.paddock;
       out.reprise = getAvailableAcademies().indexOf("Ferrari Driver Academy") >= 0;
       // invitation par message, une fois par saison
+      CAREER_HISTORY.length = 0; histo.forEach(h => CAREER_HISTORY.push(h));
       PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = [1, 2, 3, 4];
       const nb = () => getMailbox().filter(m => /place pour toi/.test(m.subject)).length, m0 = nb();
       RJAcademie.inviter(); RJAcademie.inviter(); out.invitations = nb() - m0;
@@ -3442,16 +3451,71 @@ async function suiteAcademie() {
       return out;
     });
     S.verifier("les écuries de F1 des académies existent", r.donnees.length === 0, r.donnees.join(", "));
-    S.verifier("F2 sur le podium : baquet dans l'écurie sœur (Haas), qui survit à la concurrence des baquets", r.f2Podium.length === 1 && /^Haas/.test(r.f2Podium[0]), JSON.stringify(r.f2Podium));
-    S.verifier("champion de F2 très proche de l'académie : l'écurie phare", /^Ferrari/.test(r.f2Champion[0] || "") && !/num3/.test(r.f2Champion[0]), JSON.stringify(r.f2Champion));
+    S.verifier("Ferrari, par étapes : un podium en F2 vaut la réserve, qui survit à la concurrence des baquets", JSON.stringify(r.fdaPodium) === '["Ferrari:num3"]', JSON.stringify(r.fdaPodium));
+    S.verifier("Ferrari : champion de F2, baquet chez Haas ; protégé, chez Ferrari", /^Haas.*num2$/.test(r.fdaChampion[0] || "") && /^Ferrari.*num2$/.test(r.fdaProtege[0] || ""), JSON.stringify([r.fdaChampion, r.fdaProtege]));
+    S.verifier("Red Bull, promotion rapide : un top 5 en F2 vaut Racing Bulls", /^Racing Bulls.*num2$/.test(r.rbjt[0] || ""), JSON.stringify(r.rbjt));
     S.verifier("F2 en milieu de tableau : réserve chez l'écurie phare", /^Ferrari.*num3$/.test(r.f2Milieu[0] || ""), JSON.stringify(r.f2Milieu));
     S.verifier("champion de F3 : la voie F1 s'ouvre ; F3 hors titre et Formula Regional : pas encore", r.f3Champion.length === 1 && !r.f3Podium.length && !r.fr.length, JSON.stringify([r.f3Champion, r.f3Podium, r.fr]));
     S.verifier("un membre peut quitter son académie", r.canLeave === true, "");
-    S.verifier("revue : avertissement, puis renvoi la saison suivante", r.revue1 === "avertissement" && r.revue2 === "renvoi" && !r.apresRenvoi, JSON.stringify([r.revue1, r.revue2, r.apresRenvoi]));
+    S.verifier("revue : avertissement puis renvoi chez Ferrari, renvoi immédiat chez Red Bull", r.revue1 === "avertissement" && r.revue2 === "renvoi" && !r.apresRenvoi && r.revueRB === "renvoi", JSON.stringify([r.revue1, r.revue2, r.apresRenvoi, r.revueRB]));
     S.verifier("revue : une saison sur le podium renforce la relation", r.bonne === "bonne" && r.bonus === 8, r.bonne + " " + r.bonus);
     S.verifier("partir coûte 3 de réputation paddock, et l'académie ne reprend pas", r.paddock === 37 && !r.reprise, r.paddock + " " + r.reprise);
     S.verifier("un pilote éligible reçoit une invitation, une seule par saison", r.invitations === 1, String(r.invitations));
     S.verifier("l'état de l'académie revient au rechargement", r.recharge, "");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteCaracteres() {
+  S.suite("Caractère des écuries de F1 et des académies");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(r => setTimeout(r, ms)), out = {}, C = RJCaracteres;
+      out.sansEcurie = (TEAM_OFFERS["Formule 1"] || []).map(o => o.team).filter(t => !C.ecurie(t));
+      out.sansAcademie = Object.keys(ACADEMIES).filter(n => !C.academie(ACADEMIES[n].id));
+      // poids dans le choix d'un candidat
+      out.ferrariRookie = C.ajustement("Formule 1", "Ferrari", { rookie: true }) - C.ajustement("Formule 1", "Ferrari", { rookie: false });
+      out.rbMembre = C.ajustement("Formule 1", "Red Bull Racing", { rookie: true, membre: true }) - C.ajustement("Formule 1", "Red Bull Racing", { rookie: true });
+      out.mcRookie = C.ajustement("Formule 1", "McLaren", { rookie: true }) - C.ajustement("Formule 1", "McLaren", { rookie: false });
+      out.hors = C.ajustement("Formule 2", "Ferrari", { rookie: true });
+      G.pilot.style = "attaquant"; G.pilot.trait = "competiteur";
+      out.affRB = C.affinite(C.ecurie("Red Bull Racing")); out.affFer = C.affinite(C.ecurie("Ferrari"));
+      // dans la vraie sélection (116) : un débutant pèse moins chez Ferrari qu'un pilote qui a déjà couru en F1
+      G.cat = "Formule 2"; PLAYER_ACADEMY.id = null;
+      const histo = CAREER_HISTORY.slice(), sc = () => RJBaquets.classer("Formule 1", "Ferrari", { team: "Ferrari", cat: "Formule 1", cost: 0 }).candidats.filter(x => x.joueur)[0].score;
+      const s1 = sc(); CAREER_HISTORY.push({ saison: G.saison - 1, cat: "Formule 1", pos: 12 }); const s2 = sc();
+      CAREER_HISTORY.length = 0; histo.forEach(h => CAREER_HISTORY.push(h));
+      out.selection = s2 > s1;
+      out.motif = C.motif("Formule 1", "Ferrari", { rookie: false });
+      out.patience = [C.patience("Mercedes"), C.patience("Red Bull Racing"), C.patience("Dale Coyne Racing")];
+      // affichage : fiche de l'écurie, offre de F1, page Académie
+      showTeamProfileModal("Ferrari"); await d(100);
+      out.fiche = (document.querySelector("#team-profile-modal .rj139-fiche") || {}).textContent || "";
+      closeTeamProfileModal();
+      G.offers = [buildOffer({ team: "Red Bull Racing", cat: "Formule 1", role: "num3", expire: 5 })];
+      let liste = document.getElementById("offers-list"); const cree = !liste;
+      if (cree) { liste = document.createElement("div"); liste.id = "offers-list"; document.body.appendChild(liste); }
+      renderOffers(); out.offre = (liste.querySelector(".rj139-labels") || {}).textContent || "";
+      if (cree) liste.remove();
+      G.offers = [];
+      const zone = document.createElement("div"); zone.id = "rj139-test-acad"; document.body.appendChild(zone);
+      PLAYER_ACADEMY.id = null; joinAcademy("Red Bull Junior Team"); renderAcademyPage("rj139-test-acad");
+      out.academie = (zone.querySelector(".rj139-labels") || {}).textContent || "";
+      zone.remove(); PLAYER_ACADEMY.id = null;
+      return out;
+    });
+    S.verifier("chaque écurie de F1 et chaque académie a son caractère", !r.sansEcurie.length && !r.sansAcademie.length, r.sansEcurie.concat(r.sansAcademie).join(", "));
+    S.verifier("Ferrari pénalise nettement le débutant, McLaren à peine ; Red Bull favorise sa filière", r.ferrariRookie <= -6 && r.mcRookie > -3 && r.rbMembre >= 10, JSON.stringify([r.ferrariRookie, r.mcRookie, r.rbMembre]));
+    S.verifier("le caractère ne joue qu'en F1", r.hors === 0, String(r.hors));
+    S.verifier("le style et le trait du pilote comptent un peu (3 points au plus)", r.affRB === 3 && r.affFer === 0, r.affRB + " " + r.affFer);
+    S.verifier("sélection des baquets (116) : chez Ferrari, l'expérience en F1 compte", r.selection, "");
+    S.verifier("un baquet perdu dit pourquoi le caractère a pesé", /expérience/.test(r.motif || ""), String(r.motif));
+    S.verifier("patience au renvoi : Mercedes patiente, Red Bull non, hors F1 neutre", r.patience[0] > 0 && r.patience[1] < 0 && r.patience[2] === 0, JSON.stringify(r.patience));
+    S.verifier("labels sur la fiche de l'écurie", /Préfère l'expérience/.test(r.fiche), r.fiche.slice(0, 80));
+    S.verifier("labels sur une offre de F1", /Filière maison/.test(r.offre), r.offre);
+    S.verifier("labels sur la page Académie", /Impitoyable/.test(r.academie), r.academie);
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -3684,7 +3748,8 @@ const SUITES = {
   saison: suiteSaison,
   appui: suiteAppui,
   calendrier: suiteCalendrier,
-  academie: suiteAcademie
+  academie: suiteAcademie,
+  caracteres: suiteCaracteres
 };
 
 async function principal() {
