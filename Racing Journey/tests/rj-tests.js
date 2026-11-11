@@ -3398,6 +3398,64 @@ async function suiteCalendrier() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteAcademie() {
+  S.suite("Académie de pilotes");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(r => setTimeout(r, ms)), out = {};
+      out.donnees = Object.keys(ACADEMIES).flatMap(n => [ACADEMIES[n].f1Team].concat(ACADEMIES[n].f1Alt || []).filter(t => !(TEAM_OFFERS["Formule 1"] || []).some(o => o.team === t)));
+      const prep = (cat, place, rel) => {
+        G.cat = cat; G.currentTeam = (TEAM_OFFERS[cat] || [])[0].team; G._seasonTeam = G.currentTeam; G._playerRole = "num2"; initRivals();
+        window.CAL_RACES = []; buildCalendar(); G.offers = []; G.pendingTransfer = null; G._baquets = null;
+        Object.keys(G).filter(k => /^w[123]_/.test(k)).forEach(k => delete G[k]);
+        G.age = 19; PLAYER_ACADEMY.id = null; joinAcademy("Ferrari Driver Academy"); PLAYER_ACADEMY.relation = rel; PLAYER_ACADEMY.f1Offer = true; PLAYER_ACADEMY._rj138 = {};
+        G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = place === 1 ? 999 : 200 - (place - 1) * 10 + 1;
+        G.races = new Array(CAL_RACES.length - 2).fill({ pos: 3, pts: 15 });
+      };
+      const f1 = () => G.offers.filter(o => o.cat === "Formule 1" && o._academie).map(o => o.team + ":" + o.role);
+      prep("Formule 2", 2, 80); generateTeamOffers(); generateTeamOffers();
+      out.f2Podium = f1(); out.canLeave = PLAYER_ACADEMY.canLeave;
+      prep("Formule 2", 1, 95); generateTeamOffers(); out.f2Champion = f1();
+      prep("Formule 2", 9, 80); generateTeamOffers(); out.f2Milieu = f1();
+      prep("Formule 3", 1, 80); generateTeamOffers(); out.f3Champion = f1();
+      prep("Formule 3", 3, 80); generateTeamOffers(); out.f3Podium = f1();
+      prep("Formula Regional", 1, 80); generateTeamOffers(); out.fr = f1();
+      // revue de fin de saison : avertissement puis renvoi
+      prep("Formule 2", 18, 50); const s0 = G.saison;
+      out.revue1 = RJAcademie.revueSaison(); G.saison = s0 + 1; out.revue2 = RJAcademie.revueSaison(); G.saison = s0;
+      out.apresRenvoi = PLAYER_ACADEMY.id;
+      prep("Formule 2", 2, 60); const rel0 = PLAYER_ACADEMY.relation; out.bonne = RJAcademie.revueSaison(); out.bonus = PLAYER_ACADEMY.relation - rel0;
+      // départ : réputation et porte fermée
+      prep("Formule 2", 2, 60); G.rep = G.rep || {}; G.rep.paddock = 40;
+      leaveAcademy("Séparation volontaire"); out.paddock = G.rep.paddock;
+      out.reprise = getAvailableAcademies().indexOf("Ferrari Driver Academy") >= 0;
+      // invitation par message, une fois par saison
+      PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = [1, 2, 3, 4];
+      const nb = () => getMailbox().filter(m => /place pour toi/.test(m.subject)).length, m0 = nb();
+      RJAcademie.inviter(); RJAcademie.inviter(); out.invitations = nb() - m0;
+      // sauvegarde
+      prep("Formule 2", 18, 50); RJAcademie.revueSaison(); const av = JSON.stringify(PLAYER_ACADEMY._rj138);
+      saveGame(0, { silencieux: true }); PLAYER_ACADEMY._rj138 = {}; PLAYER_ACADEMY.canLeave = false; loadSave(0); await d(1500);
+      out.recharge = JSON.stringify(PLAYER_ACADEMY._rj138) === av && PLAYER_ACADEMY.canLeave === true;
+      return out;
+    });
+    S.verifier("les écuries de F1 des académies existent", r.donnees.length === 0, r.donnees.join(", "));
+    S.verifier("F2 sur le podium : baquet dans l'écurie sœur (Haas), qui survit à la concurrence des baquets", r.f2Podium.length === 1 && /^Haas/.test(r.f2Podium[0]), JSON.stringify(r.f2Podium));
+    S.verifier("champion de F2 très proche de l'académie : l'écurie phare", /^Ferrari/.test(r.f2Champion[0] || "") && !/num3/.test(r.f2Champion[0]), JSON.stringify(r.f2Champion));
+    S.verifier("F2 en milieu de tableau : réserve chez l'écurie phare", /^Ferrari.*num3$/.test(r.f2Milieu[0] || ""), JSON.stringify(r.f2Milieu));
+    S.verifier("champion de F3 : la voie F1 s'ouvre ; F3 hors titre et Formula Regional : pas encore", r.f3Champion.length === 1 && !r.f3Podium.length && !r.fr.length, JSON.stringify([r.f3Champion, r.f3Podium, r.fr]));
+    S.verifier("un membre peut quitter son académie", r.canLeave === true, "");
+    S.verifier("revue : avertissement, puis renvoi la saison suivante", r.revue1 === "avertissement" && r.revue2 === "renvoi" && !r.apresRenvoi, JSON.stringify([r.revue1, r.revue2, r.apresRenvoi]));
+    S.verifier("revue : une saison sur le podium renforce la relation", r.bonne === "bonne" && r.bonus === 8, r.bonne + " " + r.bonus);
+    S.verifier("partir coûte 3 de réputation paddock, et l'académie ne reprend pas", r.paddock === 37 && !r.reprise, r.paddock + " " + r.reprise);
+    S.verifier("un pilote éligible reçoit une invitation, une seule par saison", r.invitations === 1, String(r.invitations));
+    S.verifier("l'état de l'académie revient au rechargement", r.recharge, "");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3625,7 +3683,8 @@ const SUITES = {
   audit: suiteAudit,
   saison: suiteSaison,
   appui: suiteAppui,
-  calendrier: suiteCalendrier
+  calendrier: suiteCalendrier,
+  academie: suiteAcademie
 };
 
 async function principal() {

@@ -145,7 +145,7 @@
   function filtrer(offres) {
     var E = etat(), garde = [];
     offres.forEach(function (o) {
-      if (!o || o.isRenewalForced || (o.team === G.currentTeam && o.cat === G.cat)) { garde.push(o); return; }
+      if (!o || o.isRenewalForced || o._academie || (o.team === G.currentTeam && o.cat === G.cat)) { garde.push(o); return; }
       var plan = places(o.cat);
       if (!plan[o.team]) { E.perdus.push({ equipe: o.team, cat: o.cat, raison: "complet" }); return; }
       var c = classer(o.cat, o.team, o);

@@ -764,6 +764,16 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Le pilote de réserve (79) suit le calendrier de la saison.
 - Tests : suite `calendrier`.
 
+## Académies de pilotes — v265
+
+- **Voie F1** (module `138-academie.js`) : une fois le plan F1 annoncé, à partir de la mi-saison, en F2, en Super Formula ou champion de F3, l'académie propose une place pour la saison suivante, sans condition de réputation. Sur le podium : un baquet dans l'écurie sœur (Haas pour Ferrari, Racing Bulls pour Red Bull, Williams pour Mercedes), dans l'écurie phare pour un champion très proche de l'académie. Sinon, ou si la Super Licence projetée en fin de saison manque : pilote de réserve de l'écurie phare (cette offre remplace une offre de réserve ordinaire). L'offre reste ouverte jusqu'au mercato et n'est pas remise en jeu par la concurrence des baquets (116) ; à défaut, elle revient la saison suivante. Avant : seule l'écurie phare était tentée, avec une réputation hors de portée, et l'offre se perdait au premier échec.
+- **Revue de fin de saison** : sur le podium, relation +8 ; une saison sous les attentes (place ou relation trop basses, plus strict chez Red Bull) vaut un avertissement, la seconde d'affilée un renvoi.
+- **Quitter** : possible à tout moment (avant : impossible sauf après avoir quitté une écurie partenaire) ; réputation paddock −3, et l'académie ne reprend pas le pilote.
+- **Invitations** par message, une fois par saison, quand une académie est accessible.
+- Entrée : en début de saison, c'est la place de la saison passée qui compte (avant : tout le monde à 0 point, le joueur passait pour 1er).
+- L'accueil n'annonce un volant F1 que si l'offre existe vraiment. Données : Ferrari → Haas (et non Audi), Mercedes → Williams, McLaren sans Arrow McLaren (IndyCar).
+- Sauvegarde : bloc `rj138`. Tests : suite `academie`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

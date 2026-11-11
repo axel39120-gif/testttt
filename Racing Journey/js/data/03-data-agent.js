@@ -9490,9 +9490,9 @@ var ACADEMIES = {
       f1Team: "Ferrari",
       desc: "La FDA est la pépinière officielle de la Scuderia Ferrari. Fondée en 2009, elle a lancé les carrières de Leclerc, Shwartzman et Zhou.",
       background: "Créée pour sécuriser le futur de Ferrari, l'académie accompagne ses pilotes très étroitement : ingénieur dédié, simulateur à Maranello, suivi psychologique. Elle exige des résultats rapides — les pilotes sans progression sous 2 ans sont libérés.",
-      strengths: ["Accès simulateur Ferrari", "Réseau Prema exclusif", "Suivi technique F1", "Tremplin Audi"],
+      strengths: ["Accès simulateur Ferrari", "Réseau Prema exclusif", "Suivi technique F1", "Tremplin Haas"],
       alumni: "Charles Leclerc, Robert Shwartzman, Zhou Guanyu",
-      f1Alt: ["Audi"],
+      f1Alt: ["Haas F1 Team"],
       affiliates: {
         "Karting Senior": ["KR Sport", "Tony Kart"],
         "Formule 4": ["Prema Racing", "Iron Lynx"],
@@ -9535,7 +9535,7 @@ var ACADEMIES = {
       background: "Moins médiatisé que ses rivaux, le MJP mise sur la patience et la formation technique poussée. Accès régulier à Brackley, sessions ingénieurs F1, accompagnement mental hors du commun. Ils cherchent des pilotes capables de développer une voiture.",
       strengths: ["Formation technique avancée", "Coaching mental dédié", "Accès usine Brackley", "Programme ART Grand Prix"],
       alumni: "George Russell, Paul Aron, Andrea Kimi Antonelli",
-      f1Alt: [],
+      f1Alt: ["Williams"],
       affiliates: {
         "Karting Senior": ["Tony Kart"],
         "Formule 4": ["Antonelli Motorsport"],
@@ -9578,7 +9578,7 @@ var ACADEMIES = {
       background: "Le MDD est l'un des programmes les plus ouverts du paddock : McLaren ne se limite pas à la filière européenne et s'intéresse à l'IndyCar, au WEC, au sim racing. Suivi data poussé, intégration réelle dans la culture McLaren à Woking.",
       strengths: ["Vision multi-disciplines", "Intégration usine Woking", "Lien Arrow McLaren IndyCar", "Culture innovation et data"],
       alumni: "Lando Norris, Oliver Turvey, Ugo Ugochukwu",
-      f1Alt: ["Arrow McLaren"],
+      f1Alt: [],
       affiliates: {
         "Karting Senior": ["CRG Racing"],
         "Formule 4": ["Van Amersfoort Racing", "PHM Racing"],
@@ -9740,7 +9740,7 @@ function joinAcademy(e) {
       reason: "Intégration à l'académie",
       relation: 30,
       saison: G.saison
-    }], PLAYER_ACADEMY.f1Offer = !1, PLAYER_ACADEMY._pendingF1Offer = !1, PLAYER_ACADEMY.canLeave = !1, "function" == typeof recordDecision && (recordDecision("academy", "Rejoint " + e, "Intégration à l'académie · relation de départ 30/100", "positive", [e]), setEntityMemory(e, {
+    }], PLAYER_ACADEMY.f1Offer = !1, PLAYER_ACADEMY._pendingF1Offer = !1, PLAYER_ACADEMY.canLeave = !0, "function" == typeof recordDecision && (recordDecision("academy", "Rejoint " + e, "Intégration à l'académie · relation de départ 30/100", "positive", [e]), setEntityMemory(e, {
       status: "signed",
       reason: "Académie rejointe en saison " + G.saison
     })), "function" == typeof _addFeedPost) {
@@ -9789,7 +9789,7 @@ function leaveAcademy(e) {
       }), t && "function" == typeof recordDecision && (recordDecision("academy", "Départ de " + t, e || "Séparation avec l'académie", "negative", [t]), setEntityMemory(t, {
         status: "broken",
         reason: "Quittée en saison " + G.saison + " : " + (e || "")
-      })), PLAYER_ACADEMY.id = null, PLAYER_ACADEMY.relation = 0, PLAYER_ACADEMY.canLeave = !1, PLAYER_ACADEMY.f1Offer = !1, PLAYER_ACADEMY._pendingF1Offer = !1, t && "function" == typeof pushMail && pushMail({
+      })), G.rep && /^(Séparation|Transfert)/.test(e || "") && (G.rep.paddock = Math.max(0, (G.rep.paddock || 0) - 3), "function" == typeof recomputeGlobalRep && recomputeGlobalRep()), PLAYER_ACADEMY.id = null, PLAYER_ACADEMY.relation = 0, PLAYER_ACADEMY.canLeave = !1, PLAYER_ACADEMY.f1Offer = !1, PLAYER_ACADEMY._pendingF1Offer = !1, t && "function" == typeof pushMail && pushMail({
         from: t,
         role: "academy",
         subject: "Résiliation du programme",
@@ -9831,9 +9831,15 @@ function getAvailableAcademies() {
       return e.me
     }) + 1,
     a = [];
+  if ((G.races || []).length < 3) {
+    var _dern = (typeof CAREER_HISTORY !== "undefined" ? CAREER_HISTORY : []).filter(function(h) { return h && h.saison === (G.saison || 1) - 1; })[0];
+    n = _dern && _dern.pos ? _dern.pos : 99;
+  }
   return Object.keys(ACADEMIES).forEach(function(r) {
     var i = ACADEMIES[r],
       o;
+    var _mem = typeof getEntityMemory === "function" ? getEntityMemory(r) : null;
+    if (_mem && _mem.status === "broken") return;
     PLAYER_ACADEMY.id !== i.id && (!(!i.affiliates[e] || !i.affiliates[e].length) && (t < i.minRating || n > i.reqPos || a.push(r)))
   }), a
 }
@@ -9971,7 +9977,7 @@ function leaveAcademyUI() {
     var e = getAcademy(PLAYER_ACADEMY.id) || "Académie";
     showConfirmDialog({
       title: "Quitter " + e + " ?",
-      message: "Tu pourras ensuite rejoindre une autre académie si tu es éligible. Toute progression de relation sera réinitialisée.",
+      message: "Tu pourras ensuite rejoindre une autre académie si tu es éligible. " + e + " ne te reprendra pas, ta relation est perdue et ta réputation dans le paddock en souffre (−3).",
       confirmText: "Quitter l'académie",
       cancelText: "Rester",
       danger: !0,
@@ -18539,7 +18545,7 @@ function _computeHomePriorityNotif() {
       });
     if (u) return u
   }
-  if (PLAYER_ACADEMY && PLAYER_ACADEMY.f1Offer) {
+  if (PLAYER_ACADEMY && PLAYER_ACADEMY.f1Offer && (G.offers || []).some(function(o) { return o && o._academie; })) {
     var f = t({
       sig: "academy-f1:" + (PLAYER_ACADEMY.id || "") + "|" + G.saison,
       type: "academy-f1",
@@ -22822,7 +22828,7 @@ function generateTeamOffers(e) {
               }
             }
           })
-        }), PLAYER_ACADEMY._pendingF1Offer) {
+        }), PLAYER_ACADEMY._pendingF1Offer && !window.RJAcademie) {
         var V = getPlayerAcademy();
         if (V && ["Formule 2", "Formule 3", "Formula Regional", "Super Formula"].indexOf(G.cat) >= 0) {
           var U = (TEAM_OFFERS["Formule 1"] || []).find(function(e) {
