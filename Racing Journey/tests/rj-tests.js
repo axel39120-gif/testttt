@@ -2900,6 +2900,8 @@ async function suiteLogos() {
     S.verifier("chaque écurie garde son logo d'origine, retouché (coins, reflet), et ses références se résolvent", r.n > 50 && r.ko.length === 0, JSON.stringify(r.ko.slice(0, 4)));
     S.verifier("l'éditeur propose tous les modèles, plaque à lettrage comprise, chacun dessiné", r.modeles > 40 && r.vides.length === 0 && r.plaque, JSON.stringify(r.vides));
     S.verifier("une écurie connue garde sa couleur (Ferrari en rouge)", r.ferrari === "#DC0000", r.ferrari);
+    const acad = await page.evaluate(() => Object.keys(ACADEMIES).filter(n => !/rjlogo/.test(ACADEMIES[n].logo || "") || !/viewBox="0 0 40 40"/.test(ACADEMIES[n].logo || "")));
+    S.verifier("les logos d'académies ont la finition des écuries de F1 (tuile 40, coins, reflet)", acad.length === 0, acad.join(", "));
     const audi = await page.evaluate(() => { const ancien = JSON.parse(JSON.stringify(G)); G.rivals[0].team = "Kick Sauber"; G._testHisto = { "Kick Sauber": 3 }; RJRenommerEcurie("Kick Sauber", "Audi"); const ok = G.rivals[0].team === "Audi" && G._testHisto.Audi === 3 && !("Kick Sauber" in G._testHisto); delete G._testHisto; return { ok, f1: (TEAMS_BY_CAT["Formule 1"] || []).indexOf("Audi") >= 0 && (TEAMS_BY_CAT["Formule 1"] || []).indexOf("Kick Sauber") < 0, logo: !!TEAM_LOGOS.Audi }; });
     S.verifier("Kick Sauber devient Audi (équipe de F1, logo, ancienne sauvegarde renommée)", audi.ok && audi.f1 && audi.logo, JSON.stringify(audi));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");

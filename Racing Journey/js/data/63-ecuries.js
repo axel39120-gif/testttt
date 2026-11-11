@@ -790,7 +790,18 @@
 
     refaireTout();
     appliquerTout();
+    polirAcademies();
     return true;
+  }
+
+  /* Les logos des académies (03) sont dessinés comme ceux des écuries de F1 :
+     ils reçoivent la même finition (coins, reflet, liseré). */
+  function polirAcademies() {
+    if (typeof ACADEMIES === "undefined") return;
+    Object.keys(ACADEMIES).forEach(function (n) {
+      var a = ACADEMIES[n];
+      if (a && a.logo && !a._logoPoli) { a.logo = poli(a.logo); a._logoPoli = true; }
+    });
   }
 
   var essais = 0;
