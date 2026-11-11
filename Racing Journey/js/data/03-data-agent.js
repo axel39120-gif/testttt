@@ -10512,13 +10512,6 @@ function renderNatGrid(e) {
     })
   }
 }
-var CONTINENT_FLAGS = {
-  Europe: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#003399"/><g fill="#FFCC00"><circle cx="20" cy="8" r="1.4"/><circle cx="26" cy="9.6" r="1.4"/><circle cx="30.4" cy="14" r="1.4"/><circle cx="32" cy="20" r="1.4"/><circle cx="30.4" cy="26" r="1.4"/><circle cx="26" cy="30.4" r="1.4"/><circle cx="20" cy="32" r="1.4"/><circle cx="14" cy="30.4" r="1.4"/><circle cx="9.6" cy="26" r="1.4"/><circle cx="8" cy="20" r="1.4"/><circle cx="9.6" cy="14" r="1.4"/><circle cx="14" cy="9.6" r="1.4"/></g></svg>',
-  "Amériques": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="13" fill="#1e5aa8"/><rect y="13" width="40" height="14" fill="#ffffff"/><rect y="27" width="40" height="13" fill="#1e5aa8"/><path d="M20 13 L22.3 18.5 L28.3 18.7 L23.5 22.3 L25.3 28 L20 24.6 L14.7 28 L16.5 22.3 L11.7 18.7 L17.7 18.5 Z" fill="#F5A623"/></svg>',
-  Asie: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#f5f0e0"/><g stroke="#c8102e" stroke-width="1.6" stroke-linecap="round"><line x1="20" y1="6" x2="20" y2="10"/><line x1="20" y1="30" x2="20" y2="34"/><line x1="6" y1="20" x2="10" y2="20"/><line x1="30" y1="20" x2="34" y2="20"/><line x1="10.2" y1="10.2" x2="13" y2="13"/><line x1="27" y1="27" x2="29.8" y2="29.8"/><line x1="29.8" y1="10.2" x2="27" y2="13"/><line x1="13" y1="27" x2="10.2" y2="29.8"/></g><circle cx="20" cy="20" r="7.5" fill="#c8102e"/></svg>',
-  Afrique: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#1a6e3a"/><path d="M17 7 L22 7 L26 9 L28 12 L29 16 L28 19 L30 22 L28 26 L26 29 L24 32 L22 34 L20 33 L18 30 L16 27 L14 23 L13 19 L12 15 L13 11 L15 8 Z" fill="#F5B800"/><circle cx="20" cy="20" r="1" fill="#1a6e3a" opacity="0.4"/></svg>',
-  "Océanie": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#002868"/><g fill="#ffffff"><path d="M22 9 L22.8 11 L24.8 11 L23.2 12.4 L23.9 14.4 L22 13.1 L20.1 14.4 L20.8 12.4 L19.2 11 L21.2 11 Z"/><path d="M28 17 L28.6 18.4 L30 18.4 L28.9 19.4 L29.4 20.8 L28 19.8 L26.6 20.8 L27.1 19.4 L26 18.4 L27.4 18.4 Z"/><path d="M16 20 L16.6 21.4 L18 21.4 L16.9 22.4 L17.4 23.8 L16 22.8 L14.6 23.8 L15.1 22.4 L14 21.4 L15.4 21.4 Z"/><path d="M25 26 L25.7 27.6 L27.3 27.6 L26.1 28.7 L26.6 30.3 L25 29.2 L23.4 30.3 L23.9 28.7 L22.7 27.6 L24.3 27.6 Z"/><circle cx="21" cy="31" r="0.9"/></g></svg>'
-};
 
 function buildContinentGrid() {
   var e = document.getElementById("continent-grid");
@@ -10527,8 +10520,7 @@ function buildContinentGrid() {
     r.className = "continent-opt" + (t === _selectedContinent ? " on" : ""), r.dataset.continent = t, r.onclick = function() {
       selContinent(t)
     };
-    var n, a, i = '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.12);margin-right:7px">' + (CONTINENT_FLAGS[t] || "").replace(/width="[^"]*"/, 'width="100%"').replace(/height="[^"]*"/, 'height="100%"').replace("<svg ", '<svg preserveAspectRatio="xMidYMid slice" ') + "</span>";
-    r.innerHTML = i + t, r.style.cssText = "display:flex;align-items:center;justify-content:flex-start;padding:9px 12px;border:1px solid var(--border-hi);border-radius:var(--r);background:var(--bg3);font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;touch-action:manipulation;transition:all .15s;width:100%", e.appendChild(r)
+    r.innerHTML = t, r.style.cssText = "display:flex;align-items:center;justify-content:flex-start;padding:9px 12px;border:1px solid var(--border-hi);border-radius:var(--r);background:var(--bg3);font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;touch-action:manipulation;transition:all .15s;width:100%", e.appendChild(r)
   }))
 }
 
