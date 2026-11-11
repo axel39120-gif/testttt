@@ -77,7 +77,9 @@ function serialiserCoeur() {
                sorti: e._rj79Sorti || null, recrue: !!e._rj79Recrue,
                pts: e.pts, qualiHistory: e.qualiHistory || [], raceHistory: e.raceHistory || [], careerHistory: e.careerHistory || [] };
     }),
-    calRaces: CAL_RACES.map(function (e) { return { done: e.done, result: e.result }; }),
+    /* Chaque manche avec son nom, sa semaine et son format : le calendrier d'une
+       saison change d'une année à l'autre (137), il est relu tel qu'il était. */
+    calRaces: CAL_RACES.map(function (e) { return { name: e.name, week: e.week, manche: e.manche, isSprint: !!e.isSprint, special: e.special || null, done: e.done, result: e.result }; }),
     owned: G.owned || [],
     happiness: G.happiness || 50,
     igFollowers: G.igFollowers || 0,
@@ -326,11 +328,26 @@ function appliquerCoeur(t, e) {
   if (Array.isArray(t.driverPool) && t.driverPool.length) { G.driverPool = t.driverPool; G._rjPoolInitialized = true; }
   initRivals();
   restaurerRivaux(t.rivals);
+  /* Calendrier évolutif (137) : la graine et la saison de départ de la partie
+     chargée, et non celles d'une partie ouverte avant. Une sauvegarde antérieure
+     garde le calendrier de sa saison en cours ; l'évolution part de la suivante. */
+  var _cal = t.rj137 || null;
+  G._calGraine = (_cal && _cal.graine) || G._calGraine;
+  G._calDepart = (_cal && typeof _cal.depart === "number") ? _cal.depart : undefined;
   CAL_RACES = [];
-  buildCalendar();
-  if (t.calRaces) t.calRaces.forEach(function (c, i) {
-    if (CAL_RACES[i]) { CAL_RACES[i].done = c.done; CAL_RACES[i].result = c.result; }
-  });
+  if (t.calRaces && t.calRaces.length && t.calRaces.every(function (c) { return c && c.name; })) {
+    CAL_RACES = t.calRaces.map(function (c, i) {
+      var r = { name: c.name, week: c.week, manche: c.manche || i + 1, done: !!c.done, result: c.result || null };
+      if (c.isSprint) r.isSprint = true;
+      if (c.special) r.special = c.special;
+      return r;
+    });
+  } else {
+    buildCalendar();
+    if (t.calRaces) t.calRaces.forEach(function (c, i) {
+      if (CAL_RACES[i]) { CAL_RACES[i].done = c.done; CAL_RACES[i].result = c.result; }
+    });
+  }
   G.seasonOver = false;
   G.raceLocked = false;
   G.racePhase = "";

@@ -756,6 +756,14 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Badge des contrats : un seul décompte, réécrit seulement s'il change (03, 04q, 07d) — il était remplacé toutes les 1,5 s sous le doigt.
 - Tests : suite `appui`.
 
+## Calendriers évolutifs — v263
+
+- **Module `137-calendriers.js`** : le calendrier d'une saison se déduit d'une graine de carrière (identique à chaque rechargement). F1 : 20 à 26 Grands Prix, des piliers fixes (Melbourne, Bahreïn, Suzuka, Monaco, Silverstone, Monza, Abu Dhabi), une saison sur trois environ un circuit part et un autre arrive ou revient parmi un vivier réaliste ; 6 à 12 sprints, reconduits pour la plupart. F2 (12 manches) et F3 (10, plus Macao) suivent les circuits de la F1 de la saison ; IndyCar et WEC tournent plus rarement ; Super Formula, F4, Formula Regional et karting inchangés. Le calendrier est annoncé par message en début de saison.
+- Nouveaux circuits : Shanghai, Montréal, Qatar (Lusail), Madrid, Istanbul, Sepang, Kyalami, Nürburgring (fiches, pays, tracés inventés par 130).
+- Sauvegarde : chaque manche est enregistrée avec son nom, sa semaine et son format, puis relue telle quelle. Une partie antérieure garde le calendrier de sa saison en cours ; l'évolution part de la suivante.
+- Le pilote de réserve (79) suit le calendrier de la saison.
+- Tests : suite `calendrier`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais

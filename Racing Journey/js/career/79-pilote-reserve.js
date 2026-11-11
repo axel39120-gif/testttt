@@ -82,13 +82,19 @@
     "Endurance WEC": ["Sebring 12h", "Portimao 6h", "Spa 6h", "24h Le Mans", "Sao Paulo 6h", "Monza 6h", "Fuji 6h", "Bahrain 8h"]
   };
   /* La course de la catégorie cat la plus proche (à venir) de la semaine donnée. */
-  function courseDuCalendrier(cat, sem) {
+  /* Le calendrier de la saison : celui du module 137 quand il existe (il change
+     d'une année à l'autre), sinon la liste fixe. */
+  function calendrierSaison(cat) {
+    var p = window.RJCalendrier && RJCalendrier.plan ? RJCalendrier.plan(cat, saison()) : null;
+    if (p) return p;
     var l = CALENDRIERS[cat]; if (!l) return null;
-    var pas = Math.floor(46 / l.length), meilleure = l[l.length - 1];
-    for (var n = 0; n < l.length; n++) {
-      if (2 + n * pas + (n % 3 === 0 ? 1 : 0) >= sem) { meilleure = l[n]; break; }
-    }
-    return meilleure;
+    var pas = Math.floor(46 / l.length);
+    return { courses: l, semaines: l.map(function (x, n) { return 2 + n * pas + (n % 3 === 0 ? 1 : 0); }) };
+  }
+  function courseDuCalendrier(cat, sem) {
+    var c = calendrierSaison(cat); if (!c) return null;
+    for (var n = 0; n < c.courses.length; n++) if (c.semaines[n] >= sem) return c.courses[n];
+    return c.courses[c.courses.length - 1];
   }
   /* La confiance de l'écurie de réserve : celle du baquet principal quand on
      y est réserviste pur, la sienne propre pour un contrat cumulé. */
@@ -1927,7 +1933,7 @@
     if (!G || !d) { if (entry) entry.resolved = true; return; }
 
     /* Un circuit du calendrier de la catégorie de réserve, jamais un tracé de karting ou un ovale. */
-    var liste = CALENDRIERS[d.cat] || [];
+    var liste = (calendrierSaison(d.cat) || {}).courses || [];
     var circuit = liste.length ? liste[Math.floor(Math.random() * liste.length)] : "Journée d'essais " + d.team;
     var el1 = estEL1Officielle();
     if (el1) circuit = courseDuCalendrier(d.cat, semaine()) || circuit;   // l'EL1 d'un vrai Grand Prix

@@ -3353,6 +3353,51 @@ async function suiteAppui() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteCalendrier() {
+  S.suite("Calendriers qui évoluent d'une saison à l'autre");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(r => setTimeout(r, ms)), out = {};
+      out.ancienne = G._calDepart === G.saison + 1;          // la partie de test, antérieure : sa saison en cours ne change pas
+      const dep = G.saison; G._calDepart = dep;
+      const L = []; for (let s = dep; s < dep + 30; s++) L.push(RJCalendrier.plan("Formule 1", s));
+      const piliers = Object.keys(RJCalendrier.F1).filter(n => RJCalendrier.F1[n].statut === "pilier");
+      out.bornes = L.every(p => p.courses.length >= 20 && p.courses.length <= 26 && p.sprints.length >= 6 && p.sprints.length <= 12);
+      out.piliers = L.every(p => piliers.every(n => p.courses.indexOf(n) >= 0));
+      out.changements = L.slice(1).filter((p, i) => p.courses.join() !== L[i].courses.join()).length;
+      out.ordre = L.every(p => p.semaines.every((w, i) => w >= 3 && w <= 47 && (!i || w > p.semaines[i - 1])) && p.courses.every((n, i) => !i || RJCalendrier.F1[n].mois >= RJCalendrier.F1[p.courses[i - 1]].mois));
+      out.sprints = L.every(p => p.sprints.every(n => p.courses.indexOf(n) >= 0) && p.sprints.indexOf("Monaco") < 0);
+      out.fiches = [...new Set(L.flatMap(p => p.courses))].filter(n => { const c = getCircuitData(n); return !c || c === DEFAULT_CIRCUIT || !c.trace || !_getCircuitCountry(n); });
+      const f1 = RJCalendrier.plan("Formule 1", dep + 6), f2 = RJCalendrier.plan("Formule 2", dep + 6), f3 = RJCalendrier.plan("Formule 3", dep + 6);
+      out.support = f2.courses.every(n => f1.courses.indexOf(n) >= 0) && f3.courses[f3.courses.length - 1] === "Macao GP";
+      out.fixes = RJCalendrier.plan("Super Formula", dep + 6) === null && RJCalendrier.plan("Formule 4", dep + 6) === null;
+      // changement de saison : le nouveau calendrier est celui du plan, sprints compris
+      G.offers = []; G.pendingTransfer = null; G.contractDur = 3; CAL_RACES.forEach(c => c.done = true); G.seasonOver = true;
+      startNextSeason({ isRenewal: true, team: G.currentTeam, dur: 2, budget: 0 }); await d(800);
+      const p = RJCalendrier.plan("Formule 1", G.saison);
+      out.saison = CAL_RACES.map(c => c.name).join() === p.courses.join() && CAL_RACES.filter(c => c.isSprint).length === p.sprints.length;
+      // sauvegarde : le calendrier revient tel quel
+      CAL_RACES[0].done = true;
+      const avant = JSON.stringify(CAL_RACES.map(c => [c.name, c.week, !!c.isSprint, !!c.done]));
+      saveGame(0, { silencieux: true }); G._calGraine = 1; G._calDepart = 1; CAL_RACES = [];
+      loadSave(0); await d(1500);
+      out.recharge = JSON.stringify(CAL_RACES.map(c => [c.name, c.week, !!c.isSprint, !!c.done])) === avant;
+      return out;
+    });
+    S.verifier("une partie déjà commencée garde le calendrier de sa saison en cours", r.ancienne, JSON.stringify(r));
+    S.verifier("F1 : 20 à 26 Grands Prix et 6 à 12 sprints, chaque saison", r.bornes, JSON.stringify(r));
+    S.verifier("F1 : les piliers restent, le calendrier change de temps en temps (pas chaque année)", r.piliers && r.changements >= 3 && r.changements <= 22, r.changements + " saisons sur 29");
+    S.verifier("les manches restent dans l'ordre de la saison, sprints au calendrier (jamais Monaco)", r.ordre && r.sprints, "");
+    S.verifier("chaque circuit a sa fiche, son tracé et son pays", r.fiches.length === 0, r.fiches.join(", "));
+    S.verifier("F2 et F3 suivent la F1, Macao clôt la F3 ; Super Formula et F4 inchangées", r.support && r.fixes, "");
+    S.verifier("au changement de saison, le calendrier et les sprints sont ceux de la nouvelle saison", r.saison, "");
+    S.verifier("le calendrier d'une saison revient tel quel au rechargement", r.recharge, "");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3579,7 +3624,8 @@ const SUITES = {
   paralleles: suiteParalleles,
   audit: suiteAudit,
   saison: suiteSaison,
-  appui: suiteAppui
+  appui: suiteAppui,
+  calendrier: suiteCalendrier
 };
 
 async function principal() {
