@@ -18644,10 +18644,11 @@ function buildCalendar() {
       "Super Formula": ["Suzuka", "Okayama", "Autopolis", "Sugo", "Fuji Speedway", "Motegi", "Sapporo", "Okayama Round 2", "Fuji Round 2", "Suzuka Final"],
       "Endurance WEC": ["Sebring 12h", "Portimao 6h", "Spa 6h", "24h Le Mans", "Sao Paulo 6h", "Monza 6h", "Fuji 6h", "Bahrain 8h"],
       IndyCar: ["St. Petersburg", "Texas", "Long Beach", "Indianapolis 500", "Detroit", "Road America", "Iowa", "Nashville", "Portland", "Laguna Seca", "Gateway", "Milwaukee"]
-    }, t = e[G.cat] || e["Karting Junior"], r = Math.floor(46 / t.length), n = 0; n < t.length; n++) {
+    }, _plan = (typeof RJCalendrier !== "undefined" && RJCalendrier.plan) ? RJCalendrier.plan(G.cat, G.saison || 1) : null,
+      t = (_plan && _plan.courses) || e[G.cat] || e["Karting Junior"], r = Math.floor(46 / t.length), n = 0; n < t.length; n++) {
     var a = {
         name: t[n],
-        week: 2 + n * r + (n % 3 == 0 ? 1 : 0),
+        week: _plan ? _plan.semaines[n] : 2 + n * r + (n % 3 == 0 ? 1 : 0),
         manche: n + 1,
         done: !1,
         result: null
@@ -18659,7 +18660,9 @@ function buildCalendar() {
      PRNG seedé par G.saison + cat → déterministe pour une saison donnée mais varie d'une saison à l'autre.
      Le seed inclut 'F1' pour ne pas affecter les autres cats (au cas où on ajouterait du randomisé ailleurs).
      F2/F3 : toutes les manches restent sprint (géré dans _isSprintWeekendForRace, pas marqué ici). */
-  if (G.cat === "Formule 1" && CAL_RACES.length >= 5) {
+  if (_plan && _plan.sprints) {
+    CAL_RACES.forEach(function(c) { if (_plan.sprints.indexOf(c.name) >= 0) c.isSprint = true; });
+  } else if (G.cat === "Formule 1" && CAL_RACES.length >= 5) {
     // Mulberry32 — PRNG simple, déterministe à partir d'un seed
     var _seed = ((G.saison || 1) * 2654435761) >>> 0;
     _seed = (_seed ^ 0xF1F1F1F1) >>> 0; // marqueur F1
@@ -22719,6 +22722,38 @@ function _getCircuitCountry(n) {
       name: "États-Unis",
       flag: "🇺🇸"
     },
+    "Shanghai": {
+      name: "Chine",
+      flag: "🇨🇳"
+    },
+    "Montréal": {
+      name: "Canada",
+      flag: "🇨🇦"
+    },
+    "Qatar": {
+      name: "Qatar",
+      flag: "🇶🇦"
+    },
+    "Madrid": {
+      name: "Espagne",
+      flag: "🇪🇸"
+    },
+    "Istanbul": {
+      name: "Turquie",
+      flag: "🇹🇷"
+    },
+    "Sepang": {
+      name: "Malaisie",
+      flag: "🇲🇾"
+    },
+    "Kyalami": {
+      name: "Afrique du Sud",
+      flag: "🇿🇦"
+    },
+    "Nürburgring": {
+      name: "Allemagne",
+      flag: "🇩🇪"
+    },
     "GP Monaco Kart": {
       name: "Monaco",
       flag: "🇲🇨"
@@ -22889,7 +22924,14 @@ function _countryToNat(name) {
     "Autriche": "AT",
     "France": "FR",
     "Émirats": "AE",
-    "Macao": "MO"
+    "Macao": "MO",
+    "Chine": "CN",
+    "Canada": "CA",
+    "Qatar": "QA",
+    "Turquie": "TR",
+    "Malaisie": "MY",
+    "Afrique du Sud": "ZA",
+    "Allemagne": "DE"
   };
   return _M[name] || null;
 }
