@@ -807,6 +807,11 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Nouvelle partie remise à zéro** : quitter la création vers l'accueil puis relancer une partie reprenait l'ancienne saisie et l'étape où l'on s'était arrêté (la saisie conservée pour un aller-retour par « changer » de mode n'était jamais effacée), ce qui pouvait aussi afficher un titre d'étape décalé. La saisie n'est désormais conservée que pour « changer » de mode ; quitter ou relancer repart de zéro (écurie de cœur et milieu familial compris).
 - Tests : suite `creation` (choix obligatoires, « changer » garde la saisie, nouvelle partie à zéro).
 
+## Étape Profil : Continuer bloqué — v270
+
+- Après un réglage du visage, Continuer ne faisait plus rien : l'éditeur (128) redessine la colonne de l'aperçu, où la création compacte (140) avait placé le champ du numéro, qui disparaissait de la page ; la création plantait alors sur un numéro introuvable. Le bloc du numéro est désormais replacé après chaque redessin, avec sa valeur.
+- Tests : suite `creation` (régler le visage, saisir un numéro, continuer).
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

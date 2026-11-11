@@ -64,16 +64,27 @@
   }
 
   /* Le numéro rejoint l'aperçu du visage (128), dans la colonne de gauche :
-     l'étape tient sur un écran. */
+     l'étape tient sur un écran. L'éditeur redessine cette colonne à chaque
+     réglage du visage, ce qui retirait le champ du numéro de la page (et
+     Continuer plantait sur un p-num introuvable) : on garde le bloc et on le
+     replace après chaque redessin. */
+  var _boiteNum = null, _obsNum = null;
   function numero() {
-    var num = $("p-num"), apercu = $("num-preview"), gauche = document.querySelector("#rja-creation .rja-ed-grand");
-    if (!num || !apercu) return;
-    var boite = num.parentNode;
-    if (!boite.classList.contains("rj140-num")) {
-      boite.classList.add("rj140-num");
-      boite.insertBefore(apercu, boite.firstChild);
+    if (!_boiteNum) {
+      var num = $("p-num"), apercu = $("num-preview");
+      if (!num || !apercu) return;
+      _boiteNum = num.parentNode;
+      _boiteNum.classList.add("rj140-num");
+      _boiteNum.insertBefore(apercu, _boiteNum.firstChild);
     }
-    if (gauche && boite.parentNode !== gauche) gauche.appendChild(boite);
+    var gauche = document.querySelector("#rja-creation .rja-ed-grand");
+    if (gauche && _boiteNum.parentNode !== gauche) gauche.appendChild(_boiteNum);
+    else if (!gauche && !_boiteNum.isConnected && $("cs5")) $("cs5").appendChild(_boiteNum);   // éditeur absent : le numéro reste à l'étape
+    var ed = $("rja-creation");
+    if (ed && !_obsNum && typeof MutationObserver === "function") {
+      _obsNum = new MutationObserver(function () { if (!_boiteNum.isConnected || _boiteNum.parentNode !== document.querySelector("#rja-creation .rja-ed-grand")) numero(); });
+      _obsNum.observe(ed, { childList: true, subtree: true });
+    }
   }
 
   /* L'écurie de cœur (80) est facultative : une ligne qui se déplie. */
