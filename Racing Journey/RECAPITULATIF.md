@@ -832,6 +832,11 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Événements** : les choix d'arrêt (Safety Car, VSC, undercut, couvrir un rival…) sont retirés juste avant l'affichage ; un événement qui ne parle que d'arrêt est sauté ; la Safety Car et la VSC proposent des choix de relance. Trois moments décisifs fondés sur un arrêt (neutralisation tardive, seul sur la grille, ravitaillement en ovale) ne sont plus tirés ; « Le déluge » propose « Lever le pied ».
 - Tests : suite `arrets`.
 
+## Widgets Contrat et Super Licence — v273
+
+- Le widget « Contrat » ne s'affiche plus que dans Pilote › Carrière (avant : Pilote, tous onglets, Messagerie, Patrimoine) ; le widget « Super Licence » est retiré de Contrats, Championnat et Pilote : l'onglet Carrière a déjà sa carte Super Licence (112). Le widget Budget reste dans Style de vie (119).
+- Tests : suite `habillage`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
