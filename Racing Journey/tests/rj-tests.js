@@ -2595,7 +2595,7 @@ async function suiteHabillage() {
       }
       return vus;
     });
-    S.verifier("plus de widgets « prochaine course » ni « rêves » hors de leur écran", !widgets.course && !widgets.reves, JSON.stringify(widgets));
+    S.verifier("plus de widgets « prochaine course », « rêves » ni « saison »", !widgets.course && !widgets.reves && !widgets.saison, JSON.stringify(widgets));
 
     const duel = await page.evaluate(async () => {
       navTo("S-champ", "ni-champ"); chtab("h2h");

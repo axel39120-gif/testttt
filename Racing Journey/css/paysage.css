@@ -531,14 +531,6 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj119-s { margin-top: 4px; font-size: 11px; line-height: 1.4; color: var(--muted, #80808a); }
 .rj119-barre { height: 5px; margin: 5px 0 2px; border-radius: 3px; background: rgba(255, 255, 255, .07); overflow: hidden; }
 .rj119-barre span { display: block; height: 100%; border-radius: 3px; }
-.rj119-forme { display: flex; gap: 4px; margin-top: 6px; }
-.rj119-forme i {
-  font: 700 10px/1 var(--font-display); font-style: normal; padding: 4px 6px; border-radius: 4px;
-  color: var(--text2, #b0b0bc); background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08);
-}
-.rj119-forme i.podium { color: #F59E0B; border-color: #F59E0B66; }
-.rj119-forme i.points { color: #34D399; border-color: #34D39944; }
-.rj119-forme i.ab { color: #ff2040; border-color: #ff204055; }
 
 /* Carte de la prochaine course : l'action principale, nommée. */
 #S-home > .apex-hero-race { position: relative; }
@@ -629,8 +621,57 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
   #S-home > .apex-stats-rail { display: none !important; }
 }
 
-/* --- Calendrier : le mois entier tient dans l'écran ------------------- */
-#S-cal .cal-cell { aspect-ratio: auto !important; height: clamp(24px, calc((var(--app-h) - var(--bandeau) - 140px) / 6), 46px); }
+/* --- Calendrier (js/weekend/18-weekend.js) ------------------------------
+   Une seule colonne centrée : la prochaine manche en tête, puis la saison
+   mois par mois, une ligne par manche ou événement avec son résultat. */
+#S-cal .rjcal { max-width: 620px; margin-inline: auto !important; column-width: auto !important; columns: auto !important; }
+#S-cal .rjcal > * { break-inside: auto; }
+.rjcal-hero {
+  position: relative; overflow: hidden; padding: 12px 16px 12px 18px; border-radius: var(--r2, 12px);
+  border: 1px solid rgba(255, 24, 1, .28);
+  background: linear-gradient(120deg, rgba(255, 24, 1, .16), rgba(255, 255, 255, .03) 55%, rgba(255, 255, 255, .015));
+  box-shadow: inset 3px 0 0 var(--red, #FF1801), 0 8px 24px rgba(0, 0, 0, .4);
+}
+.rjcal-kicker { display: flex; justify-content: space-between; align-items: center; font: 800 10px/1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--red3, #ff2040); }
+.rjcal-kicker b { color: var(--soft, #a8a8b4); font-weight: 800; }
+.rjcal-hero-main { display: flex; align-items: center; gap: 12px; margin-top: 9px; }
+.rjcal-hero-txt { flex: 1; min-width: 0; }
+.rjcal-hero-nom { font: 900 22px/1.1 var(--font-display); color: #fff; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rjcal-hero-date { margin-top: 3px; font-size: 12px; color: var(--soft, #a8a8b4); }
+.rjcal-hero-fin { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.rjcal-quand { padding: 6px 10px; border-radius: 99px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); font: 800 11px/1 var(--font-display); color: #fff; white-space: nowrap; }
+.rjcal-prog { height: 4px; margin-top: 11px; border-radius: 2px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.rjcal-prog span { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #D4150A, #FF1801); }
+.rjcal-prog-l { margin-top: 5px; font-size: 10.5px; color: var(--muted, #6b6b78); }
+.rjcal-b { padding: 3px 7px; border-radius: 4px; font: 800 9px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.rjcal-b.sprint { color: #FFB300; background: rgba(255, 179, 0, .10); border: 1px solid rgba(255, 179, 0, .35); }
+.rjcal-b.presse { color: #EC4899; background: rgba(236, 72, 153, .10); border: 1px solid rgba(236, 72, 153, .4); }
+
+.rjcal-mois { margin-bottom: 8px; border: 1px solid rgba(255, 255, 255, .06); border-radius: var(--r2, 12px); background: rgba(255, 255, 255, .02); overflow: hidden; }
+.rjcal-mois.en-cours { border-color: rgba(255, 24, 1, .25); }
+.rjcal-mois-nom { display: flex; align-items: center; gap: 8px; padding: 8px 14px 6px; font: 800 11px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--soft, #a8a8b4); }
+.rjcal-mois.en-cours .rjcal-mois-nom { color: #fff; }
+.rjcal-mois-nom i { font-style: normal; padding: 2px 6px; border-radius: 4px; background: var(--red, #FF1801); color: #fff; font-size: 8.5px; letter-spacing: .12em; }
+.rjcal-l { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 14px; border-top: 1px solid rgba(255, 255, 255, .04); font-size: 12.5px; }
+.rjcal-l.fait :is(.rjcal-m, .rjcal-d, .rjcal-nom, .rjcal-t) { opacity: .55; }
+.rjcal-l.prochaine { background: linear-gradient(90deg, rgba(255, 24, 1, .14), transparent 70%); box-shadow: inset 3px 0 0 var(--red, #FF1801); }
+.rjcal-m { flex: 0 0 30px; font: 800 10px/1 var(--font-display); color: var(--muted, #6b6b78); letter-spacing: .04em; }
+.rjcal-l.prochaine .rjcal-m { color: var(--red3, #ff2040); }
+.rjcal-d { flex: 0 0 92px; font-size: 11px; font-weight: 600; color: var(--soft, #a8a8b4); white-space: nowrap; }
+.rjcal-nom, .rjcal-t { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; color: #fff; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rjcal-ev .rjcal-t { font-weight: 500; color: var(--text, #e8e8ec); }
+.rjcal-ev .rjcal-m i { display: block; width: 7px; height: 7px; margin-left: 4px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+.rjcal-r { flex-shrink: 0; min-width: 44px; text-align: right; }
+.rjcal-r b { display: inline-block; min-width: 34px; padding: 4px 6px; border-radius: 5px; text-align: center; font: 800 11px/1 var(--font-display); color: var(--text, #e8e8ec); background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); }
+.rjcal-r b.or { color: #FFC107; border-color: rgba(255, 193, 7, .5); background: rgba(255, 193, 7, .1); }
+.rjcal-r b.podium { color: #e8e8ec; border-color: rgba(255, 255, 255, .3); }
+.rjcal-r b.points { color: #34D399; border-color: rgba(52, 211, 153, .35); }
+.rjcal-r b.ab { color: #ff2040; border-color: rgba(255, 32, 64, .4); }
+.rjcal-r em { font-style: normal; font-size: 10px; font-weight: 600; color: var(--muted, #6b6b78); text-transform: uppercase; letter-spacing: .08em; }
+.rjcal-r em.next { color: var(--red3, #ff2040); font-weight: 800; }
+/* Badge « Presse » du module 99, posé dans le titre de la manche. */
+.rjcal-l .cal-mini-event-title { flex: 0 1 auto !important; display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#S-cal .rjcal .rj99-cal { margin: 0 !important; padding: 3px 7px !important; font-size: 9px !important; line-height: 1 !important; }
 
 /* --- Course en direct ----------------------------------------------------
    À gauche, le circuit sur toute la hauteur (js/race/111-vue-circuit.js) ;
