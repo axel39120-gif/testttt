@@ -73,7 +73,7 @@
   /* --- Offres de F1 : sans licence, rôle de réserviste --------------- */
   function surOffre(args, suite) {
     var o = args[0];
-    if (!o || o.cat !== F1 || o.role === "num3" || etat().eligible) return suite();
+    if (!o || o.cat !== F1 || o.role === "num3" || o.licenceAttendue || etat().eligible) return suite();   // licenceAttendue : l'académie (138) a projeté la licence de fin de saison
     var r = suite([Object.assign({}, o, { role: "num3" })]);
     if (r) r._superLicence = true;
     prevenir();
