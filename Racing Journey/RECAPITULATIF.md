@@ -812,6 +812,18 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Après un réglage du visage, Continuer ne faisait plus rien : l'éditeur (128) redessine la colonne de l'aperçu, où la création compacte (140) avait placé le champ du numéro, qui disparaissait de la page ; la création plantait alors sur un numéro introuvable. Le bloc du numéro est désormais replacé après chaque redessin, avec sa valeur.
 - Tests : suite `creation` (régler le visage, saisir un numéro, continuer).
 
+## Entraînement et progression — v271
+
+- **Gains affichés = gains réels** : le résultat d'une séance annonçait le gain avant le potentiel, l'âge et le plafond (sur 40 séances : +77 affiché, +16 réel). Il montre désormais ce que le pilote a vraiment gagné, au dixième près.
+- **L'âge ne compte qu'une fois** : il réduisait le nombre de points de la séance, puis chaque point gagné ; après le pic, l'entraînement tombait à un cinquième de l'effet prévu (à 36 ans, +4 pour 40 séances). À 36 ans, on gagne maintenant environ la moitié de ce qu'on gagne à 24 ans.
+- **Développement visible dès le début** : le lancement de la carrière effaçait le profil (potentiels, archétype, arbre), recréé seulement au premier gain ; la section restait vide. Il est créé au lancement et à l'affichage.
+- **Effets utiles** : la spécialité « Gestionnaire pneus » devient « Constance » (+ régularité en course, débloquée par les séances mentales) et le palier 3 de la branche Course devient « Rythme constant » (+ constance sur toute la course) ; ils agissaient sur l'usure des pneus, retirée (82).
+- **Coach** : le coach recruté dans les relations renforce de 25 % les focus de sa spécialité (technique : pilotage et racecraft ; mental : conditions ; physique : préparation physique).
+- **Spécialités** : chaque focus a son type de séance ; Pilotage et Racecraft débloquaient ensemble « Spécialiste qualif » et « Maître des départs ».
+- **Fatigue** : au-delà de 60, environ −1 % de performance en course, au-delà de 80, environ −3 % (contre −1 % au-delà de 80 avant) ; l'écran d'entraînement le signale.
+- Ancien catalogue de séances (TRAIN_CATALOG, doTrain), remplacé par les focus, retiré (−345 lignes).
+- Tests : suite `entrainement`. La suite de création sur téléphone devient `creationtel` : elle portait le même nom que la suite « Création d'une carrière », qui ne tournait plus depuis la v267.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
