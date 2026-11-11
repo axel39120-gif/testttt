@@ -3544,9 +3544,16 @@ async function suiteCreation() {
         const sc = document.querySelector("#S-create > .scroll"), btn = document.getElementById("cre-next");
         out.etapes.push({ n, defile: sc.scrollHeight - sc.clientHeight, bouton: btn.getBoundingClientRect().bottom <= innerHeight && btn.getBoundingClientRect().top >= 0,
           titre: (document.getElementById("rj80-stepname") || {}).textContent || "" });
+        if (n === 5) {   // régler le visage redessine l'éditeur : le numéro doit rester
+          document.getElementById("p-num").value = "44";
+          document.querySelector("#rja-creation .rja-puce:not(.on)").click(); await d(150);
+          document.querySelector("#rja-creation .rja-pastille:not(.on)").click(); await d(150);
+          out.numero = !!document.getElementById("p-num") && document.getElementById("p-num").value === "44";
+        }
         if (n === 3 || n === 4) { const avant = document.getElementById("cre-next").classList.contains("rj80-off"); creNext(); await d(150); out["bloque" + n] = avant && window.creStep === n; }
         if (n < 6) { if (window.creStep === 3 && !window.selStyleVal) document.querySelector("#style-grid .trait-opt").click(); if (window.creStep === 4 && !window.selTraitVal) document.querySelector("#trait-list .trait-opt").click(); creNext(); await d(250); }
       }
+      out.numPilote = G.pilot && G.pilot.number;
       // « changer » de mode en cours de création : la saisie et l'étape restent
       document.querySelector("#rj80-banner button").click(); await d(300); document.getElementById("rj80-go").click(); await d(500);
       out.garde = window.creStep === 6 && document.getElementById("p-fn").value === "Lou" && window.selStyleVal !== null;
@@ -3564,6 +3571,7 @@ async function suiteCreation() {
     S.verifier("style et caractère obligatoires : sans choix, Continuer est inactif et l'étape ne change pas", r.bloque3 && r.bloque4, JSON.stringify([r.bloque3, r.bloque4]));
     S.verifier("changer de mode en cours de création garde la saisie et l'étape", r.garde, "");
     S.verifier("quitter la création puis lancer une nouvelle partie repart de zéro", r.neuf, "");
+    S.verifier("profil : après avoir réglé le visage, le numéro reste et Continuer mène au récapitulatif", r.numero && r.numPilote === 44 && r.etapes[5].n === 6, JSON.stringify([r.numero, r.numPilote]));
     S.verifier("sous-titres courts, sans point final", r.etapes.every(e => e.titre && !/\.\s*$/.test(e.titre) && e.titre.length <= 40), JSON.stringify(r.etapes.map(e => e.titre)));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
