@@ -2600,6 +2600,12 @@ async function suiteHabillage() {
       return vus;
     });
     S.verifier("plus de widgets « prochaine course », « rêves » ni « saison »", !widgets.course && !widgets.reves && !widgets.saison, JSON.stringify(widgets));
+    const carriere = await page.evaluate(async () => {
+      const vu = async (o) => { navTo("S-pilot", null); if (typeof ptab === "function") ptab(o); await new Promise(r => setTimeout(r, 300));
+        return [...document.querySelectorAll("#S-pilot .rj119-w")].map(w => w.getAttribute("data-w")); };
+      return { carriere: await vu("rep"), stats: await vu("stats"), licence112: !!document.getElementById("rj112-carte") };
+    });
+    S.verifier("« Contrat » et « Super Licence » ne s'affichent que dans Pilote › Carrière", !widgets.contrat && !widgets.licence && JSON.stringify(carriere.carriere) === '["contrat"]' && !carriere.stats.length && carriere.licence112, JSON.stringify([widgets, carriere]));
 
     const duel = await page.evaluate(async () => {
       navTo("S-champ", "ni-champ"); chtab("h2h");

@@ -25,15 +25,15 @@
   /* « Prochaine course » et « Rêves de carrière » ne sont plus proposés :
      la course est à l'accueil et au calendrier, les rêves dans Pilote ›
      Héritage ; ailleurs ils répétaient l'information. « Saison » (place,
-     points, forme) a suivi : le classement est à l'accueil et au championnat. */
+     points, forme) a suivi : le classement est à l'accueil et au championnat.
+     « Contrat » ne vit plus que dans Pilote › Carrière, et « Super Licence »
+     n'est plus un widget : l'onglet Carrière a déjà sa carte (112). */
   var WIDGETS_PAR_ECRAN = {
-    "S-contracts": ["licence"],   // le contrat et le budget y sont déjà
-    "S-patrimoine": ["contrat"],
     "S-lifestyle": ["budget"],
-    "S-mailbox": ["contrat"],
-    "S-champ": ["licence"],
-    "S-pilot": ["contrat", "licence"]
+    "S-pilot": ["contrat"]
   };
+  /* Écran à onglets : le widget ne s'affiche que dans cet onglet. */
+  var ONGLET = { "S-pilot": "pt-rep" };
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function argent(n) {
@@ -81,14 +81,6 @@
         '<div class="rj119-l"><span>Sponsors</span><b>' + (sponsors ? pluriel(sponsors, "contrat") : "aucun") + "</b></div>",
         "patrimoine");
     },
-    licence: function () {
-      if (G.cat === F1 || !window.RJSuperLicence) return "";
-      var e = RJSuperLicence.etat();
-      return carte("licence", "#60A5FA", "Super Licence", e.points + ' <small>/ ' + e.requis + " pts</small>",
-        barre(e.points / e.requis, "#60A5FA") +
-        '<div class="rj119-s">' + (e.eligible ? "Licence obtenue : la F1 t'est ouverte." : !e.ageOk ? "18 ans minimum pour la F1." : "Il manque " + e.manque + " points sur trois saisons.") + "</div>",
-        "licence");
-    },
     reves: function () {
       if (!window.RJHeritage) return "";
       var noms = {};
@@ -124,6 +116,8 @@
     document.querySelectorAll(".rj119-w").forEach(function (w) { w.remove(); });
     document.querySelectorAll(".rj119-rangee").forEach(function (r) { r.remove(); });
     if (!liste) return;
+    var onglet = ONGLET[ecran.id] && document.getElementById(ONGLET[ecran.id]);
+    if (ONGLET[ecran.id] && !(onglet && onglet.getClientRects().length)) return;
     var ou = cible(ecran);
     if (!ou) return;
     var html = liste.map(function (id) { try { return WIDGETS[id](); } catch (e) { console.warn(TAG, id, e && e.message); return ""; } }).join("");
@@ -136,7 +130,6 @@
     contrats: function () { navMore("S-contracts"); },
     calendrier: function () { navTo("S-cal", "ni-cal"); if (typeof renderCal === "function") renderCal(); },
     patrimoine: function () { navTo("S-patrimoine", null); },
-    licence: function () { navTo("S-pilot", null); if (typeof ptab === "function") ptab("rep"); },
     heritage: function () { navTo("S-pilot", null); if (typeof ptab === "function") ptab("heritage"); }
   };
 
