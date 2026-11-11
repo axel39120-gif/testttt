@@ -3635,6 +3635,58 @@ async function suiteEntrainement() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteArrets() {
+  S.suite("Arrêts au stand automatiques");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    await page.evaluate(() => {
+      window.__arrets = { bouton: 0, radio: [] };
+      const rp = window.rjRadioPush;
+      window.rjRadioPush = function (item, t) { if (/box/i.test(String(t))) __arrets.radio.push(String(t)); return rp.apply(this, arguments); };
+      window.__arretsVeille = setInterval(() => { if (document.getElementById("pit-button-container")) __arrets.bouton++; }, 20);
+    });
+    await S.courirUneCourse(page, { categorie: "Formule 1", rang: 2 });
+    const r = await page.evaluate(() => {
+      clearInterval(window.__arretsVeille);
+      const out = { bouton: __arrets.bouton, radio: __arrets.radio.slice(0, 3) };
+      const p = (LIVE_RACE.drivers || []).find(d => d.isPlayer);
+      out.arretsJoueur = p ? p._pitsDone : null;
+      // une demande d'arrêt du joueur (bouton, choix d'événement) ne fait rien
+      if (p) { const avant = p._pitsDone || 0; LIVE_RACE.finished = false; try { _playerPit(true); _playerPit(); } catch (e) {} out.demande = (p._pitsDone || 0) - avant; LIVE_RACE.finished = true; }
+      // le filtre des événements
+      const f = _rj82.sansArret;
+      const vsc = f({ icon: "[VSC]", title: "Virtual Safety Car", desc: "X a un problème — VSC déclenché. Fenêtre pit stop à -2s de pénalité.",
+        choices: [{ text: "Pit stop VSC — fenêtre gratuite", mod: .018 }, { text: "Rester en piste — tenter l'overcut", mod: .01 }] });
+      out.vsc = vsc && vsc.choices.map(c => c.text);
+      out.vscDesc = vsc && vsc.desc;
+      out.undercut = f({ icon: "[STRAT]", title: "Fenêtre undercut sur Leclerc", desc: "…", choices: [{ text: "Undercut — rentrer maintenant", mod: .02 }, { text: "Overcut — rester en piste et pousser fort" }, { text: "Ignorer — respecter la stratégie initiale" }] });
+      const normal = { title: "Orlov attaque !", choices: [{ text: "Défense agressive" }, { text: "Laisser passer" }] };
+      out.normal = f(normal) === normal;
+      out.meteoChoix = f({ title: "La pluie arrive", choices: [{ text: "Rentrer changer de pneus maintenant", _doPit: true, _weatherStrategy: "pit" }, { text: "Attaquer pendant que les autres hésitent" }, { text: "Rester prudent le temps que ça se stabilise" }] }).choices.length;
+      // la météo bascule : tout le monde rentre dans les trois tours, un arrêt proche est fusionné
+      const sauve = window.LIVE_RACE;
+      window.LIVE_RACE = { drivers: [{ name: "A" }, { name: "B", isPlayer: true }], total: 50, cur: 20, _rj82Pits: { A: [24], B: [40] }, _rj82PitsFaits: {}, _rj82Types: {} };
+      _rj82.meteo(true);
+      out.planMeteo = JSON.parse(JSON.stringify(LIVE_RACE._rj82Pits)); out.typesMeteo = Object.assign({}, LIVE_RACE._rj82Types);
+      window.LIVE_RACE = sauve;
+      out.flag = !!window.RJ_ARRETS_AUTO;
+      return out;
+    });
+    S.verifier("aucun bouton d'arrêt pendant la course", r.bouton === 0, String(r.bouton));
+    S.verifier("le joueur s'arrête quand même, sur décision du muret", r.arretsJoueur >= 1, String(r.arretsJoueur));
+    S.verifier("l'ingénieur annonce l'arrêt : « Box, box ! » et les pneus", r.radio.length >= 1 && r.radio.every(t => /^Box, box ! /.test(t) && /pneus|slicks/i.test(t)), JSON.stringify(r.radio));
+    S.verifier("une demande d'arrêt du joueur est ignorée", r.demande === 0, String(r.demande));
+    S.verifier("VSC : plus de choix d'arrêt, des choix de relance", r.vsc && r.vsc.length === 2 && r.vsc.every(t => !/pit|stand|overcut|en piste/i.test(t)) && !/pit/i.test(r.vscDesc), JSON.stringify([r.vsc, r.vscDesc]));
+    S.verifier("un événement d'undercut est sauté, un événement ordinaire ne change pas", r.undercut === null && r.normal, JSON.stringify([r.undercut, r.normal]));
+    S.verifier("la pluie arrive : on choisit sa façon de rouler, pas l'arrêt", r.meteoChoix === 2, String(r.meteoChoix));
+    S.verifier("la météo bascule : tout le monde rentre dans les trois tours (arrêt proche fusionné)",
+      r.planMeteo.A.length === 1 && r.planMeteo.A[0] >= 21 && r.planMeteo.A[0] <= 23 && r.planMeteo.B.length === 2 && r.planMeteo.B[1] === 40 && r.typesMeteo["A#0"] === "pluie",
+      JSON.stringify([r.planMeteo, r.typesMeteo]));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3866,7 +3918,8 @@ const SUITES = {
   academie: suiteAcademie,
   caracteres: suiteCaracteres,
   creationtel: suiteCreationTelephone,
-  entrainement: suiteEntrainement
+  entrainement: suiteEntrainement,
+  arrets: suiteArrets
 };
 
 async function principal() {

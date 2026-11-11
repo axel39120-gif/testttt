@@ -211,6 +211,32 @@
     }
     lr._rj82Pits = plan;
     lr._rj82PitsFaits = {};
+    lr._rj82Types = {};
+    lr._rj82Mouille = pisteMouillee();
+  }
+
+  function pisteMouillee() {
+    var w = window.RACE_STATE && RACE_STATE.weather && RACE_STATE.weather.id;
+    return w === "wet" || w === "storm";
+  }
+
+  /* La météo bascule (sec ↔ mouillé) : toute l'écurie rappelle ses pilotes
+     dans les trois tours, pour tout le monde. Un arrêt prévu tout près est
+     fusionné avec celui-ci. */
+  function arretsMeteo(mouille) {
+    var lr = LR(); if (!lr || !lr._rj82Pits) return;
+    for (var i = 0; i < lr.drivers.length; i++) {
+      var d = lr.drivers[i];
+      if (!d || d.dnf || d._mc) continue;
+      var tours = lr._rj82Pits[d.name] || (lr._rj82Pits[d.name] = []);
+      var fait = d._pitsDone || 0, tour = Math.min(lr.total - 1, lr.cur + 1 + Math.floor(Math.random() * 3));
+      if (tour <= lr.cur) continue;
+      var restants = tours.slice(fait).filter(function (t) { return Math.abs(t - tour) > 4; });
+      var nouveaux = tours.slice(0, fait).concat(restants, [tour]).sort(function (a, b) { return a - b; });
+      lr._rj82Pits[d.name] = nouveaux;
+      for (var k = fait; k < nouveaux.length; k++) delete lr._rj82PitsFaits[d.name + "#" + k];
+      lr._rj82Types[d.name + "#" + nouveaux.indexOf(tour)] = mouille ? "pluie" : "slicks";
+    }
   }
 
   /* Un arrêt coûte sa durée, en secondes, à tout le monde. L'ancienne
@@ -225,12 +251,16 @@
     } catch (e) {}
   }
 
-  /* Le joueur doit comprendre pourquoi il vient de reculer. */
-  function annoncerArret(d, dur) {
+  /* Le joueur doit comprendre pourquoi il vient de reculer : l'ingénieur
+     l'appelle au stand, comme à la radio d'une vraie course. */
+  function annoncerArret(d, dur, type) {
     var lr = LR();
-    var texte = "Arrêt au stand — " + dur.toFixed(1) + " s immobilisé";
+    var pneus = type === "pluie" ? "Pneus pluie." : type === "slicks" ? "On repasse en slicks." :
+      type === "gardes" ? "On garde les pneus, ravitaillement seulement." : "On change les pneus.";
+    var texte = "Arrêt au stand — " + (type === "gardes" ? "pneus conservés" : type === "pluie" ? "pneus pluie" : type === "slicks" ? "slicks" : "pneus neufs") +
+      " · " + dur.toFixed(1) + " s immobilisé";
     try {
-      if (fn("rjRadioPush")) window.rjRadioPush("ingenieur", "Tu rentres. " + texte + ".");
+      if (fn("rjRadioPush")) window.rjRadioPush("ingenieur", "Box, box ! " + pneus);
     } catch (e) {}
     try {
       if (lr) {
@@ -248,30 +278,86 @@
     } catch (e) {}
   }
 
-  /* Le module d'arrêts automatiques appelle _playerPit, qui ouvre une
-     fenêtre de choix de gomme. Sans pneus, ce choix n'a plus d'objet : on
-     remplace la fonction par la voie directe, quel que soit l'appelant. */
+  /* Les arrêts sont décidés par le muret, jamais par le joueur : le bouton
+     « Box » disparaît, et toute demande d'arrêt (bouton, choix d'un
+     événement, texte d'un choix) est ignorée. Le plan (planifierArrets,
+     arretsMeteo) fait rentrer tout le monde, joueur compris. */
   function neutraliserPitJoueur() {
-    if (!fn("_playerPit") || window._playerPit._rj82) return;
-    _orig._playerPit = window._playerPit;
-    rjInscrire("_playerPit", { id: "82-simulation-simplifiee:_playerPit", ordre: -6100, remplace: function (args, suite) {
-      var lr = LR(); if (!lr || !lr.drivers || lr.finished) return;
-      var cfg = configPit(); if (!cfg || !cfg.enabled) return;
-      var p = lr.drivers.find(function (d) { return d.isPlayer; });
-      if (!p || p.dnf) return;
-      if ((p._pitsDone || 0) >= (cfg.maxStops || 2)) return;
-      var dur = (cfg.stopTimeMin || 2.2) +
-                Math.random() * ((cfg.stopTimeMax || 3.4) - (cfg.stopTimeMin || 2.2));
-      arretRival(p, dur);
-      annoncerArret(p, dur);
-    } });
-    window._playerPit._rj82 = true;
+    if (fn("_playerPit") && !window._playerPit._rj82) {
+      _orig._playerPit = window._playerPit;
+      rjInscrire("_playerPit", { id: "82-simulation-simplifiee:_playerPit", ordre: -6100, remplace: function () { return; } });
+      window._playerPit._rj82 = true;
+    }
+    if (fn("renderPitButton") && !window.renderPitButton._rj82) {
+      rjInscrire("renderPitButton", { id: "82-simulation-simplifiee:renderPitButton", ordre: -6100, remplace: function () {
+        var b = document.getElementById("pit-button-container"); if (b) b.remove();
+      } });
+      window.renderPitButton._rj82 = true;
+    }
+    var b = document.getElementById("pit-button-container"); if (b) b.remove();
+  }
+
+  /* Une quinzaine d'événements (Safety Car, VSC, undercut, météo…) proposaient
+     de rentrer au stand. Juste avant l'affichage, on retire ces choix ; un
+     événement qui ne parle que d'arrêt est sauté ; la Safety Car et la VSC
+     gardent des choix de pilotage pour la relance. */
+  var CHOIX_ARRET = /pit|\bbox\b|stand|undercut|rentrer|pneus neufs|gommes? neuves|changer de pneus|ravitaill|attendre un tour|overcut|s'arr[eê]ter|rester en piste|rester dehors/i;
+  var SUJET_ARRET = /undercut|overcut|mur des stands|fenêtre (d'arrêt|pit)|stratégie pit/i;
+  function texte(x) { try { return typeof x === "function" ? String(x()) : String(x || ""); } catch (e) { return ""; } }
+  function sansArret(ev) {
+    if (!ev || !Array.isArray(ev.choices)) return ev;
+    var garde = ev.choices.filter(function (c) {
+      return c && !c._doPit && c._weatherStrategy !== "pit" && !CHOIX_ARRET.test(texte(c.text));
+    });
+    if (garde.length === ev.choices.length) return ev;
+    var neutralisation = /\[(SC|VSC)\]/.test(ev.icon || "") || /safety|vsc/i.test(texte(ev.title));
+    var copie = Object.assign({}, ev);
+    if (neutralisation) {
+      copie.desc = texte(ev.desc).replace(/[^.]*(pit|stand)[^.]*\.?/gi, "").trim() || "La course est neutralisée, le muret gère la stratégie.";
+      if (garde.length < 2) garde = [
+        { text: "Préparer la relance — se placer pour attaquer", mod: 0.014, chance: { fail: 0.18, failMod: -0.006, msg: "Relance manquée, on te passe." } },
+        { text: "Rester concentré — garder la position", mod: 0.008 }
+      ];
+    } else if (garde.length < 2 || SUJET_ARRET.test(texte(ev.title) + " " + texte(ev.desc) + " " + texte(ev.text))) {
+      return null;
+    }
+    copie.choices = garde;
+    return copie;
+  }
+  function filtrerEvenements() {
+    if (fn("showLiveEvent") && !window.showLiveEvent._rj82) {
+      rjInscrire("showLiveEvent", { id: "82-simulation-simplifiee:showLiveEvent", ordre: -6100, remplace: function (args, suite) {
+        var ev = sansArret(args[0]), lr = LR();
+        if (!ev) { if (lr) { lr.pendingEvent = null; lr.paused = false; } return; }
+        if (lr) lr.pendingEvent = ev;
+        return suite([ev]);
+      } });
+      window.showLiveEvent._rj82 = true;
+    }
+    if (fn("showNextRaceEvent") && !window.showNextRaceEvent._rj82) {
+      rjInscrire("showNextRaceEvent", { id: "82-simulation-simplifiee:showNextRaceEvent", ordre: -6100, remplace: function (args, suite) {
+        try {
+          var evs = window.RACE_STATE && RACE_STATE.events, i = window.CURRENT_EVT_IDX || 0;
+          while (evs && evs[i]) {
+            var ev = sansArret(evs[i]);
+            if (ev) { evs[i] = ev; break; }
+            evs.splice(i, 1);
+          }
+        } catch (e) {}
+        return suite();
+      } });
+      window.showNextRaceEvent._rj82 = true;
+    }
   }
 
   function traiterArrets() {
     var lr = LR(); if (!lr || !lr.drivers || !lr._rj82Pits || lr.finished) return;
     var cfg = configPit(); if (!cfg || !cfg.enabled) return;
     var tour = lr.cur;
+    lr._rj82Types = lr._rj82Types || {};
+    var mouille = pisteMouillee();
+    if (typeof lr._rj82Mouille !== "boolean") lr._rj82Mouille = mouille;
+    else if (mouille !== lr._rj82Mouille) { lr._rj82Mouille = mouille; arretsMeteo(mouille); }
 
     for (var i = 0; i < lr.drivers.length; i++) {
       var d = lr.drivers[i];
@@ -296,7 +382,9 @@
            fenêtre de choix de gomme : elle n'a plus d'objet ici, et elle
            empêchait l'arrêt du joueur d'aboutir. */
         arretRival(d, dur);
-        if (d.isPlayer) annoncerArret(d, dur);
+        /* En endurance, un relais sur deux peut se faire sans changer de pneus. */
+        var type = lr._rj82Types[cle] || (G.cat === "Endurance WEC" && Math.random() < 0.35 ? "gardes" : "neufs");
+        if (d.isPlayer) annoncerArret(d, dur, type);
         break;                                       // un seul arrêt par tour et par pilote
       }
     }
@@ -309,6 +397,8 @@
   var _origRun = null, _origTick = null, _origConfirm = null;
 
   function installer() {
+    window.RJ_ARRETS_AUTO = true;                    // lu par 27 et 106 : plus de choix d'arrêt
+    filtrerEvenements();
     neutraliserPneus();
     neutraliserPitJoueur();
 
@@ -372,6 +462,7 @@
     })();
 
     window._rj82 = {
+      sansArret: sansArret, meteo: arretsMeteo,
       variance: function (v) { if (typeof v === "number") VARIANCE = v; return VARIANCE; },
       planifier: planifierArrets,
       arrets: function () { var lr = LR(); return lr ? lr._rj82Pits : null; },
