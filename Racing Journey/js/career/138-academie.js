@@ -32,9 +32,10 @@
   "use strict";
 
   var TAG = "[138-academie]";
-  /* Seuils de la revue de fin de saison : place maximale et relation minimale. */
-  var EXIGENCE = { RBJT: { place: 6, relation: 40 } };
-  var EXIGENCE_DEFAUT = { place: 12, relation: 20 };
+  /* Exigences de l'académie (caractère, module 139) : place et relation minimales à la
+     revue, saisons ratées d'affilée avant le renvoi, place pour un baquet de F1. */
+  var EXIGENCE_DEFAUT = { place: 12, relation: 20, renvoi: 2, baquet: 3 };
+  function exigence() { return (window.RJCaracteres && RJCaracteres.academie(PLAYER_ACADEMY.id)) || EXIGENCE_DEFAUT; }
 
   function A() { return typeof getPlayerAcademy === "function" ? getPlayerAcademy() : null; }
   function nomA() { return (typeof getAcademy === "function" && PLAYER_ACADEMY.id) ? getAcademy(PLAYER_ACADEMY.id) : "Ton académie"; }
@@ -79,7 +80,7 @@
     if (!eligibleF1() || typeof buildOffer !== "function") return null;
     var a = A(), p = place(), rel = PLAYER_ACADEMY.relation || 0;
     var soeur = (a.f1Alt || []).map(f1).filter(Boolean)[0], phare = f1(a.f1Team);
-    var resultats = p <= 3, licence = licenceProjetee(p), baquet = resultats && licence;
+    var resultats = p <= exigence().baquet, licence = licenceProjetee(p), baquet = resultats && licence;
     var o = null, cible;
     if (baquet) {
       cible = (p === 1 && rel >= 90 && phare) ? phare : (soeur || phare);
@@ -107,22 +108,25 @@
   /* --- Revue de fin de saison -------------------------------------------- */
   function revueSaison() {
     var a = A(); if (!a || G.cat === "Formule 1") return null;          // arrivé en F1 : le programme a rempli son rôle
-    var e = etat(), x = EXIGENCE[PLAYER_ACADEMY.id] || EXIGENCE_DEFAUT, p = place(), rel = PLAYER_ACADEMY.relation || 0;
+    var e = etat(), x = exigence(), p = place(), rel = PLAYER_ACADEMY.relation || 0;
     if (e.revueSaison === G.saison) return null;
     e.revueSaison = G.saison;
-    if (p <= 3) { if (typeof changeAcademyRelation === "function") changeAcademyRelation(8, "Bilan de saison : P" + p); e.avertissement = null; return "bonne"; }
+    if (p <= 3) { if (typeof changeAcademyRelation === "function") changeAcademyRelation(8, "Bilan de saison : P" + p); e.avertissement = null; e.mauvaises = 0; return "bonne"; }
     if (p > x.place || rel < x.relation) {
-      if (e.avertissement === G.saison - 1) {
+      // saisons ratées d'affilée (une partie antérieure n'a que la saison de l'avertissement)
+      var suite = e.avertissement === G.saison - 1 ? (e.mauvaises || 1) : 0;
+      e.mauvaises = suite + 1;
+      if (e.mauvaises >= (x.renvoi || 2)) {
         var n = nomA();
-        if (typeof leaveAcademy === "function") leaveAcademy("Renvoi après deux saisons décevantes");
-        if (typeof pushMail === "function") try { pushMail({ from: n, role: "academy", subject: "Fin de ton programme", body: "Deux saisons sous nos attentes : nous mettons fin à ton programme. Les places sont rares et d'autres pilotes attendent la leur.\n\nNous te souhaitons de rebondir ailleurs.", actions: [{ label: "Compris", kind: "dismiss", responseBody: "Je comprends." }] }); } catch (err) {}
+        if (typeof leaveAcademy === "function") leaveAcademy("Renvoi après " + (e.mauvaises > 1 ? e.mauvaises + " saisons décevantes" : "une saison décevante"));
+        if (typeof pushMail === "function") try { pushMail({ from: n, role: "academy", subject: "Fin de ton programme", body: (e.mauvaises > 1 ? e.mauvaises + " saisons" : "Une saison") + " sous nos attentes : nous mettons fin à ton programme. Les places sont rares et d'autres pilotes attendent la leur.\n\nNous te souhaitons de rebondir ailleurs.", actions: [{ label: "Compris", kind: "dismiss", responseBody: "Je comprends." }] }); } catch (err) {}
         return "renvoi";
       }
       e.avertissement = G.saison;
       mail("Avertissement de fin de saison", "Ta saison (P" + p + ", relation " + rel + "/100) est en dessous de ce que nous attendons de nos pilotes. Nous te gardons, mais la prochaine saison doit être meilleure : sans progrès, le programme s'arrêtera.");
       return "avertissement";
     }
-    e.avertissement = null;
+    e.avertissement = null; e.mauvaises = 0;
     return "correcte";
   }
 

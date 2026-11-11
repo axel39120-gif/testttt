@@ -774,7 +774,17 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - L'accueil n'annonce un volant F1 que si l'offre existe vraiment. Données : Ferrari → Haas (et non Audi), Mercedes → Williams, McLaren sans Arrow McLaren (IndyCar).
 - Sauvegarde : bloc `rj138`. Tests : suite `academie`.
 
+## Caractère des écuries de F1 et des académies — v266
+
+- **Écuries de F1** (module `139-caracteres.js`) : chaque écurie a un caractère qui pèse dans le choix entre candidats à un baquet (116) — fidélité à sa filière, goût de l'expérience ou de la jeunesse, poids de l'argent — et dans sa patience avant de renvoyer un pilote en fin de saison (14). Red Bull et Racing Bulls misent sur leur filière et ne patientent pas ; Ferrari, Aston Martin et Audi préfèrent l'expérience ; Mercedes et Williams font confiance aux jeunes et patientent ; McLaren recrute le talent ; Haas, Aston Martin et Williams regardent l'apport financier.
+- **Profil du pilote** : le style et le trait choisis à la création comptent un peu (3 points de note au plus) auprès des écuries qui les apprécient.
+- **Académies** : sévérité de la revue, saisons ratées avant le renvoi (Red Bull : une seule ; Mercedes et Williams : trois), place à atteindre pour un baquet de F1 (Red Bull et Haas : top 5 ; Ferrari : le titre, sinon la réserve d'abord ; les autres : le podium).
+- **Labels affichés** sur la fiche de chaque écurie (avec une phrase et « Ton profil de pilote plaît à cette écurie » le cas échéant), sur chaque offre de F1 et sur chaque académie de la page Académie. Un baquet perdu dit quand le caractère de l'écurie a pesé (« Ferrari a préféré l'expérience »).
+- Tests : suite `caracteres` ; suite `academie` adaptée.
+
 ## Pistes suivantes
+
+- Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
 
 - Développement des voitures en cours de saison (évolutions, essais
   privés, retours du pilote), écarté au choix de l'étape 4.
