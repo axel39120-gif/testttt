@@ -290,7 +290,7 @@
     pilotage:   { label: "Pilotage pur",         color: "#00D4FF", base: "qualifier",
       tiers: ["Spécialiste qualif", "Tour rapide", "Pole position"] },
     course:     { label: "Course / Racecraft",   color: "#FF1801", base: "start_master",
-      tiers: ["Maître des départs", "Duelliste", "Gestionnaire pneus"] },
+      tiers: ["Maître des départs", "Duelliste", "Rythme constant"] },
     conditions: { label: "Conditions",           color: "#60A5FA", base: "wet_runner",
       tiers: ["Roi de la pluie", "Adaptabilité", "Funambule"] },
     physique:   { label: "Endurance / Physique", color: "#EC4899", base: "endurance",
@@ -298,7 +298,7 @@
   };
   var TREE_DESC = {
     pilotage:   ["+ Performance en qualif", "+ Rythme pur en course", "+ Qualif et rythme renforcés"],
-    course:     ["+ Score au 1er tour", "+ En duel / dépassement", "\u2212 Usure pneus"],
+    course:     ["+ Score au 1er tour", "+ En duel / dépassement", "+ Constance sur toute la course"],
     conditions: ["+ Score sous la pluie", "+ Adaptabilité (toutes conditions)", "+ Pluie et extrêmes"],
     physique:   ["\u2212 Fatigue par activité", "+ Tenue en fin de course", "+ Résistance maximale"]
   };
@@ -345,13 +345,21 @@
   }
   /* Effets des paliers T2/T3 en course (T1 reste géré par le moteur d'origine). */
   function applyTreeBonuses(e, weather, r, isQuali) {
-    var tr = trainingObj(); if (!tr || !tr.tree) return e;
-    var lvl = tr.tree, wet = weather && (weather.id === "rain" || weather.id === "storm");
+    var tr = trainingObj(); if (!tr) return e;
     function add(x) { e.scoreBonus = (e.scoreBonus || 0) + x; }
+    /* La spécialité « Constance » (ex-gestion des pneus, sans effet depuis le retrait
+       de l'usure, 82) apporte de la régularité. */
+    if (tr.specialties && tr.specialties.indexOf("tire_whisperer") >= 0) add(0.006);
+    /* Fatigue : au-delà de 60, le pilote perd en course (le cœur retire déjà 1 % au-delà de 80). */
+    var fat = tr.fatigue || 0;
+    if (fat >= 60) add(-0.008);
+    if (fat >= 80) add(-0.015);
+    if (!tr.tree) return e;
+    var lvl = tr.tree, wet = weather && (weather.id === "rain" || weather.id === "storm");
     if (lvl.pilotage >= 1) add(0.012);
     if (lvl.pilotage >= 2) { if (isQuali) add(0.02); add(0.008); }
     if (lvl.course >= 1) add(0.012);
-    if (lvl.course >= 2) e.tyreWearMult = 0.90 * (e.tyreWearMult || 1);
+    if (lvl.course >= 2) add(0.01);
     if (lvl.conditions >= 1) add(0.01);
     if (lvl.conditions >= 2) { if (wet) add(0.02); add(0.008); }
     var late = (lvl.physique >= 1 ? 0.008 : 0) + (lvl.physique >= 2 ? 0.008 : 0);
@@ -409,6 +417,7 @@
       + '<div class="rjdev-bar-mark" style="left:' + markL + '%"></div></div></div>';
   }
   function renderDevSection() {
+    try { ensureProfile(); ensureTree(); } catch (e) {}
     var G = G_();
     if (!G || !G.training || !G.training.pot || !G.substats) return '';
     var arch = ARCH_LABEL[G.training.arch] || "—";
@@ -573,6 +582,9 @@
     wrapApplySpecialties();
     injectDevCSS();
     wrapTrainScreen();
+    if (typeof rjInscrire === "function") rjInscrire("launchGame", { id: "34-progression:profil", apres: function () {
+      try { ensureProfile(); ensureTree(); } catch (e) {}
+    } });
 
     window._rjProgInstalled = true;
     window._rjProg = {
@@ -589,6 +601,7 @@
       window.RJ_SEASON_HOOKS = (window.RJ_SEASON_HOOKS || []).filter(function (h) { return h.id !== "34-progression-depth"; });
       rjDesinscrire(["34-progression:"], "renderTrainScreen");
       rjDesinscrire(["34-progression:"], "applyTrainingSpecialtiesToRace");
+      rjDesinscrire(["34-progression:"], "launchGame");
       var sec = document.getElementById("rj-dev-section"); if (sec && sec.parentNode) sec.parentNode.removeChild(sec);
       window._rjProgInstalled = false;
       console.log("[34-progression-depth] désinstallé");
@@ -627,7 +640,7 @@
   var FOCUS = {
     pilotage:   { label: "Pilotage pur",          color: "#00D4FF", sessionKey: "simu",
       stats: ["vitesse_pure", "acceleration", "freinage"], desc: "Vitesse brute, tour lancé, freinage tardif." },
-    course:     { label: "Racecraft",             color: "#FF1801", sessionKey: "simu",
+    course:     { label: "Racecraft",             color: "#FF1801", sessionKey: "racecraft",
       stats: ["reactivite", "decision", "gestion_pneus"], desc: "Duels, départs, lecture de course." },
     conditions: { label: "Conditions",            color: "#60A5FA", sessionKey: "technical",
       stats: ["grip", "concentration", "pression"], desc: "Pluie, adaptation, sang-froid." },
@@ -651,6 +664,17 @@
     return !!(tr && G && tr._coachSeason === G.saison);
   }
 
+  /* Coach : le programme premium (+20 %) et le coach recruté dans les relations,
+     s'il est spécialiste du focus (+25 %). */
+  var COACH_FOCUS = { technique: ["pilotage", "course"], mental: ["conditions"], physique: ["physique"] };
+  function coachRelation(focusKey) {
+    try {
+      var rel = typeof window.getRelations === "function" ? window.getRelations() : null, c = rel && rel.coach;
+      return !!(c && (COACH_FOCUS[c.specialty] || []).indexOf(focusKey) >= 0);
+    } catch (e) { return false; }
+  }
+  function coachMult(focusKey) { return (coachActive() ? 1.2 : 1) * (coachRelation(focusKey) ? 1.25 : 1); }
+
   /* Issue d'un focus : budget de gain modulé, réparti aléatoirement. */
   function computeFocusOutcome(focusKey, opts) {
     opts = opts || {};
@@ -658,7 +682,7 @@
     if (!focus) return null;
     var tr = tr_(), fatigue = (tr && tr.fatigue) || 0;
     var fatigueMult = Math.max(0.4, 1 - fatigue / 160);
-    var mult = fatigueMult * ageMult() * (coachActive() ? 1.2 : 1);
+    var mult = fatigueMult * coachMult(focusKey);   // l'âge est appliqué par gainSubStat (34-progression), une seule fois
 
     var event = "normal", eventMult = 1;
     if (!opts.guaranteed) {
@@ -699,9 +723,13 @@
     if (!opts.free) G.pa -= 1;
     // fatigue + déblocage des spécialités T1 (mécanisme d'origine)
     try { if (typeof window.recordTrainingSession === "function") window.recordTrainingSession(focus.sessionKey); } catch (e) {}
+    var valeur = function (k) { return k === "physique" ? ((G.stats && G.stats.physique) || 0) : ((G.substats && G.substats[k]) || 0); };
+    var avant = {}; focus.stats.forEach(function (k) { avant[k] = valeur(k); });
     var outcome = computeFocusOutcome(focusKey, opts);
-    var applied = applyGains(outcome.gains);
-    return { ok: true, event: outcome.event, gains: applied, focus: focusKey };
+    applyGains(outcome.gains);
+    var applied = focus.stats.map(function (k) { return { k: k, v: Math.round((valeur(k) - avant[k]) * 10) / 10 }; })
+      .filter(function (g) { return g.v > 0; });
+    return { ok: true, event: outcome.event, gains: applied, focus: focusKey, prevu: outcome.budget };
   }
 
   function premiumUsedThisWeek(id) {
@@ -807,7 +835,7 @@
       stage: { lbl: "Stage simulateur", col: "#00D4FF" }
     };
     var ev = EV[o.event] || EV.normal;
-    var gains = (o.gains && o.gains.length) ? o.gains.map(function (g) { return "+" + g.v + " " + subLabel(g.k); }).join(" · ") : "Aucun gain cette fois";
+    var gains = (o.gains && o.gains.length) ? o.gains.map(function (g) { return "+" + String(g.v).replace(".", ",") + " " + subLabel(g.k); }).join(" · ") : "Aucun gain cette fois";
     return '<div class="rjf-fb" style="border-color:' + ev.col + '55"><span class="rjf-fb-ev" style="color:' + ev.col + '">' + ev.lbl + '</span><span class="rjf-fb-g">' + gains + '</span></div>';
   }
   function renderFocusUI() {
@@ -842,6 +870,7 @@
       + '<div class="rjf-state"><div class="rjf-state-item"><div class="rjf-state-lbl">Énergie</div>'
       + '<div class="rjf-state-bar"><div class="rjf-state-fill" style="width:' + (100 - fatigue) + "%;background:" + fatCol + '"></div></div></div>'
       + '<div class="rjf-state-eff"><div class="rjf-state-lbl">Efficacité</div><div class="rjf-state-val" style="color:' + effCol + '">' + eff + "%</div></div></div>"
+      + (fatigue >= 60 ? '<div class="rjf-alerte">Fatigue ' + Math.round(fatigue) + '/100 : tu perds ' + (fatigue >= 80 ? "environ 3 %" : "environ 1 %") + ' de performance en course. Récupère avant la prochaine course.</div>' : "")
       + '<div class="rjf-kicker">Focus d\'entraînement <span class="rjf-pa">' + pa + " PA</span></div>"
       + '<div class="rjf-grid">' + cards + "</div>"
       + '<button class="rjf-rest" data-rest="1"' + (pa > 0 ? "" : " disabled") + ">Récupérer · 1 PA · \u221235 énergie</button>"
@@ -876,6 +905,7 @@
       '.rjf-state-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}',
       '.rjf-state-fill{height:100%;border-radius:3px;transition:width .4s ease}',
       '.rjf-state-eff{text-align:right;flex-shrink:0}',
+      '.rjf-alerte{margin:-4px 0 12px;padding:8px 12px;border-radius:var(--r);border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#FCA5A5;font-size:12px;line-height:1.4}',
       '.rjf-state-val{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums}',
       '.rjf-kicker{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 11px;display:flex;align-items:center;justify-content:space-between}',
       '.rjf-kicker-prem{margin-top:20px}',
@@ -940,7 +970,7 @@
       runFocus: runFocus, computeFocusOutcome: computeFocusOutcome, runPremium: runPremium,
       doRest: doRest, lowestFocus: lowestFocus, renderFocusUI: renderFocusUI,
       premiumUsedThisWeek: premiumUsedThisWeek, resetSeasonState: resetSeasonState,
-      ageMult: ageMult, coachActive: coachActive
+      ageMult: ageMult, coachActive: coachActive, coachMult: coachMult
     };
     window._rjTrainUninstall = function () {
       rjDesinscrire(["34-entrainement:"], "renderTrainScreen");

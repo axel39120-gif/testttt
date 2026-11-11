@@ -3524,7 +3524,7 @@ async function suiteCaracteres() {
   } finally { await navigateur.close(); }
 }
 
-async function suiteCreation() {
+async function suiteCreationTelephone() {
   S.suite("Création du pilote sur téléphone (sans défiler)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true, charger: false });
   try {
@@ -3573,6 +3573,64 @@ async function suiteCreation() {
     S.verifier("quitter la création puis lancer une nouvelle partie repart de zéro", r.neuf, "");
     S.verifier("profil : après avoir réglé le visage, le numéro reste et Continuer mène au récapitulatif", r.numero && r.numPilote === 44 && r.etapes[5].n === 6, JSON.stringify([r.numero, r.numPilote]));
     S.verifier("sous-titres courts, sans point final", r.etapes.every(e => e.titre && !/\.\s*$/.test(e.titre) && e.titre.length <= 40), JSON.stringify(r.etapes.map(e => e.titre)));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteEntrainement() {
+  S.suite("Entraînement et progression");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(() => {
+      const out = {}, copie = o => JSON.parse(JSON.stringify(o));
+      const neuf = () => ({ fatigue: 0, sessions: { physical: 0, mental: 0, simu: 0, technical: 0 }, specialties: [] });
+      const base = { subs: copie(G.substats), stats: copie(G.stats), age: G.age, pilot: copie(G.pilot) };
+      const remettre = () => { G.substats = copie(base.subs); G.stats = copie(base.stats); G.training = neuf(); G.pa = 999; G.budget = 1e7; _rjProg.ensureProfile(); };
+      const somme = () => Object.values(G.substats).reduce((a, b) => a + b, 0) + (G.stats.physique || 0);
+      // 1. le gain affiché est le gain réel
+      remettre(); let affiche = 0; const s0 = somme();
+      for (let i = 0; i < 30; i++) { G.training.fatigue = 0; affiche += (_rjTrain.runFocus("pilotage").gains || []).reduce((a, g) => a + g.v, 0); }
+      out.affiche = +affiche.toFixed(1); out.reel = +(somme() - s0).toFixed(1);
+      // 2. l'âge compte une seule fois : à 36 ans, environ la moitié du gain de 24 ans
+      const gainA = age => {
+        remettre(); G.age = age; if (G.pilot && G.pilot.dob && G.gameYear) G.pilot.dob.year = G.gameYear - age;
+        G.training.arch = "steady"; const a0 = somme();
+        for (let i = 0; i < 60; i++) { G.training.fatigue = 0; _rjTrain.runFocus(["pilotage", "course", "conditions"][i % 3]); }
+        return somme() - a0;
+      };
+      out.g24 = +gainA(24).toFixed(1); out.g36 = +gainA(36).toFixed(1);
+      G.age = base.age; G.pilot = copie(base.pilot);
+      // 3. la section Développement s'affiche avant toute séance (profil à zéro)
+      G.training = null; out.devSection = (_rjProg.renderDevSection() || "").length > 200;
+      out.hookLancement = (RJ_HOOKS.launchGame || []).some(h => h.id === "34-progression:profil");
+      // 4. spécialités : un focus, une spécialité
+      remettre(); for (let i = 0; i < 5; i++) { G.training.fatigue = 0; _rjTrain.runFocus("pilotage"); } out.specPilotage = G.training.specialties.slice();
+      remettre(); for (let i = 0; i < 5; i++) { G.training.fatigue = 0; _rjTrain.runFocus("course"); } out.specCourse = G.training.specialties.slice();
+      // 5. palier 3 « Rythme constant » et spécialité « Constance » : un vrai effet en course
+      const bonus = (tree, specs, fatigue) => { G.training = Object.assign(neuf(), { tree, specialties: specs, fatigue }); return applyTrainingSpecialtiesToRace({ scoreBonus: 0, tyreWearMult: 1 }, null, null, false); };
+      const t2 = bonus({ pilotage: 0, course: 1, conditions: 0, physique: 0 }, ["start_master"], 0), t3 = bonus({ pilotage: 0, course: 2, conditions: 0, physique: 0 }, ["start_master"], 0);
+      out.palier3 = +(t3.scoreBonus - t2.scoreBonus).toFixed(4); out.pneus = t3.tyreWearMult;
+      out.constance = +(bonus({}, ["tire_whisperer"], 0).scoreBonus).toFixed(4);
+      // 6. la fatigue coûte en course
+      out.fatigue = +(bonus({}, [], 0).scoreBonus - bonus({}, [], 85).scoreBonus).toFixed(4);
+      // 7. le coach recruté renforce les focus de sa spécialité
+      const rel = getRelations(), ancien = rel.coach;
+      rel.coach = { name: "Test", specialty: "technique" }; G.training = neuf();
+      out.coach = { pilotage: _rjTrain.coachMult("pilotage"), physique: _rjTrain.coachMult("physique") };
+      rel.coach = ancien;
+      // 8. l'ancien catalogue de séances n'existe plus
+      out.catalogue = typeof TRAIN_CATALOG === "undefined" && typeof doTrain === "undefined";
+      remettre();
+      return out;
+    });
+    S.verifier("le gain affiché après une séance est le gain réel", Math.abs(r.affiche - r.reel) <= Math.max(0.6, r.reel * 0.1), r.affiche + " affiché, " + r.reel + " réel");
+    S.verifier("l'âge ne compte qu'une fois : à 36 ans, environ la moitié du gain de 24 ans", r.g36 / r.g24 >= 0.35 && r.g36 / r.g24 <= 0.75, r.g24 + " / " + r.g36);
+    S.verifier("potentiels et arbre visibles avant toute séance (dès le début de carrière)", r.devSection && r.hookLancement, JSON.stringify([r.devSection, r.hookLancement]));
+    S.verifier("chaque focus débloque sa propre spécialité", JSON.stringify(r.specPilotage) === '["qualifier"]' && JSON.stringify(r.specCourse) === '["start_master"]', JSON.stringify([r.specPilotage, r.specCourse]));
+    S.verifier("le palier « Rythme constant » et la spécialité « Constance » comptent en course", r.palier3 >= 0.009 && r.pneus === 1 && r.constance > 0, JSON.stringify([r.palier3, r.pneus, r.constance]));
+    S.verifier("la fatigue (85/100) coûte en course", r.fatigue >= 0.02, String(r.fatigue));
+    S.verifier("le coach recruté renforce les focus de sa spécialité, pas les autres", r.coach.pilotage === 1.25 && r.coach.physique === 1, JSON.stringify(r.coach));
+    S.verifier("l'ancien catalogue de séances est retiré", r.catalogue, "");
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -3807,7 +3865,8 @@ const SUITES = {
   calendrier: suiteCalendrier,
   academie: suiteAcademie,
   caracteres: suiteCaracteres,
-  creation: suiteCreation
+  creationtel: suiteCreationTelephone,
+  entrainement: suiteEntrainement
 };
 
 async function principal() {

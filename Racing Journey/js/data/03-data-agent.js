@@ -17267,7 +17267,7 @@ var TRAINING_SPECIALTIES = {
     desc: "+Score au 1er tour",
     color: "#F59E0B",
     threshold: 5,
-    sessionKey: "simu"
+    sessionKey: "racecraft"
   },
   wet_runner: {
     label: "Roi de la pluie",
@@ -17277,11 +17277,11 @@ var TRAINING_SPECIALTIES = {
     sessionKey: "technical"
   },
   tire_whisperer: {
-    label: "Gestionnaire pneus",
-    desc: "-Usure pneus en course",
+    label: "Constance",
+    desc: "+Régularité en course",
     color: "#34D399",
     threshold: 5,
-    sessionKey: "technical"
+    sessionKey: "mental"
   },
   qualifier: {
     label: "Spécialiste qualif",
