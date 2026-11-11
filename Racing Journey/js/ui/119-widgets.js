@@ -24,13 +24,13 @@
 
   /* « Prochaine course » et « Rêves de carrière » ne sont plus proposés :
      la course est à l'accueil et au calendrier, les rêves dans Pilote ›
-     Héritage ; ailleurs ils répétaient l'information. */
+     Héritage ; ailleurs ils répétaient l'information. « Saison » (place,
+     points, forme) a suivi : le classement est à l'accueil et au championnat. */
   var WIDGETS_PAR_ECRAN = {
-    "S-contracts": ["saison", "licence"],   // le contrat et le budget y sont déjà
+    "S-contracts": ["licence"],   // le contrat et le budget y sont déjà
     "S-patrimoine": ["contrat"],
-    "S-lifestyle": ["budget", "saison"],
-    "S-mailbox": ["contrat", "saison"],
-    "S-media": ["saison"],
+    "S-lifestyle": ["budget"],
+    "S-mailbox": ["contrat"],
     "S-champ": ["licence"],
     "S-pilot": ["contrat", "licence"]
   };
@@ -73,18 +73,6 @@
         '<div class="rj119-l"><span>Manche</span><b>' + (faites + 1) + " / " + total + "</b></div>" +
         '<div class="rj119-l"><span>Départ</span><b>' + (dans <= 0 ? "cette semaine" : "dans " + pluriel(dans, "semaine")) + "</b></div>",
         "calendrier");
-    },
-    saison: function () {
-      var courses = Array.isArray(G.races) ? G.races : [];
-      var forme = courses.slice(-5).map(function (r) {
-        var p = r && r.pos > 0 && r.pos < 99 ? r.pos : null;
-        return '<i class="' + (!p ? "ab" : p <= 3 ? "podium" : p <= 10 ? "points" : "") + '">' + (p ? "P" + p : "AB") + "</i>";
-      }).join("");
-      return carte("saison", "#F59E0B", "Saison " + (G.saison || 1),
-        (G.champPos ? "P" + esc(G.champPos) : "—") + ' <small>au championnat</small>',
-        '<div class="rj119-l"><span>Points</span><b>' + esc(G.champPts || 0) + "</b></div>" +
-        (forme ? '<div class="rj119-forme">' + forme + "</div>" : '<div class="rj119-s">Aucune course cette saison.</div>'),
-        "championnat");
     },
     budget: function () {
       var sponsors = Array.isArray(G.sponsors) ? G.sponsors.length : 0;
@@ -147,7 +135,6 @@
   var ALLER = {
     contrats: function () { navMore("S-contracts"); },
     calendrier: function () { navTo("S-cal", "ni-cal"); if (typeof renderCal === "function") renderCal(); },
-    championnat: function () { navTo("S-champ", "ni-champ"); },
     patrimoine: function () { navTo("S-patrimoine", null); },
     licence: function () { navTo("S-pilot", null); if (typeof ptab === "function") ptab("rep"); },
     heritage: function () { navTo("S-pilot", null); if (typeof ptab === "function") ptab("heritage"); }

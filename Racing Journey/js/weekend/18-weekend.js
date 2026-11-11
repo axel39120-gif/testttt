@@ -2503,122 +2503,95 @@
       return da - db;
     });
 
-    // --- Mois affiché (semaine courante) -----------------------------------
+    // --- Une seule colonne : la prochaine manche, puis la saison ligne par ligne
     var todayDoy = clampDoy(7 * G.semaine + 4);
     var y = f(todayDoy).m;
     var container = document.getElementById('cal-main-container');
     if (!container) return;
 
-    var A = '';
-    var monthMoments = byMonth[y] || [];
-    var nbDaysMonth = DPM[y];
+    var courses = window.CAL_RACES || [];
+    var faites = courses.filter(function (r) { return r.done; }).length;
+    var prochaine = null;
+    for (var q = 0; q < courses.length; q++) { if (!courses[q].done) { prochaine = courses[q]; break; } }
+    var presse = {};
+    try {
+      var sem99 = window._rj99 && window._rj99.programme ? window._rj99.programme() : [];
+      courses.forEach(function (r) { if (sem99.indexOf(r.week) >= 0) presse[r.name] = true; });
+    } catch (e) {}
 
-    A += '<div class="cal-current-month">';
-    A += '<div class="cal-current-head">';
-    A += '<div class="cal-current-title">' + MONTHS_FULL[y] + '</div>';
-    A += '<div class="cal-current-year">' + gYearSafe() + '</div>';
-    A += '</div>';
-    A += '<div class="cal-current-grid-wrap">';
-    A += '<div class="cal-weekdays">';
-    WD_HEAD.forEach(function (w) { A += '<div class="cal-weekday">' + w + '</div>'; });
-    A += '</div>';
+    var A = '<div class="rjcal">';
 
-    var firstDoy = firstDoyOfMonth(y);
-    var lead = wd(firstDoy); // colonnes vides avant le 1er
-    A += '<div class="cal-grid">';
-    for (var i = 0; i < lead; i++) A += '<div class="cal-cell empty"></div>';
-
-    var todayInfo = f(todayDoy);
-    var curDay = (todayInfo.m === y) ? todayInfo.d : -1;
-
-    for (var P = 1; P <= nbDaysMonth; P++) {
-      var doy = firstDoy + P - 1;
-      var cls = ['cal-cell'];
-      var styleAttr = '';
-      var band = '';
-      if (raceEndMap[doy]) {
-        cls.push('has-moment', 'has-race');
-        band = '<div class="cal-cell-band" style="background:var(--red2)"></div>';
-      } else if (eventMap[doy]) {
-        cls.push('has-moment', 'has-event');
-        styleAttr = ' style="--moment-color:' + eventMap[doy].color + '"';
-        band = '<div class="cal-cell-band" style="background:' + eventMap[doy].color + '"></div>';
-      } else if (raceLeadMap[doy]) {
-        cls.push('has-moment', 'rj-wk-lead');
-        band = '<div class="cal-cell-band rj-wk-band" style="background:var(--red2);opacity:.34"></div>';
-      }
-      if (curDay > 0 && P === curDay) cls.push('current-day');
-      A += '<div class="' + cls.join(' ') + '"' + styleAttr + '>';
-      A += '<span class="cal-cell-day">' + P + '</span>';
-      A += band;
-      A += '</div>';
-    }
-    A += '</div>'; // .cal-grid
-    A += '</div>'; // .cal-current-grid-wrap
-
-    // --- Liste « ce mois-ci » ----------------------------------------------
-    if (monthMoments.length > 0) {
-      A += '<div class="cal-current-events">';
-      monthMoments.forEach(function (m) {
-        var dim = m.done ? 'opacity:.45' : '';
-        if (m.kind === 'race') {
-          var dateTxt = raceDateRange(m);
-          var typeTxt = m.nDays > 1 ? 'Week-end' : 'Course';
-          var pre = 'M' + m.manche + ' · ';
-          A += '<div class="cal-event-tag" style="color:var(--red2);' + dim + '">';
-          A += '<div class="cal-event-tag-date">' + dateTxt + '</div>';
-          A += '<div class="cal-event-tag-type">' + typeTxt + '</div>';
-          A += '<div class="cal-event-tag-title" style="color:var(--text)">' + pre + m.label + '</div>';
-          A += '</div>';
-        } else {
-          var d2 = MONTHS_ABBR[y] + ' ' + m.info.d;
-          A += '<div class="cal-event-tag" style="color:' + m.color + ';' + dim + '">';
-          A += '<div class="cal-event-tag-date">' + d2 + '</div>';
-          A += '<div class="cal-event-tag-type">' + m.catLabel + '</div>';
-          A += '<div class="cal-event-tag-title" style="color:var(--text)">' + m.label + '</div>';
-          A += '</div>';
-        }
-      });
-      A += '</div>';
+    // Prochaine manche
+    A += '<div class="rjcal-hero">';
+    if (prochaine) {
+      var pm = null;
+      for (var mm in byMonth) byMonth[mm].forEach(function (m) { if (m.kind === 'race' && m.data === prochaine) pm = m; });
+      var dans = prochaine.week - (G.semaine || 0);
+      var quand = dans <= 0 ? 'Cette semaine' : dans === 1 ? 'Dans 1 semaine' : 'Dans ' + dans + ' semaines';
+      A += '<div class="rjcal-kicker"><span>Prochaine manche</span><b>M' + prochaine.manche + ' / ' + courses.length + '</b></div>';
+      A += '<div class="rjcal-hero-main">' + drapeau(prochaine.name, 30) +
+        '<div class="rjcal-hero-txt"><div class="rjcal-hero-nom">' + prochaine.name + '</div>' +
+        '<div class="rjcal-hero-date">' + (pm ? raceDateRange(pm) : '') + '</div></div>' +
+        '<div class="rjcal-hero-fin">' + badges(prochaine) + '<span class="rjcal-quand">' + quand + '</span></div></div>';
     } else {
-      A += '<div style="padding:12px 14px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">Aucun moment programmé ce mois-ci.</div>';
+      A += '<div class="rjcal-kicker"><span>Saison terminée</span><b>' + courses.length + ' manches</b></div>';
     }
-    A += '</div>'; // .cal-current-month
+    A += '<div class="rjcal-prog"><span style="width:' + (courses.length ? Math.round(100 * faites / courses.length) : 0) + '%"></span></div>';
+    A += '<div class="rjcal-prog-l">' + faites + ' courue' + (faites > 1 ? 's' : '') + ' · ' + (courses.length - faites) + ' à venir</div>';
+    A += '</div>';
 
-    // --- Saison complète ----------------------------------------------------
-    A += '<div class="t-sec cal-other-months-title">Saison complète</div>';
+    // La saison, mois par mois
+    A += '<div class="t-sec">Saison ' + gYearSafe() + '</div>';
     for (var j = 0; j < 12; j++) {
-      if (j === y) continue;
       var arr = byMonth[j];
       if (!arr || !arr.length) continue;
-      var nbR = arr.filter(function (m) { return m.kind === 'race'; }).length;
-      var nbE = arr.filter(function (m) { return m.kind === 'event'; }).length;
-      A += '<div class="cal-other-month">';
-      A += '<div class="cal-other-month-head">';
-      A += '<div class="cal-other-month-name">' + MONTHS_FULL[j] + '</div>';
-      A += '<div class="cal-other-month-counts">' + (nbR > 0 ? nbR + ' course' + (nbR > 1 ? 's' : '') : '') + (nbR > 0 && nbE > 0 ? ' · ' : '') + (nbE > 0 ? nbE + ' évén.' : '') + '</div>';
-      A += '</div>';
-      A += '<div class="cal-other-events">';
+      A += '<div class="rjcal-mois' + (j === y ? ' en-cours' : '') + '"><div class="rjcal-mois-nom">' + MONTHS_FULL[j] + (j === y ? '<i>En cours</i>' : '') + '</div>';
       arr.forEach(function (m) {
         if (m.kind === 'race') {
-          A += '<div class="cal-mini-event">';
-          A += '<div class="cal-mini-event-dot" style="background:var(--red2)"></div>';
-          A += '<div class="cal-mini-event-date">' + raceMiniRange(m) + '</div>';
-          A += '<div class="cal-mini-event-title">' + m.label + '</div>';
-          A += '</div>';
+          var r = m.data, etat = r.done ? ' fait' : r === prochaine ? ' prochaine' : '';
+          // cal-mini-event / cal-mini-event-title : repères du module 99 (badge « Presse »).
+          A += '<div class="cal-mini-event rjcal-l' + etat + '">' +
+            '<span class="rjcal-m">M' + m.manche + '</span>' +
+            '<span class="rjcal-d">' + raceMiniRange(m) + '</span>' +
+            drapeau(m.label, 16) +
+            '<span class="rjcal-nom"><span class="cal-mini-event-title">' + m.label + '</span>' + (r.isSprint ? '<span class="rjcal-b sprint">Sprint</span>' : '') + '</span>' +
+            '<span class="rjcal-r">' + resultat(r, r === prochaine) + '</span></div>';
         } else {
-          A += '<div class="cal-mini-event">';
-          A += '<div class="cal-mini-event-dot" style="background:' + m.color + '"></div>';
-          A += '<div class="cal-mini-event-date">' + m.info.d + ' ' + MONTHS_ABBR[j] + '</div>';
-          A += '<div class="cal-mini-event-title">' + m.label + '</div>';
-          A += '</div>';
+          A += '<div class="rjcal-l rjcal-ev' + (m.done ? ' fait' : '') + '" style="--c:' + m.color + '">' +
+            '<span class="rjcal-m"><i></i></span>' +
+            '<span class="rjcal-d">' + m.info.d + ' ' + MONTHS_ABBR[j] + '</span>' +
+            '<span class="rjcal-t">' + m.label + '</span>' +
+            '<span class="rjcal-r"><em>' + m.catLabel + '</em></span></div>';
         }
       });
       A += '</div>';
-      A += '</div>';
     }
+    A += '</div>';
 
     container.innerHTML = A;
+
+    function badges(r) {
+      return (r.isSprint ? '<span class="rjcal-b sprint">Sprint</span>' : '') +
+        (presse[r.name] ? '<span class="rjcal-b presse">Presse</span>' : '');
+    }
+  }
+
+  // Résultat d'une manche courue, ou son état.
+  function resultat(r, estProchaine) {
+    if (!r.done) return estProchaine ? '<em class="next">Prochaine</em>' : '';
+    var p = r.result && r.result.pos;
+    if (!p || p >= 99) return '<b class="ab">AB</b>';
+    var cls = p === 1 ? 'or' : p <= 3 ? 'podium' : (r.result.pts > 0 ? 'points' : '');
+    return '<b class="' + cls + '">P' + p + '</b>';
+  }
+
+  // Drapeau du pays du circuit ("" si inconnu).
+  function drapeau(nom, t) {
+    try {
+      var c = typeof _getCircuitCountry === 'function' ? _getCircuitCountry(nom) : null;
+      var code = c && c.name && typeof _countryToNat === 'function' ? _countryToNat(c.name) : null;
+      return code && typeof flagSvg === 'function' ? flagSvg(code, t) : '';
+    } catch (e) { return ''; }
   }
 
   // « Ven 12 → Dim 14 Mai » (ou avec mois aux deux bouts si à cheval).
