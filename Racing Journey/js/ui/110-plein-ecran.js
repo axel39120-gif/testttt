@@ -48,6 +48,10 @@
     if (e.touches.length > 1) { e.preventDefault(); return; }      // pincement
     if (!depart || e.target.closest && e.target.closest("input[type=range]")) return;
     var dx = Math.abs(e.touches[0].clientX - depart.x), dy = Math.abs(e.touches[0].clientY - depart.y);
+    /* Un doigt n'est jamais immobile : sous 10 px, c'est encore un appui. Annuler
+       ce micro-mouvement faisait perdre le clic sur certains téléphones (menus
+       qui ne répondaient pas, ou seulement après plusieurs appuis). */
+    if (dx < 10 && dy < 10) return;
     // Jeu pivoté (portrait, css/paysage.css) : le haut de l'écran est la gauche du jeu.
     if (pivote.matches) { var t = dx; dx = dy; dy = t; }
     if (!defileur(e.target, dy >= dx)) e.preventDefault();

@@ -749,6 +749,13 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Mercato du personnel : un classement d'écuries absent ne fait plus planter le recrutement (06). Module mort de redirection de la stratégie retiré (28).
 - Tests : suite `saison` (règles de contrat et une saison complète de F1).
 
+## Appuis sur iPhone — v262
+
+- **Jeu pivoté** (module `136-appui-pivote.js`) : téléphone tenu à l'horizontale avec la rotation verrouillée, le jeu est pivoté par une transformation CSS (css/paysage.css) et Safari iOS ciblait mal les appuis (menus qui ne répondaient pas ou demandaient plusieurs appuis). Dans ce mode, un appui court (< 10 px, < 600 ms) envoie un clic à l'élément réellement sous le doigt et annule le clic du navigateur ; saisie, curseurs et glissements restent natifs.
+- Un léger glissé du doigt (< 10 px) n'est plus annulé (110).
+- Badge des contrats : un seul décompte, réécrit seulement s'il change (03, 04q, 07d) — il était remplacé toutes les 1,5 s sous le doigt.
+- Tests : suite `appui`.
+
 ## Pistes suivantes
 
 - Développement des voitures en cours de saison (évolutions, essais
