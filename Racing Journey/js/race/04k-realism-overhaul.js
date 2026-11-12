@@ -476,12 +476,15 @@ function _rjNewTeamRatingToBonus(rating) {
         },
         lire: function (bloc, G_) { if (bloc) Object.keys(bloc).forEach(function (k) { if (/^_rjSkillsCalib_/.test(k)) G_[k] = true; }); } });
     }
-    rjInscrire("startQual", { id: "04k-realism-overhaul:startQual", avant: function () {
+    /* Niveaux des rivaux pour la saison (une fois par saison) : avant la qualif,
+       et dès les essais libres (18), qui doivent voir le même peloton. */
+    window.rjCalibrerPeloton = function () {
       try {
         _rjRecalibrateSkills(G.rivals.map(function (r, i) { return { name: r.name, team: r.team, skill: r.skill, rivalIdx: i }; })
           .concat([{ isPlayer: true }]));
-      } catch (e) { console.warn("[RJ] Recalibrage avant qualification :", e && e.message); }
-    } });
+      } catch (e) { console.warn("[RJ] Recalibrage du peloton :", e && e.message); }
+    };
+    rjInscrire("startQual", { id: "04k-realism-overhaul:startQual", avant: window.rjCalibrerPeloton });
     window.RJ_RACE_START_HOOKS.push({
       id: "04k-realism-overhaul",
       apres: function () {
