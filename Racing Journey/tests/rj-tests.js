@@ -3787,13 +3787,14 @@ async function suiteCorrections() {
     const ev = await page.evaluate(() => {
       const sauve = window.LIVE_RACE;
       const mk = (name, isPlayer) => ({ name, isPlayer, score: 0.6, consistency: 0.9, gridPos: isPlayer ? 2 : 1, pos: isPlayer ? 2 : 1, dnf: false });
+      const hasard = Math.random; Math.random = () => 0.5;   // la part de chance du dépassement (80 % au plus) ne doit pas décider du test
       window.LIVE_RACE = { drivers: [mk("A", false), Object.assign(mk("Moi", true), { isPlayer: false })], cur: 1, total: 20, finished: false, baseRef: 90 };   // deux voitures identiques : rien du profil du joueur
       _rj81.positions();
       const ecart = () => LIVE_RACE.drivers[1]._t - LIVE_RACE.drivers[0]._t;
       LIVE_RACE.cur = 2; _rj81.positions(); const e0 = ecart();
       LIVE_RACE.drivers[1]._rj81EvtSec = -3; LIVE_RACE.cur = 3; _rj81.positions(); const e1 = ecart();
       const r = { gagne: e0 - e1, consomme: LIVE_RACE.drivers[1]._rj81EvtSec, pos: LIVE_RACE.drivers[1].pos };
-      window.LIVE_RACE = sauve;
+      window.LIVE_RACE = sauve; Math.random = hasard;
       return r;
     });
     S.verifier("un effet de −3 s fait gagner environ 3 s", ev.gagne > 2.5 && ev.gagne < 3.6, JSON.stringify(ev));

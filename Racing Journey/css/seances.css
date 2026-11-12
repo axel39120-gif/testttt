@@ -72,6 +72,11 @@ div:has(> #fpl-board-body) { padding-bottom: 0 !important; }
 /* --- Entraînement : la répartition des colonnes ne bouge plus ----------------------
    Le bloc des focus (34) est en colonnes équilibrées : selon la hauteur (alerte de
    fatigue, résultat d'une séance), « Préparation physique » passait à droite. Les
-   focus restent ensemble à gauche ; « Récupérer » et les programmes, à droite. */
-#S-training .rjf .rjf-grid, #S-training .rjf .rjf-card { break-inside: avoid; }
-#S-training .rjf .rjf-rest { break-before: column; }
+   focus restent ensemble à gauche ; « Récupérer » et les programmes, à droite.
+   Deux colonnes écrites en dur (.rjf-col) dans une grille : plus de rééquilibrage ;
+   écran trop étroit, la seconde passe dessous. */
+#S-training .rjf {
+  display: grid; gap: 12px; align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--colonne, 340px), 100%), 1fr));
+}
+#S-training .rjf-col > .rjf-rest { margin-top: 0 !important; }

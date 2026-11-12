@@ -865,17 +865,20 @@
     }).join("");
     var fatCol = fatigue < 40 ? "var(--green)" : fatigue < 75 ? "var(--amber)" : "var(--red3)";
     var effCol = eff >= 85 ? "var(--green)" : eff >= 65 ? "var(--amber)" : "var(--red3)";
-    host.innerHTML = '<div class="rjf">'
+    /* Deux colonnes écrites en dur : la mise en colonnes automatique (CSS
+       multi-colonnes) rééquilibrait à chaque redessin et, sur Safari, faisait
+       passer « Préparation physique » à droite après un appui. */
+    host.innerHTML = '<div class="rjf"><div class="rjf-col">'
       + (_lastOutcome ? renderOutcome(_lastOutcome) : "")
       + '<div class="rjf-state"><div class="rjf-state-item"><div class="rjf-state-lbl">Énergie</div>'
       + '<div class="rjf-state-bar"><div class="rjf-state-fill" style="width:' + (100 - fatigue) + "%;background:" + fatCol + '"></div></div></div>'
       + '<div class="rjf-state-eff"><div class="rjf-state-lbl">Efficacité</div><div class="rjf-state-val" style="color:' + effCol + '">' + eff + "%</div></div></div>"
       + (fatigue >= 60 ? '<div class="rjf-alerte">Fatigue ' + Math.round(fatigue) + '/100 : tu perds ' + (fatigue >= 80 ? "environ 3 %" : "environ 1 %") + ' de performance en course. Récupère avant la prochaine course.</div>' : "")
       + '<div class="rjf-kicker">Focus d\'entraînement <span class="rjf-pa">' + pa + " PA</span></div>"
-      + '<div class="rjf-grid">' + cards + "</div>"
-      + '<button class="rjf-rest" data-rest="1"' + (pa > 0 ? "" : " disabled") + ">Récupérer · 1 PA · \u221235 énergie</button>"
+      + '<div class="rjf-grid">' + cards + "</div></div>"
+      + '<div class="rjf-col"><button class="rjf-rest" data-rest="1"' + (pa > 0 ? "" : " disabled") + ">Récupérer · 1 PA · \u221235 énergie</button>"
       + '<div class="rjf-kicker rjf-kicker-prem">Programmes premium</div>'
-      + '<div class="rjf-prem">' + prem + "</div></div>";
+      + '<div class="rjf-prem">' + prem + "</div></div></div>";
     if (!host._rjFocusBound) { host.addEventListener("click", onFocusClick); host._rjFocusBound = true; }
   }
   function afterAction() {

@@ -1512,7 +1512,7 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 :is(.scr > .scroll > :has(> :nth-child(5)), .scr > .scroll > * > :only-child:has(> :nth-child(5))) > :first-child:empty + * > :first-child { margin-top: 0 !important; }
 :is(.scr > .scroll > :has(> :nth-child(5)), .scr > .scroll > * > :only-child:has(> :nth-child(5))) > :is(.mg, #pilot-rating-card):first-child { padding-top: 0 !important; }
 :is(.scr > .scroll > :has(> :nth-child(5)), .scr > .scroll > * > :only-child:has(> :nth-child(5))) > :first-child:empty + .mg { padding-top: 0 !important; }
-.rjf > .rjf-rest { margin-top: 0 !important; }
+.rjf-col > .rjf-rest { margin-top: 0 !important; }
 
 /* Messagerie › Contacts (131) : une colonne, comme une appli de messages. */
 #mb-contacts, #mb-contacts-list, #mb-contacts-list > * { column-width: auto !important; columns: auto !important; }
