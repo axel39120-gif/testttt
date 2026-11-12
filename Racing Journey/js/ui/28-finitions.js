@@ -21,6 +21,8 @@
   function injectInto(popup) {
     try {
       if (!popup || popup.querySelector('#' + PANEL_ID)) return; // déjà fait
+      // Les curseurs de ressentis du débrief (18, 120) règlent la voiture : l'ancien panneau ferait doublon.
+      if (popup.querySelector('.rja-debrief')) return;
       if (!fn('buildSetupPanel')) return;
 
       // Le card est le conteneur scrollable (1er élément du pop-up).
