@@ -60,8 +60,8 @@
     if (ch.chance && (typeof ch.chance.dnf === "number" ||
                       typeof ch.chance.penalty === "number" ||
                       typeof ch.chance.fail === "number")) {
-      var cri2 = pct(ch.chance.dnf || 0);
       var rate = pct(ch.chance.fail || ch.chance.penalty || 0);
+      var cri2 = ch.chance.dnf === true ? rate : pct(ch.chance.dnf || 0);
       var ech2 = Math.max(0, rate - cri2);
       var rea2 = 100 - ech2 - cri2; if (rea2 < 0) rea2 = 0;
       return { rea: rea2, ech: ech2, cri: cri2 };
@@ -141,7 +141,9 @@
         if (ev && ev.choices && ev.choices[info.choiceIdx]) return ev.choices[info.choiceIdx];
       } catch (e) { /* no-op */ }
     }
-    var pe = currentEvent();
+    // resolveLiveEvent : l'événement en attente d'abord (avant, les chances du
+    // dernier événement à choix s'affichaient sur celui-ci).
+    var pe = (typeof LIVE_RACE !== "undefined" && LIVE_RACE && LIVE_RACE.pendingEvent) || currentEvent();
     return (pe && pe.choices && pe.choices[info.choiceIdx]) ? pe.choices[info.choiceIdx] : null;
   }
 

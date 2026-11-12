@@ -3879,6 +3879,76 @@ async function suiteCoherenceEssais() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteEvenements() {
+  S.suite("Événements de course (v278)");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(() => {
+      const out = {};
+      // 1. Calendrier : un seul duel, une seule fin, complété par la banque, sans doublon de tour
+      G.cat = "Formule 1"; G._rj143Vus = [];
+      const brut = [
+        { lap: 3, phase: "Départ", always: true, gen: () => null }, { lap: 20, phase: "Rivalité", gen: () => null },
+        { lap: 30, phase: "Duel", gen: () => null }, { lap: 50, phase: "Sprint final", gen: () => null }, { lap: 52, phase: "Dernière chance", gen: () => null }];
+      const s = RJ143.enrichir(brut, 57);
+      out.duels = s.filter(x => /Rivalité|Duel/.test(x.phase)).length;
+      out.fins = s.filter(x => /Sprint final|Dernière chance/.test(x.phase)).length;
+      out.total = s.length; out.banque = s.filter(x => /^143:/.test(x.phase)).length;
+      out.trie = s.every((x, i) => !i || x.lap >= s[i - 1].lap);
+      // 2. Les événements vus récemment passent après les autres
+      const fam = RJ143.banque.filter(d => !d.fam || d.fam.indexOf("f1") >= 0).map(d => d.id);
+      G._rj143Vus = fam.slice(0, fam.length - 4);
+      const s2 = RJ143.enrichir([{ lap: 3, phase: "Départ", gen: () => null }], 57).filter(x => /^143:/.test(x.phase)).map(x => x.phase.slice(4));
+      out.neufsDabord = s2.filter(id => G._rj143Vus.indexOf(id) < 0).length;
+      out.tires = s2.length;
+      // 3. Chaque événement de la banque se génère sans erreur, avec 2 ou 3 choix lisibles
+      const ctx = RJ143.contexte();
+      const faux = { cat: "Formule 1", fam: "f1", p: { name: "Moi", pos: 5, team: "X" }, pos: 5, plateau: 20, devant: { name: "A B", pos: 4 }, derriere: { name: "C D", pos: 6 }, equipier: { name: "E F", pos: 6, team: "X" }, pluie: true, chaud: true, sec: true, rue: true, rapide: true, nuit: true, ovale: true, part: 0.5 };
+      out.ko = RJ143.banque.filter(d => { try { const e = d.gen(faux); return !e || !e.title || !Array.isArray(e.choices) || e.choices.length < 2 || e.choices.some(c => !c.text || typeof c.mod !== "number"); } catch (e) { return true; } }).map(d => d.id);
+      out.nb = RJ143.banque.length;
+      // 4. Lecture d'un choix : risque et effet en clair
+      out.lecDnf = RJ143.lecture({ text: "x", mod: 0.045, chance: { fail: 0.12, failMod: -0.35, dnf: true } });
+      out.lecSur = RJ143.lecture({ text: "x", mod: 0.008 });
+      out.lecOse = RJ143.lecture({ text: "x", mod: 0.035, chance: { fail: 0.3, failMod: -0.065 } });
+      // 5. Un choix prudent a désormais un effet (seuil 0,012 supprimé), proportionnel
+      const petit = _convertLegacyMod({ name: "x" }, 0.008, "test"), grand = _convertLegacyMod({ name: "x" }, 0.04, "test");
+      out.petit = petit && petit.paceMod; out.grand = grand && grand.paceMod;
+      // 6. Les choix d'arrêt au format « label » sont retirés (82)
+      const f = _rj82.sansArret({ title: "Changement météo", choices: [{ label: "Rentrer immédiatement (intermédiaires)", score: 60 }, { label: "Rester et observer", score: 55 }, { label: "Attaquer", score: 50 }] });
+      out.filtre = f && f.choices.map(c => c.label);
+      // 7. « Dernier tour » seulement au dernier tour
+      const sauve = window.LIVE_RACE;
+      window.LIVE_RACE = { cur: 53, total: 57 }; out.fin53 = _rjFinCourse();
+      window.LIVE_RACE = { cur: 56, total: 57 }; out.fin56 = _rjFinCourse();
+      window.LIVE_RACE = sauve;
+      // 8. Sauvegarde de la mémoire
+      const h = RJ_SAVE_HOOKS.find(x => x.cle === "rj143"); G._rj143Vus = ["a", "b"];
+      const G2 = {}; h.lire(h.ecrire(), G2); out.memoire = G2._rj143Vus;
+      return out;
+    });
+    S.verifier("calendrier : un seul duel et une seule scène de fin", r.duels === 1 && r.fins === 1, JSON.stringify(r));
+    S.verifier("calendrier : complété par la banque (5 à 6 événements en F1)", r.total >= 5 && r.banque >= 2 && r.trie, JSON.stringify(r));
+    S.verifier("les événements vus récemment passent après les nouveaux (au moins la moitié de neufs)", r.tires > 0 && r.neufsDabord * 2 >= r.tires, JSON.stringify([r.tires, r.neufsDabord]));
+    S.verifier("banque : " + r.nb + " événements, tous générés avec 2 ou 3 choix", r.nb >= 35 && r.ko.length === 0, JSON.stringify(r.ko));
+    S.verifier("risque en clair : abandon, réussite, sans risque", /Abandon si raté · 12 %/.test(r.lecDnf.risque) && /70 % de réussite/.test(r.lecOse.risque) && /raté/.test(r.lecOse.effet) && r.lecSur.risque === "Sans risque", JSON.stringify([r.lecDnf, r.lecOse, r.lecSur]));
+    S.verifier("un choix prudent a un effet, proportionnel à son mod", r.petit && r.petit.deltaSec < 0 && r.grand && r.grand.deltaSec * r.grand.laps < r.petit.deltaSec * r.petit.laps * 3, JSON.stringify([r.petit, r.grand]));
+    S.verifier("les choix d'arrêt au format label sont retirés", JSON.stringify(r.filtre) === JSON.stringify(["Rester et observer", "Attaquer"]), JSON.stringify(r.filtre));
+    S.verifier("« Dernier tour » seulement au dernier tour", r.fin53 === "Fin de course" && r.fin56 === "Dernier tour", r.fin53 + " / " + r.fin56);
+    S.verifier("la mémoire des événements vus est sauvegardée", JSON.stringify(r.memoire) === '["a","b"]', JSON.stringify(r.memoire));
+    // 9. Une vraie course : des événements, la fenêtre redessinée, la mémoire alimentée
+    await page.evaluate(() => {
+      G._rj143Vus = []; window.__vus143 = 0;
+      window.__obs143 = new MutationObserver(() => { const m = document.getElementById("live-event-modal"); if (m && m.querySelector(".rj143-carte .rj143-btn")) window.__vus143++; });
+      window.__obs143.observe(document.getElementById("live-event-modal"), { childList: true });
+    });
+    await S.courirUneCourse(page, { categorie: "Formule 1", rang: 2, grille: 8 });
+    const c = await page.evaluate(() => ({ resolus: (LIVE_RACE.resolvedEvents || []).length, fenetres: window.__vus143, memoire: (G._rj143Vus || []).length }));
+    S.verifier("course de F1 : au moins 3 événements joués, dans la nouvelle fenêtre", c.resolus >= 3 && c.fenetres >= 1, JSON.stringify(c));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -4114,7 +4184,8 @@ const SUITES = {
   arrets: suiteArrets,
   seances: suiteSeances,
   corrections: suiteCorrections,
-  coherence: suiteCoherenceEssais
+  coherence: suiteCoherenceEssais,
+  evenements: suiteEvenements
 };
 
 async function principal() {

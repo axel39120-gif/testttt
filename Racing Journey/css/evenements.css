@@ -1,0 +1,70 @@
+/* =====================================================================
+ * evenements.css — fenêtre d'événement en course (module 143)
+ *
+ * Téléphone à l'horizontale : tout tient sans défiler. Les choix sont côte
+ * à côte, chacun avec son risque et son effet en clair ; le résultat
+ * remplace les choix.
+ * =================================================================== */
+
+/* La barre de navigation reste à gauche : la carte se centre dans l'espace à sa droite. */
+#live-event-modal.rj143-modale {
+  align-items: center !important;
+  padding: 10px calc(14px + var(--sd, 0px)) 10px calc(var(--rail, 0px) + var(--rail-g, 0px) + 14px) !important;
+}
+
+.rj143-carte {
+  --acc: #F59E0B;
+  width: min(780px, 100%); max-height: calc(100dvh - 20px); overflow-y: auto; scrollbar-width: none;
+  background: linear-gradient(180deg, #111118 0%, #0a0a10 100%);
+  border: 1px solid rgba(255, 255, 255, .07); border-top: 3px solid var(--acc); border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+  animation: rj143-entree .22s ease-out;
+}
+.rj143-carte::-webkit-scrollbar { display: none; }
+@keyframes rj143-entree { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.rj143-tete {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  background: color-mix(in srgb, var(--acc) 10%, transparent);
+  font: 800 9px/1 var(--font-display); letter-spacing: .18em; text-transform: uppercase;
+}
+.rj143-led { width: 7px; height: 7px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 8px var(--acc); animation: rj143-pulse 1s ease-in-out infinite; }
+@keyframes rj143-pulse { 50% { opacity: .45; } }
+.rj143-type { color: var(--acc); }
+.rj143-tour { margin-left: auto; color: rgba(255, 255, 255, .45); letter-spacing: .08em; }
+
+.rj143-situation { padding: 6px 14px; font-size: 11px; color: rgba(255, 255, 255, .6); border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.rj143-situation:empty { display: none; }
+.rj143-situation b { color: #FFD23F; font-family: var(--font-display); font-weight: 900; }
+
+.rj143-corps { padding: 10px 14px 4px; }
+.rj143-titre { font: 900 17px/1.15 var(--font-display); color: #fff; letter-spacing: -.01em; }
+.rj143-desc { margin-top: 5px; font-size: 13px; line-height: 1.45; color: rgba(255, 255, 255, .72); }
+
+.rj143-choix { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; padding: 10px 14px 14px; }
+.rj143-btn {
+  --c: rgba(255, 255, 255, .35);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px; text-align: left;
+  padding: 10px 12px; border-radius: 9px; cursor: pointer; font-family: inherit; color: #fff;
+  background: rgba(255, 255, 255, .035); border: 1px solid rgba(255, 255, 255, .09); border-left: 3px solid var(--c);
+  transition: background .15s, transform .1s;
+}
+.rj143-btn:hover { background: rgba(255, 255, 255, .07); }
+.rj143-btn:active { transform: scale(.98); }
+.rj143-sur { --c: #34D399; }
+.rj143-ose { --c: #F59E0B; }
+.rj143-penal { --c: #FB923C; }
+.rj143-fatal { --c: #EF4444; }
+.rj143-btxt { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.rj143-risque { font: 800 9.5px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.rj143-effet { font-size: 11px; line-height: 1.35; color: rgba(255, 255, 255, .55); }
+
+.rj143-resultat { display: flex; flex-direction: column; gap: 4px; margin: 0 14px 14px; padding: 11px 13px; border-radius: 9px; background: rgba(255, 255, 255, .04); border-left: 3px solid rgba(255, 255, 255, .3); }
+.rj143-bon { border-left-color: #34D399; }
+.rj143-mauvais { border-left-color: #EF4444; }
+.rj143-verdict { font: 900 12px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; }
+.rj143-bon .rj143-verdict { color: #34D399; }
+.rj143-mauvais .rj143-verdict { color: #EF4444; }
+.rj143-neutre .rj143-verdict { color: rgba(255, 255, 255, .7); }
+.rj143-recit { font-size: 12.5px; color: rgba(255, 255, 255, .78); }
+.rj143-effets { font-size: 12.5px; font-weight: 700; color: #fff; }
