@@ -1,0 +1,7 @@
+{
+  "appId": "com.racingjourney.f1dreams",
+  "appName": "Racing Journey",
+  "webDir": "www",
+  "backgroundColor": "#000000",
+  "android": { "allowMixedContent": false }
+}
