@@ -15493,9 +15493,16 @@ function _renderMailThread(e, t) {
 /* Ouvrir une conversation la montre au début de son dernier échange (avant :
    tout en bas de la page) ; revenir à la liste rend la position qu'on avait. */
 var _MAIL_LIST_SCROLL = 0;
+/* Ce qui défile dans la liste : la liste des conversations elle-même quand
+   elle déborde (écran sans défilement, module 144), sinon la page. */
+function _mailListeDefil() {
+  var l = document.querySelector("#mailbox-list > .rj124-carte, #mailbox-list > * > .rj124-carte");
+  l = l && l.parentNode;
+  return l && l.scrollHeight > l.clientHeight + 1 ? l : document.querySelector("#S-mailbox .scroll");
+}
 function openMailThread(e) {
-  var t = document.querySelector("#S-mailbox .scroll");
-  if (t && !_MAIL_OPEN_THREAD) _MAIL_LIST_SCROLL = t.scrollTop;
+  var t = document.querySelector("#S-mailbox .scroll"), L = _mailListeDefil();
+  if (L && !_MAIL_OPEN_THREAD) _MAIL_LIST_SCROLL = L.scrollTop;
   _MAIL_OPEN_THREAD = e, renderMailbox();
   if (t) {
     var placer = function() {
@@ -15512,11 +15519,9 @@ function openMailThread(e) {
 
 function backToMailList() {
   _MAIL_OPEN_THREAD = null, renderMailbox();
-  var t = document.querySelector("#S-mailbox .scroll"), y = _MAIL_LIST_SCROLL;
-  if (t) {
-    var remettre = function() { t.scrollTop = y; };
-    remettre(); requestAnimationFrame(remettre); setTimeout(remettre, 60);
-  }
+  var y = _MAIL_LIST_SCROLL;
+  var remettre = function() { var L = _mailListeDefil(); if (L) L.scrollTop = y; };
+  remettre(); requestAnimationFrame(remettre); setTimeout(remettre, 60);
 }
 
 function _deleteEntireThread(e) {
