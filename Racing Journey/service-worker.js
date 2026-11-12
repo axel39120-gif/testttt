@@ -1,5 +1,5 @@
 // Bump this version on every deploy to force old caches to be purged.
-const CACHE_NAME = 'racing-journey-pwa-v273';
+const CACHE_NAME = 'racing-journey-pwa-v274';
 
 const urlsToCache = [
   './',
@@ -7,6 +7,7 @@ const urlsToCache = [
   './styles.css',
   './css/paysage.css',
   './css/creation.css',
+  './css/seances.css',
   './manifest.json'
 ];
 

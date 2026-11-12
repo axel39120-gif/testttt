@@ -1419,7 +1419,7 @@
       // -- Fin de séance / qualif --
       var curSession = pr.sessionsCompleted + 1;
       if (curSession < maxSessions) {
-        c += '<button id="fpl-next-btn" style="width:100%;padding:12px 16px;background:transparent;border:1px solid var(--line2);color:var(--text2);font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:6px;border-radius:4px">Terminer EL' + curSession + ' → EL' + (curSession + 1) + '</button>';
+        c += '<button id="fpl-next-btn" style="width:100%;padding:12px 16px;background:transparent;border:1px solid var(--line2);color:var(--text2);font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:6px;border-radius:4px">Terminer l’EL' + curSession + ', passer à l’EL' + (curSession + 1) + '</button>';
       }
       c += '<button id="fpl-qualif-btn" style="width:100%;padding:10px 16px;background:transparent;border:1px solid var(--red2);color:var(--red2);font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:4px">Partir en qualif maintenant</button>';
 

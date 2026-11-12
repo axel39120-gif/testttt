@@ -3693,6 +3693,46 @@ async function suiteArrets() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteSeances() {
+  S.suite("Essais et qualifs sur téléphone (sans défiler)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const defile = () => page.evaluate(() => { const sc = document.querySelector("#S-race > .scroll"); return sc.scrollHeight - sc.clientHeight; });
+    const visibles = id => page.evaluate(id => [...document.querySelectorAll("#" + id + " > div")].filter(l => l.getClientRects().length && /^\s*\d/.test(l.textContent)).length, id);
+    const clic = re => page.evaluate(re => { const b = [...document.querySelectorAll("#S-race button")].find(x => new RegExp(re, "i").test(x.textContent) && x.getClientRects().length); if (b) b.click(); return !!b; }, re);
+    await page.evaluate(() => {
+      SETTINGS.simSpeed = "fast";
+      G.cat = "Formule 1"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.fpDone = false; navTo("S-race", null);
+    });
+    await page.waitForTimeout(500);
+    await clic("^\\s*continuer"); await page.waitForTimeout(800);
+    const repos = await defile();
+    const libelle = await page.evaluate(() => (document.getElementById("fpl-next-btn") || {}).textContent || "");
+    await clic("envoyer en piste"); await page.waitForTimeout(3500);
+    const relais = { defile: await defile(), lignes: await visibles("fpl-board-body"), box: await page.evaluate(() => { const b = document.getElementById("fpl-box-btn"); return !!b && b.getBoundingClientRect().bottom <= innerHeight; }) };
+    await page.evaluate(() => { RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; rtab("qualif", true); try { startQual(); } catch (e) {} });
+    await page.waitForTimeout(1500);
+    await clic("lancer q1"); await page.waitForTimeout(5000);
+    const q = await page.evaluate(() => {
+      const st = document.getElementById("quali-status"), b = document.querySelector("#quali-timing-board .rj141-plus");
+      return { statut: !!st && st.getBoundingClientRect().bottom <= innerHeight && st.getBoundingClientRect().left < innerWidth / 2, bouton: b ? b.textContent : null };
+    });
+    q.defile = await defile(); q.lignes = await visibles("quali-timing-board");
+    await page.evaluate(() => document.querySelector("#quali-timing-board .rj141-plus").click());
+    await page.waitForTimeout(400);
+    const modale = await page.evaluate(() => { const m = document.getElementById("rj141-modale"); if (!m) return null; const f = m.querySelector(".rj141-feuille");
+      return { lignes: m.querySelectorAll(".rj141-col > div").length, colonnes: m.querySelectorAll(".rj141-col").length, deborde: f.scrollHeight > f.clientHeight + 2, moi: !!m.querySelector(".rj141-moi") }; });
+    await page.evaluate(() => _rj141.fermer());
+    S.verifier("essais au repos : rien ne défile", repos <= 2, String(repos));
+    S.verifier("essais en relais : feuille resserrée (3 premiers + le joueur), « Rentrer au stand » visible", relais.lignes <= 6 && relais.box && relais.defile <= 10, JSON.stringify(relais));
+    S.verifier("le bouton de fin de séance se lit (« Terminer l'EL1, passer à l'EL2 »)", /Terminer l.EL\d, passer à l.EL\d/.test(libelle), libelle);
+    S.verifier("qualifs : rien ne défile, statut visible à gauche, feuille resserrée", q.defile <= 2 && q.statut && q.lignes <= 6 && /Classement complet \(20\)/.test(q.bouton || ""), JSON.stringify(q));
+    S.verifier("classement complet : 20 pilotes en deux colonnes, sans défilement, le joueur repéré", modale && modale.lignes === 20 && modale.colonnes === 2 && !modale.deborde && modale.moi, JSON.stringify(modale));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3925,7 +3965,8 @@ const SUITES = {
   caracteres: suiteCaracteres,
   creationtel: suiteCreationTelephone,
   entrainement: suiteEntrainement,
-  arrets: suiteArrets
+  arrets: suiteArrets,
+  seances: suiteSeances
 };
 
 async function principal() {
