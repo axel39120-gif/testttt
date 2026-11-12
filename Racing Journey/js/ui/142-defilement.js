@@ -19,7 +19,8 @@
 (function () {
   "use strict";
 
-  var NAV = /\b(navTo|navMore|go|goBack|ptab|rtab|chtab|mtab|lstab|ctab|stab|switchTab|openScreen)\s*\(/;
+  // (la messagerie place elle-même sa vue à l'ouverture et au retour d'une conversation)
+  var NAV = /\b(navTo|navMore|go|goBack|ptab|rtab|chtab|mtab|lstab|ctab|stab|switchTab|openScreen|openMailThread|backToMailList)\s*\(/;
 
   function onglet(ecran) {
     var t = ecran && ecran.querySelector(".tab.on, .tabs .on, [data-tab].on");

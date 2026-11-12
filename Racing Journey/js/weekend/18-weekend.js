@@ -1034,6 +1034,12 @@
       return rows;
     }
 
+    // classement complet de la séance (141)
+    window._rjEssaisClassement = function () {
+      var pr = (typeof RACE_STATE !== "undefined") ? RACE_STATE.practice : null;
+      return pr && pr._live ? fieldStandings(pr) : null;
+    };
+
     function fmtGap(t, leader) {
       if (t == null) return "—";
       if (leader == null || t === leader) return "";
@@ -1398,11 +1404,15 @@
 
       c += '</div></div>';
 
-      // Note : les réglages se font dans l'onglet Préparation
-      c += '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.25);border-radius:6px;display:flex;align-items:center;gap:8px">';
-      c += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
-      c += '<span style="font-size:11px;color:var(--soft);line-height:1.4">Les réglages de la voiture se font dans l\'onglet <b style="color:#A78BFA">Préparation</b>. Le travail en piste affine le retour de l\'ingénieur sur ces réglages.</span>';
-      c += '</div>';
+      // Réglages : les mêmes curseurs de ressentis qu'en Préparation (120)
+      var atelierEssais = window.RJAtelier && typeof RJAtelier.ressentisHTML === "function" ? RJAtelier.ressentisHTML() : "";
+      if (atelierEssais) c += '<div class="rja rja-essais" style="margin-bottom:10px">' + atelierEssais + "</div>";
+      else {
+        c += '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.25);border-radius:6px;display:flex;align-items:center;gap:8px">';
+        c += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+        c += '<span style="font-size:11px;color:var(--soft);line-height:1.4">Les réglages de la voiture se font dans l\'onglet <b style="color:#A78BFA">Préparation</b>. Le travail en piste affine le retour de l\'ingénieur sur ces réglages.</span>';
+        c += '</div>';
+      }
 
       // -- Feuille de temps (classement live) --
       c += timingBoardHtml(pr);

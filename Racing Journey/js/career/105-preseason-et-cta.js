@@ -156,16 +156,19 @@
       } });
     }
 
-    /* Une fois le plan validé, on enchaîne sur la première course plutôt
-       que de laisser le joueur chercher son chemin. */
+    /* Une fois le plan validé, retour à l'accueil de la nouvelle saison : le
+       joueur y découvre sa saison (calendrier, objectifs, messages) et lance
+       lui-même la première course avec le bouton d'action. Avant, on partait
+       directement sur la première course (signalé en karting). */
     if (typeof window.savePreseasonPlan === "function" && !window.savePreseasonPlan._rj105) {
       _orig.savePreseasonPlan = window.savePreseasonPlan;
       rjInscrire("savePreseasonPlan", { id: "105-preseason-et-cta:savePreseasonPlan", ordre: -7900, remplace: function (args, suite) {
         var r = suite();
         setTimeout(function () {
           try {
+            if (window.G) G.seasonOver = false;
+            if (typeof window.navTo === "function") window.navTo("S-home", "ni-home");
             teinter();
-            if (typeof window.advanceToNextMoment === "function") window.advanceToNextMoment();
           } catch (e) {}
         }, 260);
         return r;

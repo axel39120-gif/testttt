@@ -1320,14 +1320,22 @@
      version effaçait donc l'écran d'une course en train de se dérouler dès
      qu'on quittait l'onglet et qu'on y revenait. On se fie à la phase
      déclarée par le moteur, et au fait qu'un classement soit déjà rempli. */
+  /* Chaque course est marquée à son départ : l'état du week-end (RACE_STATE,
+     recréé par initRaceState à chaque week-end, même sur un circuit déjà
+     visité) et la manche (sprint ou course). C'était la pièce manquante : un
+     classement rempli ou une phase « result » restaient vrais à la manche
+     suivante, et l'écran de la course précédente ne se vidait jamais. */
+  function cleCourse() {
+    var w = window.RACE_WEEKEND_STATE || {};
+    return { etat: window.RACE_STATE, manche: w.sprintDone ? "course" : "sprint" };
+  }
+  function memeCourse(a, b) { return !!a && !!b && a.etat === b.etat && a.manche === b.manche; }
   function courseEnCoursOuFinie() {
     try {
-      var e = window.RACE_WEEKEND_STATE || {};
-      if (e.courseDone) return true;
-      var phase = window.G && window.G.racePhase;
-      if (phase === "live" || phase === "result") return true;
-      var cl = document.getElementById("live-leaderboard");
-      if (cl && cl.children.length > 1) return true;
+      var lr = window.LIVE_RACE;
+      if (!lr || !lr.drivers || !lr.drivers.length) return false;
+      if (lr.interval && !lr.finished) return true;              // en train de rouler
+      return memeCourse(lr._rjCourse, cleCourse());                // celle de cette manche, finie
     } catch (err) {}
     return false;
   }
@@ -1350,8 +1358,17 @@
       poser("live-race-label", "Prêt au départ");
       vide("live-leaderboard");
       vide("live-news-feed");
+      vide("rj-direct-list");
+      // progression (90), carte (111) et voisins (107) se recréent au départ
+      ["rj90-progression", "rj111-carte", "rj107-mini"].forEach(function (id) { var el = document.getElementById(id); if (el) el.remove(); });
+      if (window.LIVE_RACE && window.LIVE_RACE.drivers && window.LIVE_RACE.drivers.length) {
+        window.LIVE_RACE = { drivers: [], cur: 0, total: 0, phase: 0, finished: false, paused: false, interval: null,
+          pendingEvent: null, resolvedEvents: [], eventsSchedule: [], newsFeed: [] };
+      }
+      var ecran = document.getElementById("race-screen");
+      if (ecran) [].forEach.call(ecran.children, function (c) { if (c._rj90Base !== undefined) c.style.display = c._rj90Base; });
       var btn = document.getElementById("race-btn");
-      if (btn) { btn.disabled = false; btn.textContent = "Départ !"; }
+      if (btn) { btn.disabled = false; btn.style.display = ""; btn.textContent = "Départ !"; }
     } catch (e) { console.warn(TAG, e && e.message); }
   }
 
@@ -1361,6 +1378,10 @@
       window.RJ_RACE_TAB_HOOKS.push({ id: "40-course-vierge", apres: function (onglet) {
         if (onglet === "course" && !courseEnCoursOuFinie()) vider();
       } });
+    }
+    if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
+    if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "40-course-vierge"; })) {
+      window.RJ_RACE_START_HOOKS.push({ id: "40-course-vierge", apres: function (lr) { if (lr) lr._rjCourse = cleCourse(); } });
     }
     return true;
   }

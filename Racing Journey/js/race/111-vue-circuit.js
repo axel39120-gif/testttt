@@ -223,16 +223,27 @@
     var avantDepart = !e.fini && !(e.temps > 0);   // sur la grille : personne n'a encore d'écart
     var vivants = e.voitures.filter(function (v) { return !v.abandon; })
       .sort(function (a, b) { return (a.autreCategorie - b.autreCategorie) || (a.pos - b.pos); });
+    // les abandons restent dans la tour, en bas et grisés, « OUT » à la place de l'écart
+    var abandons = e.voitures.filter(function (v) { return v.abandon; })
+      .sort(function (a, b) { return (a.autreCategorie - b.autreCategorie) || (a.pos - b.pos); });
+    var liste = vivants.concat(abandons);
     // vingt lignes ; le joueur toujours visible (à la dernière ligne s'il est plus loin)
-    var montres = vivants.slice(0, LIGNES), iJoueur = vivants.findIndex(function (v) { return v.joueur; });
-    if (iJoueur >= LIGNES) montres[LIGNES - 1] = vivants[iJoueur];
+    var montres = liste.slice(0, LIGNES), iJoueur = liste.findIndex(function (v) { return v.joueur; });
+    if (iJoueur >= LIGNES) montres[LIGNES - 1] = liste[iJoueur];
     vue.tour.innerHTML = montres.map(function (v, k) {
-      var i = vivants.indexOf(v), d = parNom[v.nom] || {};
+      var d = parNom[v.nom] || {};
+      if (v.abandon) {
+        var meme = function (w) { return w.autreCategorie === v.autreCategorie; };
+        var rang = vivants.filter(meme).length + abandons.filter(meme).indexOf(v) + 1;
+        return '<li class="out' + (v.joueur ? " moi" : "") + (v.autreCategorie ? " autre" : "") + (k === LIGNES - 1 && liste.indexOf(v) >= LIGNES ? " detache" : "") + '"><span class="p">' + rang + "</span>" +
+          ecusson(d.team, v.nom) + '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">OUT</span></li>';
+      }
+      var i = vivants.indexOf(v);
       var tete = i === 0 || vivants[i - 1].autreCategorie !== v.autreCategorie;
       var x = mode === "intervalle" && !tete ? v.ecart - vivants[i - 1].ecart : v.ecart;
       var ecart = tete ? "TÊTE" : avantDepart ? ""
         : x >= e.tempsTour ? "+" + Math.floor(x / e.tempsTour) + " T" : "+" + Math.max(Math.pow(10, -th.dec), x).toFixed(th.dec);
-      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + (tete ? " tete" : "") + (k === LIGNES - 1 && i >= LIGNES ? " detache" : "") + '"><span class="p">' + v.pos + "</span>" +
+      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + (tete ? " tete" : "") + (k === LIGNES - 1 && liste.indexOf(v) >= LIGNES ? " detache" : "") + '"><span class="p">' + v.pos + "</span>" +
         ecusson(d.team, v.nom) +
         '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? '<i class="pit">PIT</i>' : ecart) + "</span></li>";
     }).join("");

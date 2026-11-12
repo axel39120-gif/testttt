@@ -513,25 +513,18 @@
         try {
           var weeksAdvanced = Math.max(0, (G.semaine || 0) - (weekBefore || 0));
 
-          // CAS 1 : on avance le temps et on ENTRE en week-end de course (S-race).
-          // On ne montre PAS le bilan tout de suite : on le met en attente pour
-          // l'afficher au RETOUR à l'accueil, à la fin du week-end.
-          if (snapshot && weeksAdvanced > 0 && scrAfter === 'S-race') {
+          /* Le temps avance (vers un week-end ou non) : le bilan ne s'affiche
+             jamais sur le moment. Les semaines s'additionnent en un seul bilan,
+             montré à la fin du prochain week-end de course. Avant, avancer hors
+             week-end (événement, semaine de pause) ouvrait le bilan au milieu de
+             l'événement. */
+          if (snapshot && weeksAdvanced > 0) {
             _rjApplyMaterialCosts(weeksAdvanced);
             _rjPending = {
-              before: snapshot,
-              weeks: weeksAdvanced,
+              before: _rjPending ? _rjPending.before : snapshot,
+              weeks: (_rjPending ? _rjPending.weeks : 0) + weeksAdvanced,
               afterBudget: (G.budget || 0)
             };
-          }
-          // CAS 2 : avancement de temps SANS entrer en week-end (événement…) → bilan immédiat.
-          else if (snapshot && weeksAdvanced > 0) {
-            _rjApplyMaterialCosts(weeksAdvanced);
-            setTimeout(function() {
-              try { _rjShowWeeklyBilan(snapshot, weeksAdvanced); } catch(e) {
-                console.warn('[10-finance] bilan popup:', e);
-              }
-            }, 350);
           }
 
           // FLUSH : on QUITTE le week-end (S-race → autre écran) avec un bilan en

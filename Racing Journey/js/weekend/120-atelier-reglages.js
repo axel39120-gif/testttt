@@ -138,22 +138,91 @@
       '<div class="rja-anneau-val" style="color:' + teinte + '">' + (v === null ? "—" : v + "<small>%</small>") + "</div>";
   }
 
+  /* Un ressenti est un curseur : on le fait glisser vers la fenêtre idéale et,
+     au lâcher, les réglages qui le composent bougent d'autant (pondérés, avec
+     leurs couplages). Plus de liste de réglages à « − / + ». */
+  function barre(r, x) {
+    var v = verdict(x), largeur = Math.max(6, 6 + 60 * x.doute);
+    return '<div class="rja-r"><div class="rja-r-tete"><span class="nom">' + esc(r.nom) + '</span><span class="rja-verdict ' + v.c + '">' + v.t + "</span></div>" +
+      '<div class="rja-barre" data-rja-r="' + r.id + '" role="slider" aria-label="' + esc(r.nom) + '" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="' + Math.round(x.pos * 100) + '" tabindex="0">' +
+      '<span class="zone" style="left:' + (50 - largeur / 2) + "%;width:" + largeur + '%"></span>' +
+      '<span class="marque" style="left:' + (50 + 46 * x.pos).toFixed(1) + '%"></span></div>' +
+      '<div class="rja-bornes"><span>' + esc(r.bornes[0]) + "</span><span>" + esc(r.bornes[1]) + "</span></div></div>";
+  }
+
   /* La tête de l'atelier (confiance + cinq ressentis) seule, pour la montrer
-     ailleurs à l'identique (débrief des essais). */
+     ailleurs à l'identique (essais libres, débrief). */
   function ressentisHTML() {
     var dispo = params();
     if (!dispo.length) return "";
     var h = '<div class="rja-tete"><div class="rja-conf">' + anneau(confiance()) + '<div class="rja-conf-lbl">Confiance<br>du pilote</div></div><div class="rja-ressentis">';
     RESSENTIS.forEach(function (r) {
       var x = ressenti(r, dispo);
-      if (!x) return;
-      var v = verdict(x), largeur = Math.max(6, 6 + 60 * x.doute);
-      h += '<div class="rja-r"><div class="rja-r-tete"><span class="nom">' + esc(r.nom) + '</span><span class="rja-verdict ' + v.c + '">' + v.t + "</span></div>" +
-        '<div class="rja-barre"><span class="zone" style="left:' + (50 - largeur / 2) + "%;width:" + largeur + '%"></span>' +
-        '<span class="marque" style="left:' + (50 + 46 * x.pos).toFixed(1) + '%"></span></div>' +
-        '<div class="rja-bornes"><span>' + esc(r.bornes[0]) + "</span><span>" + esc(r.bornes[1]) + "</span></div></div>";
+      if (x) h += barre(r, x);
     });
     return h + "</div></div>";
+  }
+
+  /* Amener le ressenti r à la position t (−1 … 1). Sa position vaut
+     Σ w·(v − centre) / Σ|w| / 5 : en déplaçant chaque réglage de w·E,
+     E = 5·(t − pos)·Σ|w| / Σw², la position atteint t (à l'arrondi des crans). */
+  function amener(r, t) {
+    var dispo = params(), x = ressenti(r, dispo);
+    if (!x) return false;
+    var ps = Object.keys(r.poids).filter(function (p) { return dispo.indexOf(p) >= 0; });
+    var sa = 0, s2 = 0;
+    ps.forEach(function (p) { sa += Math.abs(r.poids[p]); s2 += r.poids[p] * r.poids[p]; });
+    var E = 5 * (t - x.pos) * sa / s2, bouge = false;
+    ps.forEach(function (p) {
+      var cible = Math.max(0, Math.min(10, Math.round(valeur(p) + r.poids[p] * E)));
+      if (cible !== valeur(p)) { setAdvParam("setup", p, cible); bouge = true; }
+    });
+    return bouge;
+  }
+
+  function rafraichir() {
+    try { renderAdvancedSetupUI(); } catch (e) { }
+    document.querySelectorAll(".rja-essais").forEach(function (b) { b.innerHTML = ressentisHTML(); });
+  }
+
+  var glisse = null;
+  function positionDe(barreEl, clientX) {
+    var rc = barreEl.getBoundingClientRect();
+    var part = (clientX - rc.left) / Math.max(1, rc.width) * 100;   // 0 … 100
+    return { part: Math.max(4, Math.min(96, part)), t: Math.max(-1, Math.min(1, (part - 50) / 46)) };
+  }
+  function surAppui(e) {
+    var b = e.target && e.target.closest && e.target.closest(".rja-barre[data-rja-r]");
+    if (!b) return;
+    e.preventDefault();
+    var r = RESSENTIS.filter(function (x) { return x.id === b.getAttribute("data-rja-r"); })[0];
+    if (!r) return;
+    glisse = { barre: b, r: r, marque: b.querySelector(".marque") };
+    b.classList.add("rja-glisse");
+    try { b.setPointerCapture(e.pointerId); } catch (x) { }
+    surGlisse(e);
+  }
+  function surGlisse(e) {
+    if (!glisse) return;
+    var p = positionDe(glisse.barre, e.clientX);
+    glisse.t = p.t;
+    if (glisse.marque) glisse.marque.style.left = p.part.toFixed(1) + "%";
+  }
+  function surLacher() {
+    if (!glisse) return;
+    var g = glisse; glisse = null;
+    g.barre.classList.remove("rja-glisse");
+    if (typeof g.t === "number") amener(g.r, g.t);
+    rafraichir();
+  }
+  function surTouche(e) {
+    var b = e.target && e.target.closest && e.target.closest(".rja-barre[data-rja-r]");
+    if (!b || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+    var r = RESSENTIS.filter(function (x) { return x.id === b.getAttribute("data-rja-r"); })[0], x = r && ressenti(r, params());
+    if (!x) return;
+    e.preventDefault();
+    amener(r, Math.max(-1, Math.min(1, x.pos + (e.key === "ArrowRight" ? 0.12 : -0.12))));
+    rafraichir();
   }
 
   /* ------------------------------------------------------------------ */
@@ -178,12 +247,7 @@
       '<div class="rja-conf-lbl">Confiance<br>du pilote</div></div><div class="rja-ressentis">';
     RESSENTIS.forEach(function (r) {
       var x = ressenti(r, dispo);
-      if (!x) return;
-      var v = verdict(x), largeur = Math.max(6, 6 + 60 * x.doute);
-      h += '<div class="rja-r"><div class="rja-r-tete"><span class="nom">' + esc(r.nom) + '</span><span class="rja-verdict ' + v.c + '">' + v.t + "</span></div>" +
-        '<div class="rja-barre"><span class="zone" style="left:' + (50 - largeur / 2) + "%;width:" + largeur + '%"></span>' +
-        '<span class="marque" style="left:' + (50 + 46 * x.pos).toFixed(1) + '%"></span></div>' +
-        '<div class="rja-bornes"><span>' + esc(r.bornes[0]) + "</span><span>" + esc(r.bornes[1]) + "</span></div></div>";
+      if (x) h += barre(r, x);
     });
     h += "</div></div>";
 
@@ -198,22 +262,8 @@
         return '<span class="' + (t.lapTime === meilleur ? "meilleur" : "") + '">' + temps(t.lapTime) + "</span>";
       }).join("") + "</div>" : "") + "</div>";
 
-    /* Réglages par groupe. */
-    GROUPES.forEach(function (g) {
-      var ps = g[1].filter(function (x) { return dispo.indexOf(x) >= 0; });
-      if (!ps.length) return;
-      h += '<div class="rja-groupe"><div class="rja-groupe-titre">' + esc(g[0]) + "</div>";
-      ps.forEach(function (pr) {
-        var v = valeur(pr), effets = RESSENTIS.filter(function (r) { return r.poids[pr]; }).map(function (r) {
-          return '<i>' + (r.poids[pr] > 0 ? "↑ " + esc(r.bornes[1]) : "↑ " + esc(r.bornes[0])) + "</i>";
-        }).join("");
-        h += '<div class="rja-p"><div class="rja-p-info"><span class="nom">' + esc(NOMS[pr] || pr) + '</span><span class="effets">' + effets + "</span></div>" +
-          '<div class="rja-p-ctrl"><button type="button" data-rja="moins" data-p="' + pr + '"' + (v <= 0 ? " disabled" : "") + ">−</button>" +
-          '<span class="crans">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (k) { return "<b" + (k <= v ? ' class="on"' : "") + "></b>"; }).join("") + "</span>" +
-          '<span class="val">' + v + '</span><button type="button" data-rja="plus" data-p="' + pr + '"' + (v >= 10 ? " disabled" : "") + ">+</button></div></div>";
-      });
-      h += "</div>";
-    });
+    /* Les réglages se font par les curseurs ci-dessus (demande des joueurs :
+       une seule façon de régler, la même en préparation et en essais). */
     h += "</div>";
     conteneur.innerHTML = h;
   }
@@ -222,10 +272,7 @@
     var b = e.target && e.target.closest && e.target.closest("[data-rja]");
     if (!b || b.disabled || !b.closest("#advanced-setup-container")) return;
     var quoi = b.getAttribute("data-rja");
-    if (quoi === "plus" || quoi === "moins") {
-      var p = b.getAttribute("data-p");
-      setAdvParam("setup", p, valeur(p) + (quoi === "plus" ? 1 : -1));   // couplages compris ; re-rend l'atelier
-    } else if (quoi === "essai") {
+    if (quoi === "essai") {
       var r = runPracticeTest();
       if (r && r.error === "session_full" && typeof endPracticeSession === "function") { endPracticeSession(); r = runPracticeTest(); }
       if (r && r.sessionFull && typeof endPracticeSession === "function") {
@@ -247,10 +294,16 @@
       try { rendre(c); } catch (e) { console.warn(TAG, e && e.message); }
     } });
     document.addEventListener("click", surClic, true);
-    window.RJAtelier = { ressenti: ressenti, confiance: confiance, parole: parole, ressentisHTML: ressentisHTML, RESSENTIS: RESSENTIS };
+    document.addEventListener("pointerdown", surAppui, true);
+    document.addEventListener("pointermove", surGlisse, true);
+    document.addEventListener("pointerup", surLacher, true);
+    document.addEventListener("pointercancel", surLacher, true);
+    document.addEventListener("keydown", surTouche, true);
+    window.RJAtelier = { ressenti: ressenti, confiance: confiance, parole: parole, ressentisHTML: ressentisHTML, RESSENTIS: RESSENTIS, amener: amener };
     window._rj120Uninstall = function () {
       rjDesinscrire(["120-atelier:"], "renderAdvancedSetupUI");
       document.removeEventListener("click", surClic, true);
+      ["pointerdown", surAppui, "pointermove", surGlisse, "pointerup", surLacher, "pointercancel", surLacher, "keydown", surTouche].forEach(function (x, i, L) { if (i % 2 === 0) document.removeEventListener(x, L[i + 1], true); });
       delete window.RJAtelier;
     };
     console.log(TAG, "actif — atelier de réglages (confiance, ressentis, parole du pilote)");

@@ -66,34 +66,70 @@
     } else if (plus !== tab.lastElementChild) tab.appendChild(plus);
     var libelle = "Classement complet (" + L.length + ") ›";
     if (plus.textContent !== libelle) plus.textContent = libelle;   // réécrire sans changement relancerait l'observateur sans fin
-    if ($("rj141-modale")) remplirModale(tab);
+    var ouverte = $("rj141-modale");
+    if (ouverte && ouverte._tab === tab) remplirModale(tab);   // la feuille des essais, cachée mais vivante, écrasait celle des qualifs
   }
 
-  /* Les vingt pilotes en deux colonnes de dix, dans une fenêtre. */
+  /* Les vingt pilotes en deux colonnes de dix, dans une fenêtre, lus dans les
+     données de la séance. (Avant : une copie des lignes de la feuille, dont les
+     temps restaient vides en essais et qui ne suivait pas la séance.) */
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function chrono(t) {
+    if (typeof t !== "number" || !isFinite(t)) return "—";
+    if (typeof formatQualiTime === "function") return formatQualiTime(t);
+    var m = Math.floor(t / 60), s = t - m * 60;
+    return m ? m + ":" + (s < 10 ? "0" : "") + s.toFixed(3) : s.toFixed(3);
+  }
+  function donnees(tab) {
+    if (tab.id === "quali-timing-board" && window.QUALI_STATE && QUALI_STATE.drivers) {
+      var D = QUALI_STATE.drivers, ids = QUALI_STATE.survived || D.map(function (d, i) { return i; });
+      var coupe = typeof getQualiCutoff === "function" ? getQualiCutoff(QUALI_STATE.session) : 99;
+      var elim = QUALI_STATE.session === 1 || QUALI_STATE.session === 2;
+      return ids.map(function (i) { return D[i]; }).filter(Boolean).sort(function (a, b) {
+        return (a.bestTime == null) - (b.bestTime == null) || (a.bestTime || 0) - (b.bestTime || 0);
+      }).map(function (d, k) {
+        return { nom: d.isPlayer ? nomJoueur() : d.name, equipe: d.team, temps: d.bestTime, moi: !!d.isPlayer, elimine: elim && k + 1 > coupe };
+      });
+    }
+    if (tab.id === "fpl-board-body" && typeof window._rjEssaisClassement === "function") {
+      return (window._rjEssaisClassement() || []).map(function (r) { return { nom: r.name, equipe: r.team, temps: r.time, moi: !!r.isPlayer }; });
+    }
+    return null;
+  }
   function remplirModale(tab) {
     var m = $("rj141-modale"); if (!m) return;
-    var L = lignes(tab), moitie = Math.ceil(L.length / 2), nom = nomJoueur();
-    var col = function (a, b) {
-      return '<div class="rj141-col">' + L.slice(a, b).map(function (l) {
-        var c = l.cloneNode(true); c.classList.remove("rj141-cache", "rj141-saut");
-        c.classList.toggle("rj141-moi", !!nom && c.textContent.indexOf(nom) >= 0);
-        return c.outerHTML;
-      }).join("") + "</div>";
+    var R = donnees(tab);
+    if (!R) return;
+    var tete = null;
+    R.forEach(function (r) { if (typeof r.temps === "number" && (tete == null || r.temps < tete)) tete = r.temps; });
+    var moitie = Math.ceil(R.length / 2);
+    var ligne = function (r, k) {
+      var ecart = typeof r.temps !== "number" || r.temps === tete ? "" : "+" + (r.temps - tete).toFixed(3);
+      return '<div class="rj141-ligne' + (r.moi ? " rj141-moi" : "") + (r.elimine ? " rj141-elim" : "") + '">' +
+        '<span class="rj141-p">' + (k + 1) + '</span><span class="rj141-n">' + esc(r.nom) +
+        (r.equipe ? "<em>" + esc(r.equipe) + "</em>" : "") + '</span><span class="rj141-t">' + chrono(r.temps) +
+        '</span><span class="rj141-e">' + ecart + "</span></div>";
     };
-    m.querySelector(".rj141-grille").innerHTML = col(0, moitie) + col(moitie, L.length);
+    var col = function (a, b) { return '<div class="rj141-col">' + R.slice(a, b).map(function (r, i) { return ligne(r, a + i); }).join("") + "</div>"; };
+    var html = col(0, moitie) + col(moitie, R.length);
+    var g = m.querySelector(".rj141-grille");
+    if (g.innerHTML !== html) g.innerHTML = html;
   }
   function ouvrirModale(tab) {
     fermerModale();
     var m = document.createElement("div");
     m.id = "rj141-modale";
+    m.setAttribute("data-rj-noround", "1");   // l'arrondi global (04q) effaçait les millièmes : « 50.086 » devenait « 50 »
     m.innerHTML = '<div class="rj141-feuille"><div class="rj141-titre"><span>Classement complet</span>' +
       '<button type="button" class="rj141-fermer" aria-label="Fermer">×</button></div><div class="rj141-grille"></div></div>';
     document.body.appendChild(m);
     m._tab = tab;
     remplirModale(tab);
+    // la séance continue pendant que la fenêtre est ouverte
+    m._minuteur = setInterval(function () { if (!document.body.contains(m)) return clearInterval(m._minuteur); remplirModale(tab); }, 500);
     m.addEventListener("click", function (e) { if (e.target === m || (e.target.closest && e.target.closest(".rj141-fermer"))) fermerModale(); });
   }
-  function fermerModale() { var m = $("rj141-modale"); if (m) m.remove(); }
+  function fermerModale() { var m = $("rj141-modale"); if (m) { clearInterval(m._minuteur); m.remove(); } }
 
   /* Le statut des qualifs, sous la liste et donc hors de l'écran, passe à gauche. */
   function statut() {

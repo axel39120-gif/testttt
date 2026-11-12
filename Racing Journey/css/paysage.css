@@ -768,6 +768,8 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj111-tour li.moi .p { background: #fff; color: #0b0b0e; }
 .rj111-tour li.moi .e { color: #fff; }
 .rj111-tour li.autre { opacity: .5; }
+.rj111-tour li.out { opacity: .42; }
+.rj111-tour li.out .e { color: #EF4444; font-weight: 900; letter-spacing: .08em; }
 .rj111-tour li .pit { font-style: normal; font-weight: 900; font-size: 8.5px; letter-spacing: .1em; padding: 2px 4px; border-radius: 2px; background: #ffc107; color: #111; }
 /* Piste : bordure, limites blanches, bitume, repères de secteurs. */
 .rj111-bord { fill: none; stroke: #23232d; stroke-width: 7.5; stroke-linejoin: round; }

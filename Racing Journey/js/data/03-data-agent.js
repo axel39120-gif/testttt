@@ -15467,7 +15467,7 @@ function _renderMailThread(e, t) {
   }), n.messages.forEach(function(e, t) {
     var r = "S" + e.saison + "-W" + e.week,
       a;
-    r !== l && (o += '<div style="text-align:center;margin:' + (0 === t ? "4px" : "14px") + ' 0 8px;font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase">Saison ' + e.saison + " · Semaine " + e.week + "</div>", l = r, s = null);
+    r !== l && (o += '<div class="rj-mail-jour" style="text-align:center;margin:' + (0 === t ? "4px" : "14px") + ' 0 8px;font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase">Saison ' + e.saison + " · Semaine " + e.week + "</div>", l = r, s = null);
     var d = "in" !== s,
       p = !1,
       u = n.messages[t + 1];
@@ -15490,22 +15490,33 @@ function _renderMailThread(e, t) {
   }, 0)
 }
 
+/* Ouvrir une conversation la montre au début de son dernier échange (avant :
+   tout en bas de la page) ; revenir à la liste rend la position qu'on avait. */
+var _MAIL_LIST_SCROLL = 0;
 function openMailThread(e) {
-  _MAIL_OPEN_THREAD = e, renderMailbox();
   var t = document.querySelector("#S-mailbox .scroll");
+  if (t && !_MAIL_OPEN_THREAD) _MAIL_LIST_SCROLL = t.scrollTop;
+  _MAIL_OPEN_THREAD = e, renderMailbox();
   if (t) {
-    t.scrollTop = 0;
-    requestAnimationFrame(function() {
-      t.scrollTop = t.scrollHeight;
-      setTimeout(function() {
-        t.scrollTop = t.scrollHeight;
-      }, 50);
-    });
+    var placer = function() {
+      var jours = t.querySelectorAll(".rj-mail-jour"), dernier = jours[jours.length - 1];
+      var tete = t.querySelector("[style*='position:sticky']");
+      if (!dernier) { t.scrollTop = 0; return; }
+      var haut = dernier.getBoundingClientRect().top - t.getBoundingClientRect().top + t.scrollTop - (tete ? tete.offsetHeight : 0) - 6;
+      t.scrollTop = Math.max(0, haut);
+    };
+    requestAnimationFrame(placer);
+    setTimeout(placer, 50);
   }
 }
 
 function backToMailList() {
-  _MAIL_OPEN_THREAD = null, renderMailbox()
+  _MAIL_OPEN_THREAD = null, renderMailbox();
+  var t = document.querySelector("#S-mailbox .scroll"), y = _MAIL_LIST_SCROLL;
+  if (t) {
+    var remettre = function() { t.scrollTop = y; };
+    remettre(); requestAnimationFrame(remettre); setTimeout(remettre, 60);
+  }
 }
 
 function _deleteEntireThread(e) {
