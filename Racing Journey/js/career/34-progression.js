@@ -836,7 +836,7 @@
     };
     var ev = EV[o.event] || EV.normal;
     var gains = (o.gains && o.gains.length) ? o.gains.map(function (g) { return "+" + String(g.v).replace(".", ",") + " " + subLabel(g.k); }).join(" · ") : "Aucun gain cette fois";
-    return '<div class="rjf-fb" style="border-color:' + ev.col + '55"><span class="rjf-fb-ev" style="color:' + ev.col + '">' + ev.lbl + '</span><span class="rjf-fb-g">' + gains + '</span></div>';
+    return '<div class="rjf-fb" data-rj-noround="1" style="border-color:' + ev.col + '55"><span class="rjf-fb-ev" style="color:' + ev.col + '">' + ev.lbl + '</span><span class="rjf-fb-g">' + gains + '</span></div>';
   }
   function renderFocusUI() {
     var host = document.getElementById("train-sessions-content");

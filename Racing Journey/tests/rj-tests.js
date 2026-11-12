@@ -3733,6 +3733,104 @@ async function suiteSeances() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteCorrections() {
+  S.suite("Corrections course (v275)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await S.repondeurAutomatique(page);
+
+    // 3. Entraînement : Préparation physique reste à gauche ; 4. le gain garde ses décimales ; 5. l'écran ne remonte pas
+    await page.evaluate(() => { navTo("S-training", null); renderTrainScreen(); G.pa = 9; });
+    await page.waitForTimeout(400);
+    const t = await page.evaluate(async () => {
+      const out = {};
+      const cartes = [...document.querySelectorAll("#S-training .rjf .rjf-card")];
+      const prep = cartes.find(c => /Préparation physique/i.test(c.textContent));
+      const repos = document.querySelector("#S-training .rjf .rjf-rest");
+      out.prep = prep ? Math.round(prep.getBoundingClientRect().left) : null;
+      out.repos = repos ? Math.round(repos.getBoundingClientRect().left) : null;
+      const sc = document.querySelector("#S-training > .scroll");
+      const b = document.createElement("button");
+      b.textContent = "Essai remise en haut";
+      b.onclick = () => { sc.scrollTop = 0; };
+      sc.appendChild(b);
+      sc.scrollTop = 400; await new Promise(r => setTimeout(r, 80));
+      out.avant = sc.scrollTop;
+      b.click();
+      await new Promise(r => setTimeout(r, 500));
+      out.apres = sc.scrollTop;
+      b.remove();
+      const go = document.querySelector(".rjf-go[data-focus=course]");
+      if (go) go.click();
+      await new Promise(r => setTimeout(r, 300));
+      const fb = document.querySelector(".rjf-fb");
+      out.noround = fb ? fb.hasAttribute("data-rj-noround") : null;
+      return out;
+    });
+    S.verifier("Préparation physique dans la colonne de gauche", t.prep !== null && t.repos !== null && t.prep < t.repos, JSON.stringify(t));
+    S.verifier("l'écran reste où il était après un appui", t.avant > 300 && Math.abs(t.apres - t.avant) < 5, JSON.stringify(t));
+    S.verifier("le gain d'entraînement n'est pas arrondi à l'entier", t.noround === true, JSON.stringify(t));
+
+    // 1. Pneus neufs à chaque qualif (karting : un seul segment, l'usure s'accumulait)
+    const q = await page.evaluate(() => {
+      const marque = { usure: 99 };
+      QUALI_STATE._tyreState = marque;
+      G.cat = "Formule 1"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true;
+      navTo("S-race", null);
+      try { startQual(); } catch (e) { return { erreur: e.message }; }
+      return { remis: QUALI_STATE._tyreState !== marque };
+    });
+    S.verifier("pneus de qualif remis à neuf à chaque séance", q.remis === true, JSON.stringify(q));
+
+    // 2. Effets d'événements : les secondes passent au temps du tour (moteur 81) et permettent de doubler
+    const ev = await page.evaluate(() => {
+      const sauve = window.LIVE_RACE;
+      const mk = (name, isPlayer) => ({ name, isPlayer, score: 0.6, consistency: 0.9, gridPos: isPlayer ? 2 : 1, pos: isPlayer ? 2 : 1, dnf: false });
+      window.LIVE_RACE = { drivers: [mk("A", false), Object.assign(mk("Moi", true), { isPlayer: false })], cur: 1, total: 20, finished: false, baseRef: 90 };   // deux voitures identiques : rien du profil du joueur
+      _rj81.positions();
+      const ecart = () => LIVE_RACE.drivers[1]._t - LIVE_RACE.drivers[0]._t;
+      LIVE_RACE.cur = 2; _rj81.positions(); const e0 = ecart();
+      LIVE_RACE.drivers[1]._rj81EvtSec = -3; LIVE_RACE.cur = 3; _rj81.positions(); const e1 = ecart();
+      const r = { gagne: e0 - e1, consomme: LIVE_RACE.drivers[1]._rj81EvtSec, pos: LIVE_RACE.drivers[1].pos };
+      window.LIVE_RACE = sauve;
+      return r;
+    });
+    S.verifier("un effet de −3 s fait gagner environ 3 s", ev.gagne > 2.5 && ev.gagne < 3.6, JSON.stringify(ev));
+    S.verifier("l'effet n'est appliqué qu'une fois", ev.consomme === 0, JSON.stringify(ev));
+    S.verifier("le gain permet de passer devant", ev.pos === 1, JSON.stringify(ev));
+
+    // 6. Classement en course : rien avant le départ, puis bascule écart / intervalle
+    const lire = () => page.evaluate(() => {
+      const e = [...document.querySelectorAll(".rj111-tour li")].slice(1, 6).map(li => { const x = li.querySelector(".e"); return x ? x.textContent : null; });
+      const m = document.querySelector(".rj111-mode"), mini = document.getElementById("rj107-mini");
+      return { mode: m && m.textContent, e, mini: mini ? mini.innerText : "" };
+    });
+    await page.evaluate(() => {
+      try { localStorage.removeItem("rj111-mode"); } catch (e) { }
+      SETTINGS.simSpeed = "normal";
+      RACE_STATE.qualiPos = 8; navTo("S-race", null); rtab("course", true);
+    });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { const b = [...document.querySelectorAll("#S-race button")].find(x => /départ|lancer la course|commencer/i.test(x.textContent) && x.getClientRects().length); if (b) b.click(); else runRaceLive(); });
+    await page.waitForTimeout(400);
+    const grille = await lire();
+    S.verifier("sur la grille, aucun écart dans la tour", grille.e.length > 0 && grille.e.every(x => x === ""), JSON.stringify(grille));
+    S.verifier("sur la grille, pas de « 0,0 s » dans le panneau voisins", !/\d\s*s/.test(grille.mini), JSON.stringify(grille));
+    await page.waitForTimeout(7000);
+    const ecart = await lire();
+    await page.click(".rj111-colonne");
+    await page.waitForTimeout(80);
+    const inter = await lire();
+    const garde = await page.evaluate(() => { try { return localStorage.getItem("rj111-mode"); } catch (e) { return "?"; } });
+    const nb = a => a.map(x => parseFloat(String(x).replace("+", "")));
+    S.verifier("en course, la tour donne l'écart au premier (croissant)", ecart.mode === "ÉCART" && ecart.e.every(x => /^\+/.test(x)) && nb(ecart.e).every((v, i, a) => !i || v >= a[i - 1] || /T|PIT/.test(ecart.e[i])), JSON.stringify(ecart));
+    S.verifier("un appui sur la tour passe en intervalle", inter.mode === "INTERVALLE" && inter.e.every(x => /^\+|PIT/.test(x)) && nb(inter.e).some((v, i) => v < nb(ecart.e)[i]), JSON.stringify(inter));
+    S.verifier("le choix est retenu", garde === "intervalle", String(garde));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -3966,7 +4064,8 @@ const SUITES = {
   creationtel: suiteCreationTelephone,
   entrainement: suiteEntrainement,
   arrets: suiteArrets,
-  seances: suiteSeances
+  seances: suiteSeances,
+  corrections: suiteCorrections
 };
 
 async function principal() {

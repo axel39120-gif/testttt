@@ -487,6 +487,9 @@ function _startQualCoeur() {
   if (!(G._startQualInProgress && Date.now() - G._startQualInProgressAt < 1500)) {
     G._startQualInProgress = !0, G._startQualInProgressAt = Date.now();
     G.raceLocked = !0, G.racePhase = "live", applyRaceLockUI(), rtab("qualif", !0), initRaceState();
+    /* Pneus neufs à chaque qualif : l état n était remis à zéro qu entre deux segments ;
+       en karting (un seul segment), l usure du joueur s accumulait de week-end en week-end. */
+    _resetQualiTyreForNewSeason();
     var t = RACE_STATE.weather,
       r = {
         bal: 0,
@@ -15269,14 +15272,13 @@ function _tickRaceCoeur() {
                   e.score = Math.max(.02, e.score - _nightPenalty);
                 }
               }
-              if (_evtPaceSec !== 0) {
-                h += _evtPaceSec;
-                e.score = Math.min(.99, Math.max(.02, e.score - _evtPaceSec / 45));
-              }
-              if (_tyreDmgSec > 0) {
-                h += _tyreDmgSec;
-                e.score = Math.min(.99, Math.max(.02, e.score - _tyreDmgSec / 45));
-              }
+              /* Effets d'événements : des secondes ajoutées au tour par le moteur au
+                 chronomètre (81, _rj81EvtSec). Les convertir en note (/45, l'échelle de
+                 l'ancien moteur) les divisait par seize environ, et la note restait
+                 modifiée après la fin de l'effet. */
+              if (_evtPaceSec !== 0) h += _evtPaceSec;
+              if (_tyreDmgSec > 0) h += _tyreDmgSec;
+              e._rj81EvtSec = (e._rj81EvtSec || 0) + _evtPaceSec + (_tyreDmgSec > 0 ? _tyreDmgSec : 0);
               // Décrémente la durée des paceMods une fois leur effet appliqué pour ce tour
               _evtTickPaceMods(e);
               e.lastLap = h, (null === e.bestLap || h < e.bestLap) && (e.bestLap = h), (!LIVE_RACE.bestLap || h < LIVE_RACE.bestLap.time) && (LIVE_RACE.bestLap = {
@@ -15938,7 +15940,8 @@ function _renderLiveLeaderboardCoeur() {
   m += '<div style="height:30px;background:var(--border);width:1px"></div>';
 
   // Gap leader
-  var _gapTxt = _p.pos === 1 ? '<span style="font-size:8px;color:var(--gold);font-weight:800">LEADER</span>' : ('+' + _p.gap + 's');
+  var _avantDepart = !(LIVE_RACE.cur > 0);   /* sur la grille : pas d'écart à montrer */
+  var _gapTxt = _avantDepart ? "—" : _p.pos === 1 ? '<span style="font-size:8px;color:var(--gold);font-weight:800">LEADER</span>' : ('+' + _p.gap + 's');
   m += '<div style="text-align:center;padding:0 4px">' +
     '<div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px">Gap</div>' +
     '<div style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--text);line-height:1.1">' + _gapTxt + '</div>' +
@@ -15963,16 +15966,16 @@ function _renderLiveLeaderboardCoeur() {
   if (_hasNeighbour) {
     m += '<div style="display:flex;gap:5px;padding:6px 10px;border-bottom:1px solid var(--border)">';
     if (_ahead) {
-      var _aGap = (_p.gap != null && _ahead.gap != null) ? Math.abs(_p.gap - _ahead.gap).toFixed(1) + "s" : "—";
+      var _aGap = _avantDepart ? "—" : (_p.gap != null && _ahead.gap != null) ? Math.abs(_p.gap - _ahead.gap).toFixed(1) + "s" : "—";
       m += '<div style="flex:1;background:var(--teal-bg,rgba(52,211,153,0.07));border:1px solid rgba(52,211,153,0.2);border-radius:var(--r);padding:5px 8px;min-width:0">' +
         '<div style="font-size:8px;color:var(--green);font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">▲ Devant</div>' +
         '<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (_ahead.name || "").split(" ").pop() + '</div>' +
-        '<div style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--green)">–' + _aGap + '</div>' +
+        '<div style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--green)">' + (_aGap === "—" ? "" : "–") + _aGap + '</div>' +
         '</div>';
     }
     if (_activeRival) {
       var _rvDiff = (_activeRival.gap != null && _p.gap != null) ? (_activeRival.gap - _p.gap) : null;
-      var _rvRelGap = _rvDiff !== null ? ((_rvDiff > 0 ? "+" : "") + _rvDiff.toFixed(1) + "s") : "P" + _activeRival.pos;
+      var _rvRelGap = _avantDepart ? "P" + _activeRival.pos : _rvDiff !== null ? ((_rvDiff > 0 ? "+" : "") + _rvDiff.toFixed(1) + "s") : "P" + _activeRival.pos;
       m += '<div style="flex:1;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-left:3px solid ' + _rivalColor + ';border-radius:var(--r);padding:5px 7px;min-width:0">' +
         '<div style="font-size:8px;color:' + _rivalColor + ';font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">' + _rivalIcon + ' Rival</div>' +
         '<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (_activeRival.name || "").split(" ").pop() + '</div>' +
@@ -16051,7 +16054,7 @@ function _renderLiveLeaderboardCoeur() {
     var _rvSfx = _rvMatch ? '<span style="font-size:8px;color:' + _rvMatch.color + ';margin-left:3px">' + (_rvMatch.icon || "⚡") + '</span>' : "";
 
     // Gap texte
-    var _gT2 = d.dnf ? '<span style="color:var(--red);font-size:9px;font-weight:700">DNF</span>' : (d.pos === 1 ? '<span style="color:var(--gold);font-size:8px">Ldr</span>' : '+' + d.gap + 's');
+    var _gT2 = d.dnf ? '<span style="color:var(--red);font-size:9px;font-weight:700">DNF</span>' : (d.pos === 1 ? '<span style="color:var(--gold);font-size:8px">Ldr</span>' : _avantDepart ? '—' : '+' + d.gap + 's');
 
     m += '<div style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-top:1px solid var(--line);min-height:30px;' + _bg + _bl2 + '">' +
       '<span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + _pc + ';width:22px;flex-shrink:0">P' + d.pos + '</span>' +

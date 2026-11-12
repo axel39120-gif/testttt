@@ -847,6 +847,16 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Résultat (852×393) : rien ne défile, sauf 7 px pendant un relais d'essais.
 - Tests : suite `seances`.
 
+## Corrections course — v275
+
+- **Qualifs karting toujours en fond de grille** : un bug. L'usure des pneus de qualif n'était remise à zéro qu'entre deux segments (Q1→Q2) ; le karting n'en a qu'un, donc l'usure du joueur s'accumulait de week-end en week-end (53,6 s puis 54,6 s…). Pneus neufs à chaque qualif (`_startQualCoeur`, 04).
+- **Événements de course sans effet** : leurs secondes étaient converties en « score » à l'échelle de l'ancien moteur (÷45), seize fois trop faible pour le moteur 81, et l'écart restait après la fin de l'effet. Elles passent désormais telles quelles au temps du tour (`_rj81EvtSec`, 04 → 81) et comptent aussi dans la règle de dépassement (sinon l'air sale annulait le gain). Un −3 s fait maintenant gagner 3 s et la place.
+- **L'écran remontait après un appui** (« Lancer · 1 PA », boutons en course ; signalé sur iPhone, non reproduit sur Chrome) : module `142-defilement.js`, qui remet la position si la zone revient en haut sans changement d'écran ni d'onglet.
+- **Préparation physique passait dans la colonne de droite** (non reproduit ; corrigé par précaution) : les cartes de l'entraînement ne se coupent plus entre deux colonnes et le repos commence toujours la seconde (`seances.css`).
+- Gain d'entraînement : « +0,3 » s'affichait « +0 » (arrondi global de 04q), corrigé.
+- **Classement en course** : un appui sur la tour bascule entre ÉCART (au premier) et INTERVALLE (à la voiture de devant), choix retenu ; le panneau de droite garde devant / derrière. Sur la grille, plus de « +0,0 » : la tour, le panneau de droite et le tableau du pilote restent vides (ou « — ») jusqu'au départ. La tour ne porte pas `role="button"` : le module 57 la viderait.
+- Tests : suite `corrections`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

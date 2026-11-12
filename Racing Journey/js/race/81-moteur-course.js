@@ -92,6 +92,11 @@
     var devant = null;
     ordre.forEach(function (d) {
       var r = rythme(d, c), tour = r + gauss() * c.base * 0.0022 * (1.25 - regularite(d));
+      /* Effets d'événements du tour (secondes, posées par le cœur) : un bon choix fait gagner
+         du temps, un mauvais en fait perdre, pendant leur durée. */
+      var evt = d._rj81EvtSec || 0;
+      if (evt) { tour += evt; d._rj81EvtSec = 0; }
+      d._rj81EvtTour = evt;     // compté aussi dans le rythme qui permet de dépasser
       var pen = Math.max(0, (d.penaltySec || 0) - (d._tPen || 0));
       d._tPen = d.penaltySec || 0;
       if (neutre === "vsc") tour = c.base * 1.35;
@@ -100,7 +105,7 @@
 
       /* Rattrape la voiture de devant (même tour, sur la piste) : passe-t-il ? */
       if (devant && !d._mc && !devant._mc && !pen && d._t - devant._t < c.base * 0.5 && arrivee < devant._arrivee + AIR_SALE[0]) {
-        var avance = rythme(devant, c) - r;
+        var avance = (rythme(devant, c) + (devant._rj81EvtTour || 0)) - (r + evt);
         var seuil = c.seuil * (premier ? 0.5 : 1);
         var chance = Math.min(0.8, Math.max(0, (avance - 0.03) / seuil) * 0.9);
         if (neutre === "vsc" || Math.random() >= chance) {
