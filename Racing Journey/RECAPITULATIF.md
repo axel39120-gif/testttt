@@ -857,6 +857,16 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Classement en course** : un appui sur la tour bascule entre ÉCART (au premier) et INTERVALLE (à la voiture de devant), choix retenu ; le panneau de droite garde devant / derrière. Sur la grille, plus de « +0,0 » : la tour, le panneau de droite et le tableau du pilote restent vides (ou « — ») jusqu'au départ. La tour ne porte pas `role="button"` : le module 57 la viderait.
 - Tests : suite `corrections`.
 
+## Essais libres et qualif cohérents — v276
+
+- **Meilleur temps en essais, fond de grille en qualif** : les deux séances n'utilisaient pas le même modèle.
+  - Les essais (18) ignoraient la voiture : rivaux et joueur placés au seul talent du pilote, sur une échelle cinq fois plus large que la qualif ; un pilote d'une petite écurie y dominait. Ils prennent maintenant le niveau de la qualif (pilote + voiture, `_rjNiveauEssais`) et son échelle (0,1 de niveau = 0,22 % du tour).
+  - Le joueur gagnait en essais des avantages que la qualif ne compte pas : jusqu'à −1,2 % de « connaissance de la voiture » (ramenée à ±0,15 %) et un réglage valant jusqu'à 4,5 % ; le réglage vaut désormais exactement l'effet qu'il aura en qualif (module 40, ±1 %, `_rj76Delta`).
+  - Pneus et mode de pilotage sont comptés par rapport au tour de référence des rivaux (pneus chauds, ~8 % d'usure, rythme normal) au lieu de ne pénaliser que le joueur.
+  - Le recalibrage des niveaux de la saison (04k, `rjCalibrerPeloton`) et la forme du week-end (04n) s'appliquent dès les essais, plus seulement au lancement de la qualif.
+- **Secteurs violets avec le moins bon chrono** : chaque secteur était tiré à ±1,6 % du tour, plus que l'écart entre la pole et le dernier ; un tour lent pouvait poser un secteur record. Aléa ramené à ±0,3 % (qualif, essais, course) : un secteur violet suppose un tour à moins de 1 % de la pole.
+- Tests : suite `coherence`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

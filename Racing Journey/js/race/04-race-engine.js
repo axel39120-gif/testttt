@@ -1987,7 +1987,7 @@ function runQualiSession() {
         (null === o.bestTime || l < o.bestTime) && (o.bestTime = l);
         o.lastTime = l;
       }
-      var c, d = splitLapIntoSectors(l, QUALI_STATE.circuitName || "", .016);
+      var c, d = splitLapIntoSectors(l, QUALI_STATE.circuitName || "", .003);
       o.lastSectors = d, o.bestSectors || (o.bestSectors = [null, null, null]), QUALI_STATE.bestSectors || (QUALI_STATE.bestSectors = [null, null, null]), QUALI_STATE.bestSectorsHolder || (QUALI_STATE.bestSectorsHolder = [null, null, null]);
       for (var p = [0, 0, 0], u = 0; u < (_horsTour ? 0 : 3); u++) {
         var f = d[u];
@@ -2021,7 +2021,7 @@ function runQualiSession() {
                 o.improved = null !== o.bestTime && finalTime < o.bestTime;
                 (null === o.bestTime || finalTime < o.bestTime) && (o.bestTime = finalTime);
                 o.lastTime = finalTime;
-                var _dsectors = splitLapIntoSectors(finalTime, QUALI_STATE.circuitName || "", .016);
+                var _dsectors = splitLapIntoSectors(finalTime, QUALI_STATE.circuitName || "", .003);
                 o.lastSectors = _dsectors;
                 // Mettre à jour bestSectors du joueur
                 o.bestSectors = o.bestSectors || [null, null, null];
@@ -15287,7 +15287,7 @@ function _tickRaceCoeur() {
                 isPlayer: !!e.isPlayer,
                 lap: LIVE_RACE.cur
               }), e.totalTime = (e.totalTime || 0) + h;
-              var v, x = splitLapIntoSectors(h, RACE_STATE.circuit || "", .014);
+              var v, x = splitLapIntoSectors(h, RACE_STATE.circuit || "", .003);
               e.lastSectors = x, e.bestSectors || (e.bestSectors = [null, null, null]);
               var y = [0, 0, 0];
               LIVE_RACE.bestSectors || (LIVE_RACE.bestSectors = [null, null, null]), LIVE_RACE.bestSectorsHolder || (LIVE_RACE.bestSectorsHolder = [null, null, null]);

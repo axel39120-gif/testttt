@@ -530,15 +530,31 @@
       var def = { "Karting Junior": 104, "Karting Senior": 100, "Formule 4": 176, "Formula Regional": 172, "Formule 3": 196, "Formule 2": 204, "Formule 1": 168, "Super Formula": 184, "Endurance WEC": 210, "IndyCar": 160 };
       return (c && c > 0) ? c : (def[cat] || 90);
     }
+    // talent sous la pluie, compté comme en qualif (_startQualCoeur)
+    function _fpPluie(pilote) {
+      try {
+        var w = (typeof RACE_STATE !== "undefined" && RACE_STATE.weather) || null;
+        return w ? 0.5 * effetPluie(w.rainMod, talentPluie(pilote)) : 0;
+      } catch (e) { return 0; }
+    }
     function _fpPlayerScore() {
       var st = G.stats || {};
       var base = (0.6 * (st.vitesse || 50) + 0.25 * (st.sangfroid || 50) + 0.15 * (st.adapt || 50)) / 100;
-      return base + _fpTeamBonus(G.currentTeam);
+      return base + _fpTeamBonus(G.currentTeam) + _fpPluie(null);
     }
     function _fpRivalScore(r) {
       var sk = (typeof r.skill === "number") ? r.skill : 55;
-      return sk / 100 + _fpTeamBonus(r.team);
+      // forme du week-end (04n) : la qualif la pose sur skill ; hors qualif, on l'ajoute pareil
+      if (r._origSkill === undefined && typeof r._weekendForm === "number") sk = Math.max(40, Math.min(99, sk + Math.round(r._weekendForm * 100)));
+      return sk / 100 + _fpTeamBonus(r.team) + _fpPluie(r);
     }
+    // Le peloton que la qualif verra : niveaux de la saison (04k) et forme du week-end (04n).
+    function _fpPreparerPeloton() {
+      try { if (typeof window.rjCalibrerPeloton === "function") window.rjCalibrerPeloton(); } catch (e) {}
+      try { if (typeof window._rjGenerateAllRivalsForm === "function") window._rjGenerateAllRivalsForm(); } catch (e) {}
+    }
+    // les essais en direct (plus bas) placent le peloton avec le même niveau
+    window._rjNiveauEssais = { joueur: _fpPlayerScore, rival: _fpRivalScore, preparer: _fpPreparerPeloton };
     function _fpFmtLap(t) {
       if (t == null) return "—";
       var m = Math.floor(t / 60), s = t - m * 60;
@@ -546,12 +562,13 @@
     }
 
     function _fpComputeRivalsBoard() {
+      _fpPreparerPeloton();
       var rivals = G.rivals || [];
       if (!rivals.length) return null;
       var pr = (typeof RACE_STATE !== "undefined") ? RACE_STATE.practice : null;
       var playerLap = (pr && typeof _getBestPracticeLap === "function") ? _getBestPracticeLap(pr.tests) : null;
       var baseRef = _fpBaseRef();
-      var K = baseRef * 0.06;          // sensibilité écart-de-score → secondes
+      var K = baseRef * 0.022;         // même échelle que la qualif (qualiDriverTime)
       var noiseAmp = baseRef * 0.004;  // bruit déterministe (~±0.3s en F1)
       var rng = _fpRng(_fpSeed());
       var pScore = _fpPlayerScore();
@@ -806,17 +823,14 @@
     var COMPOUND_COLORS = { soft: "#EF4444", medium: "#FBBF24", hard: "#E5E7EB", wet: "#3B82F6", inter: "#34D399" };
     var COMPOUND_SHORT = { soft: "T", medium: "M", hard: "D", wet: "P", inter: "I" };
 
-    // Positionnement du peloton : skill de référence (haut de grille) + amplitude
-    var FIELD_REF = 0.62, FIELD_SPREAD = 0.115;
+    /* Rythme des essais = rythme de la qualif. Même niveau (pilote + voiture :
+       _fpPlayerScore / _fpRivalScore) et même échelle que qualiDriverTime :
+       0,1 de niveau vaut 0,22 % du temps au tour. Avant, les essais ignoraient la
+       voiture et étiraient l'échelle par cinq : le joueur d'une petite écurie
+       dominait les essais puis finissait au fond en qualif. */
+    function rythmeQualif(base, niveau) { return base * (1 - (niveau - 0.75) * 0.022); }
 
-    // Talent du joueur (0..1) dérivé de ses stats — influe sur son rythme
-    function playerSkillN() {
-      try {
-        var s = G.stats || {};
-        var pace = (s.vitesse || 50) * 0.55 + (s.regularite || 50) * 0.2 + (s.adapt || 50) * 0.15 + (s.sangfroid || 50) * 0.1;
-        return Math.max(0, Math.min(1, pace / 100));
-      } catch (e) { return 0.5; }
-    }
+
 
     // ------------------------------------------------------------------------
     // Connaissance de la voiture (% par week-end, façon F1 Manager)
@@ -952,19 +966,17 @@
     // temps progressivement → la feuille de temps évolue comme en qualif.
     // ------------------------------------------------------------------------
     function buildField(L) {
+      window._rjNiveauEssais.preparer();
       var base = circuitBaseRef();
       var rivals = (typeof G !== "undefined" && Array.isArray(G.rivals)) ? G.rivals : [];
       var field = [];
       // skill de référence (haut de grille) — un très bon pilote tourne ≈ base
-      var REF = FIELD_REF, SPREAD = FIELD_SPREAD;
       rivals.forEach(function (rv, i) {
         var sk = (typeof rv.skill === "number") ? rv.skill : 50;
-        var skN = Math.max(0, Math.min(1, sk / 100));
-        // temps cible : meilleur skill → plus proche de base
-        var target = base * (1 + (REF - skN) * SPREAD);
+        var target = rythmeQualif(base, window._rjNiveauEssais.rival(rv));
         // régularité du pilote → amplitude du bruit
         var cons = (typeof rv.consistency === "number") ? rv.consistency : 0.7;
-        var noiseAmp = base * 0.006 * (1.2 - cons);
+        var noiseAmp = base * 0.003 * (1.2 - cons);
         target += (Math.random() - 0.5) * 2 * noiseAmp;
         // planning : 2 à 4 sorties, dont la dernière proche du temps cible
         var nReveals = 2 + Math.floor(Math.random() * 3);
@@ -1042,18 +1054,10 @@
     function computeFlyingLap(pr, run, feedback) {
       var base = circuitBaseRef();
 
-      // 1) Pénalité de réglage (erreur moyenne aux sweet spots, via feedback)
-      var sumAbs = 0, n = 0;
-      Object.keys(feedback || {}).forEach(function (k) {
-        var f = feedback[k];
-        if (f && typeof f.absDiff === "number") { sumAbs += f.absDiff; n++; }
-      });
-      var avgErr = n ? sumAbs / n : 2.5;
-      var setupPenalty = base * Math.min(0.045, avgErr * 0.006); // erreur ~5 → +3%
-
-      // 1b) Talent du pilote — positionne le joueur dans le peloton (même barème
-      //     que les rivaux). S'améliore avec la progression de carrière.
-      var talentOffset = base * (FIELD_REF - playerSkillN()) * FIELD_SPREAD;
+      // 1) Niveau (pilote + voiture) et réglage : exactement ce que la qualif
+      //    retiendra (le réglage y vaut ±1 % au plus, module 40).
+      var reglage = (typeof window._rj76Delta === "function") ? window._rj76Delta() : 0;
+      var rythme = rythmeQualif(base, window._rjNiveauEssais.joueur()) * (1 + reglage);
 
       // 2) Pneus : grip = peak * warm * usure
       var prof = compoundProfile(run.compound);
@@ -1069,10 +1073,12 @@
         wearGrip = 1 - (wear / 100) * 0.07;
       }
       var grip = peak * warm * wearGrip;
-      var tyreMult = peak / Math.max(0.5, grip); // <peak → >1 → plus lent
+      // Référence des temps rivaux : pneus chauds, ~8 % d'usure. Plus frais : un peu plus vite ; froids ou usés : plus lent.
+      var tyreMult = (peak * (1 - 0.08 * 0.07)) / Math.max(0.5, grip);
 
       // 3) Mode de pilotage
-      var pushMult = run.push === "push" ? 0.9955 : run.push === "cool" ? 1.0065 : 1.0;
+      // les rivaux sont comptés au rythme normal : attaquer gagne un peu, gérer coûte
+      var pushMult = run.push === "push" ? 0.997 : run.push === "cool" ? 1.0065 : 1.0;
 
       // 4) Bruit pilote (talent → bruit plus faible)
       var prec = (typeof calcEngineerPrecision === "function") ? calcEngineerPrecision() : 0.6;
@@ -1081,9 +1087,10 @@
       var kn = (typeof pr.carKnowledge === "number") ? pr.carKnowledge / 100 : 0.06;
       var noiseAmp = base * 0.004 * (1.2 - prec) * (1 - 0.45 * kn);
       var noise = (Math.random() - 0.45) * 2 * noiseAmp;
-      var knowledgeGain = base * 0.012 * kn; // jusqu'à −1.2 % à 100 %
+      // la qualif ne la compte pas : effet léger, autour d'une connaissance moyenne
+      var knowledgeGain = base * 0.003 * (kn - 0.5);
 
-      var lap = (base + setupPenalty + talentOffset) * tyreMult * pushMult - knowledgeGain + noise;
+      var lap = rythme * tyreMult * pushMult - knowledgeGain + noise;
 
       // 5) Petit incident en mode attaque
       var incident = null;
@@ -3119,8 +3126,8 @@
     if (!o) return false;
 
     var d = origSplit
-      ? origSplit(finalTime, QUALI_STATE.circuitName || "", 0.016)
-      : decouperSeme(finalTime, QUALI_STATE.circuitName || "", "q" + idx, 0.016);
+      ? origSplit(finalTime, QUALI_STATE.circuitName || "", 0.003)
+      : decouperSeme(finalTime, QUALI_STATE.circuitName || "", "q" + idx, 0.003);
 
     if (!o.bestSectors) o.bestSectors = [null, null, null];
     if (!QUALI_STATE.bestSectors) QUALI_STATE.bestSectors = [null, null, null];
@@ -3224,7 +3231,7 @@
       var lt = pr.tests[i] && pr.tests[i].lapTime;
       if (typeof lt !== "number" || !isFinite(lt) || lt <= 0) continue;
 
-      var d = decouperSeme(lt, circuit, "el" + i, 0.014);
+      var d = decouperSeme(lt, circuit, "el" + i, 0.003);
       var f = [0, 0, 0];
       for (var u = 0; u < 3; u++) {
         if (meilleurs[u] === null || d[u] < meilleurs[u]) { meilleurs[u] = d[u]; f[u] = 2; }

@@ -3831,6 +3831,53 @@ async function suiteCorrections() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteCoherenceEssais() {
+  S.suite("Essais libres et qualif cohérents (v276)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  const clic = re => page.evaluate(re => { const b = [...document.querySelectorAll("#S-race button")].find(x => new RegExp(re, "i").test(x.textContent) && x.getClientRects().length); if (b) b.click(); return !!b; }, re);
+  try {
+    await S.repondeurAutomatique(page);
+    await page.evaluate(() => {
+      Object.assign(G.stats, { vitesse: 66, regularite: 58, sangfroid: 52, adapt: 52 });
+      G.cat = "Formule 4"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      SETTINGS.simSpeed = "fast"; RACE_WEEKEND_STATE.fpDone = false; G._fpSkipping = false; RACE_STATE.practice = null;
+      initRaceState(); navTo("S-race", null);
+    });
+    await page.waitForTimeout(600);
+    await clic("^\\s*continuer"); await page.waitForTimeout(600);
+    await clic("envoyer en piste"); await page.waitForTimeout(20000);
+    // 1. Le meilleur tour d'essais du joueur = son rythme de qualif (niveau pilote + voiture, réglage)
+    const el = await page.evaluate(() => {
+      const pr = RACE_STATE.practice, N = window._rjNiveauEssais;
+      const base = getCircuitBaseRef(RACE_STATE.circuit, G.cat);
+      const attendu = base * (1 - (N.joueur() - 0.75) * 0.022) * (1 + window._rj76Delta());
+      const meilleur = Math.min(...(pr.tests || []).map(t => t.lapTime).filter(x => x > 0));
+      const ecarts = pr._live.field.map(f => f.target - base * (1 - (N.rival(G.rivals.find(r => (r.name || r.nom) === f.name)) - 0.75) * 0.022));
+      return { attendu: +attendu.toFixed(3), meilleur: +meilleur.toFixed(3), relatif: +((meilleur / attendu - 1) * 100).toFixed(2), bruitRivauxMax: +Math.max(...ecarts.map(Math.abs)).toFixed(3), base };
+    });
+    S.verifier("meilleur tour d'essais à moins de 0,8 % du rythme de qualif", Math.abs(el.relatif) < 0.8, JSON.stringify(el));
+    S.verifier("rivaux en essais : leur rythme de qualif, à un petit bruit près", el.bruitRivauxMax < el.base * 0.004, JSON.stringify(el));
+    // 2. Mêmes niveaux qu'en qualif (recalibrage de saison et forme du week-end compris)
+    const niv = await page.evaluate(() => {
+      const N = window._rjNiveauEssais;
+      const avant = { joueur: N.joueur() }; G.rivals.forEach(r => avant[r.name] = N.rival(r));
+      RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; G._startQualInProgress = false; rtab("qualif", true); startQual();
+      const d = QUALI_STATE.drivers.map(x => x.skill - (x.isPlayer ? avant.joueur : avant[x.name]));
+      return { min: +Math.min(...d).toFixed(4), max: +Math.max(...d).toFixed(4) };
+    });
+    S.verifier("le niveau de chaque pilote est le même en essais et en qualif (météo comprise)", niv.max - niv.min < 0.002, JSON.stringify(niv));
+    // 3. Un secteur violet suppose un tour proche du meilleur
+    await page.evaluate(() => { runQualiSession(); const pousser = () => { if (document.querySelector("[onclick*='_qualiSeqChoice']")) window._qualiSeqChoice(0); if (QUALI_STATE._sessionRunning !== false) setTimeout(pousser, 40); }; pousser(); });
+    await page.waitForTimeout(9000);
+    const sect = await page.evaluate(() => {
+      const D = QUALI_STATE.drivers, pole = Math.min(...D.filter(d => d.bestTime).map(d => d.bestTime));
+      return (QUALI_STATE.bestSectorsHolder || []).map(i => i == null ? null : +((D[i].bestTime / pole - 1) * 100).toFixed(2));
+    });
+    S.verifier("les détenteurs des secteurs violets sont à moins de 1 % de la pole", sect.length === 3 && sect.every(x => x !== null && x < 1), JSON.stringify(sect));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -4065,7 +4112,8 @@ const SUITES = {
   entrainement: suiteEntrainement,
   arrets: suiteArrets,
   seances: suiteSeances,
-  corrections: suiteCorrections
+  corrections: suiteCorrections,
+  coherence: suiteCoherenceEssais
 };
 
 async function principal() {
