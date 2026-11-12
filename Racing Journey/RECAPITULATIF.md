@@ -837,6 +837,16 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Le widget « Contrat » ne s'affiche plus que dans Pilote › Carrière (avant : Pilote, tous onglets, Messagerie, Patrimoine) ; le widget « Super Licence » est retiré de Contrats, Championnat et Pilote : l'onglet Carrière a déjà sa carte Super Licence (112). Le widget Budget reste dans Style de vie (119).
 - Tests : suite `habillage`.
 
+## Essais et qualifs sans défiler — v274
+
+- **Module `141-essais-qualifs.js` et `css/seances.css`** : sur un téléphone à l'horizontale, les onglets Essais et Qualif défilaient de 350 à 500 px (feuille de temps de vingt grandes lignes, statut des qualifs sous la liste et donc invisible, bouton « Rentrer au stand » tout en bas).
+  - Feuilles de temps : les trois premiers (quatre si le joueur y figure), puis le joueur et ses deux voisins, séparés par un trait ; le bouton « Classement complet (20) » ouvre les vingt pilotes en deux colonnes de dix, sans défilement, le joueur repéré. Appliqué à chaque redessin en direct.
+  - Le statut des qualifs (« Qualifié Q2 — actuellement P7 ») remonte sous l'en-tête de séance.
+  - Blocs resserrés : en-tête, pneus, chrono, carte de séance ; pendant un relais d'essais, l'en-tête « Tour lancé » et la barre des séances (redondants) s'effacent, le conseil de l'ingénieur tient sur une ligne.
+  - « Terminer EL1 → EL2 » perdait sa flèche (absente de la police) : « Terminer l'EL1, passer à l'EL2 ».
+- Résultat (852×393) : rien ne défile, sauf 7 px pendant un relais d'essais.
+- Tests : suite `seances`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
