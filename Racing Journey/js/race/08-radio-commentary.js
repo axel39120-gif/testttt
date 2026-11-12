@@ -348,7 +348,8 @@
   // 3) Feeds & rendu
   // ========================================================================
   function _ensureFeeds() {
-    if (!LIVE_RACE) return null;
+    // écran remis à zéro avant le départ (40) : un message en retard de la course précédente n'y entre pas
+    if (!LIVE_RACE || !LIVE_RACE.drivers || !LIVE_RACE.drivers.length) return null;
     if (!LIVE_RACE.directFeed) LIVE_RACE.directFeed = [];
     if (!LIVE_RACE._commLastLap) LIVE_RACE._commLastLap = -99;
     if (!LIVE_RACE._radioLastLap) LIVE_RACE._radioLastLap = -99;
@@ -824,7 +825,7 @@
           _renderDirect();
           return;
         }
-        _ensureFeeds();
+        if (!_ensureFeeds()) { _renderDirect(); return; }   // avant le départ : pas de commentaire
 
         var speedProb = _commentaryProbabilityForSpeed();
         var sinceLast = LIVE_RACE.cur - (LIVE_RACE._commLastLap || -99);

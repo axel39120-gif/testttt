@@ -89,12 +89,27 @@
      Les expéditeurs secondaires ont un délai entre deux messages, un même
      sujet ne revient pas avant six mois de jeu, et une boîte pleine efface
      d'abord les infos lues, jamais une décision en attente. */
-  var DELAI = { fans: 3, promoter: 4, rival: 3, press: 2, journalist: 2, palier: 4 };
+  /* Mesuré sur une saison de karting (v279) : 48 messages en 6 courses, dont
+     les félicitations de quatre expéditeurs pour une même victoire, une
+     interview et une note technique à chaque course. Les félicitations, tous
+     expéditeurs confondus, ne reviennent qu'au bout de six semaines, les
+     interviews et notes techniques aussi, comme les messages des amis et de
+     la famille. Un message qui propose un vrai choix passe toujours, sauf
+     interviews et félicitations, qui reviennent à chaque course. */
+  var DELAI = { fans: 5, promoter: 4, rival: 3, press: 3, journalist: 3, palier: 4, agent: 3, sponsor: 4,
+    friends: 6, family: 6, felicitations: 6, interview: 6, technique: 6 };
   var REDITE = 24, BOITE = 38;
+  var FELICITATIONS = /gagn|victoire|on a tout vu|change tout|jour parfait|podium|bravo|félicitation|fier de toi/i;
   function semAbs() { return (G.saison || 1) * 48 + (G.semaine || 1); }
   function famille(o) {
-    if (/^(Re :|Interview d'après-course)/.test(o.subject || "")) return null;
-    if (o.role === "agent" && /\(\d+\/100\)\s*$/.test(o.subject || "")) return "palier";
+    var sujet = o.subject || "";
+    if (/^Re :/.test(sujet)) return null;
+    // interviews, félicitations et notes techniques reviennent à chaque course, réponses à choix ou non
+    if (/^Interview d'après-course/.test(sujet)) return "interview";
+    if (/^(friends|family|fans|agent|promoter|sponsor)$/.test(o.role || "") && FELICITATIONS.test(sujet)) return "felicitations";
+    if (/^(team|team_boss)$/.test(o.role || "") && /note technique|détail technique/i.test(sujet)) return "technique";
+    if (o.actions && o.actions.length > 1) return null;                      // une vraie décision passe toujours
+    if (o.role === "agent" && /\(\d+\/100\)\s*$/.test(sujet)) return "palier";
     return DELAI[o.role] ? o.role : null;
   }
   function deTrop(o) {
@@ -300,12 +315,20 @@
   var CALMES = { "S-race": 1, "S-mediaday": 1, "S-event": 1, "S-season-end": 1, "S-create": 1 };
   var file = { messages: [], couleur: null, autres: [] };
   function ecran() { var e = document.querySelector(".scr.on"); return e ? e.id : ""; }
+  /* Ailleurs aussi, une seule notification pour les messages : ceux qui
+     arrivent ensemble (fin de course, nouvelle semaine) sont regroupés après
+     un court délai, au lieu d'une notification chacun. */
+  var minuterie = null;
   function filtreFile(label, texte, couleur) {
     var id = ecran();
     if (label === "Nouveau message") {
       if (id === "S-mailbox") return false;
-      if (CALMES[id]) { file.messages.push(texte); file.couleur = couleur; return false; }
-      return;
+      file.messages.push(texte); file.couleur = couleur;
+      if (!CALMES[id]) {
+        clearTimeout(minuterie);
+        minuterie = setTimeout(function () { viderFile(ecran()); }, 900);
+      }
+      return false;
     }
     if (CALMES[id]) { if (file.autres.length < 6) file.autres.push([label, texte, couleur]); return false; }
   }
@@ -314,7 +337,7 @@
     var n = file.messages.length, a = file.autres.splice(0, 3);
     if (id === "S-mailbox") n = 0;
     if (n === 1) a.unshift(["Nouveau message", file.messages[0], file.couleur]);
-    else if (n > 1) a.unshift(["Messagerie", n + " nouveaux messages — dernier : " + file.messages[n - 1], file.couleur]);
+    else if (n > 1) a.unshift(["Messagerie", n + " nouveaux messages à lire", file.couleur]);
     file.messages = []; file.autres = [];
     a.forEach(function (x, i) { setTimeout(function () { _pushHomeToastCoeur(x[0], x[1], x[2]); }, 350 + i * 700); });
   }

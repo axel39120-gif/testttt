@@ -24,8 +24,17 @@
 #rj141-modale .rj141-titre { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 6px; font: 800 11px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #80808a); }
 #rj141-modale .rj141-fermer { background: none; border: 0; color: var(--text, #e8e8ec); font-size: 22px; line-height: 1; cursor: pointer; padding: 0 6px; }
 #rj141-modale .rj141-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; min-height: 0; }
-#rj141-modale .rj141-col > div { padding-top: 3px !important; padding-bottom: 3px !important; font-size: 11px !important; }
-#rj141-modale .rj141-col > div * { font-size: inherit; }
+#rj141-modale .rj141-ligne {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 54px; align-items: center; gap: 6px;
+  padding: 3px 6px; font-size: 11px; border-bottom: 1px solid rgba(255, 255, 255, .05); font-variant-numeric: tabular-nums;
+}
+#rj141-modale .rj141-p { font-weight: 900; color: rgba(255, 255, 255, .55); }
+#rj141-modale .rj141-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
+#rj141-modale .rj141-n em { font-style: normal; font-weight: 600; color: rgba(255, 255, 255, .4); margin-left: 6px; font-size: 10px; }
+#rj141-modale .rj141-t { font-weight: 700; }
+#rj141-modale .rj141-e { text-align: right; color: rgba(255, 255, 255, .5); }
+#rj141-modale .rj141-elim { background: rgba(239, 68, 68, .08); }
+#rj141-modale .rj141-elim .rj141-p { color: #EF4444; }
 .rj141-moi { box-shadow: inset 3px 0 0 #FF1801; }
 
 /* --- Qualifications : colonne de gauche ---------------------------------------- */
@@ -80,3 +89,27 @@ div:has(> #fpl-board-body) { padding-bottom: 0 !important; }
   grid-template-columns: repeat(auto-fit, minmax(min(var(--colonne, 340px), 100%), 1fr));
 }
 #S-training .rjf-col > .rjf-rest { margin-top: 0 !important; }
+
+/* --- Réglages : les ressentis sont des curseurs (120) ------------------------------
+   Une seule façon de régler, en Préparation comme en essais : on fait glisser le
+   ressenti vers la fenêtre idéale ; les réglages suivent au lâcher. */
+.rja-barre[data-rja-r] { cursor: pointer; touch-action: none; height: 10px; margin-top: 8px; margin-bottom: 4px; }
+.rja-barre[data-rja-r]::before { content: ""; position: absolute; inset: -12px 0; }   /* zone de prise au doigt */
+.rja-barre[data-rja-r] .marque { top: -6px; width: 16px; height: 22px; margin-left: -8px; border-radius: 5px; background: #fff; border: 2px solid rgba(0, 0, 0, .35); }
+.rja-barre.rja-glisse .marque { transition: none; box-shadow: 0 0 0 6px rgba(255, 255, 255, .18), 0 0 10px rgba(255, 255, 255, .6); }
+.rja-barre[data-rja-r]:focus-visible { outline: 2px solid #A78BFA; outline-offset: 4px; }
+.rja-essais .rja-tete { border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--r, 6px); }
+/* En essais, le bloc tient sans faire défiler l'onglet : une ligne par ressenti
+   (nom, borne, curseur, borne), sans l'anneau de confiance, déjà en Préparation. */
+.rja-essais .rja-tete { padding: 3px 10px !important; display: block !important; }
+.rja-essais { margin-bottom: 6px !important; }
+.rja-essais .rja-conf { display: none !important; }
+.rja-essais .rja-ressentis { width: 100%; display: flex; flex-direction: column; gap: 1px; }
+.rja-essais .rja-r { width: 100%; box-sizing: border-box; display: grid !important; grid-template-columns: 98px 60px minmax(90px, 1fr) 60px; align-items: center; column-gap: 6px; margin: 0 !important; min-height: 18px; }
+.rja-essais .rja-r-tete, .rja-essais .rja-bornes { display: contents !important; }
+.rja-essais .rja-r-tete .nom { grid-column: 1; grid-row: 1; font-size: 10px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rja-essais .rja-verdict { display: none !important; }
+.rja-essais .rja-bornes span { grid-row: 1; font-size: 8.5px; line-height: 1.1; color: rgba(255, 255, 255, .45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rja-essais .rja-bornes span:first-child { grid-column: 2; text-align: right; }
+.rja-essais .rja-bornes span:last-child { grid-column: 4; }
+.rja-essais .rja-barre[data-rja-r] { grid-column: 3; grid-row: 1; margin: 0; }

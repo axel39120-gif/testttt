@@ -891,6 +891,23 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Fenêtre d'événement** (`css/evenements.css`) : centrée à droite de la barre de navigation, la position et les écarts en tête, les choix côte à côte avec leur risque (« Sans risque », « 70 % de réussite », « Abandon si raté · 12 % ») et leur effet (« ≈ 3,2 s gagnées · raté : ≈ 2,7 s perdues ») ; puis un résultat clair (« Réussi · Tu gagnes ≈ 0,8 s sur 2 tours »).
 - Tests : suite `evenements`.
 
+## Retours d'une saison de karting — v279
+
+- **Qualifs : le joueur ne s'améliorait jamais, secteurs violets sur un mauvais chrono.** En karting, les tours 2 et suivants étaient réservés à la « séquence du tour chaud » (trois micro-choix), qui n'existe pas en karting : leurs temps étaient jetés, mais leurs secteurs comptaient quand même (d'où les violets). Le joueur posait un temps au premier tour, puis chutait à mesure que les rivaux s'amélioraient. Chaque tour compte désormais ; ailleurs, les secteurs d'un tour chaud sont posés sur son temps final, plus sur le temps provisoire (04, `runQualiSession`).
+- **Classement complet** (141) : lu dans les données de la séance (qualif : `QUALI_STATE` ; essais : `_rjEssaisClassement`, exposé par 18), mis à jour pendant qu'il est ouvert. Deux causes aux chronos vides et périmés : la feuille des essais, cachée mais vivante, réécrivait la fenêtre ouverte depuis les qualifs, et l'arrondi global (04q) effaçait les millièmes. Au passage, `formatQualiTime` affichait « 0:50.1000 » pour 50,9996 s.
+- **Fin d'un tour de qualif** : « Meilleur tour personnel » remplacé par l'écart à la pole, ce qu'il faut pour gagner une place et, en Q1/Q2, la marge sur l'élimination (ou ce qui manque pour passer).
+- **Onglet Course** : il gardait la course précédente jusqu'au « Départ ! ». Le filet existant (40) se croyait en course dès qu'un classement était rempli — celui de la course précédente. Chaque course est désormais marquée à son départ (état du week-end, sprint ou course) ; ailleurs, l'écran est vidé (classement, progression, carte, radio, voisins), et un message radio en retard de la course précédente n'y entre plus (08).
+- **Arrivée** : la course s'arrêtait quand le premier passait la ligne. Elle continue à l'écran jusqu'au passage du dernier (au plus un tour : un attardé prend le drapeau au passage suivant) (04 `drapeauApresDernierTour`, 108).
+- **Abandons** : ils restent dans la tour de classement, en bas, grisés, « OUT » à la place de l'écart (111).
+- **Réglages** : les cinq ressentis (équilibre, freinage, appui, traction, vitesse) sont des curseurs qu'on fait glisser ; au lâcher, les réglages qui les composent bougent d'autant, pondérés, couplages compris (120, `amener`). La partie « − / + » est retirée. Les mêmes curseurs remplacent, en essais libres, le renvoi vers l'onglet Préparation (18).
+- **Bilan financier** : il s'ouvrait dès qu'on avançait hors week-end (événement, semaine de pause). Les semaines s'additionnent en un seul bilan, montré à la fin du prochain week-end de course (10).
+- **Messages** (124)
+  - Mesuré : 48 à 51 messages pour 6 courses de karting. Félicitations de quatre expéditeurs pour une même victoire, une interview et une note technique à chaque course. Désormais une félicitation (tous expéditeurs), une interview et une note technique au plus toutes les six semaines, comme amis et famille ; agent et sponsors espacés. Résultat : 38 messages sur la même période ; une vraie décision passe toujours.
+  - Une seule notification pour les messages arrivés ensemble (« Messagerie — 3 nouveaux messages à lire »), sur tous les écrans.
+  - Messagerie : une conversation s'ouvre au début de son dernier échange (plus tout en bas), et le retour à la liste rend la position qu'on avait (03). Le garde-défilement (142) laisse la messagerie placer sa vue.
+- **Fin de saison** : après le plan de pré-saison, retour à l'accueil de la nouvelle saison au lieu de partir directement sur la première course (105).
+- Tests : suite `retours`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

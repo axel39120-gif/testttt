@@ -3949,6 +3949,130 @@ async function suiteEvenements() {
   } finally { await navigateur.close(); }
 }
 
+async function suiteRetoursSaison() {
+  S.suite("Retours d'une saison de karting (v279)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  const att = ms => page.waitForTimeout(ms);
+  try {
+    await S.repondeurAutomatique(page);
+
+    // 1. Qualif karting : chaque tour compte, le joueur s'améliore ; la feuille complète suit les données
+    await page.evaluate(() => {
+      Object.assign(G.stats, { vitesse: 62, regularite: 55, sangfroid: 50, adapt: 50 });
+      G.cat = "Karting Junior"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[1].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      SETTINGS.simSpeed = "fast"; RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; G._startQualInProgress = false;
+      navTo("S-race", null);
+      window.__tours = [];
+      window.__suivi = setInterval(() => {
+        const p = QUALI_STATE.drivers.find(d => d.isPlayer);
+        if (p && p.lastTime && __tours[__tours.length - 1] !== p.lastTime) __tours.push(p.lastTime);
+      }, 40);
+      startQual();
+    });
+    await att(300);
+    await page.evaluate(() => runQualiSession());
+    await att(12000);
+    const q = await page.evaluate(async () => {
+      const p = QUALI_STATE.drivers.find(d => d.isPlayer);
+      const b = document.querySelector("#quali-timing-board .rj141-plus");
+      let lignes = -1, avecTemps = -1, attendu = QUALI_STATE.drivers.filter(d => d.bestTime).length;
+      if (b) {
+        b.click(); await new Promise(r => setTimeout(r, 300));
+        const L = [...document.querySelectorAll("#rj141-modale .rj141-ligne")];
+        lignes = L.length; avecTemps = L.filter(l => /\d\.\d{3}/.test(l.querySelector(".rj141-t").textContent)).length;
+        _rj141.fermer();
+      }
+      const pied = (document.getElementById("quali-live-footer") || {}).textContent || "";
+      clearInterval(window.__suivi);
+      return { tours: __tours.length, meilleur: p.bestTime, premier: __tours[0], lignes, avecTemps, attendu, pied: /Écart à la pole/.test(pied) || pied === "" ? "ok" : pied.slice(0, 80), personnel: /Meilleur tour personnel/.test(pied) };
+    });
+    S.verifier("qualif karting : les tours après le premier comptent", q.tours >= 2 && q.meilleur <= q.premier, JSON.stringify(q));
+    S.verifier("classement complet : lu dans les données, temps compris", q.lignes >= 10 && q.avecTemps === q.attendu, JSON.stringify(q));
+    S.verifier("fin de tour de qualif : plus de « Meilleur tour personnel »", !q.personnel, JSON.stringify(q));
+
+    // 2. Course : abandons « OUT » dans la tour, puis l'onglet vierge à la course suivante
+    await page.evaluate(() => {
+      G.cat = "Formule 4"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      SETTINGS.simSpeed = "normal"; RACE_WEEKEND_STATE.fpDone = true; RACE_WEEKEND_STATE.courseDone = false; RACE_STATE.qualiPos = 6;
+      navTo("S-race", null); rtab("course", true);
+    });
+    await att(500);
+    await page.evaluate(() => { const b = [...document.querySelectorAll("#S-race button")].find(x => /départ/i.test(x.textContent) && x.getClientRects().length); if (b) b.click(); else runRaceLive(); });
+    await att(5000);
+    await page.evaluate(() => { const d = LIVE_RACE.drivers.find(x => !x.isPlayer && !x._mc); d.dnf = true; });
+    await att(1200);
+    const out = await page.evaluate(() => [...document.querySelectorAll(".rj111-tour li.out")].map(li => li.querySelector(".e").textContent));
+    S.verifier("tour de classement : l'abandon reste affiché, grisé, « OUT »", out.length >= 1 && out.every(t => t === "OUT"), JSON.stringify(out));
+    await S.courirUneCourse(page, { categorie: "Formule 4", rang: 1, grille: 5 });
+    const fin = await page.evaluate(() => ({ fMax: LIVE_RACE._fMax || 0, fini: LIVE_RACE.finished }));
+    S.verifier("arrivée : la course continue jusqu'au passage du dernier", fin.fini && fin.fMax > 1, JSON.stringify(fin));
+    const vierge = await page.evaluate(async () => {
+      G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.courseDone = false; initRaceState(); navTo("S-race", null); rtab("course", true);
+      await new Promise(r => setTimeout(r, 400));
+      return { pilotes: LIVE_RACE.drivers.length, progression: !!document.getElementById("rj90-progression"), radio: ((document.getElementById("rj-direct-list") || {}).innerText || "").slice(0, 60) };
+    });
+    S.verifier("onglet Course : vierge en arrivant sur la course suivante", vierge.pilotes === 0 && !vierge.progression && !/Victoire|Tour \d/.test(vierge.radio), JSON.stringify(vierge));
+
+    // 3. Réglages : les curseurs de ressentis seuls, en préparation comme en essais
+    const reg = await page.evaluate(async () => {
+      RACE_WEEKEND_STATE.fpDone = false; rtab("prep", true);
+      await new Promise(r => setTimeout(r, 400));
+      const groupes = document.querySelectorAll("#advanced-setup-container .rja-groupe").length;
+      const curseurs = document.querySelectorAll("#advanced-setup-container .rja-barre[data-rja-r]").length;
+      const avant = JSON.stringify(G.setupAdv);
+      RJAtelier.amener(RJAtelier.RESSENTIS[0], 0.6);
+      const bouge = JSON.stringify(G.setupAdv) !== avant;
+      const pos = RJAtelier.ressenti(RJAtelier.RESSENTIS[0], getAvailableSetupParams(G.cat)).pos;
+      rtab("essais", true); await new Promise(r => setTimeout(r, 400));
+      const b = [...document.querySelectorAll("#S-race button")].find(x => /^\s*continuer/i.test(x.textContent) && x.getClientRects().length); if (b) b.click();
+      await new Promise(r => setTimeout(r, 500));
+      return { groupes, curseurs, bouge, pos: +pos.toFixed(2), essais: document.querySelectorAll(".rja-essais .rja-barre[data-rja-r]").length };
+    });
+    S.verifier("réglages : plus de « − / + », cinq curseurs de ressentis", reg.groupes === 0 && reg.curseurs === 5, JSON.stringify(reg));
+    S.verifier("un curseur déplace les réglages vers la cible", reg.bouge && reg.pos > 0.3, JSON.stringify(reg));
+    S.verifier("essais libres : les mêmes curseurs", reg.essais === 5, JSON.stringify(reg));
+
+    // 4. Bilan financier : jamais hors week-end
+    const bilan = await page.evaluate(async () => {
+      navTo("S-home", "ni-home");
+      const h = RJ_ADVANCE_HOOKS.find(x => x && x.id === "10-finance");
+      h.avant({}); G.semaine += 2; h.apres({});
+      await new Promise(r => setTimeout(r, 700));
+      return /Bilan financier/.test(document.body.innerText);
+    });
+    S.verifier("bilan financier : pas d'affichage en avançant hors week-end", !bilan, String(bilan));
+
+    // 5. Messages : une seule notification, moins de redites, la boîte garde sa position
+    const msg = await page.evaluate(async () => {
+      const toasts = [], o = window._pushHomeToastCoeur;
+      window._pushHomeToastCoeur = function (l, t) { toasts.push(l + " | " + t); return o.apply(this, arguments); };
+      navTo("S-home", "ni-home");
+      for (let i = 0; i < 3; i++) pushMail({ from: "Test " + i, role: "team", subject: "Point d'équipe " + i + " " + Date.now(), body: "x" });
+      await new Promise(r => setTimeout(r, 1500));
+      window._pushHomeToastCoeur = o;
+      const fel = { role: "friends", subject: "TU AS GAGNÉ ! " + Math.random() }, fel2 = { role: "family", subject: "Bravo pour ta victoire " + Math.random() };
+      const d1 = _rj124.deTrop(fel), d2 = _rj124.deTrop(fel2);
+      return { toasts, d1, d2 };
+    });
+    const mt = msg.toasts.filter(t => /^(Messagerie|Nouveau message) \|/.test(t));
+    S.verifier("plusieurs messages : une seule notification", mt.length === 1 && /3 nouveaux messages/.test(mt[0]), JSON.stringify(msg.toasts));
+    S.verifier("félicitations : une seule pour un même résultat, tous expéditeurs confondus", msg.d1 === false && msg.d2 === true, JSON.stringify(msg));
+    const boite = await page.evaluate(async () => {
+      const a = ms => new Promise(r => setTimeout(r, ms));
+      for (let i = 0; i < 18; i++) pushMail({ from: "Boîte " + i, role: i % 2 ? "team" : "press", subject: "Sujet " + i + " " + Math.random(), body: "Corps " + i });
+      navTo("S-mailbox", null); await a(400);
+      const sc = document.querySelector("#S-mailbox .scroll"); sc.scrollTop = 300; await a(80);
+      const y = sc.scrollTop;
+      const c = [...document.querySelectorAll('#S-mailbox [onclick^="openMailThread("]')][5]; c.click(); await a(400);
+      document.querySelector('#S-mailbox [onclick*="backToMailList"]').click(); await a(400);
+      return { y, apres: sc.scrollTop };
+    });
+    S.verifier("messagerie : retour à la liste à la même position", boite.y > 100 && Math.abs(boite.apres - boite.y) < 4, JSON.stringify(boite));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteDecisions() {
   S.suite("Décisions en course");
   const { navigateur, page, journal } = await S.ouvrirJeu();
@@ -4185,7 +4309,8 @@ const SUITES = {
   seances: suiteSeances,
   corrections: suiteCorrections,
   coherence: suiteCoherenceEssais,
-  evenements: suiteEvenements
+  evenements: suiteEvenements,
+  retours: suiteRetoursSaison
 };
 
 async function principal() {

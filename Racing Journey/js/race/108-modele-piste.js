@@ -119,7 +119,8 @@
   function avancee(lr, maintenant) {
     if (!lr.cur && !lr._dernierTour) return 0;
     var duree = typeof dureeTourCourse === "function" ? dureeTourCourse() : 4500;
-    return Math.max(0, Math.min(1, ((maintenant || Date.now()) - (lr._dernierTour || 0)) / duree));
+    // après le dernier tour du premier, l'horloge continue jusqu'au dernier (04, lr._fMax)
+    return Math.max(0, Math.min(lr._fMax || 1, ((maintenant || Date.now()) - (lr._dernierTour || 0)) / duree));
   }
 
   function etat(maintenant) {
@@ -129,7 +130,7 @@
     if ((lr.cur || 0) > course.dernier) surTour(lr.cur);
     var T = tempsTour(lr), total = lr.total || 0, cur = lr.cur || 0;
     var f = avancee(lr, maintenant);
-    var fini = !!lr.finished || (cur >= total && f >= 1);
+    var fini = !!lr.finished || (cur >= total && f >= (lr._fMax || 1));
     // Horloge rejouée : un tour de retard sur le moteur, jamais en arrière.
     var temps = fini ? Infinity : cur === 0 ? 0 : (cur - 1 + f) * T;
     if (!fini && lr.paused) temps = course.temps;

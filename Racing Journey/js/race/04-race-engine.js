@@ -810,10 +810,11 @@ function _qualiDriverTimeCoeur(e, t, r, n, a) {
 }
 
 function formatQualiTime(e) {
-  var t = Math.floor(e / 60),
-    r = e - 60 * t,
-    n = Math.floor(r),
-    a = Math.round(1e3 * (r - n));
+  // arrondi au millième d'abord : 50,9996 s donnait « 0:50.1000 »
+  var ms = Math.round(1e3 * e),
+    t = Math.floor(ms / 6e4),
+    n = Math.floor(ms / 1e3) - 60 * t,
+    a = ms % 1e3;
   return t + ":" + (n < 10 ? "0" : "") + n + "." + (a < 100 ? a < 10 ? "00" : "0" : "") + a
 }
 /* === QUALI LIVE PLAYER LAP MODAL === */
@@ -1004,17 +1005,32 @@ function _showQualiPlayerLapModal(driver, session, lap, totalLaps, lapTime, sect
         deltaHtml += '<div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:' + posColor + ';letter-spacing:.02em;line-height:1">P' + position + '</div>';
         deltaHtml += '</div>';
       }
-      if (delta !== null) {
-        deltaHtml += '<div style="margin-bottom:10px;padding:10px 12px;border:1px solid ' + (isPB ? "#34D399" : "#F59E0B") + ';background:' + (isPB ? "rgba(52,211,153,.10)" : "rgba(245,158,11,.08)") + ';border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:10px">';
-        deltaHtml += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.18em;text-transform:uppercase">' + (isPB ? "▲ Meilleur tour personnel" : "vs ton meilleur") + '</div>';
-        deltaHtml += '<div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + (isPB ? "#34D399" : "#F59E0B") + ';letter-spacing:.02em;line-height:1">' + (isPB ? "" : "+") + delta.toFixed(3) + '</div>';
-        deltaHtml += '</div>';
-      } else if (deltaRef === null) {
-        // Premier tour chronométré — pas de référence
-        deltaHtml += '<div style="margin-bottom:10px;padding:10px 12px;border:1px solid #34D399;background:rgba(52,211,153,.10);border-radius:6px;text-align:center">';
-        deltaHtml += '<div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#34D399;letter-spacing:.14em;text-transform:uppercase">▲ Premier tour chrono</div>';
-        deltaHtml += '</div>';
-      }
+      /* Ce qui compte à cet instant : l'écart à la pole, ce qu'il faut pour gagner
+         une place et, en Q1/Q2, la marge sur l'élimination. (Avant : « Meilleur tour
+         personnel », qui ne disait rien du classement.) */
+      (function () {
+        var D = QUALI_STATE.drivers || [], ids = QUALI_STATE.survived || D.map(function (d, i) { return i; });
+        var L = ids.map(function (i) { return D[i]; }).filter(function (d) { return d && d.bestTime; })
+          .sort(function (a, b) { return a.bestTime - b.bestTime; });
+        var moi = driver && driver.bestTime, k = L.indexOf(driver);
+        if (!moi || k < 0) return;
+        var x = function (v) { return v.toFixed(3); };
+        var cases = [];
+        cases.push(["Écart à la pole", k === 0 ? "POLE" : "+" + x(moi - L[0].bestTime), k === 0 ? "#A855F7" : "var(--text)"]);
+        if (k > 0) cases.push(["Pour gagner une place", "−" + x(moi - L[k - 1].bestTime + 0.001), "#F59E0B"]);
+        var coupe = typeof getQualiCutoff === "function" ? getQualiCutoff(session) : 0;
+        if ((session === 1 || session === 2) && coupe > 0 && coupe < ids.length) {
+          if (k < coupe) cases.push(["Marge sur l'élimination", L[coupe] ? "+" + x(L[coupe].bestTime - moi) : "—", "#34D399"]);
+          else cases.push(["Il manque pour passer", "−" + x(moi - L[coupe - 1].bestTime + 0.001), "#EF4444"]);
+        }
+        if (delta !== null && !isPB) cases.push(["Ce tour vs ton meilleur", "+" + x(delta), "var(--muted)"]);
+        deltaHtml += '<div data-rj-noround="1" style="margin-bottom:10px;display:grid;grid-template-columns:repeat(' + cases.length + ',minmax(0,1fr));gap:6px">' +
+          cases.map(function (c) {
+            return '<div style="padding:8px 10px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);border-radius:6px">' +
+              '<div style="font-family:var(--font-display);font-size:8.5px;font-weight:800;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">' + c[0] + "</div>" +
+              '<div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:' + c[2] + ';line-height:1;font-variant-numeric:tabular-nums">' + c[1] + "</div></div>";
+          }).join("") + "</div>";
+      })();
       deltaHtml += '<button onclick="_closeQualiPlayerLapModal()" style="width:100%;padding:11px;background:linear-gradient(135deg,#FF1801 0%,#B00500 100%);border:none;color:#fff;border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">Continuer</button>';
       footer.innerHTML = deltaHtml;
     }
@@ -1979,7 +1995,9 @@ function runQualiSession() {
         _renderQualiTyreWidget();
       }
       // Pour les tours chauds joueur, la mise à jour est faite dans le callback _qualiHotLapSequence
-      var _willUseSeq = o.isPlayer && !QUALI_STATE.spectatorMode && (a.lap > 1 || a.totalLaps === 1) && !a.isRescue && typeof _qualiHotLapSequence === "function";
+      /* La séquence du tour chaud (trois micro-choix) n'existe pas en karting : y réserver les tours 2 et plus
+         les jetait, le joueur ne s'améliorait jamais et ses secteurs (calculés quand même) viraient au violet. */
+      var _willUseSeq = o.isPlayer && !QUALI_STATE.spectatorMode && G.cat !== "Karting Junior" && G.cat !== "Karting Senior" && (a.lap > 1 || a.totalLaps === 1) && !a.isRescue && typeof _qualiHotLapSequence === "function";
       // Tour de sortie (1er tour d'un relais de plusieurs tours, hors karting) : jamais chronométré.
       var _horsTour = a.lap === 1 && a.totalLaps > 1 && !a.isRescue && G.cat !== "Karting Junior" && G.cat !== "Karting Senior";
       if (!_willUseSeq && !_horsTour) {
@@ -1989,7 +2007,8 @@ function runQualiSession() {
       }
       var c, d = splitLapIntoSectors(l, QUALI_STATE.circuitName || "", .003);
       o.lastSectors = d, o.bestSectors || (o.bestSectors = [null, null, null]), QUALI_STATE.bestSectors || (QUALI_STATE.bestSectors = [null, null, null]), QUALI_STATE.bestSectorsHolder || (QUALI_STATE.bestSectorsHolder = [null, null, null]);
-      for (var p = [0, 0, 0], u = 0; u < (_horsTour ? 0 : 3); u++) {
+      // le tour chaud passe par la séquence, qui pose elle-même ses secteurs sur le temps final
+      for (var p = [0, 0, 0], u = 0; u < (_horsTour || _willUseSeq ? 0 : 3); u++) {
         var f = d[u];
         if (null === QUALI_STATE.bestSectors[u] || f < QUALI_STATE.bestSectors[u]) {
           QUALI_STATE.bestSectors[u] = f;
@@ -15073,8 +15092,20 @@ function drapeauApresDernierTour(lr) {
   (function attendre() {
     if (LIVE_RACE !== lr || lr.finished) return;
     if (lr.paused) { lr._dernierTour += 200; return setTimeout(attendre, 200); }   // la pause suspend aussi ce tour
-    var reste = dureeTourCourse() - (Date.now() - (lr._dernierTour || 0));
+    var reste = dureeTourCourse() * (lr._fMax || 1) - (Date.now() - (lr._dernierTour || 0));
     if (reste > 0) return setTimeout(attendre, Math.max(20, reste));
+    /* Le premier a passé la ligne : la course continue à l'écran jusqu'à ce que
+       le dernier la passe aussi (un attardé prend le drapeau au passage suivant,
+       donc au plus un tour plus tard). Avant, tout s'arrêtait au premier. */
+    if (!lr._fMax) {
+      var T = 0, ecart = 0;
+      try { T = (window.RJModelePiste && RJModelePiste.etat().tempsTour) || 0; } catch (e) { }
+      lr.drivers.forEach(function (d) { if (!d.dnf && !d._mc && typeof d.gap === "number") ecart = Math.max(ecart, d.gap); });
+      if (T > 0 && ecart > 0) {
+        lr._fMax = 1 + Math.min(ecart, T * 0.98) / T + 0.03;
+        return setTimeout(attendre, 20);
+      }
+    }
     lr.finished = true;
     renderLiveLeaderboard();
     setTimeout(finalizeLiveRace, 600);
