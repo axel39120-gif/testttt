@@ -236,7 +236,9 @@
     var bloc = document.getElementById("rj90-progression");
     var lr = LR();
     var mini = document.getElementById("rj107-mini");
+    e = e || (window.RJModelePiste && RJModelePiste.etat());
     var v = voisinsEnDirect(lr, e);
+    var avantDepart = !!e && !e.fini && !(e.temps > 0);   // sur la grille : pas d'écart à montrer
     if (!bloc || !lr || lr.finished || !v.joueur || v.joueur.dnf) { if (mini) mini.style.display = "none"; return; }
     if (!mini) {
       injecterCSS();
@@ -249,9 +251,9 @@
     }
     mini.style.display = "";
     mini.innerHTML =
-      (v.devant ? ligne("rj107-devant", v.devant, "−" + sec(v.ecartDevant)) : "") +
+      (v.devant ? ligne("rj107-devant", v.devant, avantDepart ? "" : "−" + sec(v.ecartDevant)) : "") +
       ligne("rj107-moi", v.joueur, "") +
-      (v.derriere ? ligne("rj107-derriere", v.derriere, "+" + sec(v.ecartDerriere)) : "");
+      (v.derriere ? ligne("rj107-derriere", v.derriere, avantDepart ? "" : "+" + sec(v.ecartDerriere)) : "");
   }
 
   /* ------------------------------------------------------------------

@@ -68,3 +68,10 @@ div:has(> #fpl-board-body) { padding-bottom: 0 !important; }
 #race-practice-section > div:first-child > div:last-child > * { margin-bottom: 3px !important; }
 /* Pendant un relais, la barre des séances (EL1-EL2-EL3) cède sa place : l'en-tête dit déjà l'EL. */
 #race-practice-section:has(#fpl-chrono) > div:first-child > div:nth-child(2) { display: none !important; }
+
+/* --- Entraînement : la répartition des colonnes ne bouge plus ----------------------
+   Le bloc des focus (34) est en colonnes équilibrées : selon la hauteur (alerte de
+   fatigue, résultat d'une séance), « Préparation physique » passait à droite. Les
+   focus restent ensemble à gauche ; « Récupérer » et les programmes, à droite. */
+#S-training .rjf .rjf-grid, #S-training .rjf .rjf-card { break-inside: avoid; }
+#S-training .rjf .rjf-rest { break-before: column; }

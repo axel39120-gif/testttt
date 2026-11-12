@@ -33,6 +33,16 @@
   var vue = null;          // carte construite pour un circuit
   var voitures = {};       // nom → { el, d, stand, x, y, pos, autre }
   var boucle = 0, dernier = 0;
+  /* Colonne des temps : « ecart » (au premier) ou « intervalle » (à la voiture de devant).
+     Un appui sur le classement bascule ; le choix est retenu. */
+  var mode = "ecart";
+  try { if (localStorage.getItem("rj111-mode") === "intervalle") mode = "intervalle"; } catch (x) { }
+  function basculerMode() {
+    mode = mode === "ecart" ? "intervalle" : "ecart";
+    try { localStorage.setItem("rj111-mode", mode); } catch (x) { }
+    var lr = LR(), e = window.RJModelePiste ? RJModelePiste.etat() : null;
+    if (vue && lr && e) majTourDeClassement(lr, e);
+  }
   if (!Array.isArray(window.RJ_FRAME_HOOKS)) window.RJ_FRAME_HOOKS = [];
 
   function LR() { return (typeof window.LIVE_RACE !== "undefined") ? window.LIVE_RACE : null; }
@@ -71,8 +81,12 @@
     c.hidden = false;
     c.innerHTML = '<div class="rj111-tete"><span class="rj111-nom">' + esc(circuit) + "</span>" +
       '<span class="rj111-neutre" hidden></span></div><div class="rj111-corps"><div class="rj111-colonne" data-theme="' + theme().id + '">' +
-      '<div class="rj111-entete"><b>' + theme().sigle + '</b><span class="rj111-tours"></span></div><ol class="rj111-tour"></ol></div></div>';
+      '<div class="rj111-entete"><b>' + theme().sigle + '</b><span class="rj111-tours"></span><span class="rj111-mode"></span></div><ol class="rj111-tour"></ol></div></div>';
     var corps = c.querySelector(".rj111-corps");
+    var colonne = c.querySelector(".rj111-colonne");
+    /* pas de role="button" : le module 57 viderait la tour (écussons, écarts) en la prenant pour un bouton */
+    colonne.title = "Appuyer pour passer de l’écart au premier à l’intervalle";
+    colonne.addEventListener("click", basculerMode);
 
     var svg = element("svg", { "class": "rj111-svg", role: "img", "aria-label": "Course en direct sur " + circuit });
     corps.appendChild(svg);
@@ -154,7 +168,7 @@
 
     voitures = {};
     return { circuit: circuit, svg: svg, piste: piste, longueur: L, groupe: groupe, etiquette: etiquette, stand: stand,
-             tour: c.querySelector(".rj111-tour"), tours: c.querySelector(".rj111-tours"), majTour: 0, neutre: c.querySelector(".rj111-neutre") };
+             tour: c.querySelector(".rj111-tour"), tours: c.querySelector(".rj111-tours"), mode: c.querySelector(".rj111-mode"), majTour: 0, neutre: c.querySelector(".rj111-neutre") };
   }
 
   /* Une voiture : un rond aux couleurs de l'écurie, avec les initiales du pilote. */
@@ -205,6 +219,8 @@
     lr.drivers.forEach(function (d) { parNom[d.name] = d; });
     var th = theme(), total = lr.total || lr.totalLaps || 0, tourEnCours = lr.finished ? total : Math.max(1, Math.min(total || 1e9, lr.cur || 0));   // même compte que la barre de progression (90)
     if (vue.tours) vue.tours.innerHTML = (lr.finished ? "ARRIVÉE" : "TOUR <b>" + tourEnCours + "</b>" + (total ? "/" + total : ""));
+    if (vue.mode) vue.mode.textContent = mode === "ecart" ? "ÉCART" : "INTERVALLE";
+    var avantDepart = !e.fini && !(e.temps > 0);   // sur la grille : personne n'a encore d'écart
     var vivants = e.voitures.filter(function (v) { return !v.abandon; })
       .sort(function (a, b) { return (a.autreCategorie - b.autreCategorie) || (a.pos - b.pos); });
     // vingt lignes ; le joueur toujours visible (à la dernière ligne s'il est plus loin)
@@ -213,8 +229,9 @@
     vue.tour.innerHTML = montres.map(function (v, k) {
       var i = vivants.indexOf(v), d = parNom[v.nom] || {};
       var tete = i === 0 || vivants[i - 1].autreCategorie !== v.autreCategorie;
-      var ecart = tete ? "TÊTE"
-        : v.ecart >= e.tempsTour ? "+" + Math.floor(v.ecart / e.tempsTour) + " T" : "+" + Math.max(Math.pow(10, -th.dec), v.ecart).toFixed(th.dec);
+      var x = mode === "intervalle" && !tete ? v.ecart - vivants[i - 1].ecart : v.ecart;
+      var ecart = tete ? "TÊTE" : avantDepart ? ""
+        : x >= e.tempsTour ? "+" + Math.floor(x / e.tempsTour) + " T" : "+" + Math.max(Math.pow(10, -th.dec), x).toFixed(th.dec);
       return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + (tete ? " tete" : "") + (k === LIGNES - 1 && i >= LIGNES ? " detache" : "") + '"><span class="p">' + v.pos + "</span>" +
         ecusson(d.team, v.nom) +
         '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? '<i class="pit">PIT</i>' : ecart) + "</span></li>";
