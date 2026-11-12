@@ -183,6 +183,8 @@
   function rafraichir() {
     try { renderAdvancedSetupUI(); } catch (e) { }
     document.querySelectorAll(".rja-essais").forEach(function (b) { b.innerHTML = ressentisHTML(); });
+    // débrief de relais (18) : seule la tête est redessinée, le titre et la parole du pilote restent
+    document.querySelectorAll(".rja-debrief > .rja-tete").forEach(function (t) { t.outerHTML = ressentisHTML(); });
   }
 
   var glisse = null;

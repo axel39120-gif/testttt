@@ -908,6 +908,10 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Fin de saison** : après le plan de pré-saison, retour à l'accueil de la nouvelle saison au lieu de partir directement sur la première course (105).
 - Tests : suite `retours`.
 
+## Débrief de relais — v280
+
+- Débrief des essais : la partie « Ajuste tes réglages » (ancien panneau de réglages injecté par 28) est retirée, puisque les curseurs de ressentis règlent directement la voiture ; leur intertitre devient « Ajustement des réglages » (18). Les curseurs du débrief se redessinent après un réglage, comme ceux des essais (120).
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
