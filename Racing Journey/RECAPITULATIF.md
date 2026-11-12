@@ -912,6 +912,15 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 
 - Débrief des essais : la partie « Ajuste tes réglages » (ancien panneau de réglages injecté par 28) est retirée, puisque les curseurs de ressentis règlent directement la voiture ; leur intertitre devient « Ajustement des réglages » (18). Les curseurs du débrief se redessinent après un réglage, comme ceux des essais (120).
 
+## Qualifs équitables — v281
+
+- **Poles trop faciles** (signalé en Karting Junior, effet de bord de la v279). Mesuré : pole 8 fois sur 8, même avec un niveau de 9e. Deux avantages réservés au joueur :
+  - un tour de plus que le maximum des rivaux (4 contre 2,3 en moyenne). Depuis que chaque tour compte, ce dernier tour, le plus rapide de la séance (piste qui gomme), faisait la pole. Le joueur suit désormais la même règle que les rivaux (talent et régularité) ;
+  - −0,3 s par tour « pneus dans la fenêtre », que les rivaux n'avaient pas : 0,6 % d'un tour de karting, l'écart entre le 1er et le 10e. Neutre désormais ; les pénalités de pneus et le choix du moment de sortie sont mis à l'échelle de la durée du tour (pensées en secondes pour ~90 s).
+  - Résultat : qualif moyenne P6,5 pour un niveau de P7,3 (12 séances), 3 poles sur 12.
+- **Essais et qualif, même niveau sous la pluie aussi** : le bonus du réglage de base selon la météo (`_rjBonusPresetQualif`, partagé avec 18) et la régularité de la forme du week-end (qui compte dans le talent sous la pluie) entrent dans le niveau des essais.
+- **Préparation** : bouton « Tour d'essai » retiré ; on roule aux essais libres, où les mêmes curseurs se règlent (120).
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).

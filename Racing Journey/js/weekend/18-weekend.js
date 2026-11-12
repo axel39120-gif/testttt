@@ -540,13 +540,19 @@
     function _fpPlayerScore() {
       var st = G.stats || {};
       var base = (0.6 * (st.vitesse || 50) + 0.25 * (st.sangfroid || 50) + 0.15 * (st.adapt || 50)) / 100;
-      return base + _fpTeamBonus(G.currentTeam) + _fpPluie(null);
+      var preset = typeof _rjBonusPresetQualif === "function" ? _rjBonusPresetQualif(typeof RACE_STATE !== "undefined" ? RACE_STATE.weather : null) : 0;
+      return base + preset + _fpTeamBonus(G.currentTeam) + _fpPluie(null);
     }
     function _fpRivalScore(r) {
-      var sk = (typeof r.skill === "number") ? r.skill : 55;
-      // forme du week-end (04n) : la qualif la pose sur skill ; hors qualif, on l'ajoute pareil
-      if (r._origSkill === undefined && typeof r._weekendForm === "number") sk = Math.max(40, Math.min(99, sk + Math.round(r._weekendForm * 100)));
-      return sk / 100 + _fpTeamBonus(r.team) + _fpPluie(r);
+      var sk = (typeof r.skill === "number") ? r.skill : 55, pluie = r;
+      // forme du week-end (04n) : la qualif la pose sur skill et sur la régularité
+      // (qui compte dans le talent sous la pluie) ; hors qualif, on l'ajoute pareil
+      if (r._origSkill === undefined && typeof r._weekendForm === "number") {
+        sk = Math.max(40, Math.min(99, sk + Math.round(r._weekendForm * 100)));
+        var reg = typeof r.consistency === "number" ? r.consistency : 0.7;
+        pluie = { name: r.name, consistency: Math.max(0.30, Math.min(1.0, reg + (r._weekendFormConsistencyDelta || 0))) };
+      }
+      return sk / 100 + _fpTeamBonus(r.team) + _fpPluie(pluie);
     }
     // Le peloton que la qualif verra : niveaux de la saison (04k) et forme du week-end (04n).
     function _fpPreparerPeloton() {

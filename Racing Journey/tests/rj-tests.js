@@ -3984,9 +3984,9 @@ async function suiteRetoursSaison() {
       }
       const pied = (document.getElementById("quali-live-footer") || {}).textContent || "";
       clearInterval(window.__suivi);
-      return { tours: __tours.length, meilleur: p.bestTime, premier: __tours[0], lignes, avecTemps, attendu, pied: /Écart à la pole/.test(pied) || pied === "" ? "ok" : pied.slice(0, 80), personnel: /Meilleur tour personnel/.test(pied) };
+      return { tours: __tours.length, laps: p.laps, meilleur: p.bestTime, premier: __tours[0], lignes, avecTemps, attendu, pied: /Écart à la pole/.test(pied) || pied === "" ? "ok" : pied.slice(0, 80), personnel: /Meilleur tour personnel/.test(pied) };
     });
-    S.verifier("qualif karting : les tours après le premier comptent", q.tours >= 2 && q.meilleur <= q.premier, JSON.stringify(q));
+    S.verifier("qualif karting : les tours après le premier comptent", q.tours >= 1 && q.tours === q.laps && q.meilleur <= q.premier, JSON.stringify(q));
     S.verifier("classement complet : lu dans les données, temps compris", q.lignes >= 10 && q.avecTemps === q.attendu, JSON.stringify(q));
     S.verifier("fin de tour de qualif : plus de « Meilleur tour personnel »", !q.personnel, JSON.stringify(q));
 
