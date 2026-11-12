@@ -867,6 +867,13 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - **Secteurs violets avec le moins bon chrono** : chaque secteur était tiré à ±1,6 % du tour, plus que l'écart entre la pole et le dernier ; un tour lent pouvait poser un secteur record. Aléa ramené à ±0,3 % (qualif, essais, course) : un secteur violet suppose un tour à moins de 1 % de la pole.
 - Tests : suite `coherence`.
 
+## Entraînement : colonnes fixes — v277
+
+- « Préparation physique » passait encore à droite (signalé après la v275, sur iPhone). Cause : le bloc des focus était mis en colonnes par le CSS multi-colonnes, qui rééquilibre à chaque redessin ; après « Lancer », le résultat de la séance s'insère en haut à gauche et Safari repoussait la quatrième carte dans la colonne de droite (les sauts de colonne de la v275, sans préfixe `-webkit-`, n'y suffisaient pas).
+- Le gabarit (34) écrit maintenant deux colonnes (`.rjf-col`) : à gauche le résultat, l'état, l'alerte de fatigue et les quatre focus ; à droite « Récupérer » et les programmes premium. Une grille les place côte à côte, ou l'une sous l'autre si l'écran est trop étroit (`seances.css`) : plus aucun rééquilibrage.
+- Vérifié sur Chrome à cinq tailles de téléphone, à l'ouverture, après défilement et après « Lancer » ; non vérifié sur un vrai iPhone.
+- Tests : suites `corrections` et `entrainement`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
