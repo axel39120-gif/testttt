@@ -307,7 +307,7 @@
   function sansArret(ev) {
     if (!ev || !Array.isArray(ev.choices)) return ev;
     var garde = ev.choices.filter(function (c) {
-      return c && !c._doPit && c._weatherStrategy !== "pit" && !CHOIX_ARRET.test(texte(c.text));
+      return c && !c._doPit && c._weatherStrategy !== "pit" && !CHOIX_ARRET.test(texte(c.text || c.label));
     });
     if (garde.length === ev.choices.length) return ev;
     var neutralisation = /\[(SC|VSC)\]/.test(ev.icon || "") || /safety|vsc/i.test(texte(ev.title));

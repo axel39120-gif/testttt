@@ -86,12 +86,34 @@
 
     var reste = total - cur;
     var sousPression = (v.devant && v.ecartDevant < 2) || (v.derriere && v.ecartDerriere < 2);
+    /* Le calendrier d'événements (04, 143) couvre déjà souvent la fin de course et
+       les duels : on ne rejoue pas le même moment avec d'autres mots. */
+    if (!st.faits.fin && dejaVu(lr, /Dernier tour|Derniers tours|Fin de course|Sprint final|Dernière chance/i)) st.faits.fin = true;
+    if (!st.faits.duel && dejaVu(lr, /Duel|attaque|à attaquer|poursuis|aspiration|à portée/i)) st.faits.duel = true;
     if (!st.faits.fin && reste >= 1 && reste <= 4 && sousPression) return "fin";
 
     var part = total ? cur / total : 0;
     if (!st.faits.duel && part >= 0.3 && part <= 0.75 && v.devant && v.ecartDevant < 1) return "duel";
     return null;
   }
+
+  // Un événement de ce genre a-t-il déjà été joué dans cette course ?
+  function dejaVu(lr, re) {
+    return (lr.resolvedEvents || []).some(function (e) { return e && re.test(String(e.title || "")); });
+  }
+
+  /* Le geste change selon la discipline : aspiration en karting, DRS en
+     monoplace, OTS en Super Formula, push-to-pass en IndyCar, trafic en WEC. */
+  function outil() {
+    var c = (window.G && G.cat) || "";
+    if (/Karting/.test(c)) return { attaque: "Prendre l'aspiration et plonger à l'épingle", fin: "Jouer l'aspiration dans le dernier tour" };
+    if (c === "Super Formula") return { attaque: "Brûler l'OTS pour le passer en ligne droite", fin: "Vider l'OTS jusqu'au drapeau" };
+    if (c === "IndyCar") return { attaque: "Push-to-pass et plongée à l'intérieur", fin: "Tout le push-to-pass restant, maintenant" };
+    if (c === "Endurance WEC") return { attaque: "Profiter d'un GT à doubler pour le surprendre", fin: "Attaquer dans le trafic des GT" };
+    if (c === "Formule 4") return { attaque: "Aspiration puis freinage tardif", fin: "Tout donner jusqu'au drapeau" };
+    return { attaque: "DRS ouvert, freinage tardif au bout de la ligne droite", fin: "DRS et freinage à la limite jusqu'au drapeau" };
+  }
+  function auHasard(L) { return L[Math.floor(Math.random() * L.length)]; }
 
   /* ------------------------------------------------------------------
    * Les décisions. mod > 0 : gain de rythme ; chance.failMod : la note
@@ -121,10 +143,14 @@
         };
       case "duel":
         return {
-          icon: "flag", color: "#A78BFA", title: "Duel avec " + nomDevant,
-          desc: "Tu es dans l'aileron de " + nomDevant + " depuis plusieurs tours. Une ouverture se dessine au freinage.",
+          icon: "flag", color: "#A78BFA", title: auHasard(["Duel avec ", "Dans l'aileron de ", "Collé à "]) + nomDevant,
+          desc: auHasard([
+            "Tu es dans l'aileron de " + nomDevant + " depuis plusieurs tours. Une ouverture se dessine.",
+            nomDevant + " défend l'intérieur à chaque freinage. Il faudra le surprendre ailleurs.",
+            "Tu reprends deux dixièmes par tour sur " + nomDevant + " : ses pneus arrière souffrent."
+          ]),
           choices: [
-            ose("Tenter le dépassement au freinage", "Freinage trop tardif : tu élargis et perds du temps."),
+            ose(outil().attaque, "Manœuvre mal calée : tu élargis et perds du temps."),
             sur("Patienter et mettre la pression")
           ]
         };
@@ -134,7 +160,7 @@
             icon: "flag", color: "#EF4444", title: "Derniers tours : l'attaque",
             desc: nomDevant + " est à portée, à " + v.ecartDevant.toFixed(1).replace(".", ",") + " s. Il reste quelques tours pour aller le chercher.",
             choices: [
-              ose("Tout donner jusqu'au drapeau", "Tu forces trop : erreur dans le dernier secteur."),
+              ose(outil().fin, "Tu forces trop : erreur dans le dernier secteur."),
               sur("Gérer et ramener la voiture")
             ]
           };

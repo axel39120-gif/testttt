@@ -7006,6 +7006,12 @@ function _tryContextualRadioCoeur() {
 
 
 function buildLiveEventSchedule() { return rjAppeler("buildLiveEventSchedule", _buildLiveEventScheduleCoeur, this, arguments); }
+/* « Dernier tour » seulement au dernier tour : l'événement de fin tombe vers 91 % de la course. */
+function _rjFinCourse() {
+  var reste = LIVE_RACE ? (LIVE_RACE.total || 0) - (LIVE_RACE.cur || 0) : 9;
+  return reste <= 1 ? "Dernier tour" : "Fin de course";
+}
+
 function _buildLiveEventScheduleCoeur(e) {
   var t = RACE_STATE.circuitData || {},
     r = RACE_STATE.weather || {
@@ -7902,7 +7908,7 @@ function _buildLiveEventScheduleCoeur(e) {
           r = _rn(t);
         return o ? {
           icon: "[FINAL]",
-          title: "Dernier tour — " + r + " dans ta roue !",
+          title: _rjFinCourse() + " — " + r + " dans ta roue !",
           desc: "Tu es en tête mais " + r + " ne lâche rien. Ligne droite finale.",
           choices: [{
             text: "Défense à l'intérieur — protéger les trajectoires",
@@ -7929,7 +7935,7 @@ function _buildLiveEventScheduleCoeur(e) {
           }]
         } : {
           icon: "[FINAL]",
-          title: "Dernier tour — victoire à portée !",
+          title: _rjFinCourse() + " — victoire à portée !",
           desc: r + " est à 0.6s dans ton rétro. Il a le DRS. Ligne droite en approche.",
           choices: [{
             text: "Défense totale — zig-zag toléré",
@@ -7954,7 +7960,7 @@ function _buildLiveEventScheduleCoeur(e) {
       }
       if (e.isLeader) return {
         icon: "[FINAL]",
-        title: "Dernier tour — victoire en approche !",
+        title: _rjFinCourse() + " — victoire en approche !",
         desc: "Tu es en tête et l'écart est confortable. Garde ton sang-froid.",
         choices: [{
           text: "Finir proprement — aucune prise de risque",
@@ -7977,7 +7983,7 @@ function _buildLiveEventScheduleCoeur(e) {
         var a = _rn(n);
         return o ? {
           icon: "[FINAL]",
-          title: "Dernier tour — attaque sur " + a + " !",
+          title: _rjFinCourse() + " — attaque sur " + a + " !",
           desc: a + " est à moins d'une longueur devant. La ligne droite des stands approche.",
           choices: [{
             text: "Plongée à l'intérieur — tout ou rien",
@@ -8004,7 +8010,7 @@ function _buildLiveEventScheduleCoeur(e) {
           }]
         } : {
           icon: "[FINAL]",
-          title: "Dernier tour — " + a + " à portée !",
+          title: _rjFinCourse() + " — " + a + " à portée !",
           desc: a + " est à 0.6s. DRS activé. C'est maintenant ou jamais.",
           choices: [{
             text: "Attaquer " + a + " dans la ligne droite",
@@ -8038,7 +8044,7 @@ function _buildLiveEventScheduleCoeur(e) {
       }
       return {
         icon: "[FINAL]",
-        title: "Dernier tour",
+        title: _rjFinCourse(),
         desc: "Aucun rival à portée immédiate. Tu dois juste ramener la voiture.",
         choices: [{
           text: "Pousser pour le meilleur tour",
@@ -11187,7 +11193,8 @@ function _buildLiveEventScheduleCoeur(e) {
     r = Math.min(.97, Math.max(.02, r)), v.push(r), h.push({
       lap: Math.round(r * e),
       gen: t.gen,
-      phase: t.phase
+      phase: t.phase,
+      always: !0
     })
   }), b.sort(function() {
     return Math.random() - .5
@@ -14752,25 +14759,13 @@ function _convertLegacyMod(d, mod, reason) {
   if (!d || typeof mod !== "number" || mod === 0) return null;
   var phase = LIVE_RACE && LIVE_RACE.total > 0 ? LIVE_RACE.cur / LIVE_RACE.total : 0.5;
   var phaseMul = phase < 0.15 ? 1.1 : phase < 0.3 ? 1.05 : phase < 0.65 ? 1.0 : phase < 0.88 ? 0.85 : 0.7;
+  /* Effet proportionnel : 0,01 de mod ≈ 0,9 s au total, de 0,3 à 4,5 s, étalé
+     sur 1 à 6 tours. Avant, quatre paliers fixes et rien sous 0,012 : un choix
+     prudent (mod 0,005 à 0,01) ne changeait rien du tout. */
   var amod = Math.abs(mod);
-  var deltaSec, laps;
-  if (amod <= 0.015) {
-    // Très petit effet : 1 tour léger
-    deltaSec = (mod > 0 ? -1 : 1) * 0.4 * phaseMul;
-    laps = 2;
-  } else if (amod <= 0.04) {
-    // Effet modéré : 3 tours
-    deltaSec = (mod > 0 ? -1 : 1) * 0.5 * phaseMul;
-    laps = 3;
-  } else if (amod <= 0.08) {
-    // Gros effet : 5 tours
-    deltaSec = (mod > 0 ? -1 : 1) * 0.6 * phaseMul;
-    laps = 5;
-  } else {
-    // Effet majeur : 6 tours
-    deltaSec = (mod > 0 ? -1 : 1) * 0.7 * phaseMul;
-    laps = 6;
-  }
+  var total = Math.max(0.3, Math.min(4.5, amod * 90)) * phaseMul;
+  var laps = Math.max(1, Math.min(6, Math.ceil(total / 0.6)));
+  var deltaSec = (mod > 0 ? -1 : 1) * total / laps;
   return {
     paceMod: {
       deltaSec: deltaSec,
@@ -16409,7 +16404,7 @@ function _resolveLiveEventCoeur(e) {
           hasExplicit = true
         }
         // Si pas d'output explicite et un mod non-trivial, on convertit
-        if (!hasExplicit && Math.abs(n) >= 0.012) {
+        if (!hasExplicit && Math.abs(n) >= 0.004) {
           var _conv = _convertLegacyMod(l, n, t.title);
           if (_conv && _conv.paceMod) pOut.paceMod = _conv.paceMod;
         }
@@ -16451,7 +16446,7 @@ function _resolveLiveEventCoeur(e) {
         g = n > .01 ? renderIcon("trend", 16, "#34D399") : n < -.01 ? renderIcon("downtrend", 16, "#EF4444") : "";
       p.style.display = "block", p.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><span>' + g + '</span><span style="font-size:13px;font-weight:700;color:' + m + '">' + f + "</span></div>", setTimeout(function() {
         d && (d.style.display = "none"), u && (u.style.display = "flex"), p && (p.style.display = "none", p.innerHTML = ""), LIVE_RACE.paused = !1, updateLivePositions(), renderLiveLeaderboard()
-      }, 1200)
+      }, 2600)
     } else d && (d.style.display = "none"), LIVE_RACE.paused = !1;
     LIVE_RACE.pendingEvent = null
   }

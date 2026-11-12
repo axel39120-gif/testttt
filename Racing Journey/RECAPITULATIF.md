@@ -874,6 +874,23 @@ Un joueur automatique (`tests/joueur-auto.js`) joue désormais des saisons enti�
 - Vérifié sur Chrome à cinq tailles de téléphone, à l'ouverture, après défilement et après « Lancer » ; non vérifié sur un vrai iPhone.
 - Tests : suites `corrections` et `entrainement`.
 
+## Événements de course : audit et refonte — v278
+
+- **Inventaire** (40 courses, 4 par catégorie, choix au hasard) : 1 à 5 événements par course, 1 en moyenne en karting junior. Presque toujours les mêmes : départ, « Duel avec … » (107), « Derniers tours » (107) et « Dernier tour — … à portée » (04), souvent deux scènes de fin dans la même course. Les événements propres à une discipline (OTS, ovale, nuit, relais) ne sortaient presque jamais.
+- **Bugs corrigés**
+  - Chances affichées (47) : sur un événement en piste, celles du dernier événement à choix s'affichaient (« Bianchi à attaquer » montrait les 97/89 % de « Alerte mécanique ») ; `chance.dnf` (un booléen : « l'échec, c'est l'abandon ») était lu comme une probabilité, d'où « 0 % de réussite, 100 % critique » sur des choix risqués à 12-38 %.
+  - Effets : tout `mod` sous 0,012 était ignoré, si bien que les choix prudents ne changeaient rien et le résultat disait « Impact limité. ». Conversion désormais proportionnelle (`_convertLegacyMod` : 0,01 ≈ 0,9 s, de 0,3 à 4,5 s sur 1 à 6 tours).
+  - Le départ, événement imposé, était retiré dans 58 % des courses : 40 l'épargnait sur une marque `always` que le calendrier ne posait pas.
+  - Les choix d'arrêt écrits au format `label` (« Rentrer immédiatement (intermédiaires) ») passaient le filtre des arrêts automatiques (82).
+  - « Dernier tour » s'affichait quatre tours avant l'arrivée : « Fin de course », sauf au vrai dernier tour (`_rjFinCourse`).
+  - Le résultat ne restait affiché que 1,2 s : 2,6 s.
+- **Variété** — module `143-evenements.js` :
+  - une banque de 43 événements selon la discipline (karting : carburation, carénage, chaîne, petit train ; F4/F3 : débutant agressif, freins froids, aileron plié, pneus tendres ; F1 : batterie, mode moteur, méplat, vent ; Super Formula : OTS, pneus Yokohama ; WEC : Hypercar, Full Course Yellow, double relais, phares, consommation ; IndyCar : ligne haute, push-to-pass, vent sur l'ovale), la météo (aquaplaning, ligne sèche, gerbes), le circuit (mur, bosses en ville) et la course (débris, huile, attardé, drapeaux bleus, consigne d'équipe, radio coupée…) ;
+  - le calendrier garde un seul duel et une seule scène de fin, puis se complète jusqu'à 3 (karting) à 6 événements (courses longues) ; les événements vus lors des dernières courses passent après les autres (mémoire sauvegardée, `rj143`) ;
+  - 107 ne rejoue plus un duel ou une fin déjà vus dans la course, et son geste dépend de la discipline (aspiration, DRS, OTS, push-to-pass, trafic WEC).
+- **Fenêtre d'événement** (`css/evenements.css`) : centrée à droite de la barre de navigation, la position et les écarts en tête, les choix côte à côte avec leur risque (« Sans risque », « 70 % de réussite », « Abandon si raté · 12 % ») et leur effet (« ≈ 3,2 s gagnées · raté : ≈ 2,7 s perdues ») ; puis un résultat clair (« Réussi · Tu gagnes ≈ 0,8 s sur 2 tours »).
+- Tests : suite `evenements`.
+
 ## Pistes suivantes
 
 - Appliquer les caractères aux pilotes gérés par l'ordinateur (Red Bull promouvant réellement ses juniors sur la grille).
