@@ -233,13 +233,6 @@
     if (!dispo.length) { conteneur.innerHTML = ""; return; }
     if (typeof initPracticeState === "function" && typeof hasPracticeSystem === "function" && hasPracticeSystem() && !pratique()) initPracticeState();
     var p = pratique(), tests = (p && p.tests) || [];
-    var max = typeof getPracticeMaxTests === "function" ? getPracticeMaxTests() : 3;
-    var maxSeances = typeof getPracticeMaxSessions === "function" ? getPracticeMaxSessions() : 3;
-    /* Séances et tours peuvent être illimités (essais au chronomètre) : on
-       annonce la séance en cours, et les tours seulement s'ils sont comptés. */
-    var finies = p && p.sessionsCompleted >= maxSeances;
-    var restants = p && !finies ? Math.max(0, max - p.testsThisSession) || max : 0;
-    var seance = p ? Math.min(p.sessionsCompleted + 1, maxSeances) : 0;
     var conf = confiance(), dit = parole();
     var meilleur = tests.reduce(function (m, t) { return typeof t.lapTime === "number" && (m === null || t.lapTime < m) ? t.lapTime : m; }, null);
 
@@ -255,9 +248,9 @@
 
     /* Le pilote parle, on roule. */
     h += '<div class="rja-pilote"><div class="rja-bulle">' +
-      (dit ? "« " + esc(dit) + " »" : "Fais un tour d'essai : le pilote te dira ce qu'il ressent.") + "</div>" +
+      (dit ? "« " + esc(dit) + " »" : "Roule aux essais libres : le pilote te dira ce qu'il ressent.") + "</div>" +
       '<div class="rja-actions">' +
-      (p ? '<button type="button" class="rja-essai" data-rja="essai"' + (restants ? "" : " disabled") + ">Tour d'essai<small>" + (restants ? "Séance " + seance + (maxSeances < 10 ? "/" + maxSeances : "") + (max <= 50 ? " · " + restants + " tour" + (restants > 1 ? "s" : "") : "") : "essais terminés") + "</small></button>" : "") +
+      /* Plus de « Tour d'essai » ici : on roule aux essais libres, où les mêmes curseurs se règlent. */
       (typeof askEngineerHint === "function" ? '<button type="button" class="rja-inge" data-rja="inge">Conseil de l\'ingénieur</button>' : "") +
       "</div>" +
       (tests.length ? '<div class="rja-temps">' + tests.slice(-4).map(function (t) {
@@ -274,16 +267,7 @@
     var b = e.target && e.target.closest && e.target.closest("[data-rja]");
     if (!b || b.disabled || !b.closest("#advanced-setup-container")) return;
     var quoi = b.getAttribute("data-rja");
-    if (quoi === "essai") {
-      var r = runPracticeTest();
-      if (r && r.error === "session_full" && typeof endPracticeSession === "function") { endPracticeSession(); r = runPracticeTest(); }
-      if (r && r.sessionFull && typeof endPracticeSession === "function") {
-        var pr = pratique(), maxS = typeof getPracticeMaxSessions === "function" ? getPracticeMaxSessions() : 3;
-        if (pr && pr.sessionsCompleted < maxS - 1) endPracticeSession();
-      }
-      try { if (typeof renderPracticeSection === "function") renderPracticeSection(); } catch (x) {}
-      renderAdvancedSetupUI();
-    } else if (quoi === "inge") {
+    if (quoi === "inge") {
       askEngineerHint();
     }
   }

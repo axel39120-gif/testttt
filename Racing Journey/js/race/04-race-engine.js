@@ -473,6 +473,14 @@ function _showFreePracticeResult(obj, outcome, bonus, onDone) {
 /* Départ des qualifications. Extensible : rjInscrire("startQual", …) — voir core/00-hooks.js. */
 function startQual() { return rjAppeler("startQual", _startQualCoeur, this, arguments); }
 
+/* Bonus de niveau du réglage de base (équilibré, aéro…) selon la météo : la
+   qualif l'ajoute au joueur, les essais (18) aussi, pour voir le même rythme. */
+function _rjBonusPresetQualif(meteo) {
+  var r = { bal: 0, aero: .03, mec: .02, agg: -.01 } [G.setup] || 0;
+  if (meteo && (meteo.id === "wet" || meteo.id === "storm")) r += { bal: .02, aero: -.02, mec: .03, agg: -.03 } [G.setup] || 0;
+  return r;
+}
+
 function _startQualCoeur() {
   /* #5 — Intercept FP : si pas encore fait et catégorie compatible, lance d'abord la séance d'essais libres. RACE_WEEKEND_STATE.fpDone est utilisé car il survit à initRaceState (contrairement à RACE_STATE qui est reset). */
   if (!(typeof RACE_WEEKEND_STATE !== "undefined" && RACE_WEEKEND_STATE.fpDone) && !G._fpSkipping && G.cat !== "Karting Junior" && G.cat !== "Karting Senior" && typeof _showFreePracticePopup === "function" && typeof document !== "undefined") {
@@ -491,18 +499,7 @@ function _startQualCoeur() {
        en karting (un seul segment), l usure du joueur s accumulait de week-end en week-end. */
     _resetQualiTyreForNewSeason();
     var t = RACE_STATE.weather,
-      r = {
-        bal: 0,
-        aero: .03,
-        mec: .02,
-        agg: -.01
-      } [G.setup] || 0;
-    "wet" !== t.id && "storm" !== t.id || (r += {
-      bal: .02,
-      aero: -.02,
-      mec: .03,
-      agg: -.03
-    } [G.setup] || 0);
+      r = _rjBonusPresetQualif(t);
     var n = G.currentTeam || "Indépendant",
       a, i = teamRatingToBonus("Indépendant" !== n ? getEffectiveTeamRating(n) : 75),
       o = (.6 * G.stats.vitesse + .25 * G.stats.sangfroid + .15 * G.stats.adapt) / 100 + r + .5 * effetPluie(t.rainMod, talentPluie(null)) + i + (G._fpBonus && G._fpBonus.qualiPace ? G._fpBonus.qualiPace : 0),
@@ -1555,10 +1552,10 @@ function __qualiTyreLapImpactCoeur() {
     // Surchauffe
     var hotRatio = Math.min(1, (temp - optMax) / (cfg.tempMax - optMax));
     impact += 0.5 * hotRatio; // jusqu'à +0.5s
-  } else {
-    // Dans la fenêtre optimale — bonus
-    impact -= 0.3;
   }
+  /* Dans la fenêtre optimale : neutre. Les rivaux roulent sur des pneus à
+     température ; le bonus de −0,3 s n'était donné qu'au joueur (en karting,
+     0,6 % du tour, l'écart entre le 1er et le 10e). */
   // Impact dégradation
   if (deg >= 80) impact += 1.0;
   else if (deg >= 60) impact += 0.5;
@@ -1569,7 +1566,8 @@ function __qualiTyreLapImpactCoeur() {
     return o.id === timing;
   });
   if (timingOpt) impact -= timingOpt.lapBonus; // lapBonus positif = temps réduit
-  return impact;
+  // Valeurs pensées en secondes pour un tour de ~90 s : à l'échelle du tour (karting ~50 s, F3 ~100 s)
+  return impact * ((QUALI_STATE.baseRef || 90) / 90);
 }
 
 // --- Mise à jour des pneus après un tour chrono ---
@@ -1907,8 +1905,11 @@ function runQualiSession() {
       var n = r[t],
         a = 1 === e ? 2 : 1,
         i = 1 === e ? 3 : 2; /* Le joueur n'avait qu'un seul tour lancé en Q1 : un tour de sortie, un tour chronométré, puis éventuellement un tour de rattrapage. Aucune comparaison possible, donc aucune amélioration visible. On lui accorde un essai supplémentaire par session. */
-      if (n.isPlayer) s[t] = i + 1;
-      else {
+      /* Même règle pour tous : le joueur avait un tour de plus que le maximum des
+         rivaux (4 contre 2,3 en moyenne). Depuis que chacun de ses tours compte
+         (v279), ce tour de plus, le plus rapide de la séance, lui donnait la pole
+         presque à chaque fois, quel que soit son niveau. */
+      {
         var o = i - a,
           l = .6 * (n.skill - .5),
           c = .4 * -(n.consistency - .5),
