@@ -198,6 +198,67 @@
       return c.relation >= 50 ? "Pas de souci, c'était propre. On se bat dur, mais à la régulière." : "Tu m'as serré un peu fort l'autre jour. La prochaine fois, je ne laisse pas de place.";
     } }]
   };
+  /* v289 : de la matière aux échanges — deux ou trois sujets par contact,
+     chaque réponse tirée de ta situation réelle (contrat, résultats,
+     réglages, prochain circuit, réputation), au lieu d'un sujet unique. */
+  function prochaine() { try { return typeof getNextRace === "function" ? getNextRace() : null; } catch (e) { return null; } }
+  function semainesContrat() { return typeof G.contractWeeksLeft === "number" ? G.contractWeeksLeft : 48 * (G.contractDur || 0); }
+  function ajouter(role, s) { (SUJETS[role] = SUJETS[role] || []).push(s); }
+  ajouter("agent", { id: "contrat", lbl: "Et mon contrat ?", texte: function () {
+    var sem = semainesContrat();
+    if (!G.currentTeam || G.currentTeam === "Indépendant") return "Tu roules en indépendant : chaque bon résultat est une carte de visite. Je fais le tour des écuries.";
+    return sem <= 12 ? "Ton contrat avec " + G.currentTeam + " se termine dans " + sem + " semaines. Il faut décider vite : prolonger ou regarder ailleurs."
+      : "Tu es tranquille chez " + G.currentTeam + " pour encore " + Math.round(sem / 4) + " mois. Profites-en pour marquer des points, c'est ce qui fera monter ton prochain salaire.";
+  } });
+  ajouter("agent", { id: "sponsors", lbl: "Des sponsors en vue ?", texte: function () {
+    var n = (G.sponsors || []).length, o = (G.sponsorOffers || []).length;
+    return o ? o + " marque" + (o > 1 ? "s ont" : " a") + " fait une proposition : regarde dans Sponsors. " + (n ? "Tu en as déjà " + n + ", ne surcharge pas ta combinaison." : "Ce serait ton premier partenaire.")
+      : "Rien de concret. Les marques suivent les podiums et la presse : soigne tes interviews.";
+  } });
+  ajouter("tp", { id: "attentes", lbl: "Qu'attendez-vous de moi ?", texte: function () {
+    var p = G.champPos || 0;
+    return !p ? "Des points dès les premières manches, et zéro casse." : p <= 3 ? "Tu es P" + p + " au championnat : on veut le titre, rien de moins." : p <= 8 ? "P" + p + ", c'est correct, mais l'objectif est le top 3. Trouve deux ou trois dixièmes en qualif." : "P" + p + " au championnat, ce n'est pas ce qu'on attendait. Il faut des résultats, vite.";
+  } });
+  ajouter("tp", { id: "coequipier", lbl: "Et face à mon coéquipier ?", texte: function () {
+    var r = derniere();
+    if (!r || !r.tmPos) return "On en reparlera après quelques courses. Pour l'instant, vous êtes à égalité.";
+    return (r.pos && r.pos < r.tmPos ? "Tu l'as battu à " + (r.circuit || "la dernière course") + " (P" + r.pos + " contre P" + r.tmPos + "). Continue, c'est comme ça qu'on devient numéro un."
+      : "Il t'a devancé à " + (r.circuit || "la dernière course") + " (P" + r.tmPos + " contre P" + (r.pos || "?") + "). Dans ce sport, ton premier adversaire, c'est lui.");
+  } });
+  ajouter("ing_course", { id: "reglages", lbl: "Où en sont mes réglages ?", texte: function () {
+    var conf = window.RJAtelier && typeof RJAtelier.confiance === "function" ? RJAtelier.confiance() : null;
+    var conseil = window.RJAtelier && typeof RJAtelier.conseil === "function" ? RJAtelier.conseil() : "";
+    return (conf === null ? "On n'a pas encore roulé ce week-end. " : "Ta confiance dans la voiture est à " + conf + " %. ") + (conseil || "Roule aux essais, je te dirai quoi changer.");
+  } });
+  ajouter("ing_course", { id: "prochain", lbl: "Le prochain circuit", texte: function () {
+    var n = prochaine(), d = n && typeof getCircuitData === "function" ? getCircuitData(n.name) : null, t = d && d.type;
+    if (!n) return "Plus de course cette saison. On prépare déjà la suivante.";
+    return n.name + " : " + (t === "street" ? "circuit en ville, des murs partout. Suspension souple, freins stables, et pas d'erreur." : t === "highspeed" ? "circuit rapide : on retire de l'aileron, la vitesse de pointe fera la différence." : t === "technical" ? "tracé technique : on charge l'appui, l'équilibre fera le chrono." : "un tracé complet, on part d'un réglage équilibré.");
+  } });
+  ajouter("journaliste", { id: "image", lbl: "Que dit-on de moi ?", texte: function () {
+    var r = G.rep || {}, med = Math.round(r.medias || 0), pub = Math.round(r.public || 0);
+    return (med >= 60 ? "Les rédactions te suivent de près. " : med >= 35 ? "On commence à parler de toi dans la presse spécialisée. " : "Franchement, peu de gens te connaissent encore. ") +
+      (pub >= 55 ? "Et le public t'adore." : pub >= 30 ? "Le public découvre ton nom." : "Le grand public, lui, attend un coup d'éclat.");
+  } });
+  ajouter("sponsor", { id: "bonus", lbl: "Un bonus possible ?", texte: function () {
+    var pod = (G.races || []).filter(function (x) { return x && x.pos && x.pos <= 3; }).length;
+    return pod ? pod + " podium" + (pod > 1 ? "s" : "") + " cette saison : notre direction est ravie. Un prochain podium déclenchera la prime prévue." : "Un premier podium déclencherait la prime prévue au contrat. Nous comptons sur vous.";
+  } });
+  ajouter("pilote", { id: "championnat", lbl: "Parler du championnat", texte: function (c) {
+    var riv = (G.rivals || []).filter(function (x) { return x && c && x.name === c.name; })[0];
+    if (!riv) return "On se reverra en piste. Le classement, on le regardera à la fin.";
+    var d = (G.champPts || 0) - (riv.pts || 0);
+    return d > 0 ? "Tu as " + d + " points d'avance sur moi. Profite, ça ne va pas durer." : d < 0 ? "J'ai " + (-d) + " points d'avance. Il va falloir faire mieux que ça." : "On est à égalité de points. Le prochain qui craque perd.";
+  } });
+  ajouter("dir_sport", { id: "strategie", lbl: "La stratégie de l'équipe", texte: function () {
+    var n = prochaine();
+    return "Pour " + (n ? n.name : "la prochaine course") + ", priorité aux points. On ne prend pas de risque au départ, on attaque en fin de course.";
+  } });
+  ajouter("dir_tech", { id: "fiabilite", lbl: "La fiabilité de la voiture", texte: function () {
+    var ab = (G.races || []).filter(function (x) { return x && x.dnf; }).length;
+    return ab ? ab + " abandon" + (ab > 1 ? "s" : "") + " cette saison : on a changé les pièces en cause. Ça ne doit plus arriver." : "Aucun abandon cette saison : la voiture tient. On garde la même base.";
+  } });
+
   function sujets(c) { return (c && (SUJETS[c.role] || SUJETS.dir_sport)) || []; }
 
   function enAttente(cle) { return etat().attente.some(function (a) { return a.cle === cle && a.type === "ecrit"; }); }
@@ -343,6 +404,34 @@
     a.forEach(function (x, i) { setTimeout(function () { _pushHomeToastCoeur(x[0], x[1], x[2]); }, 350 + i * 700); });
   }
 
+  /* ------------------------------------------ un contact = un fil (v289) ---
+     Un même interlocuteur écrivait sous plusieurs noms : « Tes parents » et
+     « Maman », « Williams » et « Williams — Direction sportive », « Salle de
+     presse » et « Service de presse », « Tes amis » et « Tes potes ». Chaque
+     variante ouvrait un fil (rôle::expéditeur) : doublons dans la boîte. */
+  function cleCanonique(m) {
+    var de = String(m.from || ""), role = m.role || "x";
+    if (role === "family" && /parents|maman|papa|m[èe]re|p[èe]re/i.test(de)) return "family::Tes parents";
+    if (role === "friends") return "friends::Tes potes";
+    if (role === "team_boss") {
+      var equipe = de.split(/\s+[—-]\s+/)[0].trim();
+      if (equipe && (equipe === G.currentTeam || (window.TEAM_LOGOS && TEAM_LOGOS[equipe]))) return "team_boss::" + equipe + " — Direction sportive";
+    }
+    if ((role === "press" || role === "journalist") && /salle de presse|service de presse/i.test(de)) return "press::Service de presse";
+    return null;
+  }
+
+  /* --- Les écuries et les académies écrivent avec leur logo, pas un visage --- */
+  function logoMail(m, t) {
+    // « Williams » ou « Williams — Bureau d'études » : l'écurie elle-même ; une personne (« Erik Karlsson ») n'est pas une écurie
+    var de = String((m && m.from) || ""), equipe = de.split(/\s+[—-]\s+/)[0].trim();
+    var svg = window.TEAM_LOGOS && TEAM_LOGOS[equipe];
+    if (svg) return '<div class="rj124-logo" style="width:' + t + "px;height:" + t + 'px">' + svg + "</div>";
+    var acad = window.ACADEMIES && ACADEMIES[de];
+    if (acad && typeof acadLogoHtml === "function") return acadLogoHtml(acad, t);
+    return null;
+  }
+
   /* -------------------------------------------------------- installation --- */
   function installer() {
     if (!R() || typeof rjInscrire !== "function" || !Array.isArray(window.WEEKLY_TICK_HOOKS) || !Array.isArray(window.RACE_POST_HOOKS)) return false;
@@ -352,16 +441,31 @@
       var m = getMailbox().filter(function (x) { return x.id === args[0]; })[0];
       var a = m && m.actions && m.actions[args[1]];
       if (!m || !a || !m.contactKey || m.rj124 || m.rj123 || a.kind === "dismiss") return;
+      /* v289 : plus de « Merci pour ta réponse » la semaine suivante — ces
+         accusés de réception remplissaient la boîte sans rien raconter. Seul
+         un refus noté par un contact rancunier ou exigeant revient (il a une
+         conséquence sur la relation). */
+      var c = G._network && G._network[m.contactKey];
+      if (!(a.kind === "refuse" && c && (c.trait === "rancunier" || c.trait === "exigeant"))) return;
       etat().attente.push({ cle: m.contactKey, ticks: 1, type: "suite", objet: m.subject || "ton message", kind: a.kind });
     } });
     /* Plus intérieur que 62 (-5100) : un message que 62 bloque comme doublon n'applique pas son effet. */
     rjInscrire("pushMail", { id: "124-messagerie:pushMail", ordre: 0, remplace: function (args, suite) {
+      if (args[0] && /^Merci d.avoir/i.test(args[0].subject || "")) return null;   // v289 : pas de remerciements automatiques
       if (deTrop(args[0])) return null;
       faireDeLaPlace();
       sansFauxChoix(args[0]);
       return suite();
     } });
     rjInscrire("renderMailbox", { id: "124-messagerie:renderMailbox", apres: function () { habiller(); } });
+    rjInscrire("_renderMailAvatar", { id: "124-messagerie:logo", ordre: -200, remplace: function (args, suite) {
+      var h = null; try { h = logoMail(args[0], args[1] || 40); } catch (e) {} return h || suite();
+    } });
+    if (typeof window._mailThreadKey === "function" && !window._mailThreadKey._rj124) {
+      var cleOrigine = window._mailThreadKey;
+      window._mailThreadKey = function (m) { return (m && cleCanonique(m)) || cleOrigine(m); };
+      window._mailThreadKey._rj124 = true;
+    }
     /* Les messages courts (showToast : « Pas assez de PA »…) avaient leur propre
        fenêtre, posée par-dessus la pile des notifications : ils rejoignent la
        pile, en haut de l'écran, sans passer par les filtres (réponse immédiate

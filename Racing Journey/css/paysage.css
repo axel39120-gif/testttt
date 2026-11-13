@@ -1838,3 +1838,4 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 #ct-offres > .t-sec { margin-top: 4px; }
 #ct-contrat-actuel > div { margin-bottom: 12px !important; }
 #ct-offres .rj117-sans-contrat { padding: 12px 14px; border: 1px dashed rgba(255, 255, 255, .15); border-radius: var(--r); color: var(--text3, #8a8a96); font-size: 13px; margin-bottom: 12px; }
+.rj124-logo { border-radius: 8px; overflow: hidden; flex-shrink: 0; display: inline-flex; } .rj124-logo svg { width: 100%; height: 100%; display: block; }

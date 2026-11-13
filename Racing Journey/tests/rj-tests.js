@@ -2406,7 +2406,7 @@ async function suiteMessagerie() {
     S.verifier("une négociation d'écurie n'expire pas", exp.negOuverte, JSON.stringify(exp));
     S.verifier("l'expéditeur se souvient d'un message ignoré", exp.relApres < exp.relAvant && /répondu|réponse/i.test(exp.souvenir || ""), JSON.stringify(exp));
 
-    /* Conversation : la réponse arrive la semaine suivante. */
+    /* v289 : plus de « merci pour ta réponse » automatique la semaine suivante. */
     const conv = await page.evaluate(() => {
       pushMail({ from: "Team Principal", role: "team_boss", subject: "Séance simulateur", body: "Dispo jeudi ?", actions: [{ label: "J'y serai", kind: "accept" }, { label: "Impossible", kind: "refuse" }] });
       const m = getMailbox()[0], n0 = getMailbox().length;
@@ -2416,7 +2416,7 @@ async function suiteMessagerie() {
       const r = getMailbox()[0];
       return { immediat, suite: r !== m && r.contactKey === m.contactKey, sansChoix: !r.actions || !r.actions.length, objet: r.subject, corps: r.body };
     });
-    S.verifier("répondre amène la réponse du contact la semaine suivante, sans choix", conv.immediat === 0 && conv.suite && conv.sansChoix && /simulateur/i.test(conv.objet + conv.corps), JSON.stringify(conv));
+    S.verifier("répondre n'amène pas de message de remerciement la semaine suivante", conv.immediat === 0 && !conv.suite, JSON.stringify(conv));
 
     /* Le débrief de l'ingénieur, sans choix, après une course qui compte. */
     await S.courirUneCourse(page, { categorie: "Formule 1", reinitialiserRivaux: false, grille: 4 });
@@ -2465,6 +2465,38 @@ async function suiteMessagerie() {
         filtre: visibles.every(c => c.getAttribute("data-rj124") === "personnel"), visibles: visibles.length };
     });
     S.verifier("la boîte montre la priorité de chaque conversation et se filtre", boite.filtres >= 4 && boite.badges === boite.cartes && boite.cartes >= 3 && boite.filtre, JSON.stringify(boite));
+
+    // v289 : audit de la messagerie
+    const audit = await page.evaluate(async () => {
+      const a = ms => new Promise(r => setTimeout(r, ms));
+      const out = {}, eq = G.currentTeam;
+      G.mailbox = [];
+      pushMail({ from: "Maman", role: "family", subject: "Bisous " + Math.random(), body: "x" });
+      pushMail({ from: "Tes parents", role: "family", subject: "Courage " + Math.random(), body: "x" });
+      pushMail({ from: eq, role: "team_boss", subject: "Réunion " + Math.random(), body: "x" });
+      pushMail({ from: eq + " — Direction sportive", role: "team_boss", subject: "Objectifs " + Math.random(), body: "x" });
+      pushMail({ from: "Salle de presse", role: "journalist", subject: "Article " + Math.random(), body: "x" });
+      pushMail({ from: "Service de presse", role: "press", subject: "Planning " + Math.random(), body: "x" });
+      out.fils = _getMailThreads().length;
+      out.merci = pushMail({ from: "Tes parents", role: "family", subject: "Merci d'avoir appelé", body: "x" });
+      navTo("S-mailbox", null); await a(500);
+      out.logo = !!document.querySelector("#mailbox-list .rj124-logo");
+      // une personne = une fiche dans le réseau
+      recordNetworkInteraction("paddock_test_dupont", { name: "Test Dupont", role: "tp", team: eq, delta: 0 });
+      recordNetworkInteraction("team_" + eq + "_test_dupont", { name: "Test Dupont", role: "contact", team: eq, delta: 0 });
+      out.fiches = Object.keys(G._network).filter(k => G._network[k].name === "Test Dupont").length;
+      // des sujets variés pour chaque contact
+      out.sujetsMin = Math.min.apply(null, ["agent", "tp", "ing_course", "journaliste", "sponsor", "pilote"].map(r => window._rj124.sujets({ role: r }).length));
+      // questions de journalistes : pas de redite avant d'avoir épuisé les autres
+      G._jqVues = []; const qs = []; for (let i = 0; i < 6; i++) qs.push(_pickJournalistQuestion("supportif").q);
+      out.questionsDistinctes = new Set(qs).size;
+      return out;
+    });
+    S.verifier("contacts doublons : un fil par interlocuteur (parents, direction, presse)", audit.fils === 3, JSON.stringify(audit));
+    S.verifier("pas de message de remerciement automatique", audit.merci === null, String(audit.merci));
+    S.verifier("une écurie écrit avec son logo", audit.logo, String(audit.logo));
+    S.verifier("une personne = une fiche dans le réseau", audit.fiches === 1, String(audit.fiches));
+    S.verifier("au moins deux sujets par contact, six questions de presse différentes d'affilée", audit.sujetsMin >= 2 && audit.questionsDistinctes === 6, JSON.stringify(audit));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
