@@ -1925,9 +1925,55 @@ var JOURNALIST_QUESTIONS = {
  ]
 };
 
+/* v289 : des questions qui partent de ta situation (dernière course, championnat,
+   coéquipier, prochain circuit), et une mémoire des questions posées : une
+   question ne revient pas tant que les autres n'ont pas servi (la banque fixe
+   n'en avait que trois par ton de journaliste). */
+function _jqRep(label, d, msg){ return {label: label, repDelta: d, msg: msg}; }
+function _jqContexte(angle){
+ var L = [], races = G.races || [], r = races[races.length - 1], c = r && (r.circuit || r.nom), p = G.champPos || 0;
+ var dur = angle === "hostile" || angle === "sarcastique";
+ if(r && c && r.dnf) L.push({sujet: "Abandon à " + c, q: dur ? "Encore un abandon, à " + c + ". Tu ne crois pas que tu prends trop de risques ?" : "Abandon à " + c + " : tu t'en veux, ou c'était inévitable ?", answers: [
+  _jqRep("J'assume, c'est ma faute", 2, "L'honnêteté plaît, l'article est indulgent."),
+  _jqRep("La voiture m'a lâché", 0, "L'écurie n'apprécie pas d'être pointée du doigt."),
+  _jqRep("On tourne la page, place à la suite", 1, "Réponse sobre, sans relief.")]});
+ else if(r && c && r.pos && r.pos <= 3) L.push({sujet: "Podium à " + c, q: dur ? "Podium à " + c + ", mais n'as-tu pas profité des erreurs des autres ?" : "P" + r.pos + " à " + c + " ! Qu'est-ce qui a fait la différence ?", answers: [
+  _jqRep("Le travail de toute l'équipe", 3, "L'écurie adore, article très positif."),
+  _jqRep("Mon rythme en fin de course", 2, "Le journaliste retient ta confiance."),
+  _jqRep(dur ? "Le chrono ne ment pas" : "Un peu de réussite aussi", dur ? 2 : 1, dur ? "Réplique sèche, reprise en titre." : "Le journaliste sourit.")]});
+ if(r && c && r.qualiPos && r.pos && r.qualiPos - r.pos >= 3) L.push({sujet: "Remontée à " + c, q: "Parti P" + r.qualiPos + ", arrivé P" + r.pos + " à " + c + " : comment as-tu fait ?", answers: [
+  _jqRep("Une bonne stratégie de course", 2, "Le journaliste salue l'intelligence de course."),
+  _jqRep("J'ai pris des risques au départ", 1, "Ça plaît au public, moins à l'équipe."),
+  _jqRep("La qualif n'était pas à notre niveau", 2, "Lucide : l'article parle de potentiel.")]});
+ if(p && p <= 3 && races.length >= 3) L.push({sujet: "Le championnat", q: dur ? "P" + p + " au championnat : tu ne crains pas de craquer sous la pression ?" : "Tu es P" + p + " au championnat. Le titre, tu y crois ?", answers: [
+  _jqRep("Je ne pense qu'au prochain week-end", 2, "Réponse posée, bien reçue."),
+  _jqRep("Oui, le titre est l'objectif", 3, "Phrase forte, reprise en titre."),
+  _jqRep("Les autres ont plus d'expérience", 1, "Un peu timide pour un prétendant.")]});
+ else if(p >= 10 && races.length >= 4) L.push({sujet: "Une saison difficile", q: (dur ? "" : "Sans détour : ") + "P" + p + " au championnat, la saison est-elle déjà ratée ?", answers: [
+  _jqRep("Rien n'est joué, on va remonter", 2, "Combatif, le journaliste apprécie."),
+  _jqRep("On apprend, les résultats viendront", 1, "Réponse prudente."),
+  _jqRep("Je ne commente pas le classement", -1, "Le journaliste trouve la réponse fuyante.")]});
+ if(r && c && r.tmPos && r.pos) L.push({sujet: "Duel chez " + (G.currentTeam || "ton écurie"), q: "Ton coéquipier finit P" + r.tmPos + " et toi P" + r.pos + " à " + c + ". Qui est le numéro un chez " + (G.currentTeam || "vous") + " ?", answers: [
+  _jqRep("Le chrono parlera", 2, "Réponse habile, sans polémique."),
+  _jqRep("Moi, évidemment", r.pos < r.tmPos ? 2 : -1, r.pos < r.tmPos ? "Les résultats te donnent raison." : "Arrogant alors qu'il t'a battu : ça fait jaser."),
+  _jqRep("On travaille ensemble pour l'équipe", 1, "Réponse diplomatique.")]});
+ var n = typeof getNextRace === "function" ? getNextRace() : null;
+ if(n && n.name) L.push({sujet: "Avant " + n.name, q: "Prochaine manche : " + n.name + ". Un circuit qui te convient ?", answers: [
+  _jqRep("J'adore ce tracé", 2, "Le journaliste note ta motivation."),
+  _jqRep("Il faudra bien préparer les essais", 1, "Réponse de pilote méthodique."),
+  _jqRep("Aucun circuit ne me fait peur", angle === "supportif" ? 2 : 1, "Assurance appréciée.")]});
+ return L;
+}
 function _pickJournalistQuestion(angle){
- var bank = JOURNALIST_QUESTIONS[angle] || JOURNALIST_QUESTIONS.supportif;
- return bank[Math.floor(Math.random() * bank.length)];
+ var vues = G._jqVues || (G._jqVues = []);
+ var bank = (JOURNALIST_QUESTIONS[angle] || JOURNALIST_QUESTIONS.supportif);
+ var neuves = function (l) { return l.filter(function (q) { return vues.indexOf(q.q) < 0; }); };
+ var ctx = neuves(_jqContexte(angle)), fixe = neuves(bank);
+ if(!ctx.length && !fixe.length){ G._jqVues = vues = []; fixe = bank.slice(); }   // tout a servi : on repart
+ var choix = ctx.length && (Math.random() < 0.7 || !fixe.length) ? ctx : fixe;
+ var q = choix[Math.floor(Math.random() * choix.length)];
+ vues.push(q.q); if(vues.length > 60) vues.shift();
+ return q;
 }
 
 function _journalistMailActions(question, journalistAngle){
@@ -1972,6 +2018,7 @@ function maybeSendJournalistMail(e, t){
  else if(i.angle === "hostile") subject = "Question difficile à te poser";
  else if(i.angle === "sarcastique") subject = "Une réaction, sans langue de bois ?";
  else subject = "Question technique";
+ if(question.sujet) subject = i.outlet + " — " + question.sujet;   // v289 : le sujet dit de quoi on parle
  // Body : journalist intro + actual question
  var body = "<strong>" + i.name + "</strong> de <strong>" + i.outlet + "</strong> :<br><br>" +
             "« " + question.q + " »";

@@ -527,7 +527,57 @@
     return null;
   }
 
+  /* --- Une personne = une fiche (v289) ---------------------------------
+     Plusieurs modules inscrivent la même personne sous des clés différentes
+     (« paddock_james_vowles » et « team_Williams_james_vowles »), et la presse
+     sous deux noms (« Salle de presse », « Service de presse ») : doublons dans
+     le réseau et dans les contacts. À l'inscription, on réutilise la fiche
+     existante du même nom ; les sauvegardes existantes sont nettoyées. */
+  var ALIAS_NOMS = { "salle de presse": "Service de presse" };
+  function nomCanonique(n) { var k = String(n || "").trim().toLowerCase(); return ALIAS_NOMS[k] || String(n || "").trim(); }
+  function cleDuNom(nom, saufCle) {
+    var cible = nomCanonique(nom).toLowerCase();
+    if (!cible || !G._network) return null;
+    var cles = Object.keys(G._network);
+    for (var i = 0; i < cles.length; i++) {
+      var c = G._network[cles[i]];
+      if (cles[i] !== saufCle && c && nomCanonique(c.name).toLowerCase() === cible) return cles[i];
+    }
+    return null;
+  }
+  function fusionnerDoublons() {
+    if (!G._network) return 0;
+    var vus = {}, n = 0;
+    Object.keys(G._network).forEach(function (k) {
+      var c = G._network[k];
+      if (!c || !c.name) return;
+      c.name = nomCanonique(c.name);
+      var nom = c.name.toLowerCase(), autre = vus[nom];
+      if (!autre) { vus[nom] = k; return; }
+      // garder la fiche au rôle le plus précis (pas « contact »), puis la meilleure relation
+      var a = G._network[autre], garde = (a.role === "contact" && c.role !== "contact") ? k : autre, jette = garde === k ? autre : k;
+      var G1 = G._network[garde], G2 = G._network[jette];
+      G1.relation = Math.max(G1.relation || 0, G2.relation || 0);
+      G1.interactions = (G1.interactions || 0) + (G2.interactions || 0);
+      if (!G1.team && G2.team) G1.team = G2.team;
+      (typeof getMailbox === "function" ? getMailbox() : []).forEach(function (m) { if (m && m.contactKey === jette) m.contactKey = garde; });
+      delete G._network[jette];
+      vus[nom] = garde; n++;
+    });
+    return n;
+  }
+
   function brancherMessages() {
+    rjInscrire("recordNetworkInteraction", { id: "101-reseau:une-fiche", ordre: -300, remplace: function (args, suite) {
+      var cle = args[0], infos = args[1] || {};
+      if (infos.name) infos.name = nomCanonique(infos.name);
+      var existante = infos.name && (!G._network || !G._network[cle]) ? cleDuNom(infos.name, cle) : null;
+      return existante ? suite([existante, infos].concat([].slice.call(args, 2))) : suite();
+    } });
+    try { fusionnerDoublons(); } catch (e) { console.warn(TAG, "fusion :", e && e.message); }
+    if (Array.isArray(window.WEEKLY_TICK_HOOKS) && !window.WEEKLY_TICK_HOOKS.some(function (h) { return h && h.id === "101-reseau:fusion"; }))
+      window.WEEKLY_TICK_HOOKS.push({ id: "101-reseau:fusion", run: function () { try { fusionnerDoublons(); } catch (e) {} } });
+    window._rj101Fusion = fusionnerDoublons;
     /* Toute personne qui entre au réseau, par quelque module que ce soit, a un trait. */
     rjInscrire("recordNetworkInteraction", { id: "101-reseau:recordNetworkInteraction", apres: function (c) { traitDe(c); } });
     if (typeof window.pushMail !== "function" || typeof window.handleMailAction !== "function") return false;
