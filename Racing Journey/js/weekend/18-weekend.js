@@ -946,6 +946,7 @@
           sessionIdx: pr.sessionsCompleted,
           clockTotal: sessionMs(),
           clockStart: Date.now(),
+          _actif: 0, _dernier: 0,   // temps de séance réellement passé à l'écran (ms)
           ended: false,
           onTrack: false,
           stock: defaultStock(),
@@ -1057,7 +1058,13 @@
       var L = pr._live;
       if (!L) return 0;
       if (L.ended) return 0;
-      return Math.max(0, L.clockTotal - (Date.now() - L.clockStart));
+      /* Le chrono ne compte que le temps passé sur l'écran des essais (accumulé
+         par le ticker). Avant (v284), il suivait l'heure réelle : quitter
+         l'écran, verrouiller le téléphone ou passer l'appli en arrière-plan
+         laissait filer la séance, et au retour l'EL1 était terminée (on
+         sautait à l'EL2). */
+      if (typeof L._actif !== "number") L._actif = Math.max(0, Date.now() - L.clockStart);
+      return Math.max(0, L.clockTotal - L._actif);
     }
 
     // ------------------------------------------------------------------------
@@ -1901,9 +1908,16 @@
     function startClockTicker(pr) {
       stopClockTicker();
       _boardTickN = 0;
+      if (pr._live) pr._live._dernier = 0;   // la pause (écran quitté) ne compte pas
       _clockIv = setInterval(function () {
         var L = pr._live;
         if (!L || L.ended) { stopClockTicker(); return; }
+        // seul le temps écoulé entre deux battements compte ; un trou (appli en
+        // arrière-plan, minuteries suspendues) vaut au plus un battement
+        var maintenant = Date.now();
+        if (typeof L._actif !== "number") L._actif = Math.max(0, maintenant - L.clockStart);
+        if (L._dernier) L._actif += Math.min(maintenant - L._dernier, 400);
+        L._dernier = maintenant;
         var sec = document.getElementById("race-practice-section");
         // Si l'écran essais n'est plus affiché, on stoppe le ticker (le chrono
         // se fige : on ne pénalise pas le joueur qui change d'onglet).
@@ -1962,6 +1976,8 @@
           var pr = seance();
           if (tab === "essais" && pr && pr._live && typeof pr._live._frozen === "number") {
             pr._live.clockStart = Date.now() - (pr._live.clockTotal - pr._live._frozen);
+            pr._live._actif = pr._live.clockTotal - pr._live._frozen;
+            pr._live._dernier = 0;
             pr._live._frozen = undefined;
           }
         }
@@ -2370,6 +2386,20 @@
   // un autre week-end ; une séance en cours sur le MÊME week-end est conservée.
   // Inoffensif et utile dans les deux modes (course unique ou multi-manches).
   function installPracticeReset() {
+    /* L'ancien chrono d'essais du moteur (_fpTickTimer, 03 : 25 à 35 s en
+       temps réel, qui continue hors de l'écran) tournait encore en parallèle
+       et terminait la séance de lui-même : l'EL1 était parfois sautée pour
+       passer à l'EL2 (v285). Quand la séance de ce module est en cours, c'est
+       son chrono qui décide de la fin ; l'ancien ne fait plus rien. */
+    if (fn('_fpOnTimerEnd') && !window._fpOnTimerEnd._rj18) {
+      var origFin = window._fpOnTimerEnd;
+      window._fpOnTimerEnd = function () {
+        var pr = window.RACE_STATE && window.RACE_STATE.practice;
+        if (pr && pr._live) { if (fn('_fpStopTimer')) window._fpStopTimer(); return; }
+        return origFin.apply(this, arguments);
+      };
+      window._fpOnTimerEnd._rj18 = true;
+    }
     if (fn('initRaceState') && !window.initRaceState._rjPracReset) {
       var origIRS = window.initRaceState;
       rjInscrire("initRaceState", { id: "18-weekend:initRaceState", ordre: -3600, remplace: function (args, suite) {
