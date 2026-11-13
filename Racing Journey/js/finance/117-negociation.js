@@ -109,6 +109,18 @@
     return lignes.length ? html + '<div class="rj117-argent">' + lignes.join("") + "</div>" : html;
   }
 
+  /* Onglet « Offres équipes » (v287) : le contrat du moment sous son propre
+     titre, au-dessus des offres. renderOffers (03) le met en tête de la liste
+     des offres (bloc sans classe .offer-card) ; on le déplace. */
+  function contratActuel() {
+    var place = document.getElementById("ct-contrat-actuel"), liste = document.getElementById("offers-list");
+    if (!place || !liste) return;
+    var bloc = [].slice.call(liste.children).filter(function (x) { return !x.classList.contains("offer-card") && /contrat en cours/i.test(x.textContent || ""); })[0];
+    place.innerHTML = "";
+    if (bloc) place.appendChild(bloc);
+    else place.innerHTML = '<div class="rj117-sans-contrat">' + (G.currentTeam && G.currentTeam !== "Indépendant" ? "Contrat en fin de course." : "Aucun contrat : tu roules en indépendant.") + "</div>";
+  }
+
   function boot() {
     if (typeof rjInscrire !== "function" || typeof computeInitialPatience !== "function" || typeof _negResolveLeverage !== "function" ||
         typeof _negSummaryHTML !== "function" || typeof negDoAction !== "function") return setTimeout(boot, 150);
@@ -118,6 +130,7 @@
     rjInscrire("_negResolveLeverage", { id: "117-negociation:sponsor", remplace: apporterSponsor });
     rjInscrire("_negSummaryHTML", { id: "117-negociation:resume", apres: resume });
     rjInscrire("negDoAction", { id: "117-negociation:planB", apres: apresAction });
+    rjInscrire("renderOffers", { id: "117-negociation:contrat-actuel", apres: function (r) { try { contratActuel(); } catch (e) {} return r; } });
     window.RJNegociation = { ajustementPatience: ajustementPatience, sponsorsAnnuels: sponsorsAnnuels };
     window._rj117Uninstall = function () { rjDesinscrire(["117-negociation:"]); delete window.RJNegociation; };
     console.log(TAG, "actif — argent et concurrence à la table");
