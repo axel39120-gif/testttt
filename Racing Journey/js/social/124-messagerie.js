@@ -109,6 +109,7 @@
     if (/^(friends|family|fans|agent|promoter|sponsor)$/.test(o.role || "") && FELICITATIONS.test(sujet)) return "felicitations";
     if (/^(team|team_boss)$/.test(o.role || "") && /note technique|détail technique/i.test(sujet)) return "technique";
     if (o.actions && o.actions.length > 1) return null;                      // une vraie décision passe toujours
+    if (/^Le point sur le marché/.test(sujet)) return null;                  // deux fois par saison (116) : jamais jeté
     if (o.role === "agent" && /\(\d+\/100\)\s*$/.test(sujet)) return "palier";
     return DELAI[o.role] ? o.role : null;
   }

@@ -673,18 +673,36 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rjcal-l .cal-mini-event-title { flex: 0 1 auto !important; display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #S-cal .rjcal .rj99-cal { margin: 0 !important; padding: 3px 7px !important; font-size: 9px !important; line-height: 1 !important; }
 
-/* --- Course en direct ----------------------------------------------------
-   À gauche, le circuit sur toute la hauteur (js/race/111-vue-circuit.js) ;
-   à droite, la progression avec le mini-classement, puis le fil du direct. */
+/* --- Course en direct (v282) ---------------------------------------------
+   En haut, le bandeau d'un seul commentaire (js/race/145-bandeau-direct.js) ;
+   dessous, le circuit et la tour de classement sur toute la largeur
+   (js/race/111-vue-circuit.js) ; le bouton d'action en bas. */
 @container app (min-width: 640px) {
   #race-screen, .race-screen {
-    display: grid !important; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    column-gap: 12px; row-gap: 10px; align-items: start;
+    display: grid !important; grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px; align-items: start;
   }
-  #race-screen > *, .race-screen > * { margin-top: 0 !important; grid-column: 2; }
-  #race-screen > #rj111-carte { grid-column: 1; grid-row: 1 / span 4; margin-bottom: 0;
-    height: calc(var(--app-h) - var(--bandeau) - 30px); max-height: 640px; }
+  #race-screen > *, .race-screen > * { margin-top: 0 !important; grid-column: 1; }
+  #race-screen > #rj111-carte { margin-bottom: 0;
+    height: calc(var(--app-h) - var(--bandeau) - 74px); max-height: 640px; }
 }
+#rj145-bandeau {
+  display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 6px 12px;
+  border-radius: var(--r); border: 1px solid rgba(255, 255, 255, .08);
+  background: linear-gradient(90deg, rgba(225, 6, 0, .22), rgba(20, 20, 26, .95) 38%);
+  overflow: hidden;
+}
+#rj145-bandeau .rj145-direct {
+  flex: none; padding: 3px 7px; border-radius: 3px; background: #E10600; color: #fff;
+  font: 800 9px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase;
+}
+#rj145-bandeau .rj145-txt {
+  flex: 1; min-width: 0; font: 700 13px/1.25 var(--font-display); color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#rj145-bandeau .rj145-entre { animation: rj145-entre .35s ease-out; }
+@keyframes rj145-entre { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #rj145-bandeau .rj145-entre { animation: none; } }
 #rj111-carte {
   display: flex; flex-direction: column; margin-bottom: 10px;
   height: clamp(150px, calc(var(--app-h) - var(--bandeau) - 190px), 460px);
@@ -772,20 +790,30 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj111-tour li.out .e { color: #EF4444; font-weight: 900; letter-spacing: .08em; }
 .rj111-tour li .pit { font-style: normal; font-weight: 900; font-size: 8.5px; letter-spacing: .1em; padding: 2px 4px; border-radius: 2px; background: #ffc107; color: #111; }
 /* Piste : bordure, limites blanches, bitume, repères de secteurs. */
-.rj111-bord { fill: none; stroke: #23232d; stroke-width: 7.5; stroke-linejoin: round; }
-.rj111-limite { fill: none; stroke: #4b4b58; stroke-width: 5.4; stroke-linejoin: round; }
-.rj111-piste { fill: none; stroke: #17171e; stroke-width: 4.6; stroke-linejoin: round; }
-.rj111-secteur { stroke: #FFC107; stroke-width: .6; opacity: .8; }
+/* v282 : piste plus large (vue rapprochée), décors à la façon d'un jeu de gestion de course */
+.rj111-bord { fill: none; stroke: #0f1a12; stroke-width: 9.6; stroke-linejoin: round; }
+.rj111-limite { fill: none; stroke: #e8e8e8; stroke-width: 7.6; stroke-linejoin: round; }
+.rj111-piste { fill: none; stroke: #3a3d44; stroke-width: 7; stroke-linejoin: round; }
+.rj111-herbe { fill: #1f4a2a; }
+.rj111-gravier { fill: none; stroke: #b9a273; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
+.rj111-arbre { stroke: rgba(0, 0, 0, .35); stroke-width: .3; }
+.rj111-arbre.a0 { fill: #2f6b36; } .rj111-arbre.a1 { fill: #27592e; } .rj111-arbre.a2 { fill: #3b7a3f; }
+.rj111-vibreur-b { fill: none; stroke: #f2f2f2; stroke-width: .9; stroke-linejoin: round; }
+.rj111-vibreur-r { fill: none; stroke: #d32f2f; stroke-width: .9; stroke-dasharray: 1 1; stroke-linejoin: round; }
+.rj111-tribune { fill: #2b3140; stroke: #11141b; stroke-width: .25; }
+.rj111-public { fill: #c9a227; opacity: .75; } .rj111-public.b { fill: #4a8bd6; }
+.rj111-svg { cursor: zoom-out; background: #1f4a2a; border-radius: 6px; }
+.rj111-secteur { stroke: #FFC107; stroke-width: .5; opacity: .8; }
 .rj111-voie-bord { fill: none; stroke: #2e2e3a; stroke-width: 3.2; stroke-linejoin: round; stroke-linecap: round; }
 .rj111-voie { fill: none; stroke: #15151b; stroke-width: 2.3; stroke-linejoin: round; stroke-linecap: round; }
 .rj111-muret { fill: none; stroke: #8a8a96; stroke-width: .45; stroke-dasharray: 1.4 .6; }
 .rj111-garage { fill: #22222c; stroke: #3a3a48; stroke-width: .25; }
-.rj111-stand-lib { font: 700 3.4px var(--font-display); fill: #6b6b78; text-anchor: middle; letter-spacing: .3px; }
-.rj111-caisse { stroke: rgba(0, 0, 0, .75); stroke-width: .4; }
-.rj111-joueur .rj111-caisse { stroke: #fff; stroke-width: .8; }
-.rj111-initiales { font-family: var(--font-display); font-weight: 900; fill: #fff; text-anchor: middle; letter-spacing: -.1px; paint-order: stroke; stroke: rgba(0, 0, 0, .85); stroke-width: .55px; pointer-events: none; }
+.rj111-stand-lib { font: 700 2.2px var(--font-display); fill: #6b6b78; text-anchor: middle; letter-spacing: .3px; }
+.rj111-caisse { stroke: rgba(0, 0, 0, .75); stroke-width: .3; }
+.rj111-joueur .rj111-caisse { stroke: #fff; stroke-width: .5; }
+.rj111-initiales { font-family: var(--font-display); font-weight: 900; fill: #fff; text-anchor: middle; letter-spacing: -.1px; paint-order: stroke; stroke: rgba(0, 0, 0, .85); stroke-width: .3px; pointer-events: none; }
 .rj111-autre { opacity: .55; }
-.rj111-etiquette { font: 800 4.6px var(--font-display); fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 1px; }
+.rj111-etiquette { font: 800 2.4px var(--font-display); fill: #fff; paint-order: stroke; stroke: #000; stroke-width: .6px; }
 
 /* Fenêtres (événements, confirmations, profils…) : en paysage la hauteur
    manque ; la carte tient dans l'écran et défile au besoin. */
@@ -1663,3 +1691,7 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj66-photo-s { position: absolute; left: 14px; bottom: 11px; font: 700 10.5px var(--font-body, sans-serif); color: rgba(255, 255, 255, .7); }
 .rj66-vues { color: var(--muted, #8a8a96); }
 .rj66-prof .rj66-id { padding-top: 50px; }   /* le nom sous la bannière, seul le portrait la chevauche */
+
+/* Conseil de l'ingénieur sous la parole du pilote (v282) */
+.rja-inge-txt { margin-top: 6px; font-size: 11.5px; line-height: 1.4; color: var(--text2, #c8c8d0); }
+.rja-inge-txt b { font: 800 9px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: #22D3EE; margin-right: 6px; }

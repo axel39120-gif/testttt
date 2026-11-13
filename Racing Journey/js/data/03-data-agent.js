@@ -22822,7 +22822,7 @@ function generateTeamOffers(e) {
                     bonusPodium: Math.round((r.bonusPodium || 0) * f),
                     duration: r.dur,
                     extra: r.extra,
-                    expire: 4,
+                    expire: 6,
                     role: u
                   }))
                 }
@@ -22868,7 +22868,9 @@ function generateTeamOffers(e) {
             return e.cat !== G.cat
           }),
           Z = [];
-        if (Q.length > 0 && Z.push(Q[0]), W.length > 0 && Z.push(W[0]), Z.length < 2 && Q.length > 1 && Z.push(Q[1]), Z.length < 2 && W.length > 1 && Z.push(W[1]), Z.forEach(function(e) {
+        /* v282 : jusqu'à quatre candidates par catégorie et par vague (avant : deux au total) ; la concurrence
+           pour les baquets (116) en écarte une partie et garde au plus quatre nouvelles offres. */
+        if (Q.slice(0, 4).forEach(function(e) { Z.push(e) }), W.slice(0, 4).forEach(function(e) { Z.push(e) }), Z.forEach(function(e) {
             G.offers.push(e)
           }), Z.length) {
           if ("function" == typeof pushMail && G.agent) {

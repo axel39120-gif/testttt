@@ -165,7 +165,9 @@
      d'arrêt, encarts divers — est masqué, y compris ce que d'autres modules
      injectent après coup. Chasser chaque bloc un par un aurait demandé de
      connaître leurs identifiants, dont plusieurs n'en ont pas. */
-  var VISIBLES = ["live-race-header", "rj111-carte", "rj90-progression", "rj-direct-section", "race-btn"];
+  /* v282 : la progression, le mini-classement et le fil « Direct » cèdent la
+     place au bandeau d'un seul commentaire (145) et à la carte pleine largeur. */
+  var VISIBLES = ["live-race-header", "rj145-bandeau", "rj111-carte", "race-btn"];
 
   /* Certains éléments flottent hors de l'écran de course : le bouton
      d'arrêt au stand et son bandeau de stratégie, positionnés dans la page

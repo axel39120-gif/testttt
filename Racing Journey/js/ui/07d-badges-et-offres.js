@@ -99,7 +99,8 @@
   // ===========================================================================
   // FIX 16 : verrouillage sponsors avant première course + notifications offres
   // ---------------------------------------------------------------------------
-  // (a) Bloque l'accès aux sponsors tant que G.races.length === 0
+  // (a) Bloque l'accès aux sponsors avant la toute première course de la
+  //     carrière (première saison seulement : les saisons suivantes, ils restent ouverts)
   // (b) Surveille G.offers et G.sponsorOffers : notifie le joueur quand
   //     de nouvelles offres apparaissent (toast + badge)
   // ===========================================================================
@@ -108,9 +109,12 @@
   function _rjAreSponsorsLocked() {
     try {
       if (typeof window.G === 'undefined' || !window.G) return true;
-      return !(G.races && G.races.length > 0);
+      if (G._sponsorsOuverts || (G.saison || 1) > 1) return false;
+      if (G.races && G.races.length > 0) { G._sponsorsOuverts = true; return false; }
+      return true;
     } catch (e) { return false; }
   }
+  window._rjAreSponsorsLocked = _rjAreSponsorsLocked;
 
   function _rjShowSponsorsLockedMessage() {
     try {
