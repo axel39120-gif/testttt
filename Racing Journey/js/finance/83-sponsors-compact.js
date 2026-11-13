@@ -247,8 +247,7 @@
       /* Le verrouillage d'avant-première course (module 07) remplace la
          liste par son propre message : on le laisse faire. */
       try {
-        var G = G_();
-        if (!G || !G.races || !G.races.length) return suite();
+        if (typeof window._rjAreSponsorsLocked === "function" ? window._rjAreSponsorsLocked() : !(G_() && G_().races && G_().races.length)) return suite();
       } catch (e) {}
       try { rendre(); } catch (e) {
         console.warn(TAG, "rendu compact :", e && e.message);

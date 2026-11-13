@@ -98,6 +98,7 @@
     if (prix > 0) lignes.push("<div><span>Prix du baquet</span><b>" + euros(prix) + "</b><em>un tiers à la signature, le reste sur huit mois</em></div>");
     if (o._apport) lignes.push("<div><span>Dont apport demandé</span><b>" + euros(o._apport) + "</b><em>l'écurie compte sur ton argent</em></div>");
     if (o._prixAvantAcademie) lignes.push("<div><span>Pris en charge par ton académie</span><b>" + euros(o._prixAvantAcademie) + "</b></div>");
+    if (o._baquetOffert) lignes.push("<div><span>Baquet offert par l'écurie</span><b>0 €</b><em>tu n'as rien à payer pour signer</em></div>");
     if (sponsorsAnnuels() > 0 && prix > 0) lignes.push("<div><span>Tes sponsors sur une saison</span><b>" + euros(sponsorsAnnuels()) + "</b></div>");
     if (c) {
       var w = c.priorites, regard = w.argent >= 0.35 ? "surtout l'argent apporté" : w.argent >= 0.2 ? "le talent et l'argent" : "surtout le talent";

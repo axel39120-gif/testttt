@@ -1814,8 +1814,9 @@
       var atelier = window.RJAtelier && typeof RJAtelier.ressentisHTML === "function" ? RJAtelier.ressentisHTML() : "";
       if (atelier) {
         var ditPilote = typeof RJAtelier.parole === "function" ? RJAtelier.parole() : null;
+        var ditInge = typeof RJAtelier.conseil === "function" ? RJAtelier.conseil() : "";
         h += '<div class="rja rja-debrief"><div class="rja-debrief-titre">Ajustement des réglages</div>' + atelier +
-          (ditPilote ? '<div class="rja-pilote"><div class="rja-bulle">« ' + esc(ditPilote) + " »</div></div>" : "") + "</div>";
+          (ditPilote || ditInge ? '<div class="rja-pilote">' + (ditPilote ? '<div class="rja-bulle">« ' + esc(ditPilote) + " »</div>" : "") + (ditInge ? '<div class="rja-inge-txt"><b>Ingénieur</b> ' + esc(ditInge) + "</div>" : "") + "</div>" : "") + "</div>";
       } else if (fKeys.length) {
         h += '<div style="padding:10px 14px 6px"><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Réglages</div>';
         fKeys.forEach(function (k) {

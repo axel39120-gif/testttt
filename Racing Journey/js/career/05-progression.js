@@ -467,10 +467,11 @@ function recomputeGlobalRep() {
     n = getRepCap(),
     a = Math.round(Math.min(n, Math.max(0, r))),
     i = G.reputation || 0;
-  if (G.reputation = a, r > n) {
-    var o, s = .15 * (r - n);
-    G.rep.medias = Math.max(0, G.rep.medias - .3 * s), G.rep.public = Math.max(0, G.rep.public - .3 * s), G.rep.recruteurs = Math.max(0, G.rep.recruteurs - .25 * s), G.rep.paddock = Math.max(0, G.rep.paddock - .15 * s)
-  }
+  /* Le plafond de catégorie borne la note affichée, pas les axes : la
+     réputation gagnée au-dessus du plafond reste acquise et réapparaît dans
+     la catégorie supérieure (avant : les axes étaient rognés à chaque calcul,
+     on repartait du plafond chaque saison). */
+  G.reputation = a;
   if ("function" == typeof getSponsorPool && a > i && (G.races || []).length >= 2) try {
     var l = getSponsorPool(),
       c = (G.sponsors || []).map(function(e) {

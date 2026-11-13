@@ -15,15 +15,14 @@
  *     compare le joueur à des pilotes du plateau (même catégorie et catégorie
  *     inférieure) : talent, argent apporté, image. Ses priorités dépendent de
  *     son rang : les grandes écuries regardent le talent, les petites l'argent.
- *     Le joueur garde l'offre s'il arrive premier ; deuxième, une fois sur trois
- *     (le premier choix signe ailleurs).
+ *     Le joueur garde l'offre s'il arrive premier ou deuxième ; troisième, une
+ *     fois sur trois (v282 : plusieurs offres à comparer).
  *   - ARGENT : chaque pilote du plateau a un soutien financier, tiré une fois
  *     pour toutes. Celui du joueur : son budget, plus une saison de revenus de
- *     sponsors. Une académie prend en charge le baquet chez ses écuries
- *     partenaires. En F1, en IndyCar et dans les équipes privées du WEC, une
- *     écurie qui regarde l'argent demande un apport.
- *   - PAIEMENT : un baquet payant se règle un tiers à la signature, le reste
- *     chaque semaine pendant huit mois.
+ *     sponsors. Il pèse dans le choix de l'écurie (les petites préfèrent le
+ *     pilote qui apporte du budget), mais une écurie qui FAIT une offre ne
+ *     réclame rien : ni prix du baquet, ni apport (v282, règle convenue avec
+ *     le joueur). Le paiement échelonné ne sert plus qu'aux anciennes offres.
  * Renouvellements chez l'écurie actuelle : hors concurrence (ta place est à toi).
  * Données : G._baquets (sauvegardé, bloc « baquets »).
  * =================================================================== */
@@ -140,14 +139,6 @@
   }
 
   /* --- Les offres du jeu passent par la concurrence ----------------------- */
-  function apportDemande(cat, equipe, w) {
-    if (cat === "Formule 1" || cat === "IndyCar" || cat === "Super Formula" || cat === "Endurance WEC") {
-      if (w.argent < 0.25) return 0;
-      return Math.round((SOUTIEN_MEDIAN[cat] || 1e6) * 2 * (w.argent / 0.55) / 1e5) * 1e5;
-    }
-    return 0;
-  }
-
   function filtrer(offres) {
     var E = etat(), garde = [];
     offres.forEach(function (o) {
@@ -155,7 +146,8 @@
       var plan = places(o.cat);
       if (!plan[o.team]) { E.perdus.push({ equipe: o.team, cat: o.cat, raison: "complet" }); return; }
       var c = classer(o.cat, o.team, o);
-      var gagne = c.rangJoueur === 1 || (c.rangJoueur === 2 && Math.random() < CHANCE_DEUXIEME);
+      // v282 : plusieurs offres possibles en même temps — premier ou deuxième choix, l'offre reste ; troisième, une fois sur trois
+      var gagne = c.rangJoueur <= 2 || (c.rangJoueur === 3 && Math.random() < CHANCE_DEUXIEME);
       var premier = c.candidats.filter(function (x) { return !x.joueur; })[0];
       if (!gagne) {
         E.perdus.push({ equipe: o.team, cat: o.cat, raison: "concurrence", choisi: premier && premier.nom,
@@ -169,19 +161,11 @@
         rival: premier ? { nom: premier.nom, talent: premier.talent, argent: premier.argent } : null,
         adversaires: c.candidats.filter(function (x) { return !x.joueur; }).slice(0, 3)
           .map(function (x) { return { nom: x.nom, talent: x.talent, argent: x.argent }; }) };
-      if (c.academie && o.cost > 0) { o._prixAvantAcademie = o.cost; o.cost = 0; }
-      // Choisi pour son talent sans en avoir les moyens : l'écurie baisse son prix
-      // (grandes écuries 70 %, offert au champion ; milieu de grille 40 % ; petites rien :
-      // elles vivent de cet argent).
-      else if (o.cost > 0 && apportJoueur() < o.cost) {
-        var remise = c.priorites.argent < 0.25 ? (G.champPos === 1 ? 1 : 0.7) : c.priorites.argent < 0.35 ? 0.4 : 0;   // le champion : baquet offert
-        if (remise) { o._remiseTalent = Math.round(o.cost * remise / 1e4) * 1e4; o.cost -= o._remiseTalent; }
-      }
-      var apport = c.academie ? 0 : apportDemande(o.cat, o.team, c.priorites);
-      if (apport > 0) { o._apport = apport; o.cost = (o.cost || 0) + apport; }
       plan[o.team]--;
       garde.push(o);
     });
+    // une offre d'écurie ne coûte rien au joueur : ni baquet payant, ni apport
+    garde.forEach(function (o) { if (o && o.cost > 0) { o._baquetOffert = o.cost; o.cost = 0; } });
     return garde;
   }
 
@@ -209,20 +193,14 @@
     var premier = rangs.filter(function (r) { return r.c.rangJoueur === 1; });
     var proche = rangs.filter(function (r) { return r.c.rangJoueur === 2; });
     var argent = rangs.filter(function (r) { return r.c.rangJoueur > 1 && r.c.priorites.argent >= 0.3; });
-    var prixMin = Math.min.apply(null, rangs.map(function (r) { return r.prix; }).filter(function (p) { return p > 0; }).concat([Infinity]));
-    var capacite = apportJoueur();
     var parent = G.agent.type === "parent";
 
     var lignes = ["<strong>" + libres.length + " baquet(s)</strong> devraient se libérer en " + cible + " pour la saison prochaine."];
     lignes.push(premier.length ? "Tu es aujourd'hui le premier choix chez <strong>" + premier.map(function (r) { return r.equipe; }).join(", ") + "</strong>."
       : proche.length ? "Tu es dans la short-list chez <strong>" + proche.map(function (r) { return r.equipe; }).join(", ") + "</strong>, mais quelqu'un passe encore devant toi."
       : "Pour l'instant, aucune écurie ne te place en tête de sa liste.");
-    if (isFinite(prixMin) && capacite < prixMin)
-      lignes.push("Le baquet le moins cher coûte <strong>" + euros(prixMin) + "</strong> ; avec ton budget et tes sponsors, tu peux mettre " + euros(capacite) + ". Il manque <strong>" + euros(prixMin - capacite) + "</strong>.");
     if (argent.length)
-      lignes.push(argent.length + " écurie(s) regardent surtout l'argent apporté : de nouveaux sponsors changeraient la donne.");
-    if (typeof getPlayerAcademy === "function" && !getPlayerAcademy() && ["Formule 4", "Formula Regional", "Formule 3", "Formule 2"].indexOf(G.cat) >= 0)
-      lignes.push("Une académie de constructeur prendrait ton baquet en charge chez ses écuries partenaires : ça vaut le coup de candidater.");
+      lignes.push(argent.length + " écurie(s) regardent surtout le soutien financier : de nouveaux sponsors te feraient passer devant.");
     if (cible === "Formule 1" && !premier.length)
       lignes.push("Si la F1 se refuse, l'IndyCar, le WEC ou la Super Formula offrent des volants payés par les usines.");
 
@@ -241,6 +219,9 @@
     if (!avant) return;
     var nouvelles = (G.offers || []).filter(function (o) { return avant.indexOf(o) < 0; });
     var gardees = filtrer(nouvelles);
+    // plusieurs offres à comparer, pas une avalanche : quatre nouvelles au plus par vague (les forcées d'abord)
+    if (gardees.length > 4) gardees = gardees.filter(function (o) { return o.isRenewalForced || o._academie; })
+      .concat(gardees.filter(function (o) { return !(o.isRenewalForced || o._academie); })).slice(0, 4);
     G.offers = avant.concat(gardees);
     avant = null;
     try { conseil(); } catch (e) { console.warn(TAG, e && e.message); }

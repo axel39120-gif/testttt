@@ -124,6 +124,59 @@
     return pire.f.magnitude === "unknown" ? "Quelque chose cloche… " + dit.charAt(0).toLowerCase() + dit.slice(1) : dit;
   }
 
+  /* ------------------------------------------------------------------
+   * L'ingénieur : une indication selon la situation (circuit, météo,
+   * ressenti le plus faux et dans quel sens, données encore floues,
+   * évolution des chronos), au lieu d'une phrase générique.
+   * ---------------------------------------------------------------- */
+  var CONSEILS = {
+    equilibre: ["Elle sous-vire : glisse « Équilibre » vers la droite, plus d'aileron avant et un antiroulis avant plus souple.",
+      "Elle survire : ramène « Équilibre » vers la gauche, l'arrière a besoin de stabilité."],
+    freinage: ["L'arrière bloque au freinage : avance la répartition, glisse « Freinage » vers la droite.",
+      "L'avant bloque : recule la répartition, glisse « Freinage » vers la gauche."],
+    appui: ["On manque d'appui en virage : pousse « Appui » vers la droite, on perdra un peu en ligne droite.",
+      "Trop d'appui : on traîne la voiture. Ramène « Appui » vers la gauche."],
+    traction: ["La voiture est paresseuse en sortie : ouvre un peu le différentiel, « Traction » vers la droite.",
+      "Ça patine à la réaccélération : ferme le différentiel, « Traction » vers la gauche."],
+    vitesse: ["On est lents en ligne droite : retire de l'aileron, « Vitesse de pointe » vers la droite.",
+      "La voiture est trop légère : rends un peu d'aileron, « Vitesse de pointe » vers la gauche."]
+  };
+  var PISTE = {
+    highspeed: "Circuit rapide : la vitesse de pointe paie plus que l'appui, garde les ailerons bas.",
+    technical: "Tracé technique : l'appui et l'équilibre font le chrono, on peut charger les ailerons.",
+    street: "Circuit urbain : bosses et freinages violents, suspension souple et freins stables d'abord."
+  };
+  function conseil() {
+    var dispo = params(), p = pratique(), tests = (p && p.tests) || [];
+    var meteo = (window.RACE_STATE && RACE_STATE.weather && RACE_STATE.weather.id) || "";
+    var pluie = /rain|wet|storm/.test(meteo);
+    var type = (window.RACE_STATE && RACE_STATE.circuitData && RACE_STATE.circuitData.type) || "";
+    var nomPiste = (window.RACE_STATE && RACE_STATE.circuit) || "ce circuit";
+    var phrases = [];
+    if (!tests.length) {
+      phrases.push(PISTE[type] || "À " + nomPiste + ", on part d'un réglage équilibré.");
+      if (pluie) phrases.push("Avec la pluie, cherche d'abord de l'appui et de la traction.");
+      phrases.push("Fais un relais aux essais : je saurai où est la fenêtre.");
+      return phrases.join(" ");
+    }
+    var vus = RESSENTIS.map(function (r) { return { r: r, x: ressenti(r, dispo) }; }).filter(function (o) { return o.x; });
+    var surs = vus.filter(function (o) { return o.x.doute <= 0.45; });
+    var flous = vus.filter(function (o) { return o.x.doute > 0.45; });
+    var pire = surs.sort(function (a, b) { return Math.abs(b.x.pos) - Math.abs(a.x.pos); })[0];
+    var c = confiance();
+    if (pire && Math.abs(pire.x.pos) > 0.2) phrases.push(CONSEILS[pire.r.id][pire.x.pos < 0 ? 0 : 1]);
+    else if (c !== null && c >= 85) phrases.push("On est dans la fenêtre. Garde ce réglage pour la qualif.");
+    else if (pire && Math.abs(pire.x.pos) > 0.08) phrases.push("Petit détail : « " + pire.r.nom + " » est presque bon, un cran suffira.");
+    if (flous.length) phrases.push("Je manque de données sur " + flous.slice(0, 2).map(function (o) { return "« " + o.r.nom + " »"; }).join(" et ") + " : un relais de plus me le dira.");
+    if (tests.length >= 2) {
+      var a = tests[tests.length - 2].lapTime, b = tests[tests.length - 1].lapTime;
+      if (typeof a === "number" && typeof b === "number" && Math.abs(a - b) >= 0.05)
+        phrases.push(b < a ? "On a gagné " + (a - b).toFixed(2) + " s sur le dernier relais, on est sur la bonne voie." : "On a perdu " + (b - a).toFixed(2) + " s : reviens sur ton dernier changement.");
+    }
+    if (pluie && pire && (pire.r.id === "appui" || pire.r.id === "traction")) phrases.push("Sous la pluie, c'est ce réglage qui compte le plus.");
+    return phrases.join(" ");
+  }
+
   function temps(t) {
     if (typeof t !== "number") return "—";
     var m = Math.floor(t / 60), s = t - 60 * m;
@@ -172,11 +225,23 @@
     var ps = Object.keys(r.poids).filter(function (p) { return dispo.indexOf(p) >= 0; });
     var sa = 0, s2 = 0;
     ps.forEach(function (p) { sa += Math.abs(r.poids[p]); s2 += r.poids[p] * r.poids[p]; });
-    var E = 5 * (t - x.pos) * sa / s2, bouge = false;
-    ps.forEach(function (p) {
-      var cible = Math.max(0, Math.min(10, Math.round(valeur(p) + r.poids[p] * E)));
-      if (cible !== valeur(p)) { setAdvParam("setup", p, cible); bouge = true; }
-    });
+    /* Valeurs exactes (non arrondies) : on vise depuis elles, puis on arrondit
+       au cran. Sans couplages (4e argument) : les couplages du moteur
+       déplaçaient d'autres réglages, le curseur s'arrêtait loin du lâcher et
+       des ressentis sans rapport bougeaient. */
+    var exact = {};
+    ps.forEach(function (p) { exact[p] = valeur(p); });
+    var bouge = false;
+    for (var passe = 0; passe < 3; passe++) {
+      x = ressenti(r, dispo);
+      if (Math.abs(t - x.pos) < 0.04) break;
+      var E = 5 * (t - x.pos) * sa / s2;
+      ps.forEach(function (p) {
+        exact[p] = Math.max(0, Math.min(10, exact[p] + r.poids[p] * E));
+        var cible = Math.round(exact[p]);
+        if (cible !== valeur(p)) { setAdvParam("setup", p, cible, true); bouge = true; }
+      });
+    }
     return bouge;
   }
 
@@ -249,6 +314,7 @@
     /* Le pilote parle, on roule. */
     h += '<div class="rja-pilote"><div class="rja-bulle">' +
       (dit ? "« " + esc(dit) + " »" : "Roule aux essais libres : le pilote te dira ce qu'il ressent.") + "</div>" +
+      '<div class="rja-inge-txt"><b>Ingénieur</b> ' + esc(conseil()) + "</div>" +
       '<div class="rja-actions">' +
       /* Plus de « Tour d'essai » ici : on roule aux essais libres, où les mêmes curseurs se règlent. */
       (typeof askEngineerHint === "function" ? '<button type="button" class="rja-inge" data-rja="inge">Conseil de l\'ingénieur</button>' : "") +
@@ -285,7 +351,7 @@
     document.addEventListener("pointerup", surLacher, true);
     document.addEventListener("pointercancel", surLacher, true);
     document.addEventListener("keydown", surTouche, true);
-    window.RJAtelier = { ressenti: ressenti, confiance: confiance, parole: parole, ressentisHTML: ressentisHTML, RESSENTIS: RESSENTIS, amener: amener };
+    window.RJAtelier = { ressenti: ressenti, confiance: confiance, parole: parole, conseil: conseil, ressentisHTML: ressentisHTML, RESSENTIS: RESSENTIS, amener: amener };
     window._rj120Uninstall = function () {
       rjDesinscrire(["120-atelier:"], "renderAdvancedSetupUI");
       document.removeEventListener("click", surClic, true);

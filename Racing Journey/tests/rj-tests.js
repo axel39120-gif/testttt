@@ -1621,11 +1621,11 @@ async function suiteBaquets() {
         const gardees = B.filtrer([{ team: haut, cat: "Formule 1", cost: 0 }, { team: bas, cat: "Formule 1", cost: 0 }]);
         res.filtre = { n: gardees.length, equipe: gardees[0] && gardees[0].team, annotee: !!(gardees[0] && gardees[0]._concurrence) };
 
-        /* Apport demandé par une petite écurie de F1 à un pilote moyen. */
+        /* v282 : une écurie qui fait une offre ne réclame rien (ni baquet payant, ni apport). */
         G._baquets = { saison: G.saison, places: { "Formule 1": { [bas]: 1 } }, perdus: [], echeancier: null };
         window.calcPlayerRating = () => 80; G.budget = 60e6;
-        const o = B.filtrer([{ team: bas, cat: "Formule 1", cost: 0 }])[0];
-        res.apport = o ? o._apport || 0 : -1;
+        const o = B.filtrer([{ team: bas, cat: "Formule 1", cost: 3e6 }])[0];
+        res.apport = o ? { cout: o.cost, apport: o._apport || 0 } : null;
 
         /* Paiement échelonné : un tiers à la signature, le reste chaque semaine. */
         G._baquets = { saison: G.saison, places: {}, perdus: [], echeancier: null };
@@ -1659,10 +1659,9 @@ async function suiteBaquets() {
     S.verifier("sans argent, un pilote moyen n'est pas le premier choix d'une petite écurie", r.moyenSansArgentEnBas > 1, String(r.moyenSansArgentEnBas));
     S.verifier("avec un gros apport, le même pilote passe devant", r.moyenAvecArgentEnBas < r.moyenSansArgentEnBas, r.moyenSansArgentEnBas + " → " + r.moyenAvecArgentEnBas);
     S.verifier("pas de place, pas d'offre ; une place gagnée donne une offre détaillée", r.filtre.n === 1 && r.filtre.annotee, JSON.stringify(r.filtre));
-    S.verifier("une petite écurie de F1 demande un apport", r.apport > 0, String(r.apport));
+    S.verifier("une offre d'écurie ne coûte rien : ni baquet, ni apport", r.apport && r.apport.cout === 0 && r.apport.apport === 0, JSON.stringify(r.apport));
     S.verifier("baquet payant : un tiers à la signature", Math.abs(r.signature.paye - 8e5) < 1e3 && Math.abs(r.signature.reste - 1.6e6) < 1e3, JSON.stringify(r.signature));
     S.verifier("l'agent fait le point sur le marché, une fois par vague", /Le point sur le marché/.test(r.conseil.sujet || "") && /baquets? devraient se libérer|baquet.s. devraient/.test(r.conseil.texte) && r.conseil.doublon === null, JSON.stringify(r.conseil).slice(0, 220));
-    S.verifier("il chiffre ce qui manque pour le baquet le moins cher", /Il manque/.test(r.conseil.texte), r.conseil.texte.slice(0, 200));
     S.verifier("le reste se prélève chaque semaine", r.prelevement < r.signature.reste, r.signature.reste + " → " + r.prelevement);
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
