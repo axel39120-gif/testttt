@@ -20,9 +20,12 @@
  *   - ARGENT : chaque pilote du plateau a un soutien financier, tiré une fois
  *     pour toutes. Celui du joueur : son budget, plus une saison de revenus de
  *     sponsors. Il pèse dans le choix de l'écurie (les petites préfèrent le
- *     pilote qui apporte du budget), mais une écurie qui FAIT une offre ne
- *     réclame rien : ni prix du baquet, ni apport (v282, règle convenue avec
- *     le joueur). Le paiement échelonné ne sert plus qu'aux anciennes offres.
+ *     pilote qui apporte du budget).
+ *   - PRIX : un baquet se paie (prix de l'écurie), sans apport supplémentaire ;
+ *     l'académie en paie la moitié chez ses partenaires ; hors catégories de
+ *     début, de bons résultats le rendent moins cher, voire gratuit (v288,
+ *     voir prixDuBaquet). Paiement : un tiers à la signature, le reste sur
+ *     huit mois.
  * Renouvellements chez l'écurie actuelle : hors concurrence (ta place est à toi).
  * Données : G._baquets (sauvegardé, bloc « baquets »).
  * =================================================================== */
@@ -164,9 +167,37 @@
       plan[o.team]--;
       garde.push(o);
     });
-    // une offre d'écurie ne coûte rien au joueur : ni baquet payant, ni apport
-    garde.forEach(function (o) { if (o && o.cost > 0) { o._baquetOffert = o.cost; o.cost = 0; } });
+    garde.forEach(prixDuBaquet);
     return garde;
+  }
+
+  /* --- Prix du baquet (v288, règle convenue avec le joueur) -----------------
+     Un baquet se paie (prix de l'écurie, TEAM_OFFERS). Pas d'« apport »
+     supplémentaire par-dessus (retiré en v282). Deux allègements :
+       - académie : chez une écurie partenaire, elle finance la moitié ;
+       - résultats : hors catégories de début, un excellent pilote est moins
+         cher — en tête du championnat 100 % (baquet offert), top 3 50 %, top 5 25 %.
+     Dans les catégories de début (karting, F4, Regional), pas de baquet
+     offert pour les résultats : ce sont les académies qui allègent la facture.
+     (v282-v287 : tout était gratuit par erreur — « Ton apport : Gratuit ».) */
+  var DEBUTS = { "Karting Junior": 1, "Karting Senior": 1, "Formule 4": 1, "Formula Regional": 1 };
+  var PART_ACADEMIE = 0.5;
+  function prixDuBaquet(o) {
+    if (!o) return;
+    delete o._baquetOffert; delete o._apport;
+    var base = o._prixBase != null ? o._prixBase : (o.cost || 0);
+    o._prixBase = base;
+    var prix = base;
+    delete o._prixAvantAcademie; delete o._remiseTalent;
+    if (prix > 0 && typeof isAcademyAffiliate === "function" && isAcademyAffiliate(o.team, o.cat)) {
+      o._prixAvantAcademie = Math.round(prix * PART_ACADEMIE / 1e3) * 1e3;   // part payée par l'académie
+      prix -= o._prixAvantAcademie;
+    }
+    if (prix > 0 && !DEBUTS[o.cat]) {   // résultats de la saison en cours, y compris pour monter d une catégorie
+      var p = G.champPos || 99, remise = p === 1 ? 1 : p <= 3 ? 0.5 : p <= 5 ? 0.25 : 0;
+      if (remise) { o._remiseTalent = Math.round(prix * remise / 1e3) * 1e3; prix -= o._remiseTalent; }
+    }
+    o.cost = Math.max(0, prix);
   }
 
   /* --- Le point de l'agent, deux fois par saison -------------------------- */
@@ -194,13 +225,19 @@
     var proche = rangs.filter(function (r) { return r.c.rangJoueur === 2; });
     var argent = rangs.filter(function (r) { return r.c.rangJoueur > 1 && r.c.priorites.argent >= 0.3; });
     var parent = G.agent.type === "parent";
+    var prixMin = Math.min.apply(null, rangs.map(function (r) { return r.prix; }).filter(function (p) { return p > 0; }).concat([Infinity]));
+    var capacite = apportJoueur();
 
     var lignes = ["<strong>" + libres.length + " baquet(s)</strong> devraient se libérer en " + cible + " pour la saison prochaine."];
     lignes.push(premier.length ? "Tu es aujourd'hui le premier choix chez <strong>" + premier.map(function (r) { return r.equipe; }).join(", ") + "</strong>."
       : proche.length ? "Tu es dans la short-list chez <strong>" + proche.map(function (r) { return r.equipe; }).join(", ") + "</strong>, mais quelqu'un passe encore devant toi."
       : "Pour l'instant, aucune écurie ne te place en tête de sa liste.");
+    if (isFinite(prixMin) && capacite < prixMin)
+      lignes.push("Le baquet le moins cher coûte <strong>" + euros(prixMin) + "</strong> ; avec ton budget et tes sponsors, tu peux mettre " + euros(capacite) + ". Il manque <strong>" + euros(prixMin - capacite) + "</strong>.");
     if (argent.length)
       lignes.push(argent.length + " écurie(s) regardent surtout le soutien financier : de nouveaux sponsors te feraient passer devant.");
+    if (typeof getPlayerAcademy === "function" && !getPlayerAcademy() && DEBUTS[cible])
+      lignes.push("Une académie de constructeur paierait la moitié de ton baquet chez ses écuries partenaires.");
     if (cible === "Formule 1" && !premier.length)
       lignes.push("Si la F1 se refuse, l'IndyCar, le WEC ou la Super Formula offrent des volants payés par les usines.");
 

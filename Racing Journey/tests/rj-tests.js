@@ -1621,11 +1621,16 @@ async function suiteBaquets() {
         const gardees = B.filtrer([{ team: haut, cat: "Formule 1", cost: 0 }, { team: bas, cat: "Formule 1", cost: 0 }]);
         res.filtre = { n: gardees.length, equipe: gardees[0] && gardees[0].team, annotee: !!(gardees[0] && gardees[0]._concurrence) };
 
-        /* v282 : une écurie qui fait une offre ne réclame rien (ni baquet payant, ni apport). */
-        G._baquets = { saison: G.saison, places: { "Formule 1": { [bas]: 1 } }, perdus: [], echeancier: null };
-        window.calcPlayerRating = () => 80; G.budget = 60e6;
-        const o = B.filtrer([{ team: bas, cat: "Formule 1", cost: 3e6 }])[0];
-        res.apport = o ? { cout: o.cost, apport: o._apport || 0 } : null;
+        /* v288 : un baquet se paie (sans apport en plus) ; remise selon les résultats hors catégories de début ; académie = moitié. */
+        G._baquets = { saison: G.saison, places: { "Formule 1": { [bas]: 3 }, "Karting Senior": { [TEAM_OFFERS["Karting Senior"][0].team]: 2 } }, perdus: [], echeancier: null };
+        window.calcPlayerRating = () => 99; G.budget = 60e6;
+        const acad = window.isAcademyAffiliate; window.isAcademyAffiliate = () => false;
+        G.champPos = 8; const plein = B.filtrer([{ team: bas, cat: "Formule 1", cost: 3e6 }])[0];
+        G.champPos = 2; const remise = B.filtrer([{ team: bas, cat: "Formule 1", cost: 3e6 }])[0];
+        G.champPos = 1; const kart = B.filtrer([{ team: TEAM_OFFERS["Karting Senior"][0].team, cat: "Karting Senior", cost: 40e3 }])[0];
+        window.isAcademyAffiliate = () => true; G.champPos = 8; const aca = B.filtrer([{ team: bas, cat: "Formule 1", cost: 3e6 }])[0];
+        window.isAcademyAffiliate = acad;
+        res.apport = { plein: plein && plein.cost, apport: plein && (plein._apport || 0), remise: remise && remise.cost, kart: kart && kart.cost, academie: aca && aca.cost };
 
         /* Paiement échelonné : un tiers à la signature, le reste chaque semaine. */
         G._baquets = { saison: G.saison, places: {}, perdus: [], echeancier: null };
@@ -1659,7 +1664,8 @@ async function suiteBaquets() {
     S.verifier("sans argent, un pilote moyen n'est pas le premier choix d'une petite écurie", r.moyenSansArgentEnBas > 1, String(r.moyenSansArgentEnBas));
     S.verifier("avec un gros apport, le même pilote passe devant", r.moyenAvecArgentEnBas < r.moyenSansArgentEnBas, r.moyenSansArgentEnBas + " → " + r.moyenAvecArgentEnBas);
     S.verifier("pas de place, pas d'offre ; une place gagnée donne une offre détaillée", r.filtre.n === 1 && r.filtre.annotee, JSON.stringify(r.filtre));
-    S.verifier("une offre d'écurie ne coûte rien : ni baquet, ni apport", r.apport && r.apport.cout === 0 && r.apport.apport === 0, JSON.stringify(r.apport));
+    S.verifier("le baquet se paie (sans apport en plus), moitié moins en P2, payant en karting même en tête, l'académie en paie la moitié", r.apport.plein === 3e6 && r.apport.apport === 0 && r.apport.remise === 1.5e6 && r.apport.kart === 40e3 && r.apport.academie === 1.5e6, JSON.stringify(r.apport));
+    S.verifier("il chiffre ce qui manque pour le baquet le moins cher", /Il manque/.test(r.conseil.texte), r.conseil.texte.slice(0, 200));
     S.verifier("baquet payant : un tiers à la signature", Math.abs(r.signature.paye - 8e5) < 1e3 && Math.abs(r.signature.reste - 1.6e6) < 1e3, JSON.stringify(r.signature));
     S.verifier("l'agent fait le point sur le marché, une fois par vague", /Le point sur le marché/.test(r.conseil.sujet || "") && /baquets? devraient se libérer|baquet.s. devraient/.test(r.conseil.texte) && r.conseil.doublon === null, JSON.stringify(r.conseil).slice(0, 220));
     S.verifier("le reste se prélève chaque semaine", r.prelevement < r.signature.reste, r.signature.reste + " → " + r.prelevement);
