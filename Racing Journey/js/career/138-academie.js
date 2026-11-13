@@ -130,22 +130,58 @@
     return "correcte";
   }
 
-  /* --- Invitations -------------------------------------------------------- */
+  /* --- Approches (v286) ----------------------------------------------------
+     Avant : toute académie dont le joueur passait les seuils (note, place au
+     championnat) était « disponible » en même temps — cinq offres à peine
+     arrivé en Karting Senior. En vrai, une académie repère un pilote pour son
+     potentiel et ses résultats, l'approche, et il a rarement le choix.
+     Désormais : une seule académie t'approche à la fois, au plus une par
+     saison, après 40 % de la saison, si tu es dans le top 3 du championnat et
+     au-dessus de son niveau requis (bonus de potentiel pour les plus jeunes),
+     avec une chance par semaine selon la place (12 % en tête, 6 % deuxième,
+     3 % troisième ; jamais d'office). L'approche expire après huit
+     semaines sans réponse. L'écran Académie ne montre que celle-là. */
+  var EXPIRATION = 8, CHANCE_SEMAINE = 0.12, PLACE_MAX = 3, MARGE_NOTE = 4;
+  function semaineAbs() { return (G.saison || 1) * 60 + (G.semaine || 0); }
+  function approcheValide() {
+    var a = etat().approche;
+    return a && ACADEMIES[a.id] && semaineAbs() - a.quand <= EXPIRATION ? a : null;
+  }
+  function eligibles() {
+    var total = (typeof CAL_RACES !== "undefined" && CAL_RACES.length) || 10;
+    if ((G.races || []).length < Math.ceil(total * 0.4)) return [];
+    var note = (typeof calcPlayerRating === "function" && calcPlayerRating()) || 50;
+    var potentiel = Math.max(0, 18 - (G.age || 18)) * 0.6;   // un jeune pilote montre plus de potentiel
+    var p = place();
+    return Object.keys(ACADEMIES).filter(function (n) {
+      var a = ACADEMIES[n], mem = typeof getEntityMemory === "function" ? getEntityMemory(n) : null;
+      if (mem && mem.status === "broken") return false;
+      if (!a.affiliates || !a.affiliates[G.cat] || !a.affiliates[G.cat].length) return false;
+      return p <= a.reqPos && note + potentiel >= a.minRating;   // seuils déjà resserrés à l installation
+    });
+  }
   function inviter() {
-    if (PLAYER_ACADEMY.id || typeof getAvailableAcademies !== "function") return null;
-    var e = etat(); if (e.invitation === G.saison) return null;
-    if ((G.races || []).length < 3) return null;
-    var dispo = getAvailableAcademies(); if (!dispo.length) return null;
-    e.invitation = G.saison;
-    var n = dispo[0];
+    if (PLAYER_ACADEMY.id || typeof ACADEMIES === "undefined") return null;
+    var e = etat();
+    if (approcheValide() || e.approcheSaison === G.saison) return null;
+    var dispo = eligibles(), chance = CHANCE_SEMAINE / Math.pow(2, place() - 1);   // 12 % en tête, 6 % deuxième, 3 % troisième
+    if (!dispo.length || Math.random() > chance) return null;
+    var n = dispo[Math.floor(Math.random() * dispo.length)];
+    e.approche = { id: n, quand: semaineAbs() }; e.approcheSaison = G.saison;
     if (typeof pushMail === "function") try {
-      pushMail({ from: n, role: "academy", subject: "Une place pour toi dans notre programme",
-        body: "Nous suivons tes résultats depuis le début de la saison. " + n + " te propose de rejoindre son programme de jeunes pilotes" +
-          (dispo.length > 1 ? " (et tu as aussi tapé dans l'œil de " + (dispo.length - 1) + " autre" + (dispo.length > 2 ? "s" : "") + " académie" + (dispo.length > 2 ? "s" : "") + ")" : "") +
-          ".\n\nTout se décide dans Pilote › Académie.",
+      pushMail({ from: n, role: "academy", subject: "Nous t'avons repéré",
+        body: "Nos observateurs suivent tes courses depuis plusieurs semaines : ton potentiel et tes résultats nous ont convaincus. " + n +
+          " te propose de rejoindre son programme de jeunes pilotes.\n\nL'offre reste ouverte huit semaines. Tout se décide dans Pilote › Académie.",
         actions: [{ label: "Je regarde", kind: "dismiss", responseBody: "Merci, je regarde ça." }] });
     } catch (err) {}
     return n;
+  }
+  /* L'écran Académie (03) et l'adhésion lisent getAvailableAcademies : seule
+     l'académie qui t'a approché y figure. */
+  function disponibles() {
+    if (PLAYER_ACADEMY.id) return [];
+    var a = approcheValide();
+    return a ? [a.id] : [];
   }
 
   /* Être membre permet de partir (contrepartie : réputation et porte fermée, 03). */
@@ -167,10 +203,20 @@
         lire: function (bloc) { PLAYER_ACADEMY._rj138 = bloc || {}; ouvrirDepart(); } });
     }
     ouvrirDepart();
+    if (typeof window.getAvailableAcademies === "function" && !window.getAvailableAcademies._rj138) {
+      window.getAvailableAcademies = disponibles;
+      window.getAvailableAcademies._rj138 = true;
+      // les conditions affichées par l'écran Académie suivent la nouvelle règle
+      Object.keys(ACADEMIES).forEach(function (n) {
+        var a = ACADEMIES[n];
+        if (a._rj138) return;
+        a._rj138 = true; a.reqPos = Math.min(a.reqPos, PLACE_MAX); a.minRating += MARGE_NOTE;
+      });
+    }
     return true;
   }
 
-  window.RJAcademie = { proposerF1: proposerF1, eligibleF1: eligibleF1, revueSaison: revueSaison, inviter: inviter };
+  window.RJAcademie = { proposerF1: proposerF1, eligibleF1: eligibleF1, revueSaison: revueSaison, inviter: inviter, eligibles: eligibles, disponibles: disponibles, approche: approcheValide };
   window._rj138Uninstall = function () {
     if (typeof rjDesinscrire === "function") rjDesinscrire(["138-academie"], "generateTeamOffers");
     window.WEEKLY_TICK_HOOKS = (window.WEEKLY_TICK_HOOKS || []).filter(function (h) { return !(h && h.id === "138-academie"); });

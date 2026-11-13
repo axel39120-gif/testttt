@@ -3473,9 +3473,14 @@ async function suiteAcademie() {
       out.reprise = getAvailableAcademies().indexOf("Ferrari Driver Academy") >= 0;
       // invitation par message, une fois par saison
       CAREER_HISTORY.length = 0; histo.forEach(h => CAREER_HISTORY.push(h));
-      PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = [1, 2, 3, 4];
-      const nb = () => getMailbox().filter(m => /place pour toi/.test(m.subject)).length, m0 = nb();
+      // v286 : une académie t'approche (pas toutes), une fois par saison ; hasard figé pour le test
+      PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = [1, 2, 3, 4, 5, 6];
+      const nb = () => getMailbox().filter(m => /Nous t'avons repéré/.test(m.subject)).length, m0 = nb();
+      const hasard = Math.random; Math.random = () => 0;
       RJAcademie.inviter(); RJAcademie.inviter(); out.invitations = nb() - m0;
+      out.disponibles = getAvailableAcademies().length;
+      G.races = [1, 2]; PLAYER_ACADEMY._rj138 = {}; out.tropTot = RJAcademie.inviter();
+      Math.random = hasard;
       // sauvegarde
       prep("Formule 2", 18, 50); RJAcademie.revueSaison(); const av = JSON.stringify(PLAYER_ACADEMY._rj138);
       saveGame(0, { silencieux: true }); PLAYER_ACADEMY._rj138 = {}; PLAYER_ACADEMY.canLeave = false; loadSave(0); await d(1500);
@@ -3493,6 +3498,7 @@ async function suiteAcademie() {
     S.verifier("revue : une saison sur le podium renforce la relation", r.bonne === "bonne" && r.bonus === 8, r.bonne + " " + r.bonus);
     S.verifier("partir coûte 3 de réputation paddock, et l'académie ne reprend pas", r.paddock === 37 && !r.reprise, r.paddock + " " + r.reprise);
     S.verifier("un pilote éligible reçoit une invitation, une seule par saison", r.invitations === 1, String(r.invitations));
+    S.verifier("une seule académie disponible à la fois, pas d'approche avant 40 % de la saison", r.disponibles === 1 && r.tropTot === null, JSON.stringify({ d: r.disponibles, t: r.tropTot }));
     S.verifier("l'état de l'académie revient au rechargement", r.recharge, "");
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }

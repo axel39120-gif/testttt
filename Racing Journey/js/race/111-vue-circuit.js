@@ -96,16 +96,44 @@
     return c;
   }
 
-  /* --- Décors, sous la piste : herbe, bacs à graviers, arbres, tribunes ;
-     sur la piste : vibreurs rouge et blanc dans les virages. ------------ */
+  /* --- Décors (v286) ------------------------------------------------------
+     Circuit permanent : herbe tondue en bandes, bacs à graviers dans les
+     virages serrés, arbres (ombre, feuillage, reflet), tribunes.
+     Circuit urbain (type « street ») : sol de ville, immeubles (ombre, toit,
+     équipements), murs de béton au bord de la piste, un port avec de l'eau et
+     des bateaux d'un côté du tracé ; pas d'herbe ni de graviers.
+     Partout : vibreurs rouge et blanc dans les virages, trajectoire gommée. */
   var DEMI = 3.5;   // demi-largeur de la piste (.rj111-piste : 7)
   function hache(i) { var x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
-  function decors(monde, L, repere, plein, PLEIN) {
+  function motifs(defs) {
+    if (defs.querySelector("#rj111-tonte")) return;
+    var t = element("pattern", { id: "rj111-tonte", width: 14, height: 14, patternUnits: "userSpaceOnUse", patternTransform: "rotate(32)" });
+    t.appendChild(element("rect", { width: 14, height: 14, fill: "#2a5d34" }));
+    t.appendChild(element("rect", { width: 7, height: 14, fill: "#2f6739" }));
+    defs.appendChild(t);
+    var v = element("pattern", { id: "rj111-vagues", width: 10, height: 6, patternUnits: "userSpaceOnUse" });
+    v.appendChild(element("rect", { width: 10, height: 6, fill: "#1f5f8b" }));
+    v.appendChild(element("path", { d: "M0,3 q2.5,-1.4 5,0 t5,0", fill: "none", stroke: "rgba(255,255,255,.14)", "stroke-width": .35 }));
+    defs.appendChild(v);
+  }
+  function decors(monde, L, repere, plein, PLEIN, ville) {
+    var svg = monde.ownerSVGElement, defs = svg.querySelector("defs");
+    motifs(defs);
+    svg.classList.toggle("rj111-ville", !!ville);
     var sous = element("g", { "class": "rj111-decors" });
     monde.insertBefore(sous, monde.firstChild);
-    sous.appendChild(element("rect", { x: plein.x - 80, y: plein.y - 80, width: plein.w + 160, height: plein.h + 160, "class": "rj111-herbe" }));
+    sous.appendChild(element("rect", { x: plein.x - 80, y: plein.y - 80, width: plein.w + 160, height: plein.h + 160, "class": ville ? "rj111-sol-ville" : "rj111-herbe", fill: ville ? null : "url(#rj111-tonte)" }));
     var ech = [];
     for (var d = 0; d < L; d += 1.5) ech.push(repere(d));
+    function distPiste(x, y) {
+      var m = 1e9;
+      for (var j = 0; j < ech.length; j += 2) { var dx = ech[j].x - x, dy = ech[j].y - y, q = dx * dx + dy * dy; if (q < m) m = q; }
+      return Math.sqrt(m);
+    }
+    // trajectoire gommée : une bande plus sombre au milieu de la piste
+    var piste = monde.querySelector(".rj111-piste");
+    if (piste) piste.parentNode.insertBefore(element("path", { d: piste.getAttribute("d"), "class": "rj111-gomme" }), piste.nextSibling);
+
     // virages : variation de cap sur ±3 unités ; côté intérieur = vers le milieu de la corde
     var virages = [], cur = null;
     ech.forEach(function (p, i) {
@@ -125,39 +153,69 @@
     var dessus = element("g", { "class": "rj111-vibreurs" });
     virages.forEach(function (v) {
       if (v.pts.length < 2) return;
-      if (v.tour > 1.6) sous.appendChild(element("path", { d: bord(v.pts, -v.cote, DEMI + 4.5), "class": "rj111-gravier" }));
+      if (!ville && v.tour > 1.6) sous.appendChild(element("path", { d: bord(v.pts, -v.cote, DEMI + 4.5), "class": "rj111-gravier" }));
       [v.cote, -v.cote].forEach(function (cote) {
         var dd = bord(v.pts, cote, DEMI);
         dessus.appendChild(element("path", { d: dd, "class": "rj111-vibreur-b" }));
         dessus.appendChild(element("path", { d: dd, "class": "rj111-vibreur-r" }));
       });
     });
-    // arbres : sur une grille, loin de la piste
-    var arbres = element("g", { "class": "rj111-arbres" }), n = 0;
-    for (var gx = plein.x - 30; gx < plein.x + plein.w + 30 && n < 420; gx += 7) {
-      for (var gy = plein.y - 30; gy < plein.y + plein.h + 30 && n < 420; gy += 7) {
-        var k = Math.round(gx * 7 + gy * 13), x = gx + hache(k) * 5, y = gy + hache(k + 1) * 5;
-        if (hache(k + 2) < 0.45) continue;
-        var loin = true;
-        for (var j = 0; j < ech.length; j += 2) { var dx = ech[j].x - x, dy = ech[j].y - y; if (dx * dx + dy * dy < 324) { loin = false; break; } }
-        if (!loin) continue;
-        arbres.appendChild(element("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: (1.6 + hache(k + 3) * 1.8).toFixed(2), "class": "rj111-arbre a" + Math.floor(hache(k + 4) * 3) }));
-        n++;
+
+    var g = element("g", { "class": ville ? "rj111-quartier" : "rj111-arbres" }), n = 0;
+    if (ville) {
+      /* Port : l'eau occupe le bas du cadre, loin de la piste (quai de 12 unités) ;
+         immeubles ailleurs, alignés en îlots, loin de la piste (11 unités). */
+      var eau = element("g", { "class": "rj111-port" }), bateaux = element("g");
+      var hautEau = plein.y + plein.h * 0.58;
+      for (var gx = plein.x - 40; gx < plein.x + plein.w + 40; gx += 8) {
+        for (var gy = plein.y - 40; gy < plein.y + plein.h + 40; gy += 8) {
+          var k = Math.round(gx * 7 + gy * 13), cx = gx + 4, cy = gy + 4, dp = distPiste(cx, cy);
+          if (cy > hautEau && dp > 12) {
+            eau.appendChild(element("rect", { x: gx, y: gy, width: 8.2, height: 8.2, fill: "url(#rj111-vagues)" }));
+            if (hache(k + 7) < 0.16 && dp > 16) {   // un bateau, coque pointue et pont
+              var ang = Math.round(hache(k + 8) * 4) * 45;
+              var bt = element("g", { transform: "translate(" + cx + "," + cy + ") rotate(" + ang + ")" });
+              bt.appendChild(element("path", { d: "M-2.6,-0.9 L1.6,-0.9 L2.8,0 L1.6,0.9 L-2.6,0.9 Z", "class": "rj111-coque" }));
+              bt.appendChild(element("rect", { x: -1.8, y: -0.5, width: 2, height: 1, rx: 0.2, "class": "rj111-pont" }));
+              bateaux.appendChild(bt);
+            }
+            continue;
+          }
+          if (dp < 11 || hache(k + 2) < 0.22 || n > 380) continue;
+          var w = 3.5 + hache(k) * 3.5, h = 3.5 + hache(k + 1) * 3.5, x = gx + (8 - w) / 2, y = gy + (8 - h) / 2;
+          g.appendChild(element("rect", { x: (x + 0.6).toFixed(1), y: (y + 0.6).toFixed(1), width: w.toFixed(1), height: h.toFixed(1), "class": "rj111-ombre-bat" }));
+          g.appendChild(element("rect", { x: x.toFixed(1), y: y.toFixed(1), width: w.toFixed(1), height: h.toFixed(1), rx: .2, "class": "rj111-bat b" + Math.floor(hache(k + 3) * 4) }));
+          if (hache(k + 4) < 0.5) g.appendChild(element("rect", { x: (x + w * 0.2).toFixed(1), y: (y + h * 0.2).toFixed(1), width: (w * 0.3).toFixed(1), height: (h * 0.3).toFixed(1), "class": "rj111-toit" }));
+          n++;
+        }
+      }
+      sous.appendChild(eau); sous.appendChild(bateaux);
+    } else {
+      // arbres : sur une grille, loin de la piste ; ombre portée, feuillage, reflet
+      for (var gx2 = plein.x - 30; gx2 < plein.x + plein.w + 30 && n < 420; gx2 += 7) {
+        for (var gy2 = plein.y - 30; gy2 < plein.y + plein.h + 30 && n < 420; gy2 += 7) {
+          var k2 = Math.round(gx2 * 7 + gy2 * 13), x2 = gx2 + hache(k2) * 5, y2 = gy2 + hache(k2 + 1) * 5;
+          if (hache(k2 + 2) < 0.45 || distPiste(x2, y2) < 18) continue;
+          var rr = 1.6 + hache(k2 + 3) * 1.8;
+          g.appendChild(element("circle", { cx: (x2 + 0.7).toFixed(1), cy: (y2 + 0.8).toFixed(1), r: rr.toFixed(2), "class": "rj111-ombre-arbre" }));
+          g.appendChild(element("circle", { cx: x2.toFixed(1), cy: y2.toFixed(1), r: rr.toFixed(2), "class": "rj111-arbre a" + Math.floor(hache(k2 + 4) * 3) }));
+          g.appendChild(element("circle", { cx: (x2 - rr * 0.3).toFixed(1), cy: (y2 - rr * 0.3).toFixed(1), r: (rr * 0.45).toFixed(2), "class": "rj111-feuille" }));
+          n++;
+        }
       }
     }
-    sous.appendChild(arbres);
+    sous.appendChild(g);
     // tribunes le long de la ligne droite, du côté opposé aux stands
     for (var sd = -PLEIN; sd <= PLEIN; sd += 6.5) {
       var r = repere(((sd % L) + L) % L), o = DEMI + 6;
-      var ang = Math.atan2(r.ty, r.tx) * 180 / Math.PI;
-      var tr = element("g", { transform: "translate(" + (r.x - r.nx * o).toFixed(2) + "," + (r.y - r.ny * o).toFixed(2) + ") rotate(" + ang.toFixed(1) + ")" });
+      var angT = Math.atan2(r.ty, r.tx) * 180 / Math.PI;
+      var tr = element("g", { transform: "translate(" + (r.x - r.nx * o).toFixed(2) + "," + (r.y - r.ny * o).toFixed(2) + ") rotate(" + angT.toFixed(1) + ")" });
       tr.appendChild(element("rect", { x: -3, y: -1.8, width: 6, height: 3.6, rx: .3, "class": "rj111-tribune" }));
       tr.appendChild(element("rect", { x: -2.7, y: -1.2, width: 5.4, height: .6, "class": "rj111-public" }));
       tr.appendChild(element("rect", { x: -2.7, y: .2, width: 5.4, height: .6, "class": "rj111-public b" }));
       sous.appendChild(tr);
     }
-    // les vibreurs passent au-dessus de la piste, sous les voitures
-    // sous les voitures : juste après la piste et ses repères
+    // vibreurs au-dessus de la piste, sous les voitures
     monde.appendChild(dessus);
   }
 
@@ -264,7 +322,7 @@
     var tout = monde.getBBox();   // la voie peut déborder du cadre de la piste
     var plein = { x: tout.x - 4, y: tout.y - 4, w: tout.width + 8, h: tout.height + 8 };
     svg.setAttribute("viewBox", [plein.x, plein.y, plein.w, plein.h].join(" "));
-    decors(monde, L, repere, plein, PLEIN);
+    decors(monde, L, repere, plein, PLEIN, donnees.type === "street");
 
     var groupe = element("g", { "class": "rj111-voitures" });
     monde.appendChild(groupe);
@@ -278,53 +336,19 @@
   /* Une voiture : un rond aux couleurs de l'écurie, avec les initiales du pilote. */
   /* Une voiture : une petite monoplace aux couleurs de l'écurie, orientée
      dans le sens de la piste (corps), et son nom toujours à l'endroit (nom). */
-  /* Silhouette vue de dessus (nez vers +x), selon la catégorie : un kart
-     n'a ni ailerons ni coque, un prototype d'endurance a des roues carénées,
-     une IndyCar porte l'aeroscreen ; les monoplaces grandissent de la F4 à
-     la F1. k : échelle (joueur un peu plus grand). */
-  var ECHELLE_CAT = { kart: 0.72, f4: 0.88, f3: 0.94, f2: 1, sf: 1, f1: 1.08, indy: 1.04, wec: 1.12 };
-  function silhouette(corps, id, k, teinte) {
-    var e = k * (ECHELLE_CAT[id] || 1);
-    function r(x, y, w, h, cls, rx) { corps.appendChild(element("rect", { x: x * e, y: y * e, width: w * e, height: h * e, rx: (rx == null ? 0.1 : rx) * e, "class": cls })); }
-    function chemin(pts, attrs) {
-      corps.appendChild(element("path", Object.assign({ d: "M" + pts.map(function (p) { return (p[0] * e).toFixed(2) + "," + (p[1] * e).toFixed(2); }).join(" L") + "Z" }, attrs)));
-    }
-    if (id === "kart") {
-      // quatre roues larges, châssis court, pare-chocs, pilote assis au centre
-      [[-1.35, -1.05], [-1.35, 0.6], [0.75, -0.95], [0.75, 0.55]].forEach(function (p) { r(p[0], p[1], 0.75, 0.45, "rj111-pneu"); });
-      r(-1.5, -0.55, 2.9, 1.1, "rj111-caisse", 0.3);
-      corps.lastChild.setAttribute("fill", teinte);
-      r(1.45, -0.7, 0.3, 1.4, "rj111-aileron", 0.15);   // pare-chocs avant
-      corps.appendChild(element("circle", { cx: -0.3 * e, cy: 0, r: 0.42 * e, "class": "rj111-casque" }));
-      return;
-    }
-    if (id === "wec") {
-      // prototype fermé : carrosserie qui couvre les roues, cockpit, phares, aileron arrière
-      r(-2.25, -0.95, 0.4, 1.9, "rj111-aileron");
-      chemin([[-2, -0.85], [1.2, -0.85], [2.2, -0.45], [2.2, 0.45], [1.2, 0.85], [-2, 0.85]], { fill: teinte, "class": "rj111-caisse" });
-      corps.appendChild(element("ellipse", { cx: 0.35 * e, cy: 0, rx: 0.7 * e, ry: 0.42 * e, "class": "rj111-verriere" }));
-      r(2.0, -0.62, 0.18, 0.3, "rj111-phare", 0.05); r(2.0, 0.32, 0.18, 0.3, "rj111-phare", 0.05);
-      return;
-    }
-    // monoplace : ailerons, roues découvertes, coque effilée, casque (et aeroscreen en IndyCar)
-    r(-2.1, -0.95, 0.55, 1.9, "rj111-aileron");
-    r(1.75, -1.05, 0.45, 2.1, "rj111-aileron");
-    [[-1.45, -0.95], [-1.45, 0.55], [0.85, -0.9], [0.85, 0.5]].forEach(function (p) { r(p[0], p[1], 0.7, 0.4, "rj111-pneu"); });
-    chemin([[-1.9, -0.55], [0.9, -0.35], [2.1, 0], [0.9, 0.35], [-1.9, 0.55]], { fill: teinte, "class": "rj111-caisse" });
-    corps.appendChild(element("circle", { cx: -0.35 * e, cy: 0, r: 0.3 * e, "class": "rj111-casque" }));
-    if (id === "indy") corps.appendChild(element("path", { d: "M" + (0.05 * e) + "," + (-0.45 * e) + " Q" + (0.45 * e) + ",0 " + (0.05 * e) + "," + (0.45 * e), "class": "rj111-aeroscreen" }));
-  }
-
   function pastille(joueur, autre, teinte, nom) {
     var g = element("g", { "class": "rj111-voiture" + (joueur ? " rj111-joueur" : "") + (autre ? " rj111-autre" : "") });
-    var k = joueur ? 1.15 : autre ? 0.7 : 1;
+    /* Une voiture = un point aux couleurs de l écurie (demande du joueur, v286) :
+       reflet pour le volume, liseré sombre ; le joueur plus gros, cerclé de blanc. */
+    var rayon = joueur ? 1.35 : autre ? 0.75 : 1.05;
     if (joueur) g.appendChild(element("circle", { r: 3.2, "class": "rj111-halo" }));
     var corps = element("g", { "class": "rj111-corps-v" });
-    silhouette(corps, autre ? "f" : theme().id, k, teinte);
+    corps.appendChild(element("circle", { r: rayon, fill: teinte, "class": "rj111-point" }));
+    corps.appendChild(element("circle", { cx: -rayon * 0.3, cy: -rayon * 0.3, r: rayon * 0.42, "class": "rj111-reflet" }));
     g.appendChild(corps);
     var nomG = element("g", { "class": "rj111-nom-v" });
     if (!autre) {
-      var t = element("text", { y: joueur ? -2.6 : -2.1, "class": "rj111-initiales", "font-size": joueur ? 1.5 : 1.1 });
+      var t = element("text", { y: joueur ? -2.7 : -2.1, "class": "rj111-initiales", "font-size": joueur ? 1.5 : 1.1 });
       t.textContent = joueur ? abrege(nom) : abrege(nom);
       nomG.appendChild(t);
     }
@@ -529,7 +553,7 @@
     var redresse = (-vue.rot).toFixed(1);   // les noms restent à l'endroit malgré la rotation du monde
     /* Vue d'ensemble (appui sur la carte, ou drapeau à damier) : le circuit
        entier tient dans le cadre et les voitures, à l'échelle, n'étaient plus
-       que des points ; on les y grossit pour garder leur silhouette (v285). */
+       que des miettes ; on les y grossit pour les garder lisibles (v285). */
     var grossi = vue.cam === "plein" ? " scale(2.2)" : "";
     vue.svg.classList.toggle("rj111-vue-plein", vue.cam === "plein");   // noms des rivaux masqués : le peloton se chevauche
     Object.keys(presents).forEach(function (nom) {
