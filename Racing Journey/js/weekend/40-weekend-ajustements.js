@@ -959,7 +959,7 @@
 
   var TAG = "[76-setup-qualif]";
   var FACTEUR = 0.12;      // performance → temps au tour
-  var PLAFOND = 0.01;      // ±1 % du temps de référence
+  var PLAFOND = 0.005;     // ±0,5 % du temps de référence (v284 : relatif au réglage de base)
 
   var wrapped = {};
   var etat = { installe: false, dernier: null };
@@ -974,9 +974,25 @@
     } catch (e) { return 0; }
   }
 
+  /* Le bonus qu'obtient le réglage de base du circuit (préréglage, équilibré) :
+     c'est le niveau des écuries rivales, qui règlent aussi leurs voitures.
+     Avant (v283), le bonus était compté dans l'absolu pour le seul joueur :
+     ~0,2 s offertes d'office, jusqu'à 1 % du tour avec un réglage parfait —
+     facile à atteindre depuis la v282 (curseurs précis) : poles en série. */
+  function bonusReference() {
+    if (typeof getCircuitStartPreset !== "function" || !window.G) return 0;
+    var sauve = G.setupAdv, setup = G.setup;
+    try {
+      G.setupAdv = Object.assign({}, sauve || {}, getCircuitStartPreset());
+      G.setup = "bal";
+      return bonusReglage();
+    } catch (e) { return 0; }
+    finally { G.setupAdv = sauve; G.setup = setup; }
+  }
+
   // Delta relatif à appliquer au temps au tour. Négatif = plus rapide.
   function delta() {
-    var d = -bonusReglage() * FACTEUR;
+    var d = -(bonusReglage() - bonusReference()) * FACTEUR;
     if (d > PLAFOND) d = PLAFOND;
     if (d < -PLAFOND) d = -PLAFOND;
     return d;

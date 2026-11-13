@@ -1745,11 +1745,11 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 #rj146 .rj146-etat { font: 800 10px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #22D3EE; }
 #rj146.rj146-record .rj146-etat { color: #A855F7; }
 #rj146 .rj146-chrono { font: 900 22px/1 var(--font-display); color: #fff; font-variant-numeric: tabular-nums; }
-#rj146 .rj146-piste { grid-area: piste; height: 104px; background: #1f4a2a; border-radius: 6px; overflow: hidden; }
+#rj146 .rj146-piste { grid-area: piste; height: 104px; background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .05), transparent 70%); border-radius: 6px; overflow: hidden; }
 #rj146 .rj146-svg { width: 100%; height: 100%; display: block; }
-#rj146 .rj146-sect { fill: none; stroke: transparent; stroke-width: 3.6; stroke-linecap: butt; transition: stroke .2s; }
+#rj146 .rj146-sect { fill: none; stroke: transparent; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
 #rj146 .rj146-ligne { fill: #fff; }
-#rj146 .rj146-voiture { stroke: #fff; stroke-width: 1; }
+#rj146 .rj146-voiture { stroke: #fff; stroke-width: 1; filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, .8)); }
 #rj146 .rj146-secteurs { grid-area: secteurs; display: flex; flex-direction: column; gap: 4px; }
 #rj146 .rj146-secteurs span { min-width: 92px; padding: 3px 7px; border-radius: 4px; background: rgba(255, 255, 255, .06); font: 800 10.5px/1.2 var(--font-display); color: #8a8a96; font-variant-numeric: tabular-nums; }
 #rj146 .rj146-secteurs span.ok { color: #0b0b0f; }
@@ -1762,9 +1762,9 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 /* Essais : piste miniature à gauche du chrono du tour en cours (146) */
 .rj146-essai-hote { display: grid; grid-template-columns: 132px minmax(0, 1fr); column-gap: 10px; align-items: center; padding-top: 6px !important; padding-bottom: 2px !important; }
 .rj146-essai-hote > * { grid-column: 2; }
-.rj146-essai-hote > .rj146-mini-ess { grid-column: 1; grid-row: 1 / span 4; width: 132px; height: 74px; background: #1f4a2a; border-radius: 6px; }
-.rj146-mini-ess .rj146-sect { fill: none; stroke: transparent; stroke-width: 3.6; }
-.rj146-mini-ess .rj146-voiture { stroke: #fff; stroke-width: 1.2; }
+.rj146-essai-hote > .rj146-mini-ess { grid-column: 1; grid-row: 1 / span 4; width: 132px; height: 74px; background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .05), transparent 70%); border-radius: 6px; }
+.rj146-mini-ess .rj146-sect { fill: none; stroke: transparent; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.rj146-mini-ess .rj146-voiture { stroke: #fff; stroke-width: 1.1; filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, .8)); }
 /* nom de la vue choisie, rappelé brièvement après un appui sur la carte */
 .rj111-scene { cursor: pointer; }
 .rj111-hud[data-vue]::after { content: attr(data-vue); position: absolute; left: 0; top: 40px; padding: 4px 8px; border-radius: 4px; background: rgba(8, 8, 12, .85); font: 800 9.5px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: #22D3EE; animation: rj111-vue 2.2s forwards; }
@@ -1801,3 +1801,13 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 #rj147 .rj147-chiffres b { color: #fff; font-weight: 900; }
 #rj147 .rj147-chiffres span:first-child b { font-size: 18px; color: #22D3EE; }
 #rj147 .rj147-chiffres .violet b { color: #A855F7; }
+
+/* Cartes des essais et des qualifs (v284) : tracé fin et sobre, sans herbe */
+.rj146-ombre { fill: none; stroke: rgba(0, 0, 0, .55); stroke-width: 6.5; stroke-linejoin: round; stroke-linecap: round; }
+.rj146-fond { fill: none; stroke: #2a2d36; stroke-width: 4.6; stroke-linejoin: round; stroke-linecap: round; }
+.rj146-trace { fill: none; stroke: #8b909c; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.rj146-ligne { fill: #fff; stroke: #0e0e12; stroke-width: .6; }
+/* silhouettes par catégorie (v284) */
+.rj111-verriere { fill: rgba(20, 28, 40, .9); stroke: rgba(255, 255, 255, .35); stroke-width: .08; }
+.rj111-phare { fill: #fff7c2; }
+.rj111-aeroscreen { fill: none; stroke: rgba(200, 220, 255, .85); stroke-width: .14; }
