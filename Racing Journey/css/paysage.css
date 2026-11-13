@@ -1830,3 +1830,11 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj111-pont { fill: #9cc6e8; }
 /* Qualifs : le bandeau « QUALIF · circuit · Manche · catégorie » répétait l'en-tête de l'écran ; retiré pour libérer la place (v286) */
 #quali-screen > .rj-bcast-hdr { display: none !important; }
+
+/* --- Contrats › Offres équipes (v287) : une colonne centrée, le contrat du
+       moment puis les offres ; budget et revenus ne servent pas ici -------- */
+#ct-offres { columns: auto !important; column-count: auto !important; display: block !important; max-width: 620px; margin: 0 auto !important; }
+#ct-offres > .mg { display: none !important; }
+#ct-offres > .t-sec { margin-top: 4px; }
+#ct-contrat-actuel > div { margin-bottom: 12px !important; }
+#ct-offres .rj117-sans-contrat { padding: 12px 14px; border: 1px dashed rgba(255, 255, 255, .15); border-radius: var(--r); color: var(--text3, #8a8a96); font-size: 13px; margin-bottom: 12px; }
