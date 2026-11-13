@@ -278,19 +278,49 @@
   /* Une voiture : un rond aux couleurs de l'écurie, avec les initiales du pilote. */
   /* Une voiture : une petite monoplace aux couleurs de l'écurie, orientée
      dans le sens de la piste (corps), et son nom toujours à l'endroit (nom). */
+  /* Silhouette vue de dessus (nez vers +x), selon la catégorie : un kart
+     n'a ni ailerons ni coque, un prototype d'endurance a des roues carénées,
+     une IndyCar porte l'aeroscreen ; les monoplaces grandissent de la F4 à
+     la F1. k : échelle (joueur un peu plus grand). */
+  var ECHELLE_CAT = { kart: 0.72, f4: 0.88, f3: 0.94, f2: 1, sf: 1, f1: 1.08, indy: 1.04, wec: 1.12 };
+  function silhouette(corps, id, k, teinte) {
+    var e = k * (ECHELLE_CAT[id] || 1);
+    function r(x, y, w, h, cls, rx) { corps.appendChild(element("rect", { x: x * e, y: y * e, width: w * e, height: h * e, rx: (rx == null ? 0.1 : rx) * e, "class": cls })); }
+    function chemin(pts, attrs) {
+      corps.appendChild(element("path", Object.assign({ d: "M" + pts.map(function (p) { return (p[0] * e).toFixed(2) + "," + (p[1] * e).toFixed(2); }).join(" L") + "Z" }, attrs)));
+    }
+    if (id === "kart") {
+      // quatre roues larges, châssis court, pare-chocs, pilote assis au centre
+      [[-1.35, -1.05], [-1.35, 0.6], [0.75, -0.95], [0.75, 0.55]].forEach(function (p) { r(p[0], p[1], 0.75, 0.45, "rj111-pneu"); });
+      r(-1.5, -0.55, 2.9, 1.1, "rj111-caisse", 0.3);
+      corps.lastChild.setAttribute("fill", teinte);
+      r(1.45, -0.7, 0.3, 1.4, "rj111-aileron", 0.15);   // pare-chocs avant
+      corps.appendChild(element("circle", { cx: -0.3 * e, cy: 0, r: 0.42 * e, "class": "rj111-casque" }));
+      return;
+    }
+    if (id === "wec") {
+      // prototype fermé : carrosserie qui couvre les roues, cockpit, phares, aileron arrière
+      r(-2.25, -0.95, 0.4, 1.9, "rj111-aileron");
+      chemin([[-2, -0.85], [1.2, -0.85], [2.2, -0.45], [2.2, 0.45], [1.2, 0.85], [-2, 0.85]], { fill: teinte, "class": "rj111-caisse" });
+      corps.appendChild(element("ellipse", { cx: 0.35 * e, cy: 0, rx: 0.7 * e, ry: 0.42 * e, "class": "rj111-verriere" }));
+      r(2.0, -0.62, 0.18, 0.3, "rj111-phare", 0.05); r(2.0, 0.32, 0.18, 0.3, "rj111-phare", 0.05);
+      return;
+    }
+    // monoplace : ailerons, roues découvertes, coque effilée, casque (et aeroscreen en IndyCar)
+    r(-2.1, -0.95, 0.55, 1.9, "rj111-aileron");
+    r(1.75, -1.05, 0.45, 2.1, "rj111-aileron");
+    [[-1.45, -0.95], [-1.45, 0.55], [0.85, -0.9], [0.85, 0.5]].forEach(function (p) { r(p[0], p[1], 0.7, 0.4, "rj111-pneu"); });
+    chemin([[-1.9, -0.55], [0.9, -0.35], [2.1, 0], [0.9, 0.35], [-1.9, 0.55]], { fill: teinte, "class": "rj111-caisse" });
+    corps.appendChild(element("circle", { cx: -0.35 * e, cy: 0, r: 0.3 * e, "class": "rj111-casque" }));
+    if (id === "indy") corps.appendChild(element("path", { d: "M" + (0.05 * e) + "," + (-0.45 * e) + " Q" + (0.45 * e) + ",0 " + (0.05 * e) + "," + (0.45 * e), "class": "rj111-aeroscreen" }));
+  }
+
   function pastille(joueur, autre, teinte, nom) {
     var g = element("g", { "class": "rj111-voiture" + (joueur ? " rj111-joueur" : "") + (autre ? " rj111-autre" : "") });
     var k = joueur ? 1.15 : autre ? 0.7 : 1;
     if (joueur) g.appendChild(element("circle", { r: 3.2, "class": "rj111-halo" }));
     var corps = element("g", { "class": "rj111-corps-v" });
-    // vue de dessus, nez vers +x : ailerons, pneus, coque, casque
-    corps.appendChild(element("rect", { x: -2.1 * k, y: -0.95 * k, width: 0.55 * k, height: 1.9 * k, rx: 0.1, "class": "rj111-aileron" }));
-    corps.appendChild(element("rect", { x: 1.75 * k, y: -1.05 * k, width: 0.45 * k, height: 2.1 * k, rx: 0.1, "class": "rj111-aileron" }));
-    [[-1.45, -0.95], [-1.45, 0.55], [0.85, -0.9], [0.85, 0.5]].forEach(function (p) {
-      corps.appendChild(element("rect", { x: p[0] * k, y: p[1] * k, width: 0.7 * k, height: 0.4 * k, rx: 0.1, "class": "rj111-pneu" }));
-    });
-    corps.appendChild(element("path", { d: "M" + (-1.9 * k) + "," + (-0.55 * k) + " L" + (0.9 * k) + "," + (-0.35 * k) + " L" + (2.1 * k) + ",0 L" + (0.9 * k) + "," + (0.35 * k) + " L" + (-1.9 * k) + "," + (0.55 * k) + "Z", fill: teinte, "class": "rj111-caisse" }));
-    corps.appendChild(element("circle", { cx: -0.35 * k, cy: 0, r: 0.3 * k, "class": "rj111-casque" }));
+    silhouette(corps, autre ? "f" : theme().id, k, teinte);
     g.appendChild(corps);
     var nomG = element("g", { "class": "rj111-nom-v" });
     if (!autre) {

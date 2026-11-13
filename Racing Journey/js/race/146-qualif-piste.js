@@ -53,9 +53,9 @@
     statut.parentNode.insertBefore(c, statut.nextSibling);
     var svg = el("svg", { "class": "rj146-svg", role: "img", "aria-label": "Ton tour sur " + circuit });
     c.querySelector(".rj146-piste").appendChild(svg);
-    svg.appendChild(el("path", { d: donnees.path, "class": "rj111-bord" }));
-    svg.appendChild(el("path", { d: donnees.path, "class": "rj111-limite" }));
-    var piste = el("path", { d: donnees.path, "class": "rj111-piste" });
+    svg.appendChild(el("path", { d: donnees.path, "class": "rj146-ombre" }));
+    svg.appendChild(el("path", { d: donnees.path, "class": "rj146-fond" }));
+    var piste = el("path", { d: donnees.path, "class": "rj146-trace" });
     svg.appendChild(piste);
     var L = piste.getTotalLength(), b = piste.getBBox();
     svg.setAttribute("viewBox", [b.x - 6, b.y - 6, b.width + 12, b.height + 12].join(" "));
@@ -66,9 +66,9 @@
       return p;
     });
     var depart = piste.getPointAtLength(0);
-    svg.appendChild(el("circle", { cx: depart.x, cy: depart.y, r: 2.2, "class": "rj146-ligne" }));
+    svg.appendChild(el("circle", { cx: depart.x, cy: depart.y, r: 1.8, "class": "rj146-ligne" }));
     var p = joueur();
-    var voiture = el("circle", { r: 3.4, fill: couleur(p && p.team), "class": "rj146-voiture" });
+    var voiture = el("circle", { r: 3, fill: couleur(p && p.team), "class": "rj146-voiture" });
     voiture.setAttribute("transform", "translate(" + depart.x + "," + depart.y + ")");
     svg.appendChild(voiture);
     carte = { el: c, svg: svg, piste: piste, L: L, secteurs: secteurs, voiture: voiture,
@@ -170,9 +170,9 @@
       var svg = el("svg", { "class": "rj146-mini-ess", "aria-hidden": "true" });
       hote.insertBefore(svg, hote.firstChild);
       hote.classList.add("rj146-essai-hote");
-      svg.appendChild(el("path", { d: donnees.path, "class": "rj111-bord" }));
-      svg.appendChild(el("path", { d: donnees.path, "class": "rj111-limite" }));
-      var piste = el("path", { d: donnees.path, "class": "rj111-piste" });
+      svg.appendChild(el("path", { d: donnees.path, "class": "rj146-ombre" }));
+      svg.appendChild(el("path", { d: donnees.path, "class": "rj146-fond" }));
+      var piste = el("path", { d: donnees.path, "class": "rj146-trace" });
       svg.appendChild(piste);
       var L = piste.getTotalLength(), b = piste.getBBox();
       svg.setAttribute("viewBox", [b.x - 6, b.y - 6, b.width + 12, b.height + 12].join(" "));
@@ -180,7 +180,7 @@
         var p = el("path", { d: donnees.path, "class": "rj146-sect", "stroke-dasharray": (L / 3).toFixed(2) + " " + L.toFixed(2), "stroke-dashoffset": (-k * L / 3).toFixed(2) });
         svg.appendChild(p); return p;
       });
-      var voiture = el("circle", { r: 4, fill: couleur(G && G.currentTeam), "class": "rj146-voiture" });
+      var voiture = el("circle", { r: 3.6, fill: couleur(G && G.currentTeam), "class": "rj146-voiture" });
       svg.appendChild(voiture);
       essai = { svg: svg, piste: piste, L: L, secteurs: secteurs, voiture: voiture, part: null };
     }
