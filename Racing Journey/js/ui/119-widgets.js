@@ -101,6 +101,9 @@
   function cible(ecran) {
     var zone = ecran.querySelector(":scope > .scroll");
     if (!zone) return null;
+    // écran arrangé en deux colonnes fixes (144) : les widgets vont dans celle de droite
+    var droite = [].slice.call(zone.querySelectorAll(".rj144-col-d")).filter(function (e) { return e.offsetParent !== null; })[0];
+    if (droite) return { parent: droite, rangee: false };
     var colonnes = [].slice.call(zone.querySelectorAll(":scope > *, :scope > * > *")).filter(function (e) {
       return e.offsetParent !== null && !e.classList.contains("rj119-rangee") && getComputedStyle(e).columnWidth !== "auto";
     });

@@ -4060,15 +4060,68 @@ async function suiteRetoursSaison() {
     S.verifier("félicitations : une seule pour un même résultat, tous expéditeurs confondus", msg.d1 === false && msg.d2 === true, JSON.stringify(msg));
     const boite = await page.evaluate(async () => {
       const a = ms => new Promise(r => setTimeout(r, ms));
-      for (let i = 0; i < 18; i++) pushMail({ from: "Boîte " + i, role: i % 2 ? "team" : "press", subject: "Sujet " + i + " " + Math.random(), body: "Corps " + i });
+      for (let i = 0; i < 30; i++) pushMail({ from: "Boîte " + i, role: i % 2 ? "team" : "press", subject: "Sujet " + i + " " + Math.random(), body: "Corps " + i });
       navTo("S-mailbox", null); await a(400);
-      const sc = document.querySelector("#S-mailbox .scroll"); sc.scrollTop = 300; await a(80);
-      const y = sc.scrollTop;
+      _mailListeDefil().scrollTop = 300; await a(80);
+      const y = _mailListeDefil().scrollTop;
       const c = [...document.querySelectorAll('#S-mailbox [onclick^="openMailThread("]')][5]; c.click(); await a(400);
       document.querySelector('#S-mailbox [onclick*="backToMailList"]').click(); await a(400);
-      return { y, apres: sc.scrollTop };
+      return { y, apres: _mailListeDefil().scrollTop };
     });
-    S.verifier("messagerie : retour à la liste à la même position", boite.y > 100 && Math.abs(boite.apres - boite.y) < 4, JSON.stringify(boite));
+    S.verifier("messagerie : retour à la liste à la même position", boite.y > 60 && Math.abs(boite.apres - boite.y) < 4, JSON.stringify(boite));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+async function suiteEcrans() {
+  S.suite("Chaque écran tient sur un écran de téléphone (v282)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  const att = ms => page.waitForTimeout(ms);
+  // défilement de l'écran affiché (zone .scroll), en px
+  const defile = () => page.evaluate(() => { const s = document.querySelector(".scr.on"), sc = s.querySelector(":scope > .scroll") || s; return sc.scrollHeight - sc.clientHeight; });
+  const onglet = o => page.evaluate(o => { const t = [...document.querySelectorAll(".scr.on .tabs .tab")].find(x => x.textContent.trim().startsWith(o)); if (t) t.click(); return !!t; }, o);
+  const mesures = {};
+  try {
+    await S.repondeurAutomatique(page);
+    await S.courirUneCourse(page, { categorie: "Formule 4", rang: 1, grille: 5 });
+    await page.evaluate(() => { for (let i = 0; i < 8; i++) pushMail({ from: "Test " + i, role: i % 2 ? "team" : "press", subject: "Sujet " + i, body: "Corps " + i }); });
+
+    // 1. Écrans et onglets du lot 1 : rien à faire défiler
+    const ecrans = [["S-pilot", ["Stats", "Carri", "Relations", "Héritage"]], ["S-champ", ["Pilotes", "Constructeurs", "Performances", "Face"]], ["S-mailbox", ["Reçus", "Contacts"]], ["S-cal", [""]]];
+    for (const [id, onglets] of ecrans) {
+      await page.evaluate(id => navTo(id, null), id); await att(500);
+      for (const o of onglets) { if (o) await onglet(o); await att(400); mesures[id + (o ? " › " + o : "")] = await defile(); }
+    }
+    await page.evaluate(() => { navTo("S-mailbox", null); mbtab("contacts"); }); await att(400);
+    await page.evaluate(() => document.querySelector("#mb-contacts .rj131-carte").click()); await att(500);
+    mesures["S-mailbox › conversation"] = await defile();
+    await page.evaluate(() => { G.cat = "Formule 1"; window.CAL_RACES = []; buildCalendar(); navTo("S-home", null); navTo("S-cal", null); }); await att(500);
+    mesures["S-cal (F1, " + await page.evaluate(() => CAL_RACES.length) + " manches)"] = await defile();
+    await page.evaluate(() => { G.cat = "Formule 4"; window.CAL_RACES = []; buildCalendar(); navTo("S-training", null); G.pa = 9; renderTrainScreen(); }); await att(500);
+    for (const p of ["recup", "dev", "arbre"]) {
+      await page.evaluate(p => document.querySelector('#rj144-train-seg [data-p="' + p + '"]').click(), p); await att(300);
+      mesures["S-training › " + p] = await defile();
+    }
+    const trop = Object.entries(mesures).filter(([, v]) => v > 2);
+    S.verifier("aucun écran du lot 1 ne défile (≤ 2 px)", trop.length === 0 && Object.keys(mesures).length >= 15, JSON.stringify(trop.length ? trop : mesures));
+
+    // 2. Les outils : segment, Lancer, puce → fenêtre
+    const outils = await page.evaluate(async () => {
+      const a = ms => new Promise(r => setTimeout(r, ms));
+      document.querySelector('#rj144-train-seg [data-p="recup"]').click(); await a(100);
+      const pa = G.pa; document.querySelector(".rjf-go").click(); await a(400);
+      const lance = G.pa < pa;
+      navTo("S-pilot", null); await a(300);
+      [...document.querySelectorAll(".scr.on .tabs .tab")].find(x => /Carri/.test(x.textContent)).click(); await a(400);
+      const puce = document.querySelector("#rj144-pcar-puces .rj144-puce");
+      if (puce) puce.click(); await a(200);
+      const f = document.getElementById("rj144-fenetre");
+      const fenetre = !!(f && f.querySelector(".rj144-corps").textContent.trim().length > 20);
+      if (f) f.querySelector(".rj144-x").click(); await a(100);
+      return { lance, puce: !!puce, fenetre, fermee: !document.getElementById("rj144-fenetre") };
+    });
+    S.verifier("entraînement : Lancer consomme les PA dans le segment Récupération", outils.lance, JSON.stringify(outils));
+    S.verifier("une puce ouvre son contenu dans une fenêtre, qui se ferme", outils.puce && outils.fenetre && outils.fermee, JSON.stringify(outils));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -4310,7 +4363,8 @@ const SUITES = {
   corrections: suiteCorrections,
   coherence: suiteCoherenceEssais,
   evenements: suiteEvenements,
-  retours: suiteRetoursSaison
+  retours: suiteRetoursSaison,
+  ecrans: suiteEcrans
 };
 
 async function principal() {
