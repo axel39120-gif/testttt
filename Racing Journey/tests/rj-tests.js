@@ -2952,6 +2952,29 @@ async function suiteEssais() {
     S.verifier("les retours de l ingénieur s accordent (l aileron, la suspension trop haute)", /^L.aileron arrière est sensiblement trop bas./.test(r.aileron) && /^La suspension est un peu trop haute. Réduis-la./.test(r.suspension), r.aileron + " / " + r.suspension);
     S.verifier("l ingénieur ne dit « première séance » qu en EL1", !/Première séance/.test(r.el2) && !/Première séance/.test(r.el3) && /EL2|Deuxième/.test(r.el2) && /EL3|Dernière/.test(r.el3), r.el2.slice(0, 60) + " / " + r.el3.slice(0, 60));
     S.verifier("les pneus de qualification portent des noms français, sans marque", !/Soft|Pirelli|Primary/.test(r.pneus), r.pneus);
+
+    // v285 : l'EL1 n'est plus sautée quand on quitte l'écran (téléphone verrouillé, autre écran)
+    await page.evaluate(() => {
+      G.cat = "Formule 3"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.fpDone = false; initRaceState(); navTo("S-race", null); rtab("essais", true);
+    });
+    await page.waitForTimeout(1500);
+    const saut = await page.evaluate(async () => {
+      const a = ms => new Promise(r => setTimeout(r, ms));
+      const avant = RACE_STATE.practice.sessionsCompleted;
+      navTo("S-home", null);
+      const vrai = Date.now; Date.now = () => vrai.call(Date) + 10 * 60 * 1000;   // dix minutes hors de l'écran
+      await a(500);
+      navTo("S-race", null); rtab("essais", true); await a(1800);
+      const pendant = RACE_STATE.practice.sessionsCompleted;
+      // la séance se termine toujours quand son propre chrono arrive au bout
+      RACE_STATE.practice._live._actif = RACE_STATE.practice._live.clockTotal - 300; await a(1200);
+      const fin = RACE_STATE.practice.sessionsCompleted;
+      Date.now = vrai;
+      return { avant, pendant, fin };
+    });
+    S.verifier("essais : l'EL1 n'est pas sautée après dix minutes hors de l'écran", saut.avant === 0 && saut.pendant === 0, JSON.stringify(saut));
+    S.verifier("essais : la séance se termine à la fin de son chrono", saut.fin === 1, JSON.stringify(saut));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }

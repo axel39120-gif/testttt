@@ -403,7 +403,7 @@
   function camera(joueur, e, dt) {
     var P = vue.plein, svg = vue.svg;
     if (!zoom || !joueur || e.fini) {
-      if (vue.cam !== "plein") { svg.setAttribute("viewBox", [P.x, P.y, P.w, P.h].join(" ")); vue.monde.removeAttribute("transform"); vue.rot = 0; vue.cam = "plein"; }
+      if (vue.cam !== "plein") { svg.setAttribute("viewBox", [P.x, P.y - P.h * 0.16, P.w, P.h * 1.16].join(" "));   /* marge haute : le HUD ne cache pas le tracé */ vue.monde.removeAttribute("transform"); vue.rot = 0; vue.cam = "plein"; }
       return;
     }
     var J = joueur.p;   // position de cette image (x, y ne sont écrits qu après la caméra)
@@ -527,10 +527,15 @@
     camera(joueur, e, vue.tPrec ? Math.min(500, t - vue.tPrec) : 16);
     vue.tPrec = t;
     var redresse = (-vue.rot).toFixed(1);   // les noms restent à l'endroit malgré la rotation du monde
+    /* Vue d'ensemble (appui sur la carte, ou drapeau à damier) : le circuit
+       entier tient dans le cadre et les voitures, à l'échelle, n'étaient plus
+       que des points ; on les y grossit pour garder leur silhouette (v285). */
+    var grossi = vue.cam === "plein" ? " scale(2.2)" : "";
+    vue.svg.classList.toggle("rj111-vue-plein", vue.cam === "plein");   // noms des rivaux masqués : le peloton se chevauche
     Object.keys(presents).forEach(function (nom) {
       var r = voitures[nom];
       r.x = r.p.x; r.y = r.p.y;
-      r.el.setAttribute("transform", "translate(" + r.x.toFixed(2) + "," + r.y.toFixed(2) + ")");
+      r.el.setAttribute("transform", "translate(" + r.x.toFixed(2) + "," + r.y.toFixed(2) + ")" + grossi);
       r.el.querySelector(".rj111-corps-v").setAttribute("transform", "rotate(" + ((r.cap || 0) * 180 / Math.PI).toFixed(1) + ")");
       r.el.lastChild.setAttribute("transform", "rotate(" + redresse + ")");
     });
