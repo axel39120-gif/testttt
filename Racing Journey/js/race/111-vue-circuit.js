@@ -43,15 +43,26 @@
     var lr = LR(), e = window.RJModelePiste ? RJModelePiste.etat() : null;
     if (vue && lr && e) majTourDeClassement(lr, e);
   }
-  /* Caméra : par défaut, gros plan sur la portion de circuit où roule le
-     joueur (la piste paraît plus large, les bagarres se voient) ; un appui
-     sur le circuit montre le tracé entier. Le choix est retenu. */
-  var zoom = true;
-  try { if (localStorage.getItem("rj111-zoom") === "non") zoom = false; } catch (x) { }
+  /* Caméra : trois vues, un appui sur le circuit passe à la suivante (choix
+     retenu) — « embarquée » (par défaut : gros plan, la piste file dans le
+     sens de marche du joueur), « suivie » (gros plan, nord en haut) et
+     « ensemble » (le tracé entier). */
+  var ROT_MAX = 50;   // vitesse de rotation maximale de la caméra embarquée, en degrés par seconde
+  var VUES = ["embarquee", "suivie", "ensemble"], NOMS_VUES = { embarquee: "Vue embarquée", suivie: "Vue suivie", ensemble: "Vue d'ensemble" };
+  var modeVue = "embarquee";
+  try {
+    var m0 = localStorage.getItem("rj111-vue");
+    if (VUES.indexOf(m0) >= 0) modeVue = m0; else if (localStorage.getItem("rj111-zoom") === "non") modeVue = "ensemble";
+  } catch (x) { }
+  var zoom = modeVue !== "ensemble";
   function basculerZoom() {
-    zoom = !zoom;
-    try { localStorage.setItem("rj111-zoom", zoom ? "oui" : "non"); } catch (x) { }
-    if (vue) vue.cam = null;
+    modeVue = VUES[(VUES.indexOf(modeVue) + 1) % VUES.length];
+    zoom = modeVue !== "ensemble";
+    try { localStorage.setItem("rj111-vue", modeVue); } catch (x) { }
+    if (vue) {
+      vue.cam = null; vue.palier = null;
+      if (vue.hud) { vue.hud.removeAttribute("data-vue"); void vue.hud.offsetWidth; vue.hud.setAttribute("data-vue", NOMS_VUES[modeVue]); }   // relance le rappel
+    }
   }
   if (!Array.isArray(window.RJ_FRAME_HOOKS)) window.RJ_FRAME_HOOKS = [];
 
@@ -89,9 +100,9 @@
      sur la piste : vibreurs rouge et blanc dans les virages. ------------ */
   var DEMI = 3.5;   // demi-largeur de la piste (.rj111-piste : 7)
   function hache(i) { var x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
-  function decors(svg, defs, L, repere, plein, PLEIN) {
+  function decors(monde, L, repere, plein, PLEIN) {
     var sous = element("g", { "class": "rj111-decors" });
-    svg.insertBefore(sous, defs.nextSibling);
+    monde.insertBefore(sous, monde.firstChild);
     sous.appendChild(element("rect", { x: plein.x - 80, y: plein.y - 80, width: plein.w + 160, height: plein.h + 160, "class": "rj111-herbe" }));
     var ech = [];
     for (var d = 0; d < L; d += 1.5) ech.push(repere(d));
@@ -146,7 +157,8 @@
       sous.appendChild(tr);
     }
     // les vibreurs passent au-dessus de la piste, sous les voitures
-    svg.appendChild(dessus);
+    // sous les voitures : juste après la piste et ses repères
+    monde.appendChild(dessus);
   }
 
   function construire(c, circuit) {
@@ -162,9 +174,22 @@
     colonne.title = "Appuyer pour passer de l’écart au premier à l’intervalle";
     colonne.addEventListener("click", basculerMode);
 
+    var scene = document.createElement("div");
+    scene.className = "rj111-scene";
+    corps.appendChild(scene);
     var svg = element("svg", { "class": "rj111-svg", role: "img", "aria-label": "Course en direct sur " + circuit });
-    corps.appendChild(svg);
+    scene.appendChild(svg);
     svg.addEventListener("click", basculerZoom);
+    var meteo = (typeof RACE_STATE !== "undefined" && RACE_STATE.weather && RACE_STATE.weather.id) || "";
+    if (/rain|wet|storm/.test(meteo)) scene.classList.add("rj111-pluie", meteo === "storm" ? "forte" : "fine");
+    var hud = document.createElement("div");
+    hud.className = "rj111-hud";
+    scene.appendChild(hud);
+    var mini = element("svg", { "class": "rj111-mini", "aria-hidden": "true" });
+    mini.appendChild(element("path", { d: donnees.path, "class": "rj111-mini-piste" }));
+    var miniPoints = element("g");
+    mini.appendChild(miniPoints);
+    scene.appendChild(mini);
     var defs = element("defs");
     var damier = element("pattern", { id: "rj111-damier", width: 1.2, height: 1.2, patternUnits: "userSpaceOnUse" });
     damier.appendChild(element("rect", { width: 1.2, height: 1.2, fill: "#fff" }));
@@ -172,12 +197,15 @@
     damier.appendChild(element("rect", { x: 0.6, y: 0.6, width: 0.6, height: 0.6, fill: "#111" }));
     defs.appendChild(damier);
     svg.appendChild(defs);
-    svg.appendChild(element("path", { d: donnees.path, "class": "rj111-bord" }));
-    svg.appendChild(element("path", { d: donnees.path, "class": "rj111-limite" }));
+    var monde = element("g", { "class": "rj111-monde" });
+    svg.appendChild(monde);
+    monde.appendChild(element("path", { d: donnees.path, "class": "rj111-bord" }));
+    monde.appendChild(element("path", { d: donnees.path, "class": "rj111-limite" }));
     var piste = element("path", { d: donnees.path, "class": "rj111-piste" });
-    svg.appendChild(piste);
+    monde.appendChild(piste);
 
     var L = piste.getTotalLength(), b = piste.getBBox(), marge = 9;
+    mini.setAttribute("viewBox", [b.x - 4, b.y - 4, b.width + 8, b.height + 8].join(" "));
     svg.setAttribute("viewBox", [b.x - marge, b.y - marge, b.width + 2 * marge, b.height + 2 * marge].join(" "));
 
     // Repères perpendiculaires au tracé : normale tournée vers l'intérieur du circuit.
@@ -192,11 +220,11 @@
     }
     [1 / 3, 2 / 3].forEach(function (part) {           // fins des secteurs 1 et 2
       var r = repere(part * L);
-      svg.appendChild(element("line", { x1: r.x - r.nx * 3, y1: r.y - r.ny * 3, x2: r.x + r.nx * 3, y2: r.y + r.ny * 3, "class": "rj111-secteur" }));
+      monde.appendChild(element("line", { x1: r.x - r.nx * 3, y1: r.y - r.ny * 3, x2: r.x + r.nx * 3, y2: r.y + r.ny * 3, "class": "rj111-secteur" }));
     });
     var r0 = repere(0);
     var angle = Math.atan2(r0.ny, r0.nx) * 180 / Math.PI;
-    svg.appendChild(element("rect", { x: -3, y: -0.6, width: 6, height: 1.2, fill: "url(#rj111-damier)",
+    monde.appendChild(element("rect", { x: -3, y: -0.6, width: 6, height: 1.2, fill: "url(#rj111-damier)",
       transform: "translate(" + r0.x.toFixed(2) + "," + r0.y.toFixed(2) + ") rotate(" + angle.toFixed(1) + ")" }));
     /* Voie des stands : parallèle à la ligne droite d'arrivée, côté intérieur,
        avec une entrée et une sortie qui rejoignent la piste, un muret et des
@@ -211,15 +239,15 @@
     var pts = [];
     for (var sd = -ENTREE; sd <= ENTREE; sd += 1) pts.push(surVoie(sd));
     var trace = "M" + pts.map(function (p) { return p.x.toFixed(2) + "," + p.y.toFixed(2); }).join(" L");
-    svg.appendChild(element("path", { d: trace, "class": "rj111-voie-bord" }));
-    svg.appendChild(element("path", { d: trace, "class": "rj111-voie" }));
+    monde.appendChild(element("path", { d: trace, "class": "rj111-voie-bord" }));
+    monde.appendChild(element("path", { d: trace, "class": "rj111-voie" }));
     var muret = [];
     for (sd = -PLEIN + 1; sd <= PLEIN - 1; sd += 1) muret.push(surVoie(sd, ECART / 2));
-    svg.appendChild(element("path", { d: "M" + muret.map(function (p) { return p.x.toFixed(2) + "," + p.y.toFixed(2); }).join(" L"), "class": "rj111-muret" }));
+    monde.appendChild(element("path", { d: "M" + muret.map(function (p) { return p.x.toFixed(2) + "," + p.y.toFixed(2); }).join(" L"), "class": "rj111-muret" }));
     var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
     for (sd = -PLEIN + 2; sd <= PLEIN - 2; sd += 2.4) {
       var g0 = surVoie(sd, ECART + 2.6), ang = Math.atan2(g0.r.ty, g0.r.tx) * 180 / Math.PI;
-      svg.appendChild(element("rect", { x: -1, y: -1, width: 2, height: 2, rx: .3, "class": "rj111-garage",
+      monde.appendChild(element("rect", { x: -1, y: -1, width: 2, height: 2, rx: .3, "class": "rj111-garage",
         transform: "translate(" + g0.x.toFixed(2) + "," + g0.y.toFixed(2) + ") rotate(" + ang.toFixed(1) + ")" }));
     }
     pts.forEach(function (p, i) {
@@ -232,32 +260,45 @@
     var lieu = surVoie(0, ECART + 6.5);
     var lib = element("text", { x: lieu.x.toFixed(2), y: (lieu.y + 1.2).toFixed(2), "class": "rj111-stand-lib" });
     lib.textContent = "STANDS";
-    svg.appendChild(lib);
-    var tout = svg.getBBox();   // la voie peut déborder du cadre de la piste
+    monde.appendChild(lib);
+    var tout = monde.getBBox();   // la voie peut déborder du cadre de la piste
     var plein = { x: tout.x - 4, y: tout.y - 4, w: tout.width + 8, h: tout.height + 8 };
     svg.setAttribute("viewBox", [plein.x, plein.y, plein.w, plein.h].join(" "));
-    decors(svg, defs, L, repere, plein, PLEIN);
+    decors(monde, L, repere, plein, PLEIN);
 
     var groupe = element("g", { "class": "rj111-voitures" });
-    svg.appendChild(groupe);
-    var etiquette = element("text", { "class": "rj111-etiquette" });
-    svg.appendChild(etiquette);
+    monde.appendChild(groupe);
 
     voitures = {};
-    return { circuit: circuit, svg: svg, piste: piste, longueur: L, groupe: groupe, etiquette: etiquette, stand: stand, plein: plein, cam: null,
+    return { circuit: circuit, svg: svg, monde: monde, piste: piste, longueur: L, groupe: groupe, stand: stand, plein: plein, cam: null, rot: 0,
+             hud: hud, mini: mini, miniPoints: miniPoints, miniV: {},
              tour: c.querySelector(".rj111-tour"), tours: c.querySelector(".rj111-tours"), mode: c.querySelector(".rj111-mode"), majTour: 0, neutre: c.querySelector(".rj111-neutre") };
   }
 
   /* Une voiture : un rond aux couleurs de l'écurie, avec les initiales du pilote. */
+  /* Une voiture : une petite monoplace aux couleurs de l'écurie, orientée
+     dans le sens de la piste (corps), et son nom toujours à l'endroit (nom). */
   function pastille(joueur, autre, teinte, nom) {
     var g = element("g", { "class": "rj111-voiture" + (joueur ? " rj111-joueur" : "") + (autre ? " rj111-autre" : "") });
-    var rayon = joueur ? 1.9 : autre ? 1.1 : 1.6;
-    g.appendChild(element("circle", { r: rayon, fill: teinte, "class": "rj111-caisse" }));
+    var k = joueur ? 1.15 : autre ? 0.7 : 1;
+    if (joueur) g.appendChild(element("circle", { r: 3.2, "class": "rj111-halo" }));
+    var corps = element("g", { "class": "rj111-corps-v" });
+    // vue de dessus, nez vers +x : ailerons, pneus, coque, casque
+    corps.appendChild(element("rect", { x: -2.1 * k, y: -0.95 * k, width: 0.55 * k, height: 1.9 * k, rx: 0.1, "class": "rj111-aileron" }));
+    corps.appendChild(element("rect", { x: 1.75 * k, y: -1.05 * k, width: 0.45 * k, height: 2.1 * k, rx: 0.1, "class": "rj111-aileron" }));
+    [[-1.45, -0.95], [-1.45, 0.55], [0.85, -0.9], [0.85, 0.5]].forEach(function (p) {
+      corps.appendChild(element("rect", { x: p[0] * k, y: p[1] * k, width: 0.7 * k, height: 0.4 * k, rx: 0.1, "class": "rj111-pneu" }));
+    });
+    corps.appendChild(element("path", { d: "M" + (-1.9 * k) + "," + (-0.55 * k) + " L" + (0.9 * k) + "," + (-0.35 * k) + " L" + (2.1 * k) + ",0 L" + (0.9 * k) + "," + (0.35 * k) + " L" + (-1.9 * k) + "," + (0.55 * k) + "Z", fill: teinte, "class": "rj111-caisse" }));
+    corps.appendChild(element("circle", { cx: -0.35 * k, cy: 0, r: 0.3 * k, "class": "rj111-casque" }));
+    g.appendChild(corps);
+    var nomG = element("g", { "class": "rj111-nom-v" });
     if (!autre) {
-      var t = element("text", { y: 0.42, "class": "rj111-initiales", "font-size": joueur ? 1.35 : 1.15 });
-      t.textContent = abrege(nom);
-      g.appendChild(t);
+      var t = element("text", { y: joueur ? -2.6 : -2.1, "class": "rj111-initiales", "font-size": joueur ? 1.5 : 1.1 });
+      t.textContent = joueur ? abrege(nom) : abrege(nom);
+      nomG.appendChild(t);
     }
+    g.appendChild(nomG);
     return g;
   }
 
@@ -326,20 +367,85 @@
     }).join("");
   }
 
-  function camera(joueur, e) {
+  /* Caméra embarquée : le monde tourne autour du joueur pour que la piste
+     file vers le haut de l'écran, dans son sens de marche ; le joueur est
+     placé au tiers bas pour voir ce qui arrive. Vue d'ensemble : nord en haut. */
+  function camera(joueur, e, dt) {
     var P = vue.plein, svg = vue.svg;
     if (!zoom || !joueur || e.fini) {
-      if (vue.cam !== "plein") { svg.setAttribute("viewBox", [P.x, P.y, P.w, P.h].join(" ")); vue.cam = "plein"; }
+      if (vue.cam !== "plein") { svg.setAttribute("viewBox", [P.x, P.y, P.w, P.h].join(" ")); vue.monde.removeAttribute("transform"); vue.rot = 0; vue.cam = "plein"; }
       return;
     }
+    var J = joueur.p;   // position de cette image (x, y ne sont écrits qu après la caméra)
+    if (!J || !isFinite(J.x) || !isFinite(J.y)) return;
     var rc = svg.getBoundingClientRect(), asp = rc.width > 0 && rc.height > 0 ? rc.width / rc.height : 1.6;
-    var W = Math.max(60, Math.min(100, Math.max(P.w, P.h) * 0.6)), H = W / asp;
-    var c = vue.cam && vue.cam !== "plein" ? vue.cam : { x: joueur.x, y: joueur.y };
-    // suit le joueur en douceur ; s il sort du cadre (images espacées), on recadre d un coup
-    if (Math.abs(joueur.x - c.x) > W * 0.35 || Math.abs(joueur.y - c.y) > H * 0.35) { c.x = joueur.x; c.y = joueur.y; }
-    else { c.x += (joueur.x - c.x) * 0.25; c.y += (joueur.y - c.y) * 0.25; }
+    // la hauteur compte : c est la piste qu on voit arriver devant le joueur
+    var H = Math.max(40, Math.min(60, Math.max(P.w, P.h) * 0.42)), W = H * asp;
+    var neuve = !vue.cam || vue.cam === "plein";
+    var c = neuve ? { x: J.x, y: J.y } : vue.cam;
+    // lissage selon le temps écoulé (même rendu à 20 ou 120 images/s)
+    var kp = 1 - Math.exp(-(dt || 16) / 90), kr = 1 - Math.exp(-(dt || 16) / 600);
+    if (Math.hypot(J.x - c.x, J.y - c.y) > H * 0.6) { c.x = J.x; c.y = J.y; }
+    else { c.x += (J.x - c.x) * kp; c.y += (J.y - c.y) * kp; }
+    /* la direction où va le joueur pointe vers le haut : on vise un point de la
+       piste plus loin devant (moyenne des prochains virages), pas le cap
+       instantané qui tournerait sans cesse dans les chicanes. */
+    var cap = joueur.cap || 0;
+    if (!joueur.stand && typeof joueur.ici === "number") {
+      var loin = vue.piste.getPointAtLength((joueur.ici + 30) % vue.longueur);
+      cap = Math.atan2(loin.y - J.y, loin.x - J.x);
+    }
+    /* Confort : rotation plafonnée à ROT_MAX °/s (mesuré avant : 73 °/s en
+       médiane, pointes à 230, à-coups à 1400 en vitesse rapide). En vitesse
+       rapide ou instantanée, les tours défilent trop vite pour une vue qui
+       tourne : la caméra suit le joueur, nord en haut. */
+    var rapide = modeVue === "suivie" || (typeof SETTINGS !== "undefined" && /fast|instant/.test(SETTINGS.simSpeed || ""));
+    var brute = rapide ? 0 : -90 - cap * 180 / Math.PI;
+    /* Paliers de 45° avec hystérésis : la vue ne pivote que lorsque la direction
+       générale s'écarte de plus de 35° de l'orientation retenue ; le reste du
+       temps elle reste immobile (un tour ne dure que quelques secondes). */
+    if (vue.palier == null || neuve || rapide) vue.palier = Math.round(brute / 45) * 45;
+    else if (Math.abs(((brute - vue.palier) % 360 + 540) % 360 - 180) > 35) vue.palier = Math.round(brute / 45) * 45;
+    var cible = vue.palier;
+    var d = ((cible - vue.rot) % 360 + 540) % 360 - 180;
+    var pas = ROT_MAX * (dt || 16) / 1000;
+    vue.rot = neuve ? cible : vue.rot + Math.max(-pas, Math.min(pas, d * kr * 4));
+    vue.rot = ((vue.rot % 360) + 540) % 360 - 180;
     vue.cam = c;
-    svg.setAttribute("viewBox", [(c.x - W / 2).toFixed(2), (c.y - H / 2).toFixed(2), W.toFixed(2), H.toFixed(2)].join(" "));
+    vue.monde.setAttribute("transform", "rotate(" + vue.rot.toFixed(2) + " " + c.x.toFixed(2) + " " + c.y.toFixed(2) + ")");
+    var cy = c.y - H * 0.2;   // le joueur au tiers bas
+    svg.setAttribute("viewBox", [(c.x - W / 2).toFixed(2), (cy - H / 2).toFixed(2), W.toFixed(2), H.toFixed(2)].join(" "));
+  }
+
+  /* Mini-carte : le tracé entier, un point par voiture (le joueur en blanc). */
+  function miniCarte(e, joueur) {
+    vue.mini.style.display = zoom && joueur && !e.fini ? "" : "none";
+    if (vue.mini.style.display) return;
+    Object.keys(voitures).forEach(function (nom) {
+      var r = voitures[nom], p = vue.miniV[nom];
+      if (r.autre) return;
+      if (!p) { p = vue.miniV[nom] = element("circle", { r: r === joueur ? 3.2 : 2.2, "class": r === joueur ? "moi" : "" }); vue.miniPoints.appendChild(p); }
+      p.setAttribute("cx", r.x.toFixed(1)); p.setAttribute("cy", r.y.toFixed(1));
+    });
+    Object.keys(vue.miniV).forEach(function (nom) { if (!voitures[nom]) { vue.miniV[nom].remove(); delete vue.miniV[nom]; } });
+  }
+
+  /* HUD : position, tour, écarts avec la voiture de devant et de derrière. */
+  function majHud(lr, e) {
+    var vivants = e.voitures.filter(function (v) { return !v.abandon && !v.autreCategorie; }).sort(function (a, b) { return a.pos - b.pos; });
+    var i = vivants.findIndex(function (v) { return v.joueur; });
+    if (i < 0) { vue.hud.innerHTML = ""; return; }
+    var moi = vivants[i], av = vivants[i - 1], ar = vivants[i + 1];
+    var total = lr.total || 0, tour = lr.finished ? total : Math.max(1, Math.min(total || 1e9, lr.cur || 0));
+    var ec = function (x) { return x >= e.tempsTour ? Math.floor(x / e.tempsTour) + " T" : x.toFixed(1) + " s"; };
+    var duel = function (v, signe, cls) {
+      if (!v || !(e.temps > 0)) return "";
+      var x = Math.abs((v.ecart || 0) - (moi.ecart || 0));
+      return '<div class="d ' + cls + (x < 1 ? " proche" : "") + '"><span>' + esc(abrege(v.nom)) + "</span><b>" + signe + ec(x) + "</b></div>";
+    };
+    vue.hud.innerHTML = '<div class="p"><b>P' + moi.pos + '</b><span>/' + vivants.length + "</span></div>" +
+      '<div class="t">' + (lr.finished ? "ARRIVÉE" : "TOUR " + tour + (total ? "/" + total : "")) + "</div>" +
+      duel(av, "−", "av") + duel(ar, "+", "ar");
   }
 
   function image(t) {
@@ -370,7 +476,8 @@
       if (v.joueur) joueur = r;
       var lg = vue.longueur, ici = (((r.d % 1) + 1) % 1) * lg;
       r.ici = ici;
-      r.p = r.stand ? vue.stand.place(r.rang) : vue.piste.getPointAtLength(ici);
+      if (r.stand) { var sp = vue.stand.place(r.rang); r.p = { x: sp.x, y: sp.y }; r.cap = Math.atan2(sp.r.ty, sp.r.tx); }
+      else r.p = vue.piste.getPointAtLength(ici);
     });
     /* Deux voitures à moins de 5 unités l'une de l'autre se mettent côte à
        côte (couloirs) : les bagarres et les dépassements se voient. */
@@ -381,28 +488,36 @@
       if (prec && r.ici - prec.ici < 5) cible = prec.cible > 0 ? -1.5 : 1.5;
       r.cible = cible;
       r.lat = (r.lat || 0) + (cible - (r.lat || 0)) * 0.12;
-      var q = vue.piste.getPointAtLength(Math.min(vue.longueur, r.ici + 0.8)), tx = q.x - r.p.x, ty = q.y - r.p.y, nn = Math.hypot(tx, ty) || 1;
+      var q = vue.piste.getPointAtLength((r.ici + 0.8) % vue.longueur), tx = q.x - r.p.x, ty = q.y - r.p.y, nn = Math.hypot(tx, ty) || 1;
+      var cap = Math.atan2(ty, tx);
+      // cap lissé (les virages serrés ne font pas sauter la voiture)
+      r.cap = r.cap == null ? cap : r.cap + Math.atan2(Math.sin(cap - r.cap), Math.cos(cap - r.cap)) * 0.35;
       r.p = { x: r.p.x - ty / nn * r.lat, y: r.p.y + tx / nn * r.lat };
     });
+    camera(joueur, e, vue.tPrec ? Math.min(500, t - vue.tPrec) : 16);
+    vue.tPrec = t;
+    var redresse = (-vue.rot).toFixed(1);   // les noms restent à l'endroit malgré la rotation du monde
     Object.keys(presents).forEach(function (nom) {
       var r = voitures[nom];
       r.x = r.p.x; r.y = r.p.y;
       r.el.setAttribute("transform", "translate(" + r.x.toFixed(2) + "," + r.y.toFixed(2) + ")");
+      r.el.querySelector(".rj111-corps-v").setAttribute("transform", "rotate(" + ((r.cap || 0) * 180 / Math.PI).toFixed(1) + ")");
+      r.el.lastChild.setAttribute("transform", "rotate(" + redresse + ")");
     });
-    camera(joueur, e);
+    miniCarte(e, joueur);
     Object.keys(voitures).forEach(function (nom) {
       if (!presents[nom]) { voitures[nom].el.remove(); delete voitures[nom]; }
     });
     // Le joueur au premier plan, avec sa position.
     if (joueur) {
       vue.groupe.appendChild(joueur.el);
-      vue.etiquette.setAttribute("x", (joueur.x + 2.4).toFixed(2));
-      vue.etiquette.setAttribute("y", (joueur.y - 2.3).toFixed(2));
-      vue.etiquette.textContent = "P" + joueur.pos;
+      var lbl = joueur.el.querySelector(".rj111-initiales");
+      if (lbl && lbl.getAttribute("data-p") !== String(joueur.pos)) { lbl.setAttribute("data-p", joueur.pos); lbl.textContent = "P" + joueur.pos; }
     }
     if (t - vue.majTour > 250 || e.fini) {
       vue.majTour = t;
       majTourDeClassement(lr, e);
+      majHud(lr, e);
       (window.RJ_FRAME_HOOKS || []).forEach(function (h) { try { h.run(e); } catch (x) { console.warn(TAG, h.id, x && x.message); } });
     }
     var n = lr._rjNeutral && lr._rjNeutral.active ? lr._rjNeutral : null;
@@ -432,6 +547,7 @@
     return {
       circuit: vue ? vue.circuit : null,
       temps: dernier,                 // horodatage de la dernière image
+      rotation: vue && vue.cam !== "plein" ? vue.rot : 0,   // angle de la caméra embarquée (degrés)
       stand: vue ? vue.stand : null,
       voitures: Object.keys(voitures).map(function (nom) {
         var r = voitures[nom];

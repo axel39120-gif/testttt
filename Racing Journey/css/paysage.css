@@ -1695,3 +1695,109 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 /* Conseil de l'ingénieur sous la parole du pilote (v282) */
 .rja-inge-txt { margin-top: 6px; font-size: 11.5px; line-height: 1.4; color: var(--text2, #c8c8d0); }
 .rja-inge-txt b { font: 800 9px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: #22D3EE; margin-right: 6px; }
+
+/* --- Vue circuit embarquée (v283) : la piste file dans le sens de marche du
+       joueur, HUD et mini-carte par-dessus, pluie visible -------------------- */
+.rj111-scene { position: relative; min-height: 0; height: 100%; border-radius: 6px; overflow: hidden; }
+.rj111-scene > .rj111-svg { display: block; width: 100%; height: 100%; }
+.rj111-pneu { fill: #111; }
+.rj111-aileron { fill: #1b1b1f; stroke: rgba(255, 255, 255, .25); stroke-width: .08; }
+.rj111-casque { fill: #f5f5f5; stroke: #000; stroke-width: .08; }
+.rj111-caisse { stroke: rgba(0, 0, 0, .7); stroke-width: .12; }
+.rj111-joueur .rj111-caisse { stroke: #fff; stroke-width: .25; }
+.rj111-joueur .rj111-initiales { fill: #fff; font-weight: 900; }
+.rj111-nom-v .rj111-initiales { stroke-width: .35px; }
+.rj111-hud {
+  position: absolute; top: 6px; left: 6px; display: flex; align-items: center; gap: 6px; pointer-events: none;
+  font: 800 11px/1 var(--font-display); color: #fff; letter-spacing: .04em;
+}
+.rj111-hud:empty { display: none; }
+.rj111-hud > div { background: rgba(8, 8, 12, .78); border: 1px solid rgba(255, 255, 255, .12); border-radius: 5px; padding: 5px 7px; display: flex; align-items: baseline; gap: 5px; }
+.rj111-hud .p b { font-size: 18px; color: #fff; }
+.rj111-hud .p span { color: #8a8a96; font-size: 10px; }
+.rj111-hud .t { color: #c8c8d0; }
+.rj111-hud .d span { color: #8a8a96; }
+.rj111-hud .d.av b { color: #34D399; }
+.rj111-hud .d.ar b { color: #F87171; }
+.rj111-hud .d.proche { border-color: #FFB300; box-shadow: 0 0 0 1px rgba(255, 179, 0, .35); }
+.rj111-mini {
+  position: absolute; right: 6px; bottom: 6px; width: 92px; height: 70px; pointer-events: none;
+  background: rgba(8, 8, 12, .9); border: 1px solid rgba(255, 255, 255, .18); border-radius: 6px; padding: 3px;
+}
+.rj111-mini-piste { fill: none; stroke: #6b6b78; stroke-width: 3; stroke-linejoin: round; }
+.rj111-mini circle { fill: #9CA3AF; }
+.rj111-mini circle.moi { fill: #fff; stroke: #E10600; stroke-width: 1.2; }
+/* pluie : stries qui tombent, piste plus sombre et luisante */
+.rj111-pluie .rj111-piste { stroke: #2b2f36; }
+.rj111-pluie::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35;
+  background-image: repeating-linear-gradient(105deg, transparent 0 9px, rgba(190, 210, 255, .55) 9px 10px, transparent 10px 22px);
+  background-size: 60px 60px; animation: rj111-pluie .5s linear infinite;
+}
+.rj111-pluie.forte::after { opacity: .55; animation-duration: .35s; }
+@keyframes rj111-pluie { from { background-position: 0 0; } to { background-position: -16px 60px; } }
+@media (prefers-reduced-motion: reduce) { .rj111-pluie::after { animation: none; } }
+.rj111-halo { fill: rgba(255, 255, 255, .16); stroke: rgba(255, 255, 255, .7); stroke-width: .2; stroke-dasharray: .6 .4; }
+
+/* --- Qualifs : ton tour sur le tracé (js/race/146-qualif-piste.js) ------- */
+#rj146 { margin: 8px 0 0; padding: 8px 10px; border-radius: var(--r); background: #0e0e12; border: 1px solid rgba(255, 255, 255, .1); display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tete tete" "piste secteurs" "piste bilan"; gap: 6px 12px; align-items: center; }
+#rj146 .rj146-tete { grid-area: tete; display: flex; align-items: baseline; justify-content: space-between; }
+#rj146 .rj146-etat { font: 800 10px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #22D3EE; }
+#rj146.rj146-record .rj146-etat { color: #A855F7; }
+#rj146 .rj146-chrono { font: 900 22px/1 var(--font-display); color: #fff; font-variant-numeric: tabular-nums; }
+#rj146 .rj146-piste { grid-area: piste; height: 104px; background: #1f4a2a; border-radius: 6px; overflow: hidden; }
+#rj146 .rj146-svg { width: 100%; height: 100%; display: block; }
+#rj146 .rj146-sect { fill: none; stroke: transparent; stroke-width: 3.6; stroke-linecap: butt; transition: stroke .2s; }
+#rj146 .rj146-ligne { fill: #fff; }
+#rj146 .rj146-voiture { stroke: #fff; stroke-width: 1; }
+#rj146 .rj146-secteurs { grid-area: secteurs; display: flex; flex-direction: column; gap: 4px; }
+#rj146 .rj146-secteurs span { min-width: 92px; padding: 3px 7px; border-radius: 4px; background: rgba(255, 255, 255, .06); font: 800 10.5px/1.2 var(--font-display); color: #8a8a96; font-variant-numeric: tabular-nums; }
+#rj146 .rj146-secteurs span.ok { color: #0b0b0f; }
+#rj146 .rj146-bilan { grid-area: bilan; display: flex; flex-direction: column; gap: 2px; font: 700 11px/1.2 var(--font-display); color: #c8c8d0; }
+#rj146 .rj146-bilan b { font-size: 18px; color: #fff; }
+#rj146 .rj146-bilan em { font-style: normal; color: #8a8a96; font-size: 10px; }
+/* pendant la séance, la carte du tour remplace le texte fixe de présentation */
+#quali-screen:has(#rj146) #quali-session-header { display: none !important; }
+#rj146 .rj146-piste { height: 88px; }
+/* Essais : piste miniature à gauche du chrono du tour en cours (146) */
+.rj146-essai-hote { display: grid; grid-template-columns: 132px minmax(0, 1fr); column-gap: 10px; align-items: center; padding-top: 6px !important; padding-bottom: 2px !important; }
+.rj146-essai-hote > * { grid-column: 2; }
+.rj146-essai-hote > .rj146-mini-ess { grid-column: 1; grid-row: 1 / span 4; width: 132px; height: 74px; background: #1f4a2a; border-radius: 6px; }
+.rj146-mini-ess .rj146-sect { fill: none; stroke: transparent; stroke-width: 3.6; }
+.rj146-mini-ess .rj146-voiture { stroke: #fff; stroke-width: 1.2; }
+/* nom de la vue choisie, rappelé brièvement après un appui sur la carte */
+.rj111-scene { cursor: pointer; }
+.rj111-hud[data-vue]::after { content: attr(data-vue); position: absolute; left: 0; top: 40px; padding: 4px 8px; border-radius: 4px; background: rgba(8, 8, 12, .85); font: 800 9.5px/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: #22D3EE; animation: rj111-vue 2.2s forwards; }
+@keyframes rj111-vue { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+/* relais d'essais : un peu moins haut, pour tenir sur l'écran avec la piste */
+.rj146-essai-hote #fpl-chrono { font-size: 30px !important; }
+.rj146-essai-hote #fpl-sectorlbl { margin-top: 6px !important; }
+.fpl-sec { padding: 6px 6px 5px !important; }
+#fpl-box-btn { padding-top: 10px !important; padding-bottom: 10px !important; }
+#race-practice-section { margin-bottom: 0 !important; }
+
+/* --- Résultat façon télé (js/race/147-resultat-tele.js) ------------------- */
+#rj147 {
+  grid-column: 1 / -1; column-span: all; display: flex; align-items: stretch; gap: 14px; margin: 0 0 10px; min-height: 76px; break-inside: avoid;
+  border-radius: var(--r); overflow: hidden; border: 1px solid rgba(255, 255, 255, .1);
+  background: linear-gradient(90deg, rgba(225, 6, 0, .28), #121218 45%);
+  --t: #9CA3AF;
+}
+#rj147.rj147-or { --t: #FACC15; background: linear-gradient(90deg, rgba(250, 204, 21, .3), #121218 50%); }
+#rj147.rj147-argent { --t: #E5E7EB; }
+#rj147.rj147-bronze { --t: #F59E0B; }
+#rj147.rj147-points { --t: #34D399; }
+#rj147 .rj147-damier { flex: none; width: 34px; background: repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 12px 12px; }
+#rj147 .rj147-course { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; }
+#rj147 .rj147-course .k { font: 800 9.5px/1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: #c8c8d0; }
+#rj147 .rj147-course .v { font: 700 14px/1.2 var(--font-display); color: #fff; }
+#rj147 .rj147-moi { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 14px; border-left: 1px solid rgba(255, 255, 255, .08); }
+#rj147 .rj147-moi b { font: 900 34px/1 var(--font-display); color: var(--t); }
+#rj147 .rj147-moi span { font: 800 10px/1.2 var(--font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--t); }
+#rj147 .rj147-moi em { font-style: normal; font: 800 11px/1.3 var(--font-display); color: #9CA3AF; }
+#rj147 .rj147-moi em.up { color: #34D399; }
+#rj147 .rj147-moi em.down { color: #F87171; }
+#rj147 .rj147-chiffres { margin-left: auto; display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 14px; font: 600 11px/1.2 var(--font-display); color: #c8c8d0; text-align: right; }
+#rj147 .rj147-chiffres b { color: #fff; font-weight: 900; }
+#rj147 .rj147-chiffres span:first-child b { font-size: 18px; color: #22D3EE; }
+#rj147 .rj147-chiffres .violet b { color: #A855F7; }
