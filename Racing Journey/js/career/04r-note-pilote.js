@@ -45,6 +45,24 @@
     return Math.round(newSk);
   }
 
+  /* Une seule échelle pour toute la carrière (v286). Avant, chaque catégorie
+     avait sa table, plafonnée à son maximum : en Karting Junior la note se
+     figeait à 45 quand les stats dépassaient le plafond, puis bondissait à 55
+     au passage en Karting Senior (même stats, autre table). La courbe reprend
+     les points des tables par catégorie (elles se recoupaient presque), sans
+     plafond : la note continue de monter. Le frein est ailleurs, là où il est
+     réaliste — l'entraînement rapporte de moins en moins au-dessus du niveau
+     de la catégorie (_overCapPenalty, 03). */
+  var COURBE = [[37, 28], [54, 45], [65, 56], [72, 65], [78, 72], [83, 78], [88, 83], [96, 95], [99, 98]];
+  function noteContinue(brute) {
+    if (brute <= COURBE[0][0]) return Math.round(brute - (COURBE[0][0] - COURBE[0][1]));
+    for (var i = 1; i < COURBE.length; i++) {
+      var a = COURBE[i - 1], b = COURBE[i];
+      if (brute <= b[0]) return Math.round(a[1] + (brute - a[0]) * (b[1] - a[1]) / (b[0] - a[0]));
+    }
+    return Math.min(99, Math.round(brute - 1));
+  }
+
   // ========================================================================
   // WRAP calcPlayerRating — rebalance la note du joueur (SEUL volet actif)
   // ========================================================================
@@ -59,9 +77,7 @@
       catch (e) { return 50; }
       if (typeof oldRating !== "number") return oldRating;
 
-      var cat = (typeof G !== "undefined" && G) ? G.cat : null;
-      if (!cat || !REBALANCE_TABLE[cat]) return oldRating;
-      return rebalanceSkill(oldRating, cat);
+      return noteContinue(oldRating);
     } });
     window.calcPlayerRating._rjRebalanced = true;
     console.log("[04r] calcPlayerRating wrappé (note joueur rebalancée)");
@@ -102,6 +118,7 @@
 
   window._RJ_REBAL = {
     rebalanceSkill: rebalanceSkill,
+    noteContinue: noteContinue,
     REBALANCE_TABLE: REBALANCE_TABLE
   };
 

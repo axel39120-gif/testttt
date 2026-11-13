@@ -794,7 +794,7 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj111-bord { fill: none; stroke: #0f1a12; stroke-width: 9.6; stroke-linejoin: round; }
 .rj111-limite { fill: none; stroke: #e8e8e8; stroke-width: 7.6; stroke-linejoin: round; }
 .rj111-piste { fill: none; stroke: #3a3d44; stroke-width: 7; stroke-linejoin: round; }
-.rj111-herbe { fill: #1f4a2a; }
+.rj111-herbe { fill: url(#rj111-tonte); }
 .rj111-gravier { fill: none; stroke: #b9a273; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
 .rj111-arbre { stroke: rgba(0, 0, 0, .35); stroke-width: .3; }
 .rj111-arbre.a0 { fill: #2f6b36; } .rj111-arbre.a1 { fill: #27592e; } .rj111-arbre.a2 { fill: #3b7a3f; }
@@ -1807,8 +1807,26 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj146-fond { fill: none; stroke: #2a2d36; stroke-width: 4.6; stroke-linejoin: round; stroke-linecap: round; }
 .rj146-trace { fill: none; stroke: #8b909c; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
 .rj146-ligne { fill: #fff; stroke: #0e0e12; stroke-width: .6; }
-/* silhouettes par catégorie (v284) */
-.rj111-verriere { fill: rgba(20, 28, 40, .9); stroke: rgba(255, 255, 255, .35); stroke-width: .08; }
-.rj111-phare { fill: #fff7c2; }
-.rj111-aeroscreen { fill: none; stroke: rgba(200, 220, 255, .85); stroke-width: .14; }
 .rj111-vue-plein .rj111-voiture:not(.rj111-joueur) .rj111-nom-v { display: none; }
+
+/* voitures en points (v286) */
+.rj111-point { stroke: rgba(0, 0, 0, .75); stroke-width: .3; }
+.rj111-joueur .rj111-point { stroke: #fff; stroke-width: .45; }
+.rj111-reflet { fill: rgba(255, 255, 255, .45); pointer-events: none; }
+
+/* --- Décors v286 : herbe tondue, arbres en volume, ville et port ----------- */
+.rj111-gomme { fill: none; stroke: rgba(0, 0, 0, .22); stroke-width: 2.4; stroke-linejoin: round; }
+.rj111-ombre-arbre { fill: rgba(0, 0, 0, .28); }
+.rj111-feuille { fill: rgba(255, 255, 255, .12); }
+.rj111-svg.rj111-ville { background: #5a5f69; }
+.rj111-sol-ville { fill: #5a5f69; }
+.rj111-ville .rj111-bord { stroke: #b9bec8; }          /* murs de béton */
+.rj111-ville .rj111-limite { stroke: #f2f2f2; }
+.rj111-ombre-bat { fill: rgba(0, 0, 0, .35); }
+.rj111-bat { stroke: rgba(0, 0, 0, .35); stroke-width: .15; }
+.rj111-bat.b0 { fill: #8a8f9c; } .rj111-bat.b1 { fill: #a9a08f; } .rj111-bat.b2 { fill: #c7b9a3; } .rj111-bat.b3 { fill: #6f7685; }
+.rj111-toit { fill: rgba(255, 255, 255, .18); }
+.rj111-coque { fill: #f5f5f5; stroke: rgba(0, 0, 0, .4); stroke-width: .12; }
+.rj111-pont { fill: #9cc6e8; }
+/* Qualifs : le bandeau « QUALIF · circuit · Manche · catégorie » répétait l'en-tête de l'écran ; retiré pour libérer la place (v286) */
+#quali-screen > .rj-bcast-hdr { display: none !important; }

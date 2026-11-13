@@ -467,11 +467,23 @@ function recomputeGlobalRep() {
     n = getRepCap(),
     a = Math.round(Math.min(n, Math.max(0, r))),
     i = G.reputation || 0;
-  /* Le plafond de catégorie borne la note affichée, pas les axes : la
-     réputation gagnée au-dessus du plafond reste acquise et réapparaît dans
-     la catégorie supérieure (avant : les axes étaient rognés à chaque calcul,
-     on repartait du plafond chaque saison). */
-  G.reputation = a;
+  /* Plafond de catégorie progressif (v286). Avant : la note affichée était
+     bornée au plafond (28 en Karting Junior), figée là, puis elle bondissait
+     au passage dans la catégorie supérieure. Désormais, au-dessus du plafond
+     chaque gain ne compte plus qu'à 35 % (une petite catégorie fait peu
+     parler d'elle), mais il compte ; les pertes comptent en entier. La note
+     suit ses propres gains : changer de catégorie ne la fait pas sauter, ce
+     sont les gains suivants qui reprennent à plein. Brut précédent gardé dans
+     G.rep._brute (sauvegardé avec G.rep). */
+  var brut = Math.max(0, Math.min(100, r)), avant = typeof G.rep._brute === "number" ? G.rep._brute : brut;
+  var R = typeof G.reputation === "number" ? G.reputation : Math.min(brut, n), dr = brut - avant;
+  if (dr > 0) {
+    var sousPlafond = Math.max(0, Math.min(dr, n - R));
+    R += sousPlafond + (dr - sousPlafond) * 0.35;
+  } else R += dr;
+  G.rep._brute = brut;
+  G.reputation = Math.round(Math.max(0, Math.min(brut, R)));
+  a = G.reputation;
   if ("function" == typeof getSponsorPool && a > i && (G.races || []).length >= 2) try {
     var l = getSponsorPool(),
       c = (G.sponsors || []).map(function(e) {
