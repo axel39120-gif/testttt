@@ -500,16 +500,17 @@
 
   var TUNING = {
     // A. plafonds d'impact des événements, en points de « score »
-    evtMaxPerGain: 0.018,   // gain max d'un seul événement  (~1 place)
-    evtMaxPerLoss: 0.030,   // perte max d'un seul événement (~1,5 place)
-    evtMaxRaceGain: 0.045,  // gain cumulé max sur la course (~2 places)
-    evtMaxRaceLoss: 0.090,  // perte cumulée max sur la course (~4 places)
+    // v290 : 0,018 / 0,045 valaient 3 à 5 places en karting (plateau resserré) :
+    // un débutant parti 16e finissait 2e grâce aux seuls événements.
+    evtMaxPerGain: 0.008,   // gain max d'un seul événement  (~1 place)
+    evtMaxPerLoss: 0.016,   // perte max d'un seul événement (~2 places)
+    evtMaxRaceGain: 0.016,  // gain cumulé max sur la course (~2 places)
+    evtMaxRaceLoss: 0.040,  // perte cumulée max sur la course (~4 places)
 
     // B. niveau moyen visé pour le plateau des catégories d'entrée
-    fieldTargets: {
-      "Karting Junior": 47.5,
-      "Karting Senior": 50.0
-    }
+    // v290 : vide. Ce décalage ne valait que jusqu'à la première qualif (le
+    // recalage de saison, 04k, repartait de l'échelle de 92) : 92 fait foi.
+    fieldTargets: {}
   };
 
   // ---------------------------------------------------------------- utils

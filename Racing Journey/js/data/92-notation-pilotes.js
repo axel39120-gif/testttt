@@ -120,11 +120,13 @@
       { tier: "milieu",   count: 10, mean: 48.0, spread: 2.2 },
       { tier: "recrue",   count: 8, mean: 43.0, spread: 2.4 }
     ],
+    /* v290 : élite resserrée vers le plafond de la catégorie (52) — un joueur
+       au plafond est candidat au titre, pas assuré de le gagner. */
     "Karting Junior": [
-      { tier: "sommet",   count: 2, mean: 52.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 48.0, spread: 1.6 },
-      { tier: "milieu",   count: 10, mean: 42.0, spread: 2.3 },
-      { tier: "recrue",   count: 8, mean: 37.0, spread: 2.6 }
+      { tier: "sommet",   count: 2, mean: 54.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 51.0, spread: 1.4 },
+      { tier: "milieu",   count: 10, mean: 44.0, spread: 2.3 },
+      { tier: "recrue",   count: 8, mean: 38.0, spread: 2.6 }
     ],
     "Super Formula": [
       { tier: "sommet",   count: 2, mean: 92.0, spread: 0.8 },

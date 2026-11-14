@@ -20411,15 +20411,19 @@ function _calcPlayerRatingCoeur() {
   return Math.round(Math.max(40, Math.min(99, r + n)))
 }
 
+/* v290 : le plafond suit l'élite de chaque catégorie (92-notation-pilotes :
+   meilleurs pilotes à 54, 58, 64, 71, 78, 84 de la junior à la F2). Il était
+   de 3 à 8 points au-dessus : un joueur assidu dépassait tout le plateau, qui ne
+   progresse pas en cours de saison, et gagnait chaque titre de karting. */
 function getCategoryStatCap(e) {
   var t;
   return {
-    "Karting Junior": 55,
-    "Karting Senior": 65,
-    "Formule 4": 72,
-    "Formula Regional": 78,
-    "Formule 3": 83,
-    "Formule 2": 88,
+    "Karting Junior": 52,
+    "Karting Senior": 59,
+    "Formule 4": 65,
+    "Formula Regional": 72,
+    "Formule 3": 79,
+    "Formule 2": 85,
     "Formule 1": 99,
     "Super Formula": 90,
     "Endurance WEC": 90,
@@ -20427,13 +20431,15 @@ function getCategoryStatCap(e) {
   } [e || G.cat] || 99
 }
 
+/* Au-delà du plafond, l'entraînement rapporte de moins en moins (v290 : les
+   gains restaient entiers jusqu'à +2, puis 60 % jusqu'à +4). */
 function _overCapPenalty(e, t) {
   var r = e - t;
-  return r <= 2 ? 1 : r <= 4 ? .6 : r <= 7 ? .35 : r <= 10 ? .15 : .05
+  return r < 1 ? .6 : r < 3 ? .3 : r < 6 ? .12 : .04
 }
 
 function _hardCapForCategory(e) {
-  return Math.min(95, getCategoryStatCap(e) + 12)
+  return Math.min(95, getCategoryStatCap(e) + 8)
 }
 
 function gainSubStat() { return rjAppeler("gainSubStat", _gainSubStatCoeur, this, arguments); }

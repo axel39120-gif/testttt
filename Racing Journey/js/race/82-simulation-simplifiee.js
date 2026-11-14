@@ -40,8 +40,12 @@
 
   /* Variance de rythme par tour, désormais unique pour tout le monde.
      C'était le rôle de stratV, qui variait selon la stratégie choisie. */
-  var VARIANCE = 0.55;
-  var VARIANCE_KART = 0.75;      // le karting bouge davantage, plateau serré
+  /* v290 : 0,55 et 0,75 — cinq à dix fois l'ordre de grandeur prévu par le
+     moteur (0,06 à 0,14) ; en fin de course ce bruit s'additionne de tour en
+     tour, et un débutant parti 17e gagnait au hasard. Les retournements
+     viennent désormais d'erreurs visibles (module 149). */
+  var VARIANCE = 0.14;
+  var VARIANCE_KART = 0.17;      // le karting bouge davantage, plateau serré
 
   function LR() { return (typeof window.LIVE_RACE !== "undefined") ? window.LIVE_RACE : null; }
   function G_() { return (typeof window.G !== "undefined") ? window.G : null; }

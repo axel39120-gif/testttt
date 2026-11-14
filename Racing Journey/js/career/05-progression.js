@@ -3341,7 +3341,8 @@ function doActivity(e) {
 
 function getHappinessBonus() {
   var e = null != G.happiness ? G.happiness : 50;
-  return e >= 80 ? .03 : e >= 65 ? .015 : e >= 50 ? 0 : e >= 30 ? -.01 : -.03
+  // v290 : +0,03 valait cinq places en karting, sans équivalent chez les rivaux.
+  return e >= 80 ? .012 : e >= 65 ? .006 : e >= 50 ? 0 : e >= 30 ? -.008 : -.02
 }
 
 function applyMaintenanceCosts(e) {
