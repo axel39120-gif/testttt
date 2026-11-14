@@ -1856,3 +1856,9 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 #ct-contrat-actuel > div { margin-bottom: 12px !important; }
 #ct-offres .rj117-sans-contrat { padding: 12px 14px; border: 1px dashed rgba(255, 255, 255, .15); border-radius: var(--r); color: var(--text3, #8a8a96); font-size: 13px; margin-bottom: 12px; }
 .rj124-logo { border-radius: 8px; overflow: hidden; flex-shrink: 0; display: inline-flex; } .rj124-logo svg { width: 100%; height: 100%; display: block; }
+
+/* v293 — mercato : prix du baquet sur chaque offre, message de signature (150). */
+.rj150-prix { margin: 4px 0 10px; padding: 7px 10px; border-radius: var(--r); font-size: 12px; font-weight: 600; color: var(--text2); background: rgba(255, 255, 255, .04); border-left: 3px solid var(--amber, #F59E0B); }
+.rj150-prix.offert { border-left-color: var(--teal, #34D399); color: var(--teal, #34D399); }
+.rj150-prix.trop { border-left-color: #EF4444; color: #f87171; }
+.rj150-fb { margin: 6px 16px 10px; padding: 10px 12px; border-radius: var(--r); font-size: 13px; color: #fecaca; background: rgba(239, 68, 68, .12); border: 1px solid rgba(239, 68, 68, .4); }

@@ -315,7 +315,7 @@
           Object.keys(bloc.soutiens || {}).forEach(function (k) { if (G.driverPool && G.driverPool[k]) G.driverPool[k]._soutien = bloc.soutiens[k]; });
         }
       });
-    window.RJBaquets = { places: places, classer: classer, filtrer: filtrer, apportJoueur: apportJoueur, soutien: soutien, etat: etat, conseil: conseil };
+    window.RJBaquets = { places: places, classer: classer, filtrer: filtrer, apportJoueur: apportJoueur, soutien: soutien, etat: etat, conseil: conseil, prix: prixDuBaquet };
     window._rj116Uninstall = function () {
       rjDesinscrire(["116-baquets:"]);
       window.RJ_SAVE_HOOKS = window.RJ_SAVE_HOOKS.filter(function (h) { return !(h && h.cle === "baquets"); });

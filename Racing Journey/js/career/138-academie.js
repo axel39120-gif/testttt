@@ -18,6 +18,12 @@
  *     qui pousse). Si ses résultats ne justifient pas encore un baquet,
  *     elle le place pilote de réserve de son écurie de F1. L'offre reste
  *     ouverte jusqu'au mercato ; à défaut, elle est retentée l'an suivant.
+ *   - PROMOTION (v293) : avant la F1, un pilote de l'académie qui finit la
+ *     saison dans les premiers (top 3, ou top 5 avec une bonne relation ; seuil
+ *     propre à chaque académie) reçoit dès la mi-saison une offre d'une écurie
+ *     affiliée de la catégorie supérieure. Avant, ces écuries ne faisaient que
+ *     des offres ordinaires (tirage, réputation, concurrence) : un pilote
+ *     brillant pouvait finir la saison sans aucune.
  *   - QUITTER : possible à tout moment (réputation −3, et l'académie ne
  *     reprend pas le pilote).
  *   - REVUE DE FIN DE SAISON : une bonne saison renforce la relation ; une
@@ -68,7 +74,7 @@
   function eligibleF1() {
     var a = A(); if (!a || !PLAYER_ACADEMY.f1Offer) return false;
     if (G.pendingTransfer && G.pendingTransfer.cat === "Formule 1") return false;
-    if ((G.offers || []).some(function (o) { return o && o._academie; })) return false;
+    if ((G.offers || []).some(function (o) { return o && o._academie && o.cat === "Formule 1"; })) return false;
     var e = etat(); if (e.offreSaison === G.saison) return false;
     var total = (window.CAL_RACES || []).length || 10, faites = (G.races || []).length;
     if (faites < Math.floor(total * 0.55)) return false;                  // à partir de la mi-saison
@@ -102,6 +108,45 @@
       baquet
         ? "La décision est prise : " + cible.team + " te propose un baquet de titulaire en Formule 1 pour la saison prochaine. C'est le plan F1 de " + nomA() + ".\n\nL'offre est dans tes contrats, elle reste ouverte jusqu'au mercato."
         : (resultats ? "Tu as le niveau, mais il te manquera la Super Licence en fin de saison. En attendant," : "Tes résultats ne justifient pas encore un baquet, mais") + " nous voulons t'avoir près de la F1 : " + cible.team + " te propose de devenir son pilote de réserve, en plus de ton baquet actuel.\n\nUne meilleure saison, et la porte du baquet s'ouvre. L'offre est dans tes contrats.");
+    return o;
+  }
+
+  /* --- Promotion dans une écurie affiliée (v293) --------------------------- */
+  function rangEquipe(cat, team) {
+    var L = (typeof TEAM_OFFERS !== "undefined" && TEAM_OFFERS[cat]) || [];
+    for (var i = 0; i < L.length; i++) if (L[i].team === team) return i;
+    return 99;
+  }
+  function proposerPromotion() {
+    var a = A(); if (!a || !a.affiliates || typeof buildOffer !== "function" || typeof getCatNextOptions !== "function") return null;
+    if (G.cat === "Formule 1" || G.cat === "Formule 2") return null;     // la suite, c'est la voie F1
+    var e = etat(); if (e.promoSaison === G.saison) return null;
+    var total = (window.CAL_RACES || []).length || 10, faites = (G.races || []).length;
+    if (faites < Math.floor(total * 0.55)) return null;                    // à partir de la mi-saison
+    var p = place(), rel = PLAYER_ACADEMY.relation || 0, seuil = Math.max(3, exigence().baquet || 3);
+    if (!(p <= seuil || (p <= 5 && rel >= 65))) return null;
+    var cats = getCatNextOptions(G.cat).filter(function (c) {
+      return c !== "Formule 1" && !(typeof isAltPath === "function" && isAltPath(c)) && (a.affiliates[c] || []).length;
+    });
+    if (!cats.length) return null;
+    var cat = cats[0];
+    if (G.pendingTransfer && G.pendingTransfer.cat === cat && isAcademyAffiliate(G.pendingTransfer.team, cat)) return null;
+    var deja = (G.offers || []).filter(function (o) { return o && o.cat === cat && isAcademyAffiliate(o.team, cat); });
+    if (deja.length) { deja.forEach(function (o) { o._academie = true; o.expire = Math.max(o.expire || 0, 40); }); e.promoSaison = G.saison; return deja[0]; }
+    var equipes = a.affiliates[cat].slice().sort(function (x, y) { return rangEquipe(cat, x) - rangEquipe(cat, y); });
+    var nom = p === 1 ? equipes[0] : equipes[equipes.length - 1];          // le champion va dans la meilleure
+    var r = ((typeof TEAM_OFFERS !== "undefined" && TEAM_OFFERS[cat]) || []).filter(function (x) { return x.team === nom; })[0];
+    if (!r) return null;
+    var o = buildOffer({ team: r.team, cat: cat, cost: r.cost || 0, salary: r.salary || 0, bonusWin: r.bonusWin || 0, bonusPodium: r.bonusPodium || 0,
+      duration: r.dur || 2, extra: "Voie académie", expire: 40, role: p === 1 ? "equal" : "num2" });
+    if (!o) return null;
+    o._academie = true;
+    if (window.RJBaquets && RJBaquets.prix) RJBaquets.prix(o);           // l'académie paie la moitié du baquet (116)
+    G.offers = G.offers || []; G.offers.push(o);
+    e.promoSaison = G.saison;
+    mail("Ta place en " + cat + " est prête",
+      "Ta saison (P" + p + ") nous convainc : " + r.team + ", écurie partenaire de " + nomA() + ", te propose un baquet en " + cat + " pour la saison prochaine." +
+      (o.cost > 0 ? " L'académie prend en charge une partie du prix du baquet." : "") + "\n\nL'offre est dans tes contrats, elle reste ouverte jusqu'au mercato.");
     return o;
   }
 
@@ -189,9 +234,10 @@
 
   function installer() {
     if (typeof rjInscrire !== "function" || typeof window.generateTeamOffers !== "function" || !Array.isArray(window.WEEKLY_TICK_HOOKS) || !Array.isArray(window.RJ_SAVE_HOOKS)) return false;
-    rjInscrire("generateTeamOffers", { id: "138-academie:voie-f1", apres: function () { try { proposerF1(); } catch (e) { console.warn(TAG, e && e.message); } } });
+    rjInscrire("generateTeamOffers", { id: "138-academie:voie-f1", apres: function () { try { proposerF1(); } catch (e) { console.warn(TAG, e && e.message); } try { proposerPromotion(); } catch (e) { console.warn(TAG, e && e.message); } } });
+    /* La promotion se vérifie aussi chaque semaine : les offres ne sont pas générées à chaque tour de calendrier. */
     if (!window.WEEKLY_TICK_HOOKS.some(function (h) { return h && h.id === "138-academie"; })) {
-      window.WEEKLY_TICK_HOOKS.push({ id: "138-academie", run: function () { try { ouvrirDepart(); inviter(); } catch (e) {} } });
+      window.WEEKLY_TICK_HOOKS.push({ id: "138-academie", run: function () { try { ouvrirDepart(); inviter(); proposerPromotion(); } catch (e) {} } });
     }
     if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "138-academie"; })) {
@@ -216,7 +262,7 @@
     return true;
   }
 
-  window.RJAcademie = { proposerF1: proposerF1, eligibleF1: eligibleF1, revueSaison: revueSaison, inviter: inviter, eligibles: eligibles, disponibles: disponibles, approche: approcheValide };
+  window.RJAcademie = { proposerF1: proposerF1, eligibleF1: eligibleF1, proposerPromotion: proposerPromotion, revueSaison: revueSaison, inviter: inviter, eligibles: eligibles, disponibles: disponibles, approche: approcheValide };
   window._rj138Uninstall = function () {
     if (typeof rjDesinscrire === "function") rjDesinscrire(["138-academie"], "generateTeamOffers");
     window.WEEKLY_TICK_HOOKS = (window.WEEKLY_TICK_HOOKS || []).filter(function (h) { return !(h && h.id === "138-academie"); });
