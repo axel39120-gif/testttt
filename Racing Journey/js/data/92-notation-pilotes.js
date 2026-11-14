@@ -114,13 +114,11 @@
        retrouve dans le haut du peloton du junior sans le dominer ; le senior
        reste un cran au-dessus. Avant, le meilleur junior plafonnait à 46 et un
        débutant gagnait presque toutes les courses de sa première saison. */
-    /* v290 : un cran plus bas — mesuré sur des carrières simulées, un joueur
-       qui s'entraîne à fond plafonnait 6e à 8e en senior, sans jamais jouer le titre. */
     "Karting Senior": [
-      { tier: "sommet",   count: 2, mean: 57.0, spread: 1.0 },
-      { tier: "elite",    count: 4, mean: 53.0, spread: 1.6 },
-      { tier: "milieu",   count: 10, mean: 47.0, spread: 2.2 },
-      { tier: "recrue",   count: 8, mean: 42.0, spread: 2.4 }
+      { tier: "sommet",   count: 2, mean: 58.0, spread: 1.0 },
+      { tier: "elite",    count: 4, mean: 54.0, spread: 1.6 },
+      { tier: "milieu",   count: 10, mean: 48.0, spread: 2.2 },
+      { tier: "recrue",   count: 8, mean: 43.0, spread: 2.4 }
     ],
     /* v290 : élite resserrée vers le plafond de la catégorie (52) — un joueur
        au plafond est candidat au titre, pas assuré de le gagner. */
