@@ -43,13 +43,13 @@
     var lr = LR(), e = window.RJModelePiste ? RJModelePiste.etat() : null;
     if (vue && lr && e) majTourDeClassement(lr, e);
   }
-  /* Caméra : trois vues, un appui sur le circuit passe à la suivante (choix
-     retenu) — « embarquée » (par défaut : gros plan, la piste file dans le
-     sens de marche du joueur), « suivie » (gros plan, nord en haut) et
-     « ensemble » (le tracé entier). */
+  /* Caméra : deux vues, un appui sur le circuit passe à l'autre (choix
+     retenu) — « suivie » (par défaut : gros plan sur le joueur, nord en haut)
+     et « ensemble » (le tracé entier). La vue embarquée, qui faisait tourner
+     le circuit, est retirée (v290). */
   var ROT_MAX = 50;   // vitesse de rotation maximale de la caméra embarquée, en degrés par seconde
-  var VUES = ["embarquee", "suivie", "ensemble"], NOMS_VUES = { embarquee: "Vue embarquée", suivie: "Vue suivie", ensemble: "Vue d'ensemble" };
-  var modeVue = "embarquee";
+  var VUES = ["suivie", "ensemble"], NOMS_VUES = { suivie: "Vue suivie", ensemble: "Vue d'ensemble" };
+  var modeVue = "suivie";
   try {
     var m0 = localStorage.getItem("rj111-vue");
     if (VUES.indexOf(m0) >= 0) modeVue = m0; else if (localStorage.getItem("rj111-zoom") === "non") modeVue = "ensemble";
@@ -342,6 +342,7 @@
        reflet pour le volume, liseré sombre ; le joueur plus gros, cerclé de blanc. */
     var rayon = joueur ? 1.35 : autre ? 0.75 : 1.05;
     if (joueur) g.appendChild(element("circle", { r: 3.2, "class": "rj111-halo" }));
+    g.appendChild(element("circle", { r: joueur ? 3.6 : 2.8, "class": "rj111-alerte" }));   // faute de pilotage (149)
     var corps = element("g", { "class": "rj111-corps-v" });
     corps.appendChild(element("circle", { r: rayon, fill: teinte, "class": "rj111-point" }));
     corps.appendChild(element("circle", { cx: -rayon * 0.3, cy: -rayon * 0.3, r: rayon * 0.42, "class": "rj111-reflet" }));
@@ -401,13 +402,24 @@
     var liste = vivants.concat(abandons);
     // vingt lignes ; le joueur toujours visible (à la dernière ligne s'il est plus loin)
     var montres = liste.slice(0, LIGNES), iJoueur = liste.findIndex(function (v) { return v.joueur; });
+    /* v290 : places gagnées / perdues (flèche quelques secondes), fautes (149). */
+    var maintenant = Date.now(), suivi = vue.suiviPos || (vue.suiviPos = {});
+    vivants.forEach(function (v) {
+      var s0 = suivi[v.nom];
+      if (!s0) suivi[v.nom] = { pos: v.pos, t: 0, d: 0 };
+      else if (s0.pos !== v.pos) { suivi[v.nom] = { pos: v.pos, t: maintenant, d: s0.pos - v.pos }; }
+    });
+    e.voitures.forEach(function (v) {
+      var r = voitures[v.nom], faute = window._rj149 ? _rj149.recente(parNom[v.nom], lr) : null;
+      if (r && r.el) r.el.classList.toggle("rj111-erreur", !!faute && !v.abandon);
+    });
     if (iJoueur >= LIGNES) montres[LIGNES - 1] = liste[iJoueur];
     vue.tour.innerHTML = montres.map(function (v, k) {
       var d = parNom[v.nom] || {};
       if (v.abandon) {
         var meme = function (w) { return w.autreCategorie === v.autreCategorie; };
         var rang = vivants.filter(meme).length + abandons.filter(meme).indexOf(v) + 1;
-        return '<li class="out' + (v.joueur ? " moi" : "") + (v.autreCategorie ? " autre" : "") + (k === LIGNES - 1 && liste.indexOf(v) >= LIGNES ? " detache" : "") + '"><span class="p">' + rang + "</span>" +
+        return '<li class="out' + (v.joueur ? " moi" : "") + (v.autreCategorie ? " autre" : "") + (k === LIGNES - 1 && liste.indexOf(v) >= LIGNES ? " detache" : "") + '"><span class="p">' + rang + '</span><span class="g"></span>' +
           ecusson(d.team, v.nom) + '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">OUT</span></li>';
       }
       var i = vivants.indexOf(v);
@@ -415,9 +427,12 @@
       var x = mode === "intervalle" && !tete ? v.ecart - vivants[i - 1].ecart : v.ecart;
       var ecart = tete ? "TÊTE" : avantDepart ? ""
         : x >= e.tempsTour ? "+" + Math.floor(x / e.tempsTour) + " T" : "+" + Math.max(Math.pow(10, -th.dec), x).toFixed(th.dec);
-      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + (tete ? " tete" : "") + (k === LIGNES - 1 && liste.indexOf(v) >= LIGNES ? " detache" : "") + '"><span class="p">' + v.pos + "</span>" +
+      var sv = suivi[v.nom], fleche = sv && sv.d && maintenant - sv.t < 4000 ? (sv.d > 0 ? '<span class="g monte">▲' + sv.d + "</span>" : '<span class="g descend">▼' + (-sv.d) + "</span>") : '<span class="g"></span>';
+      var faute = window._rj149 ? _rj149.recente(d, lr) : null;
+      var pod = !v.autreCategorie && v.pos <= 3 ? " pod" + v.pos : "";
+      return '<li class="' + (v.joueur ? "moi" : "") + (v.autreCategorie ? " autre" : "") + (v.auStand ? " stand" : "") + (tete ? " tete" : "") + pod + (faute ? " faute" : "") + (k === LIGNES - 1 && liste.indexOf(v) >= LIGNES ? " detache" : "") + '"><span class="p">' + v.pos + "</span>" + fleche +
         ecusson(d.team, v.nom) +
-        '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? '<i class="pit">PIT</i>' : ecart) + "</span></li>";
+        '<span class="n">' + esc(abrege(v.nom)) + '</span><span class="e">' + (v.auStand ? '<i class="pit">PIT</i>' : faute ? '<i class="err">' + faute.court + "</i>" : ecart) + "</span></li>";
     }).join("");
   }
 
@@ -453,7 +468,7 @@
        médiane, pointes à 230, à-coups à 1400 en vitesse rapide). En vitesse
        rapide ou instantanée, les tours défilent trop vite pour une vue qui
        tourne : la caméra suit le joueur, nord en haut. */
-    var rapide = modeVue === "suivie" || (typeof SETTINGS !== "undefined" && /fast|instant/.test(SETTINGS.simSpeed || ""));
+    var rapide = true;   // v290 : plus de vue embarquée, le nord reste en haut
     var brute = rapide ? 0 : -90 - cap * 180 / Math.PI;
     /* Paliers de 45° avec hystérésis : la vue ne pivote que lorsque la direction
        générale s'écarte de plus de 35° de l'orientation retenue ; le reste du

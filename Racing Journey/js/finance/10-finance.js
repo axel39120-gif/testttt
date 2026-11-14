@@ -978,7 +978,9 @@
 
       // Ajouter l'onglet "Finances" si absent
       var tabsEl = contractsEl.querySelector('.tabs');
-      if (tabsEl && !tabsEl.querySelector('[data-tab="finances"]')) {
+      /* La comptabilité vit dans l'écran Patrimoine (102) : l'onglet n'est plus
+         ajouté ici (v290 — injecté après que 102 l'avait retiré, il restait vide). */
+      if (tabsEl && !window._rj102 && !tabsEl.querySelector('[data-tab="finances"]')) {
         var btn = document.createElement('button');
         btn.className = 'tab';
         btn.setAttribute('data-tab', 'finances');

@@ -4015,6 +4015,60 @@ async function suiteEvenements() {
   } finally { await navigateur.close(); }
 }
 
+/* ==================================================================== *
+ * v290 : équilibre, onglets des contrats, colonnes fixes, fautes de pilotage
+ * ==================================================================== */
+async function suiteEquilibre() {
+  S.suite("Équilibre et course (v290)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const r = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = {};
+      // plafonds alignés sur l'élite, gains freinés au-delà
+      out.caps = ["Karting Junior", "Karting Senior", "Formule 4"].map(c => getCategoryStatCap(c));
+      out.penalite = [_overCapPenalty(52, 52), _overCapPenalty(54, 52), _overCapPenalty(60, 52)];
+      out.bonheur = (G.happiness = 95, getHappinessBonus());
+      out.evt = window._rj55Tuning.evtMaxRaceGain;
+      // Contrats : chaque onglet montre son contenu, et seulement lui
+      navTo("S-contracts", null); await a(400);
+      out.onglets = [];
+      for (const b of document.querySelectorAll("#S-contracts .tab")) {
+        b.click(); await a(300);
+        const vus = ["offres", "primes", "reseau"].filter(x => document.getElementById("ct-" + x).offsetHeight > 0);
+        out.onglets.push(b.getAttribute("data-tab") + ":" + vus.join("+"));
+      }
+      navTo("S-home", null);
+      // fautes de pilotage : un pilote en faute perd du temps et est marqué
+      const lr = { cur: 5, finished: false, drivers: [{ name: "A B", pos: 3, rivalIdx: 0 }, { name: "C D", pos: 4, isPlayer: true }] };
+      const r0 = Math.random; Math.random = () => 0.0001;
+      try { _rj149.surTour(5, lr); } finally { Math.random = r0; }
+      out.faute = lr.drivers.map(d => (d._rj81EvtSec || 0) > 0 && !!_rj149.recente(d, lr));
+      return out;
+    });
+    S.verifier("plafonds de stats alignés sur l'élite (junior 52, senior 59, F4 65)", r.caps.join() === "52,59,65", JSON.stringify(r.caps));
+    S.verifier("au-delà du plafond, l'entraînement rapporte de moins en moins", r.penalite[0] < 1 && r.penalite[1] < r.penalite[0] && r.penalite[2] < r.penalite[1], JSON.stringify(r.penalite));
+    S.verifier("bonheur et événements ne valent plus plusieurs places", r.bonheur <= 0.012 && r.evt <= 0.02, JSON.stringify([r.bonheur, r.evt]));
+    S.verifier("contrats : chaque onglet affiche sa page", r.onglets.join() === "offres:offres,primes:primes,reseau:reseau", JSON.stringify(r.onglets));
+    S.verifier("une faute de pilotage coûte du temps et se voit", r.faute.every(Boolean), JSON.stringify(r.faute));
+
+    // Qualification : piste et classement toujours à droite, même si la gauche grandit
+    const q = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms));
+      G.cat = "Formule 4"; window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[1].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; G._startQualInProgress = false;
+      navTo("S-race", null); startQual(); await a(800);
+      const cote = () => { const b = document.getElementById("quali-timing-board").getBoundingClientRect(); return b.x > innerWidth / 2 ? "D" : "G"; };
+      const avant = cote();
+      document.getElementById("quali-btn-zone").style.minHeight = "600px"; await a(500);
+      const apres = cote();
+      document.getElementById("quali-btn-zone").style.minHeight = "";
+      return { avant, apres };
+    });
+    S.verifier("qualification : le classement reste à droite", q.avant === "D" && q.apres === "D", JSON.stringify(q));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteRetoursSaison() {
   S.suite("Retours d'une saison de karting (v279)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
@@ -4376,7 +4430,8 @@ const SUITES = {
   corrections: suiteCorrections,
   coherence: suiteCoherenceEssais,
   evenements: suiteEvenements,
-  retours: suiteRetoursSaison
+  retours: suiteRetoursSaison,
+  equilibre: suiteEquilibre
 };
 
 async function principal() {
