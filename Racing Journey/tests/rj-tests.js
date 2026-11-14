@@ -4045,7 +4045,7 @@ async function suiteEquilibre() {
       out.faute = lr.drivers.map(d => (d._rj81EvtSec || 0) > 0 && !!_rj149.recente(d, lr));
       return out;
     });
-    S.verifier("plafonds de stats alignés sur l'élite (junior 52, senior 59, F4 65)", r.caps.join() === "52,59,65", JSON.stringify(r.caps));
+    S.verifier("plafonds de stats alignés sur l'élite (junior 52, senior 60, F4 65)", r.caps.join() === "52,60,65", JSON.stringify(r.caps));
     S.verifier("au-delà du plafond, l'entraînement rapporte de moins en moins", r.penalite[0] < 1 && r.penalite[1] < r.penalite[0] && r.penalite[2] < r.penalite[1], JSON.stringify(r.penalite));
     S.verifier("bonheur et événements ne valent plus plusieurs places", r.bonheur <= 0.012 && r.evt <= 0.02, JSON.stringify([r.bonheur, r.evt]));
     S.verifier("contrats : chaque onglet affiche sa page", r.onglets.join() === "offres:offres,primes:primes,reseau:reseau", JSON.stringify(r.onglets));

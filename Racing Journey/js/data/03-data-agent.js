@@ -20412,14 +20412,14 @@ function _calcPlayerRatingCoeur() {
 }
 
 /* v290 : le plafond suit l'élite de chaque catégorie (92-notation-pilotes :
-   meilleurs pilotes à 54, 58, 64, 71, 78, 84 de la junior à la F2). Il était
+   meilleurs pilotes à 54, 57, 64, 71, 78, 84 de la junior à la F2). Il était
    de 3 à 8 points au-dessus : un joueur assidu dépassait tout le plateau, qui ne
    progresse pas en cours de saison, et gagnait chaque titre de karting. */
 function getCategoryStatCap(e) {
   var t;
   return {
     "Karting Junior": 52,
-    "Karting Senior": 59,
+    "Karting Senior": 60,
     "Formule 4": 65,
     "Formula Regional": 72,
     "Formule 3": 79,
