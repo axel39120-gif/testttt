@@ -134,13 +134,17 @@ var RJ_TIER_DISTRIBUTION = {
  * ===================================================================== */
 
 var RJ_CAR_PERF_WEIGHTS = {
-  "Karting Junior":   0.4,   // (inchangé) écart kart négligeable
-  "Karting Senior":   0.55,  // (inchangé) idem
-  "Formule 4":        0.95,  // 0.85 → 0.95 (perf chassis commence à compter)
-  "Formula Regional": 1.10,  // 0.95 → 1.10
-  "Formule 3":        1.25,  // 1.05 → 1.25
+  /* v291 : formules de formation quasi monotypes. Avec 0,55 en karting senior,
+     la meilleure écurie valait 22 points de note de plus que la dernière (42 en
+     F4 avec 0,95), bien plus que l'écart de talent du plateau (~15) : un pilote
+     dans une écurie de pointe gagnait presque tout. Écart visé : 5 à 10 points. */
+  "Karting Junior":   0.10,
+  "Karting Senior":   0.12,
+  "Formule 4":        0.15,
+  "Formula Regional": 0.20,
+  "Formule 3":        0.25,
   "IndyCar":          1.40,  // 1.05 → 1.40 (différences de moteur Honda/Chevy)
-  "Formule 2":        1.70,  // 1.25 → 1.70 (Prema/ART vs Trident en F2 réelle)
+  "Formule 2":        0.40,  // monotype, mais Prema/ART restent devant
   "Formule 1":        2.60,  // 1.6 → 2.6 (HIÉRARCHIE ÉCRASANTE F1 2024-25)
   "Super Formula":    1.50,  // 1.2 → 1.5
   "Endurance WEC":    1.80   // 1.4 → 1.8 (LMH > Hypercar > LMP2)
