@@ -3499,6 +3499,12 @@ async function suiteAcademie() {
       prep("Formule 3", 1, 80); generateTeamOffers(); out.f3Champion = f1();
       prep("Formule 3", 3, 80); generateTeamOffers(); out.f3Podium = f1();
       prep("Formula Regional", 1, 80); generateTeamOffers(); out.fr = f1();
+      // v293 : promotion dans une écurie affiliée de la catégorie supérieure
+      const promo = () => G.offers.filter(o => o._academie && o.cat === "Formule 3").map(o => ({ eq: o.team, aff: isAcademyAffiliate(o.team, o.cat), cost: o.cost, base: o._prixBase }));
+      prep("Formula Regional", 2, 50); G.offers = []; RJAcademie.proposerPromotion(); out.promoPodium = promo();
+      prep("Formula Regional", 5, 70); G.offers = []; RJAcademie.proposerPromotion(); out.promoTop5 = promo();
+      prep("Formula Regional", 9, 80); G.offers = []; RJAcademie.proposerPromotion(); out.promoMilieu = promo();
+      prep("Formula Regional", 1, 80); G.races = [1, 2]; G.offers = []; RJAcademie.proposerPromotion(); out.promoTot = promo();
       // revue de fin de saison : avertissement puis renvoi (Ferrari), renvoi immédiat (Red Bull)
       prep("Formule 2", 18, 50); const s0 = G.saison;
       out.revue1 = RJAcademie.revueSaison(); G.saison = s0 + 1; out.revue2 = RJAcademie.revueSaison(); G.saison = s0;
@@ -3531,6 +3537,8 @@ async function suiteAcademie() {
     S.verifier("Red Bull, promotion rapide : un top 5 en F2 vaut Racing Bulls", /^Racing Bulls.*num2$/.test(r.rbjt[0] || ""), JSON.stringify(r.rbjt));
     S.verifier("F2 en milieu de tableau : réserve chez l'écurie phare", /^Ferrari.*num3$/.test(r.f2Milieu[0] || ""), JSON.stringify(r.f2Milieu));
     S.verifier("champion de F3 : la voie F1 s'ouvre ; F3 hors titre et Formula Regional : pas encore", r.f3Champion.length === 1 && !r.f3Podium.length && !r.fr.length, JSON.stringify([r.f3Champion, r.f3Podium, r.fr]));
+    S.verifier("promotion : un podium en Formula Regional vaut un baquet d'une écurie affiliée de F3, moins cher", r.promoPodium.length === 1 && r.promoPodium[0].aff && (r.promoPodium[0].base === 0 || r.promoPodium[0].cost < r.promoPodium[0].base), JSON.stringify(r.promoPodium));
+    S.verifier("promotion : top 5 avec une bonne relation aussi ; pas en milieu de tableau, ni avant la mi-saison", r.promoTop5.length === 1 && !r.promoMilieu.length && !r.promoTot.length, JSON.stringify([r.promoTop5, r.promoMilieu, r.promoTot]));
     S.verifier("un membre peut quitter son académie", r.canLeave === true, "");
     S.verifier("revue : avertissement puis renvoi chez Ferrari, renvoi immédiat chez Red Bull", r.revue1 === "avertissement" && r.revue2 === "renvoi" && !r.apresRenvoi && r.revueRB === "renvoi", JSON.stringify([r.revue1, r.revue2, r.apresRenvoi, r.revueRB]));
     S.verifier("revue : une saison sur le podium renforce la relation", r.bonne === "bonne" && r.bonus === 8, r.bonne + " " + r.bonus);
@@ -4069,6 +4077,47 @@ async function suiteEquilibre() {
   } finally { await navigateur.close(); }
 }
 
+/* v293 : le mercato signe pour de vrai (150) */
+async function suiteContrats() {
+  S.suite("Contrats et mercato (v293)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  page.on("dialog", d => d.accept().catch(() => {}));
+  try {
+    const r = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = {};
+      // durée du contrat en saisons
+      G.contractDur = 2; navTo("S-contracts", null); await a(400); renderOffers(); await a(200);
+      out.duree = (document.getElementById("ct-contrat-actuel") || {}).textContent || "";
+      // mercato : une offre de promotion payante
+      const prep = (budget) => {
+        G.cat = "Formule 4"; G.currentTeam = (TEAM_OFFERS["Formule 4"] || [])[5].team; G.contractDur = 1; G.pendingTransfer = null; G.age = 17;
+        if (G.pilot && G.pilot.dob && G.gameYear) G.pilot.dob.year = G.gameYear - 17;
+        const eq = TEAM_OFFERS["Formula Regional"][2];
+        G.offers = [buildOffer({ team: eq.team, cat: "Formula Regional", cost: 900000, salary: 0, bonusWin: 0, bonusPodium: 0, duration: 2, expire: 10, role: "num2" })];
+        G.budget = budget; G.seasonOver = true;
+        navTo("S-transfer", null); buildTransferOffers();
+        return eq.team;
+      };
+      const s0 = G.saison;
+      let eq = prep(50000); await a(300);
+      out.prixAffiche = ((document.querySelector("#tr-offers-list .rj150-prix") || {}).textContent || "");
+      let b = [...document.querySelectorAll("#tr-offers-list button")].find(x => (x.closest("div").textContent || "").indexOf(eq) >= 0);
+      b && b.click(); await a(600);
+      out.refus = { saison: G.saison === s0, msg: ((document.getElementById("rj150-fb") || {}).textContent || "").slice(0, 80), cat: G.cat };
+      eq = prep(2e6); await a(300);
+      b = [...document.querySelectorAll("#tr-offers-list button")].find(x => (x.closest("div").textContent || "").indexOf(eq) >= 0);
+      const avant = G.budget; b && b.click(); await a(900);
+      out.signe = { saison: G.saison === s0 + 1, cat: G.cat, equipe: G.currentTeam === eq, paye: avant - G.budget };
+      return out;
+    });
+    S.verifier("contrat en cours affiché en saisons (fin de saison, pas en mois)", /Fin S[0-9]+/.test(r.duree) && !/mois/.test(r.duree), r.duree.slice(0, 120));
+    S.verifier("mercato : la carte montre le prix du baquet", /Baquet : .*signature/.test(r.prixAffiche), r.prixAffiche);
+    S.verifier("mercato : sans budget, pas de baquet gratuit (la saison ne démarre pas, message clair)", r.refus.saison && r.refus.cat === "Formule 4" && /Signature impossible/.test(r.refus.msg), JSON.stringify(r.refus));
+    S.verifier("mercato : avec le budget, la signature paie un tiers du baquet et lance la saison", r.signe.saison && r.signe.cat === "Formula Regional" && r.signe.equipe && r.signe.paye >= 290000, JSON.stringify(r.signe));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteRetoursSaison() {
   S.suite("Retours d'une saison de karting (v279)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
@@ -4431,7 +4480,8 @@ const SUITES = {
   coherence: suiteCoherenceEssais,
   evenements: suiteEvenements,
   retours: suiteRetoursSaison,
-  equilibre: suiteEquilibre
+  equilibre: suiteEquilibre,
+  contrats: suiteContrats
 };
 
 async function principal() {
