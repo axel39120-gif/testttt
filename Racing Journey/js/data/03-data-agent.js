@@ -22767,7 +22767,7 @@ function generateTeamOffers(e) {
       P = CAT_PROMO_REQ[G.cat] || 5,
       F = getCatNextOptions(G.cat),
       B = C ? [] : [G.cat],
-      I = calcPlayerRating(),
+      I = (typeof computeRacePerformanceScore === "function" && G.substats ? Math.round(100 * computeRacePerformanceScore()) : calcPlayerRating()),   /* v295 : niveau sur l'échelle des seuils q (la note affichée vaut ~9 de moins) */
       O = CAREER_HISTORY.filter(function(e) {
         return e.cat === G.cat
       }).length,

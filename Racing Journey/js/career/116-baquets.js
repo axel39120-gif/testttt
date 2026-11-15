@@ -131,7 +131,13 @@
     });
     var bonusResultats = G.cat === cat || (VIVIERS[cat] || []).indexOf(G.cat) >= 0
       ? (G.champPos === 1 ? 10 : G.champPos === 2 ? 7 : G.champPos === 3 ? 5 : G.champPos <= 5 ? 3 : 0) : 0;
-    var talentJoueur = (typeof calcPlayerRating === "function" ? calcPlayerRating() : 60) + bonusResultats;
+    /* v295 : même échelle que les rivaux (skill brut). La note affichée
+       (calcPlayerRating) vaut ~9 points de moins que le niveau : à niveau égal,
+       le joueur perdait presque tous les baquets (aucune offre après une 8e
+       place en F3). */
+    var niveauJoueur = typeof computeRacePerformanceScore === "function" && G.substats ? Math.round(computeRacePerformanceScore() * 100)
+      : (typeof calcPlayerRating === "function" ? calcPlayerRating() : 60);
+    var talentJoueur = niveauJoueur + bonusResultats;
     var academie = typeof isAcademyAffiliate === "function" && isAcademyAffiliate(equipe, cat);
     var argentJoueur = academie && payant ? besoin : apportJoueur();
     candidats.push({ nom: "joueur", joueur: true, talent: talentJoueur, argent: argentJoueur,
