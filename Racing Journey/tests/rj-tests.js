@@ -4118,6 +4118,40 @@ async function suiteContrats() {
   } finally { await navigateur.close(); }
 }
 
+/* v294 : secteurs de qualification (premier tour jamais jaune) et grille fidèle au chrono */
+async function suiteQualifSecteurs() {
+  S.suite("Qualification : secteurs et grille (v294)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const r = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = { jaunes: [], tours: 0 };
+      G.cat = "Formule 4"; G.currentTeam = TEAM_OFFERS["Formule 4"][3].team; initRivals();
+      window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[1].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      SETTINGS.simSpeed = "instant"; RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; G._startQualInProgress = false;
+      navTo("S-race", null); startQual(); await a(600);
+      const vus = {};
+      const suivi = setInterval(() => QUALI_STATE.drivers.forEach((d, i) => {
+        if (d.lastSectorFlags && !vus[i]) { vus[i] = 1; out.tours++; if (d.lastSectorFlags.some(f => f === 0)) out.jaunes.push(i + JSON.stringify(d.lastSectorFlags)); }
+      }), 30);
+      let attente = 0;
+      // le joueur traîne sur ses micro-choix : la séance doit attendre la fin de son tour
+      const choix = setInterval(() => { if (typeof window._qualiSeqChoice === "function" && ++attente > 6) { attente = 0; window._qualiSeqChoice(0); }
+        const m = document.getElementById("quali-player-lap-modal"); if (m) _closeQualiPlayerLapModal(); }, 250);
+      runQualiSession();
+      for (let k = 0; k < 400 && !(RACE_STATE.qualiPos > 0 && !QUALI_STATE.chronoInterval && typeof window._qualiSeqChoice !== "function"); k++) await a(250);
+      await a(800); clearInterval(suivi); clearInterval(choix);
+      const D = QUALI_STATE.drivers, p = D.find(d => d.isPlayer);
+      out.rangTemps = D.slice().sort((x, y) => x.bestTime - y.bestTime).indexOf(p) + 1;
+      out.grille = RACE_STATE.qualiPos; out.enCours = QUALI_STATE._sessionRunning;
+      return out;
+    });
+    S.verifier("aucun pilote n'a de secteur jaune à son premier tour chronométré", r.tours >= 10 && r.jaunes.length === 0, JSON.stringify(r));
+    S.verifier("la grille suit le chrono, même si la séance finit pendant les choix du joueur", r.grille === r.rangTemps, JSON.stringify(r));
+    S.verifier("la séance n'est plus marquée en cours une fois finie", r.enCours === false, String(r.enCours));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteRetoursSaison() {
   S.suite("Retours d'une saison de karting (v279)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
@@ -4481,7 +4515,8 @@ const SUITES = {
   evenements: suiteEvenements,
   retours: suiteRetoursSaison,
   equilibre: suiteEquilibre,
-  contrats: suiteContrats
+  contrats: suiteContrats,
+  qualifsecteurs: suiteQualifSecteurs
 };
 
 async function principal() {

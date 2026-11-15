@@ -3233,19 +3233,13 @@
       origSeq = window._qualiHotLapSequence;
       rjInscrire("_qualiHotLapSequence", { id: "18-weekend:_qualiHotLapSequence", ordre: -3600, remplace: function (args, suite) {
         var lapTime = args[0], session = args[1], lap = args[2], totalLaps = args[3], onDone = args[4];
-        var ph = photo;
-        var rappel = function (finalTime) {
-          try {
-            if (ph && typeof finalTime === "number" && isFinite(finalTime)) {
-              restaurerPhoto(ph);
-              reattribuer(finalTime);
-            }
-          } catch (e) {
-            etat.erreur = String(e && e.message || e);
-            console.warn(TAG, e);
-          }
-          return onDone.apply(this, arguments);
-        };
+        /* v294 : plus de restauration ni de réattribution ici. Le moteur ne touche
+           plus aux secteurs pendant le temps provisoire et les pose lui-même sur le
+           temps final (04, rappel de la séquence). Les deux passes se suivaient :
+           la seconde, sur un autre découpage, comparait au record que la première
+           venait d'écrire (secteurs jaunes au premier tour), et la restauration
+           effaçait les records posés par les rivaux pendant la séquence. */
+        var rappel = function () { return onDone.apply(this, arguments); };
         return suite([lapTime, session, lap, totalLaps, rappel]);
       } });
     }
