@@ -24,7 +24,8 @@
 
   var COUPE = "rj148-coupe", DEUX = "rj148-deux";
   /* Coupures imposées : conteneur → blocs candidats pour ouvrir la droite. */
-  var IMPOSEES = { "quali-screen": ["rj146", "quali-timing-board"] };
+  /* v294 : le classement seul à droite ; la piste reste à gauche (avec elle, la colonne débordait de 83 px en séance). */
+  var IMPOSEES = { "quali-screen": ["quali-timing-board"] };
   var memoire = {};
 
   function visible(e) { return e.offsetParent !== null || getComputedStyle(e).position === "fixed"; }

@@ -93,6 +93,8 @@
     var pt = carte.piste.getPointAtLength(Math.min(0.999, part) * carte.L);
     carte.voiture.setAttribute("transform", "translate(" + pt.x.toFixed(2) + "," + pt.y.toFixed(2) + ")");
     carte.chrono.textContent = chrono(tps);
+    /* v294 : couleurs lues en direct — la séquence du tour chaud peut corriger le temps (vert → violet) pendant le rejeu. */
+    var p = joueur(); if (p && Array.isArray(p.lastSectorFlags) && typeof p.lastTime === "number" && Math.abs(p.lastTime - rejeu.temps) < 1e-6) rejeu.flags = p.lastSectorFlags.slice();
     [0, 1, 2].forEach(function (s) {
       var fait = tps >= cumul[s + 1];
       carte.secteurs[s].style.stroke = fait ? TEINTES[rejeu.flags[s] || 0] : "";
@@ -112,12 +114,25 @@
     rejeu = null;
   }
 
+  /* v294 : la barre du chrono de séance passe à gauche, sous le statut. Placée
+     entre la piste et le classement, elle poussait la colonne de droite de
+     83 px hors de l'écran pendant la séance. */
+  function rangerChrono() {
+    var b = document.getElementById("quali-chrono-bar"), c = document.getElementById("rj146");
+    if (b && c && b.parentNode === c.parentNode && (c.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)) c.parentNode.insertBefore(b, c);
+  }
+
   function tic() {
+    rangerChrono();
     var ecran = document.getElementById("rt-qualif");
     if (!ecran || !ecran.offsetParent || !window.QUALI_STATE || !QUALI_STATE.drivers || !QUALI_STATE.drivers.length) return;
     if (!construire()) return;
     var p = joueur();
     if (!p) return;
+    /* v294 : rien à montrer avant la séance (au stand, secteurs vides) ; la carte
+       n'apparaît qu'une fois la séance lancée, sinon l'écran de départ défilait. */
+    var utile = !!(QUALI_STATE._sessionRunning || QUALI_STATE.chronoInterval || p.laps || p.bestTime);
+    if (carte.el.style.display !== (utile ? "" : "none")) carte.el.style.display = utile ? "" : "none";
     if (p.eliminated) { carte.etat.textContent = "Éliminé"; return; }
     /* Un tour est rejoué quand son chrono arrive (lastTime nouveau) : il n'est
        écrit qu'une fois, à la fin du tour chaud (après la séquence de choix),
@@ -187,7 +202,24 @@
     if (!animEssai) animEssai = requestAnimationFrame(imageEssai);
   }
 
+  /* v294 : la fin de séance attend le tour chaud du joueur. Le chrono de la
+     séance tourne pendant les trois micro-choix ; si le drapeau tombait à ce
+     moment, le tour n'était pas compté, le joueur recevait un temps fictif (P21)
+     et son vrai chrono s'affichait ensuite (P9) sans changer la grille. */
+  function attendreSequence(args, suite) {
+    var fin = function () { if (window.QUALI_STATE) QUALI_STATE._sessionRunning = false; return suite(); };   // la séance est finie (le drapeau restait levé jusqu'à la suivante)
+    if (typeof window._qualiSeqChoice !== "function") return fin();
+    var st = document.getElementById("quali-status"), n = 0;
+    if (st) st.textContent = "Drapeau à damier — ton tour lancé se termine…";
+    (function attendre() {
+      if (typeof window._qualiSeqChoice === "function" && n++ < 1200) return setTimeout(attendre, 250);
+      fin();
+    })();
+  }
+
   function boot() {
+    if (typeof rjInscrire === "function" && typeof window.concludeQualiSession === "function")
+      rjInscrire("concludeQualiSession", { id: "146-qualif-piste:attendre-sequence", remplace: attendreSequence });
     minuterie = setInterval(function () { try { tic(); } catch (e) { console.warn(TAG, e && e.message); } try { essais(); } catch (e) { console.warn(TAG, e && e.message); } }, 300);
     window.RJQualifPiste = { tic: tic, etat: function () { return { carte: !!carte, rejeu: !!rejeu, vusTours: vusTours }; } };
     window._rj146Uninstall = function () {

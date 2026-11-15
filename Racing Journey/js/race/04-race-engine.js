@@ -2021,7 +2021,8 @@ function runQualiSession() {
           QUALI_STATE.bestSectorsHolder[u] = a.driverIdx, p[u] = 2
         }(null === o.bestSectors[u] || f < o.bestSectors[u]) && (o.bestSectors[u] = f, p[u] < 2 && (p[u] = 1))
       }
-      o.lastSectorFlags = p, renderTimingBoard(e, t, !1);
+      /* v294 : un tour de sortie n'a pas de secteurs chronométrés (avant : [0,0,0], soit trois secteurs jaunes au premier tour de chaque pilote) ; le tour chaud garde ses couleurs précédentes jusqu'au temps final posé par la séquence. */
+      _horsTour ? (o.lastSectorFlags = null) : _willUseSeq || (o.lastSectorFlags = p), renderTimingBoard(e, t, !1);
       var h = document.getElementById("quali-status");
       if (h) {
         var v, x = t.slice().sort(function(e, t) {
