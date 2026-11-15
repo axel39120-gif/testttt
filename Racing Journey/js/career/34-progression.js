@@ -83,8 +83,11 @@
     if (!pot || pot <= 0) return 1;
     var r = cur / pot;
     if (r >= 1)    return 0;     // verrouillé au potentiel
-    if (r >= 0.88) return 0.25;
-    if (r >= 0.70) return 0.55;
+    /* v295 : 0,55 dès 70 % du potentiel freinait dès la F4 (≈ 59), quand les
+       plateaux montent de 7 points par catégorie : le joueur stagnait vers 66
+       et la F3 devenait une impasse. */
+    if (r >= 0.90) return 0.45;
+    if (r >= 0.75) return 0.8;
     return 1;
   }
 
