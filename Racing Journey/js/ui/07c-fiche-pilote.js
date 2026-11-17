@@ -153,8 +153,29 @@
   function _buildCareerTableForRival(rival) {
     try {
       if (!rival) return '';
-      var hist = (rival.careerHistory && Array.isArray(rival.careerHistory))
-        ? rival.careerHistory.slice() : [];
+      /* v296 : toutes les saisons, pas seulement celle en cours. Un rival recréé
+         à chaque saison repart avec un historique vide ; ses saisons passées
+         vivent dans le registre sauvegardé et dans le vivier (d.history). */
+      var vues = {}, hist = [];
+      var ajouter = function (r) {
+        if (!r || r.saison == null) return;
+        var k = r.saison + '|' + (r.cat || '');
+        if (vues[k]) return;
+        vues[k] = 1; hist.push(r);
+      };
+      (Array.isArray(rival.careerHistory) ? rival.careerHistory : []).forEach(ajouter);
+      try { (window.RIVAL_CAREER_REGISTRY && RIVAL_CAREER_REGISTRY[rival.name] || []).forEach(ajouter); } catch (e) {}
+      try {
+        var P = (window.G && G.driverPool) || {};
+        Object.keys(P).forEach(function (cle) {
+          var d = P[cle];
+          if (!d || d.name !== rival.name || !Array.isArray(d.history)) return;
+          d.history.forEach(function (h) {
+            ajouter({ saison: h.saison, cat: h.cat, team: h.team, pos: h.finalPos, pts: h.points, wins: h.wins, pods: h.podiums, races: h.races || 0 });
+          });
+        });
+      } catch (e) {}
+      hist.sort(function (a, b) { return a.saison - b.saison; });
 
       // Ajouter la saison courante si pas déjà dedans
       try {

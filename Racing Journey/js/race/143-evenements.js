@@ -493,8 +493,9 @@
         lignes.push((tot < 0 ? "Tu gagnes ≈ " : "Tu perds ≈ ") + secondes(tot) + " s sur " + o.paceMod.laps + (o.paceMod.laps > 1 ? " tours" : " tour"));
       }
       if (o.penaltySec > 0) lignes.push(o.penaltySec + " s de pénalité");
-      if (o.posGain > 0) lignes.push("+" + o.posGain + (o.posGain > 1 ? " places" : " place"));
-      if (o.posLoss > 0) lignes.push("−" + o.posLoss + (o.posLoss > 1 ? " places" : " place"));
+      /* v296 : pas de nombre de places — le suspense reste à la piste. */
+      if (o.posGain > 0) lignes.push("La manœuvre passe");
+      if (o.posLoss > 0) lignes.push("Tu te fais déborder");
     });
     if (capture.penalite > 0 && !lignes.some(function (l) { return /pénalité/.test(l); })) lignes.push(capture.penalite + " s de pénalité");
     var fin = j && j.dnf;
@@ -503,7 +504,17 @@
     p.className = "rj143-resultat rj143-" + ton;
     p.innerHTML = '<span class="rj143-verdict">' + verdict + "</span>" +
       (rate && c.msg ? '<span class="rj143-recit">' + esc(c.msg) + "</span>" : "") +
-      '<span class="rj143-effets">' + (fin ? "Ta course s'arrête ici." : (lignes.join(" · ") || "Aucun changement notable")) + "</span>";
+      '<span class="rj143-effets">' + (fin ? "Ta course s'arrête ici." : (lignes.join(" · ") || "Aucun changement notable")) + "</span>" +
+      (fin ? "" : '<span class="rj143-instant">' + instant() + "</span>");
+  }
+
+  /* L'instant présent, sans la place : qui est devant, derrière, à quel écart. */
+  function instant() {
+    var c = contexte(); if (!c.p) return "";
+    var ecart = function (a, b) { var x = Math.abs((a.gap || 0) - (b.gap || 0)); return x < 0.05 ? "dans ses roues" : "à " + secondes(x) + " s"; };
+    var bits = [c.devant ? nom(c.devant) + " devant, " + ecart(c.devant, c.p) : "Personne devant : tu mènes"];
+    if (c.derriere) bits.push(nom(c.derriere) + " derrière, " + ecart(c.derriere, c.p));
+    return bits.join(" · ");
   }
 
   /* ------------------------------------------------------------------

@@ -238,6 +238,26 @@
 
   function pluriel(n, mot) { return n + " " + mot + (n > 1 ? "s" : ""); }
 
+  /* v296 : la fenêtre ne révèle plus la place (« Tu passes P4 », « 2 places
+     gagnées ») avant que la course ne la montre — elle décrit l'instant. */
+  function sansPlace(t) {
+    return String(t || "")
+      .replace(/\s*[—–-]?\s*(tu (passes|chutes|es|remontes|recules)|passe|chute)\s+P\d+/gi, "")
+      .replace(/\bP\d+\b/g, "").replace(/\s{2,}/g, " ").replace(/\s*[—–-]\s*$/, "").trim();
+  }
+  function court(nom) { var m = String(nom || "").trim().split(/\s+/); return m.length > 1 ? m.slice(1).join(" ") : m[0] || ""; }
+  /* Ce qui se passe maintenant : la voiture devant, celle derrière, et les écarts. */
+  function instant() {
+    var p = joueur(); if (!p || p.dnf || !window.LIVE_RACE) return null;
+    var V = LIVE_RACE.drivers.filter(function (d) { return d && !d.dnf && !d._mc; });
+    var av = V.filter(function (d) { return d.pos === p.pos - 1; })[0], ar = V.filter(function (d) { return d.pos === p.pos + 1; })[0];
+    var e = function (a, b) { var x = Math.abs((a.gap || 0) - (b.gap || 0)); return x < 0.05 ? "dans ses roues" : "à " + x.toFixed(1).replace(".", ",") + " s"; };
+    var bouts = [];
+    bouts.push(av ? court(av.name) + " devant, " + e(av, p) : "Personne devant toi : tu mènes la course");
+    if (ar) bouts.push(court(ar.name) + " derrière, " + e(ar, p));
+    return bouts.join(" · ");
+  }
+
   /* Traduit les outcomes capturés + les traces laissées dans le journal
      en une liste d'effets lisibles. */
   function listerEffets(av, ap, captures, logs) {
@@ -267,8 +287,8 @@
 
       if (typeof r.posChange === "number" && r.posChange !== 0) {
         positionDite = true;
-        if (r.posChange > 0) eff.push({ txt: pluriel(r.posChange, "place") + " perdue" + (r.posChange > 1 ? "s" : ""), ton: "neg" });
-        else                 eff.push({ txt: pluriel(-r.posChange, "place") + " gagnée" + (-r.posChange > 1 ? "s" : ""), ton: "pos" });
+        if (r.posChange > 0) eff.push({ txt: "Tu te fais déborder", ton: "neg" });
+        else                 eff.push({ txt: "La manœuvre passe", ton: "pos" });
       }
     }
 
@@ -277,7 +297,7 @@
     for (var k = 0; k < logs.length; k++) {
       var l = logs[k];
       if (!l || l._principal) continue;
-      var txt = (l.text || "") + (l.note ? " — " + l.note : "");
+      var txt = sansPlace((l.text || "") + (l.note ? " — " + l.note : ""));
       if (!txt.trim()) continue;
       positionDite = true;
       eff.push({ txt: txt, ton: l.sign === "+" ? "pos" : (l.sign === "−" ? "neg" : "neutre") });
@@ -286,8 +306,8 @@
     /* Filet : si la position a bougé sans qu'aucune source ne l'ait dit. */
     if (!positionDite && typeof av.pos === "number" && typeof ap.pos === "number" && av.pos !== ap.pos) {
       var d = av.pos - ap.pos;
-      if (d > 0) eff.push({ txt: pluriel(d, "place") + " gagnée" + (d > 1 ? "s" : "") + " — tu es P" + ap.pos, ton: "pos" });
-      else       eff.push({ txt: pluriel(-d, "place") + " perdue" + (-d > 1 ? "s" : "") + " — tu es P" + ap.pos, ton: "neg" });
+      if (d > 0) eff.push({ txt: "Tu as pris l'avantage", ton: "pos" });
+      else       eff.push({ txt: "Tu as perdu du terrain", ton: "neg" });
     }
 
     /* Les petits modificateurs (< seuil de conversion du moteur) n'ont pas
@@ -304,6 +324,8 @@
       if (dt !== 0) eff.push({ txt: "Confiance de l'équipe " + (dt > 0 ? "+" : "−") + Math.abs(dt), ton: dt > 0 ? "pos" : "neg" });
     }
 
+    var maintenant = instant();
+    if (maintenant && !ap.dnf) eff.push({ txt: maintenant, ton: "neutre" });
     return eff;
   }
 
@@ -318,7 +340,7 @@
 
     var label = "", note = "", sign = "~";
     if (principal) {
-      note = principal.note || "";
+      note = sansPlace(principal.note || "");
       sign = principal.sign || "~";
       var c = principal.choice || "";
       var p = c.lastIndexOf(" → ");
