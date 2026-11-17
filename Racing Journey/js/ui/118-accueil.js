@@ -68,9 +68,14 @@
     if (!carte) return;
     var b = carte.querySelector(".rj118-cta");
     if (!b) { b = document.createElement("div"); b.className = "rj118-cta"; b.setAttribute("role", "button"); carte.appendChild(b); }
-    var lbl = (jouer && (jouer.getAttribute("data-rj105") || jouer.getAttribute("title"))) || "Continuer";
+    /* v298 : la destination est recalculée ici (105) au lieu d'être recopiée du
+       bouton du rail, qui pouvait ne pas encore être à jour (au chargement d'une
+       partie : « Plan de saison » en pleine saison). */
+    var d = null;
+    try { if (window._rj105 && _rj105.destination) d = _rj105.destination(); } catch (e) {}
+    var lbl = (d && d.lbl) || (jouer && (jouer.getAttribute("data-rj105") || jouer.getAttribute("title"))) || "Continuer";
     b.textContent = lbl;
-    var c = jouer && jouer.style.getPropertyValue("--rj105-c");
+    var c = (d && d.c) || (jouer && jouer.style.getPropertyValue("--rj105-c"));
     if (c) carte.style.setProperty("--rj118-c", c);
   }
 
@@ -85,6 +90,7 @@
     if (!window.RJ_SCREEN_HOOKS.some(function (h) { return h && h.id === "118-accueil"; }))
       window.RJ_SCREEN_HOOKS.push({ id: "118-accueil", ecran: "S-home", apres: maj });
     maj();
+    document.addEventListener("rj105-teinte", function () { try { majBouton(); } catch (e) {} });
     window._rj118Uninstall = function () {
       rjDesinscrire(["118-accueil:"], "updateUI");
       window.RJ_SCREEN_HOOKS = window.RJ_SCREEN_HOOKS.filter(function (h) { return !(h && h.id === "118-accueil"); });
