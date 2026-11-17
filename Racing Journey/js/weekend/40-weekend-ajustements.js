@@ -221,7 +221,12 @@
     // circuits karting dédiés : refLapF1 du tracé d'origine (cohérent multi-catégories)
     "GP Monaco Kart": 72, "GP Spa Kart": 105, "GP Monza Kart": 80,
     "GP Zandvoort Kart": 70, "GP Abu Dhabi Kart": 83, "GP Bahrain Kart": 91,
-    "GP Silverstone Kart": 87
+    "GP Silverstone Kart": 87,
+    /* v297 : vrais circuits de karting — temps selon la longueur (1,2 km ≈ 50 s en junior) */
+    "GP Angerville": 70, "GP Salbris": 82, "GP Val d'Argenton": 67, "GP Laval": 65, "GP Varennes": 74,
+    "GP Lavelanet": 68, "GP Ostricourt": 65, "GP Aunay-les-Bois": 75, "GP Valence": 78, "GP Le Mans Kart": 83,
+    "GP Lonato": 75, "GP Franciacorta": 80, "GP Adria": 80, "GP Sarno": 101, "GP Genk": 83,
+    "GP Zuera": 101, "GP Kristianstad": 75, "GP Wackersdorf": 75, "GP Portimao Kart": 93
   };
 
   var _origMult = {};

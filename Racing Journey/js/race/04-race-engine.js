@@ -18324,10 +18324,11 @@ function injectNatFlags() {
 function buildCalendar() {
   CAL_RACES = [];
   for (var e = {
-      "Karting Junior": ["GP Lorraine", "GP Alsace", "GP Normandie", "GP Bretagne", "GP Bourgogne", "GP Auvergne", "GP Picardie", "GP Provence", "GP Languedoc", "GP Cote Azur"],
-      "Karting Senior": ["GP Monaco Kart", "GP Lyon", "GP Valencia", "GP Spa Kart", "GP Monza Kart", "GP Portimao", "GP Zandvoort Kart", "GP Abu Dhabi Kart", "GP Bahrain Kart", "GP Silverstone Kart"],
-      "Formule 4": ["Monza", "Misano", "Mugello", "Imola", "Vallelunga", "Red Bull Ring", "Hungaroring", "Spielberg", "Spa", "Paul Ricard"],
-      "Formula Regional": ["Paul Ricard", "Spa", "Zandvoort", "Red Bull Ring", "Hungaroring", "Mugello", "Monza", "Barcelona", "Portimao", "Silverstone"],
+      /* v297 : calendriers réalistes — junior : championnat de France ; senior : grands circuits européens ; F4 : modèle italien ; FR : modèle européen. Plus de « GP Monaco Kart » (qui empruntait le tracé de F1). */
+      "Karting Junior": ["GP Angerville", "GP Salbris", "GP Val d'Argenton", "GP Laval", "GP Varennes", "GP Lavelanet", "GP Ostricourt", "GP Aunay-les-Bois", "GP Valence", "GP Le Mans Kart"],
+      "Karting Senior": ["GP Portimao Kart", "GP Zuera", "GP Valencia", "GP Lonato", "GP Franciacorta", "GP Adria", "GP Genk", "GP Wackersdorf", "GP Kristianstad", "GP Sarno"],
+      "Formule 4": ["Misano", "Vallelunga", "Imola", "Barcelona", "Mugello", "Paul Ricard", "Spa", "Red Bull Ring", "Hungaroring", "Monza"],
+      "Formula Regional": ["Imola", "Barcelona", "Hungaroring", "Spa", "Mugello", "Paul Ricard", "Zandvoort", "Red Bull Ring", "Monza"],
       "Formule 3": ["Bahrain", "Imola", "Monaco", "Barcelona", "Red Bull Ring", "Silverstone", "Budapest", "Spa", "Zandvoort", "Monza", "Macao GP"],
       "Formule 2": ["Bahrain", "Jeddah", "Melbourne", "Baku", "Monaco", "Silverstone", "Budapest", "Spa", "Monza", "Abu Dhabi"],
       "Formule 1": ["Bahrain", "Jeddah", "Miami", "Imola", "Monaco", "Barcelone", "Silverstone", "Budapest", "Spa", "Zandvoort", "Monza", "Singapore", "Suzuka", "Austin", "Mexico", "Sao Paulo", "Las Vegas", "Abu Dhabi"],
@@ -22443,6 +22444,82 @@ function _getCircuitCountry(n) {
     "Nürburgring": {
       name: "Allemagne",
       flag: "🇩🇪"
+    },
+    "GP Angerville": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Salbris": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Val d'Argenton": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Laval": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Varennes": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Lavelanet": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Ostricourt": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Aunay-les-Bois": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Valence": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Le Mans Kart": {
+      name: "France",
+      flag: "🇫🇷"
+    },
+    "GP Lonato": {
+      name: "Italie",
+      flag: "🇮🇹"
+    },
+    "GP Franciacorta": {
+      name: "Italie",
+      flag: "🇮🇹"
+    },
+    "GP Adria": {
+      name: "Italie",
+      flag: "🇮🇹"
+    },
+    "GP Sarno": {
+      name: "Italie",
+      flag: "🇮🇹"
+    },
+    "GP Genk": {
+      name: "Belgique",
+      flag: "🇧🇪"
+    },
+    "GP Zuera": {
+      name: "Espagne",
+      flag: "🇪🇸"
+    },
+    "GP Kristianstad": {
+      name: "Suède",
+      flag: "🇸🇪"
+    },
+    "GP Wackersdorf": {
+      name: "Allemagne",
+      flag: "🇩🇪"
+    },
+    "GP Portimao Kart": {
+      name: "Portugal",
+      flag: "🇵🇹"
     },
     "GP Monaco Kart": {
       name: "Monaco",

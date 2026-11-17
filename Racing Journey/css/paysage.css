@@ -1862,3 +1862,22 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj150-prix.offert { border-left-color: var(--teal, #34D399); color: var(--teal, #34D399); }
 .rj150-prix.trop { border-left-color: #EF4444; color: #f87171; }
 .rj150-fb { margin: 6px 16px 10px; padding: 10px 12px; border-radius: var(--r); font-size: 13px; color: #fecaca; background: rgba(239, 68, 68, .12); border: 1px solid rgba(239, 68, 68, .4); }
+
+/* v297 — décors selon le lieu et la catégorie (111, decors). */
+.rj111-svg.rj111-desert { background: #c9a56b; }
+.rj111-sable { fill: #d2b07a; }
+.rj111-gravier-d { stroke: #e3c48e; }
+.rj111-palme { fill: #3f7a35; stroke: rgba(0, 0, 0, .35); stroke-width: .25; }
+.rj111-dune { fill: #d9c08a; opacity: .85; }
+.rj111-foret .rj111-arbre.a0 { fill: #24552b; } .rj111-foret .rj111-arbre.a1 { fill: #1d4723; } .rj111-foret .rj111-arbre.a2 { fill: #2e6633; }
+.rj111-tribune.grande { fill: #1f2430; }
+.rj111-spect { fill: #e8e2d0; } .rj111-spect.s1 { fill: #e05050; } .rj111-spect.s2 { fill: #4a8bd6; }
+.rj111-pneu { fill: #15161a; stroke: #3a3c44; stroke-width: .25; }
+.rj111-tente { fill: #f2f2f2; stroke: rgba(0, 0, 0, .3); stroke-width: .2; } .rj111-tente.c1 { fill: #e53935; } .rj111-tente.c2 { fill: #1e88e5; }
+.rj111-tente-faitage { stroke: rgba(0, 0, 0, .25); stroke-width: .2; fill: none; }
+.rj111-hospitalite { fill: #e9ecf2; stroke: #8a93a6; stroke-width: .25; }
+.rj111-hospitalite-bande { fill: #e10600; opacity: .85; }
+.rj111-nuit { background: #0b0f17; }
+.rj111-nuit .rj111-decors { filter: brightness(.55) saturate(.85); }
+.rj111-halo-lampe { fill: rgba(255, 214, 120, .22); }
+.rj111-lampe { fill: #ffe9a8; }

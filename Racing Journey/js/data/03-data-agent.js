@@ -25154,6 +25154,121 @@ var CIRCUITS = {
     specialTrait: "greatest_endurance",
     note: "La plus grande course d'endurance du monde. 13.6km incluant l'ancienne Ligne Droite des Hunaudières (remplacée par des chicanes). 24 heures. Nuit complète. Trafic multi-classes. Fatigue pilote = facteur clé."
   },
+  /* v297 : vrais circuits de karting (calendriers réalistes, 04 buildCalendar). */
+  "GP Angerville": {
+    type: "technical", rain: 0.32, safety: 0.12, overtake: 0.35, length: 1.1, corners: 11,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit de la Beauce, plat et ouvert au vent. Manche du championnat de France, paddock de bénévoles et barbecue."
+  },
+  "GP Salbris": {
+    type: "mixed", rain: 0.34, safety: 0.12, overtake: 0.45, length: 1.33, corners: 12,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit de Sologne au milieu des pins. Longue ligne droite, épingle serrée au bout."
+  },
+  "GP Val d'Argenton": {
+    type: "technical", rain: 0.36, safety: 0.12, overtake: 0.35, length: 1.04, corners: 13,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Piste vallonnée des Deux-Sèvres, réputée sélective. Le public s'installe sur les talus."
+  },
+  "GP Laval": {
+    type: "technical", rain: 0.4, safety: 0.12, overtake: 0.35, length: 1, corners: 12,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Tracé court et sinueux de Mayenne. La pluie s'invite souvent."
+  },
+  "GP Varennes": {
+    type: "mixed", rain: 0.33, safety: 0.12, overtake: 0.45, length: 1.18, corners: 11,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Varennes-sur-Allier : gros freinages et longues courbes, piste rapide pour du karting."
+  },
+  "GP Lavelanet": {
+    type: "technical", rain: 0.3, safety: 0.12, overtake: 0.35, length: 1.06, corners: 13,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Au pied des Pyrénées : dénivelé, virages en aveugle, piste exigeante."
+  },
+  "GP Ostricourt": {
+    type: "technical", rain: 0.42, safety: 0.12, overtake: 0.35, length: 1, corners: 11,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit du Nord, souvent froid et humide. Grip changeant."
+  },
+  "GP Aunay-les-Bois": {
+    type: "mixed", rain: 0.35, safety: 0.12, overtake: 0.45, length: 1.2, corners: 12,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit de l'Orne, rapide et fluide, entouré de bocage."
+  },
+  "GP Valence": {
+    type: "mixed", rain: 0.22, safety: 0.12, overtake: 0.45, length: 1.25, corners: 12,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Dans la Drôme, sous le soleil et le mistral. Piste large qui permet de doubler."
+  },
+  "GP Le Mans Kart": {
+    type: "technical", rain: 0.33, safety: 0.12, overtake: 0.35, length: 1.35, corners: 13,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 4, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Le circuit Alain Prost, voisin des 24 Heures. Infrastructure de haut niveau."
+  },
+  "GP Lonato": {
+    type: "technical", rain: 0.18, safety: 0.12, overtake: 0.35, length: 1.2, corners: 13,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 4, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "South Garda Karting : le temple du karting, au bord du lac de Garde. Tout le paddock européen y est."
+  },
+  "GP Franciacorta": {
+    type: "mixed", rain: 0.2, safety: 0.12, overtake: 0.45, length: 1.3, corners: 12,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 4, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit lombard au milieu des vignes, moderne et rapide."
+  },
+  "GP Adria": {
+    type: "technical", rain: 0.24, safety: 0.12, overtake: 0.35, length: 1.3, corners: 14,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Adria Karting Raceway : virages lents, freinages appuyés, chaleur de la plaine du Pô."
+  },
+  "GP Sarno": {
+    type: "mixed", rain: 0.15, safety: 0.12, overtake: 0.45, length: 1.7, corners: 14,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 4, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit Internazionale Napoli, l'un des plus longs d'Europe. Rapide et chaud."
+  },
+  "GP Genk": {
+    type: "technical", rain: 0.45, safety: 0.12, overtake: 0.35, length: 1.36, corners: 14,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 4, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Genk, piste des championnats du monde. Technique, souvent sous la pluie."
+  },
+  "GP Zuera": {
+    type: "mixed", rain: 0.12, safety: 0.12, overtake: 0.45, length: 1.7, corners: 14,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 4, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Près de Saragosse : longue, rapide, sèche et ventée."
+  },
+  "GP Kristianstad": {
+    type: "technical", rain: 0.4, safety: 0.12, overtake: 0.35, length: 1.2, corners: 13,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Circuit suédois au milieu des forêts, fraîcheur et grip changeant."
+  },
+  "GP Wackersdorf": {
+    type: "mixed", rain: 0.35, safety: 0.12, overtake: 0.45, length: 1.19, corners: 12,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Prokart Raceland, en Bavière : rapide, avec des freinages tardifs."
+  },
+  "GP Portimao Kart": {
+    type: "mixed", rain: 0.1, safety: 0.12, overtake: 0.45, length: 1.54, corners: 13,
+    refLapF1: 0, downforce: 0, tyreDeg: 3, bumpsFactor: 3, trackTemp: 3, altitude: 2, overtakeQ: 5, nightRace: false,
+    prestige: 3, drsZones: 0, slopeVar: 3, microClimate: false, streetWalls: 1, neckLoad: 2, braking: 4,
+    lieu: "kart", note: "Kartódromo de l'Algarve, voisin du circuit de F1, sous le soleil portugais."
+  },
   "GP Lorraine": {
     type: "technical",
     rain: 0.35,
