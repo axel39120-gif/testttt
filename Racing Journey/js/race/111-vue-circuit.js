@@ -116,13 +116,40 @@
     v.appendChild(element("path", { d: "M0,3 q2.5,-1.4 5,0 t5,0", fill: "none", stroke: "rgba(255,255,255,.14)", "stroke-width": .35 }));
     defs.appendChild(v);
   }
-  function decors(monde, L, repere, plein, PLEIN, ville) {
+  /* v297 : chaque lieu a son paysage, chaque catégorie son habillage.
+     LIEU — port (Monaco, Macao, Bakou), ville, désert (Golfe), forêt (Spa,
+     Monza, Mugello…), dunes (Zandvoort), campagne, karting ; nuit pour les
+     courses en nocturne.
+     NIVEAU — 0 karting : murs de pneus, tentes du paddock, quelques
+     spectateurs ; 1 F4/FR : une petite tribune ; 2 F3/F2 : tribunes sur la
+     ligne droite ; 3 F1 : grandes tribunes, tribunes dans les grands virages,
+     hospitalités et foule. */
+  function lieuDe(nom, d) {
+    var n = String(nom || "").toLowerCase();
+    if ((d && d.lieu === "kart") || /^gp /.test(n)) return "kart";
+    if (/monaco|macao|macau|baku|bakou/.test(n)) return "port";
+    if (d && d.type === "street") return "ville";
+    if (/bahrain|bahreïn|abu dhabi|qatar|losail|sakhir/.test(n)) return "desert";
+    if (/zandvoort/.test(n)) return "dunes";
+    if (/spa|monza|imola|mugello|nürburg|nurburg|spielberg|red bull ring|vallelunga|hungaroring|budapest|sao paulo|interlagos|suzuka/.test(n)) return "foret";
+    return "campagne";
+  }
+  function niveauDe(cat) {
+    return ({ "Karting Junior": 0, "Karting Senior": 0, "Formule 4": 1, "Formula Regional": 1, "Formule 3": 2, "Formule 2": 2, "Formule 1": 3 })[cat] != null
+      ? ({ "Karting Junior": 0, "Karting Senior": 0, "Formule 4": 1, "Formula Regional": 1, "Formule 3": 2, "Formule 2": 2, "Formule 1": 3 })[cat] : 2;
+  }
+
+  function decors(monde, L, repere, plein, PLEIN, ctx) {
     var svg = monde.ownerSVGElement, defs = svg.querySelector("defs");
     motifs(defs);
-    svg.classList.toggle("rj111-ville", !!ville);
+    var lieu = ctx.lieu, niveau = ctx.niveau, ville = lieu === "port" || lieu === "ville";
+    svg.classList.toggle("rj111-ville", ville);
+    ["kart", "desert", "dunes", "foret", "port"].forEach(function (l) { svg.classList.toggle("rj111-" + l, lieu === l); });
+    svg.classList.toggle("rj111-nuit", !!ctx.nuit);
     var sous = element("g", { "class": "rj111-decors" });
     monde.insertBefore(sous, monde.firstChild);
-    sous.appendChild(element("rect", { x: plein.x - 80, y: plein.y - 80, width: plein.w + 160, height: plein.h + 160, "class": ville ? "rj111-sol-ville" : "rj111-herbe", fill: ville ? null : "url(#rj111-tonte)" }));
+    var sol = ville ? "rj111-sol-ville" : lieu === "desert" ? "rj111-sable" : "rj111-herbe";
+    sous.appendChild(element("rect", { x: plein.x - 80, y: plein.y - 80, width: plein.w + 160, height: plein.h + 160, "class": sol, fill: sol === "rj111-herbe" ? "url(#rj111-tonte)" : null }));
     var ech = [];
     for (var d = 0; d < L; d += 1.5) ech.push(repere(d));
     function distPiste(x, y) {
@@ -153,20 +180,20 @@
     var dessus = element("g", { "class": "rj111-vibreurs" });
     virages.forEach(function (v) {
       if (v.pts.length < 2) return;
-      if (!ville && v.tour > 1.6) sous.appendChild(element("path", { d: bord(v.pts, -v.cote, DEMI + 4.5), "class": "rj111-gravier" }));
+      if (!ville && v.tour > 1.6) sous.appendChild(element("path", { d: bord(v.pts, -v.cote, DEMI + 4.5), "class": lieu === "desert" ? "rj111-gravier rj111-gravier-d" : "rj111-gravier" }));
       [v.cote, -v.cote].forEach(function (cote) {
         var dd = bord(v.pts, cote, DEMI);
         dessus.appendChild(element("path", { d: dd, "class": "rj111-vibreur-b" }));
         dessus.appendChild(element("path", { d: dd, "class": "rj111-vibreur-r" }));
       });
     });
+    var grands = virages.filter(function (v) { return v.pts.length >= 2; }).sort(function (a, b) { return b.tour - a.tour; });
 
     var g = element("g", { "class": ville ? "rj111-quartier" : "rj111-arbres" }), n = 0;
     if (ville) {
-      /* Port : l'eau occupe le bas du cadre, loin de la piste (quai de 12 unités) ;
-         immeubles ailleurs, alignés en îlots, loin de la piste (11 unités). */
+      /* Immeubles en îlots, loin de la piste (11 unités) ; l'eau d'un port en bas du cadre. */
       var eau = element("g", { "class": "rj111-port" }), bateaux = element("g");
-      var hautEau = plein.y + plein.h * 0.58;
+      var hautEau = lieu === "port" ? plein.y + plein.h * 0.58 : Infinity;
       for (var gx = plein.x - 40; gx < plein.x + plein.w + 40; gx += 8) {
         for (var gy = plein.y - 40; gy < plein.y + plein.h + 40; gy += 8) {
           var k = Math.round(gx * 7 + gy * 13), cx = gx + 4, cy = gy + 4, dp = distPiste(cx, cy);
@@ -191,12 +218,23 @@
       }
       sous.appendChild(eau); sous.appendChild(bateaux);
     } else {
-      // arbres : sur une grille, loin de la piste ; ombre portée, feuillage, reflet
-      for (var gx2 = plein.x - 30; gx2 < plein.x + plein.w + 30 && n < 420; gx2 += 7) {
-        for (var gy2 = plein.y - 30; gy2 < plein.y + plein.h + 30 && n < 420; gy2 += 7) {
+      /* Végétation selon le lieu : forêt dense, campagne, quelques arbres autour d'un karting,
+         palmiers clairsemés dans le désert, dunes de sable à Zandvoort. */
+      var V = { foret: [5.5, 0.18, 15], campagne: [7, 0.45, 18], kart: [8, 0.62, 14], desert: [10, 0.82, 16], dunes: [8, 0.7, 16] }[lieu] || [7, 0.45, 18];
+      if (lieu === "dunes") for (var dz = 0; dz < 26; dz++) {
+        var hx = plein.x + hache(dz * 31) * plein.w, hy = plein.y + hache(dz * 37) * plein.h;
+        if (distPiste(hx, hy) > 10) sous.appendChild(element("ellipse", { cx: hx.toFixed(1), cy: hy.toFixed(1), rx: (5 + hache(dz * 41) * 9).toFixed(1), ry: (3 + hache(dz * 43) * 5).toFixed(1), "class": "rj111-dune" }));
+      }
+      for (var gx2 = plein.x - 30; gx2 < plein.x + plein.w + 30 && n < 460; gx2 += V[0]) {
+        for (var gy2 = plein.y - 30; gy2 < plein.y + plein.h + 30 && n < 460; gy2 += V[0]) {
           var k2 = Math.round(gx2 * 7 + gy2 * 13), x2 = gx2 + hache(k2) * 5, y2 = gy2 + hache(k2 + 1) * 5;
-          if (hache(k2 + 2) < 0.45 || distPiste(x2, y2) < 18) continue;
-          var rr = 1.6 + hache(k2 + 3) * 1.8;
+          if (hache(k2 + 2) < V[1] || distPiste(x2, y2) < V[2]) continue;
+          if (lieu === "desert") {   // palmier : tronc fin, couronne étoilée
+            g.appendChild(element("circle", { cx: (x2 + 0.6).toFixed(1), cy: (y2 + 0.7).toFixed(1), r: 1.5, "class": "rj111-ombre-arbre" }));
+            g.appendChild(element("path", { d: "M" + x2.toFixed(1) + "," + (y2 - 1.8).toFixed(1) + " l.5,1.3 1.3,.5 -1.3,.5 -.5,1.3 -.5,-1.3 -1.3,-.5 1.3,-.5 Z", "class": "rj111-palme" }));
+            n++; continue;
+          }
+          var rr = (lieu === "foret" ? 1.9 : 1.6) + hache(k2 + 3) * 1.8;
           g.appendChild(element("circle", { cx: (x2 + 0.7).toFixed(1), cy: (y2 + 0.8).toFixed(1), r: rr.toFixed(2), "class": "rj111-ombre-arbre" }));
           g.appendChild(element("circle", { cx: x2.toFixed(1), cy: y2.toFixed(1), r: rr.toFixed(2), "class": "rj111-arbre a" + Math.floor(hache(k2 + 4) * 3) }));
           g.appendChild(element("circle", { cx: (x2 - rr * 0.3).toFixed(1), cy: (y2 - rr * 0.3).toFixed(1), r: (rr * 0.45).toFixed(2), "class": "rj111-feuille" }));
@@ -205,15 +243,64 @@
       }
     }
     sous.appendChild(g);
-    // tribunes le long de la ligne droite, du côté opposé aux stands
-    for (var sd = -PLEIN; sd <= PLEIN; sd += 6.5) {
-      var r = repere(((sd % L) + L) % L), o = DEMI + 6;
-      var angT = Math.atan2(r.ty, r.tx) * 180 / Math.PI;
-      var tr = element("g", { transform: "translate(" + (r.x - r.nx * o).toFixed(2) + "," + (r.y - r.ny * o).toFixed(2) + ") rotate(" + angT.toFixed(1) + ")" });
-      tr.appendChild(element("rect", { x: -3, y: -1.8, width: 6, height: 3.6, rx: .3, "class": "rj111-tribune" }));
-      tr.appendChild(element("rect", { x: -2.7, y: -1.2, width: 5.4, height: .6, "class": "rj111-public" }));
-      tr.appendChild(element("rect", { x: -2.7, y: .2, width: 5.4, height: .6, "class": "rj111-public b" }));
-      sous.appendChild(tr);
+
+    /* Habillage de la catégorie. */
+    function poser(dist, decal, ang0, enfant) {
+      var r = repere(((dist % L) + L) % L), angT = Math.atan2(r.ty, r.tx) * 180 / Math.PI + (ang0 || 0);
+      var t = element("g", { transform: "translate(" + (r.x + r.nx * decal).toFixed(2) + "," + (r.y + r.ny * decal).toFixed(2) + ") rotate(" + angT.toFixed(1) + ")" });
+      enfant(t); sous.appendChild(t);
+    }
+    function tribune(t, grande) {
+      var w = grande ? 7 : 6, h = grande ? 4.6 : 3.6;
+      t.appendChild(element("rect", { x: -w / 2, y: -h / 2, width: w, height: h, rx: .3, "class": "rj111-tribune" + (grande ? " grande" : "") }));
+      for (var rg = 0; rg < (grande ? 3 : 2); rg++)
+        t.appendChild(element("rect", { x: -w / 2 + .3, y: -h / 2 + .6 + rg * 1.35, width: w - .6, height: .6, "class": "rj111-public" + (rg % 2 ? " b" : "") }));
+    }
+    function foule(dist, decal, nb) {   // spectateurs debout, en points
+      for (var f = 0; f < nb; f++) {
+        var r = repere((((dist + f * 1.3) % L) + L) % L), off = decal + hache(f * 13 + dist) * 2.5;
+        sous.appendChild(element("circle", { cx: (r.x + r.nx * off).toFixed(2), cy: (r.y + r.ny * off).toFixed(2), r: .45, "class": "rj111-spect s" + (f % 3) }));
+      }
+    }
+    if (niveau === 0) {
+      // karting : murs de pneus à l'extérieur des grands virages, paddock de tentes, public sur les talus
+      grands.slice(0, 5).forEach(function (v) {
+        v.pts.forEach(function (p, i) { if (i % 2) return;
+          var nx = -p.ty * -v.cote, ny = p.tx * -v.cote;
+          sous.appendChild(element("circle", { cx: (p.x + nx * (DEMI + 2.2)).toFixed(2), cy: (p.y + ny * (DEMI + 2.2)).toFixed(2), r: .7, "class": "rj111-pneu" }));
+        });
+      });
+      for (var tt = -PLEIN; tt <= PLEIN; tt += 7) poser(tt, DEMI + 9 + hache(tt * 3) * 3, 0, function (t) {
+        t.appendChild(element("rect", { x: -2.2, y: -2.2, width: 4.4, height: 4.4, rx: .3, "class": "rj111-tente c" + Math.floor(hache(tt * 7 + 1) * 3) }));
+        t.appendChild(element("path", { d: "M-2.2,-2.2 L2.2,2.2 M2.2,-2.2 L-2.2,2.2", "class": "rj111-tente-faitage" }));
+      });
+      foule(-PLEIN * 0.5, -(DEMI + 4), 10);
+    } else {
+      // tribunes le long de la ligne droite, du côté opposé aux stands (plus ou moins longues)
+      var etendue = niveau === 1 ? PLEIN * 0.35 : PLEIN;
+      for (var sd = -etendue; sd <= etendue; sd += 6.5) poser(sd, -(DEMI + 6), 0, function (t) { tribune(t, niveau === 3); });
+      if (niveau >= 2) foule(-PLEIN, -(DEMI + 3), niveau === 3 ? 26 : 12);
+      if (niveau === 3) {
+        // F1 : seconde rangée, tribunes dans les grands virages, hospitalités derrière les stands
+        for (var s2 = -PLEIN; s2 <= PLEIN; s2 += 7.5) poser(s2, -(DEMI + 11.5), 0, function (t) { tribune(t, true); });
+        grands.slice(0, 3).forEach(function (v) {
+          var p = v.pts[Math.floor(v.pts.length / 2)], nx = -p.ty * -v.cote, ny = p.tx * -v.cote, ang = Math.atan2(p.ty, p.tx) * 180 / Math.PI;
+          var t = element("g", { transform: "translate(" + (p.x + nx * (DEMI + 10)).toFixed(2) + "," + (p.y + ny * (DEMI + 10)).toFixed(2) + ") rotate(" + ang.toFixed(1) + ")" });
+          tribune(t, true); sous.appendChild(t);
+        });
+        for (var hb = -PLEIN * 0.8; hb <= PLEIN * 0.8; hb += 9) poser(hb, DEMI + 13, 0, function (t) {
+          t.appendChild(element("rect", { x: -3.6, y: -2, width: 7.2, height: 4, rx: .4, "class": "rj111-hospitalite" }));
+          t.appendChild(element("rect", { x: -3.2, y: -.4, width: 6.4, height: .8, "class": "rj111-hospitalite-bande" }));
+        });
+      }
+    }
+    // nuit : projecteurs le long de la piste
+    var lum = element("g", { "class": "rj111-lumieres" });
+    monde.insertBefore(lum, sous.nextSibling);
+    if (ctx.nuit) for (var lp = 0; lp < L; lp += 9) {
+      var rl = repere(lp), cl = (lp / 9) % 2 ? 1 : -1, ol = DEMI + 2.6;
+      lum.appendChild(element("circle", { cx: (rl.x + rl.nx * ol * cl).toFixed(2), cy: (rl.y + rl.ny * ol * cl).toFixed(2), r: 1.6, "class": "rj111-halo-lampe" }));
+      lum.appendChild(element("circle", { cx: (rl.x + rl.nx * ol * cl).toFixed(2), cy: (rl.y + rl.ny * ol * cl).toFixed(2), r: .35, "class": "rj111-lampe" }));
     }
     // vibreurs au-dessus de la piste, sous les voitures
     monde.appendChild(dessus);
@@ -322,7 +409,7 @@
     var tout = monde.getBBox();   // la voie peut déborder du cadre de la piste
     var plein = { x: tout.x - 4, y: tout.y - 4, w: tout.width + 8, h: tout.height + 8 };
     svg.setAttribute("viewBox", [plein.x, plein.y, plein.w, plein.h].join(" "));
-    decors(monde, L, repere, plein, PLEIN, donnees.type === "street");
+    decors(monde, L, repere, plein, PLEIN, { lieu: lieuDe(circuit, donnees), niveau: niveauDe(typeof G !== "undefined" && G ? G.cat : ""), nuit: !!donnees.nightRace });
 
     var groupe = element("g", { "class": "rj111-voitures" });
     monde.appendChild(groupe);

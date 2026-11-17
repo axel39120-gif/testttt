@@ -4221,6 +4221,75 @@ async function suiteRetoursCarriere() {
   } finally { await navigateur.close(); }
 }
 
+/* v297 : calendriers réalistes, décors par lieu et catégorie, cohérence équipe en karting */
+async function suiteCoherence297() {
+  S.suite("Calendriers, décors et cohérence (v297)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  page.on("dialog", d => d.accept().catch(() => {}));
+  try {
+    const cal = await page.evaluate(() => {
+      const out = {};
+      for (const cat of ["Karting Junior", "Karting Senior", "Formule 4", "Formula Regional"]) {
+        G.cat = cat; window.CAL_RACES = []; buildCalendar();
+        out[cat] = { noms: CAL_RACES.map(c => c.name), propres: CAL_RACES.every(c => getCircuitData(c.name) === CIRCUITS[c.name]) };
+      }
+      return out;
+    });
+    const f1 = /Monaco|Bahrain|Abu Dhabi|Silverstone|Monza|Spa/;
+    S.verifier("karting : de vrais circuits de karting, aucun Grand Prix de F1", ["Karting Junior", "Karting Senior"].every(c => cal[c].propres && !cal[c].noms.some(n => f1.test(n))), JSON.stringify(cal["Karting Senior"].noms));
+    S.verifier("F4 et FR : circuits réels, sans doublon (Red Bull Ring = Spielberg)", ["Formule 4", "Formula Regional"].every(c => cal[c].propres && !(cal[c].noms.includes("Red Bull Ring") && cal[c].noms.includes("Spielberg")) && !cal[c].noms.includes("Monaco")), JSON.stringify(cal["Formule 4"].noms));
+
+    // Décors : karting sans tribunes, F1 avec grandes tribunes et hospitalités
+    const deco = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = {};
+      for (const [cat, motif] of [["Karting Junior", "GP "], ["Formule 1", "Spa"]]) {
+        G.cat = cat; initRivals(); window.CAL_RACES = []; buildCalendar();
+        const i = Math.max(0, CAL_RACES.findIndex(c => c.name.indexOf(motif) >= 0));
+        G.semaine = CAL_RACES[i].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+        SETTINGS.simSpeed = "normal"; RACE_WEEKEND_STATE.fpDone = true; RACE_WEEKEND_STATE.courseDone = false; RACE_STATE.qualiPos = 6; RACE_STATE.circuit = CAL_RACES[i].name;
+        if (window.LIVE_RACE) LIVE_RACE.finished = true;
+        navTo("S-race", null); rtab("course", true); await a(400);
+        window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+        runRaceLive(); await a(1500); LIVE_RACE.paused = true;
+        const svg = document.querySelector(".rj111-svg"), n = c => svg ? svg.querySelectorAll(c).length : -1;
+        out[cat] = { tribunes: n(".rj111-tribune"), grandes: n(".rj111-tribune.grande"), tentes: n(".rj111-tente"), pneus: n(".rj111-pneu"), hosp: n(".rj111-hospitalite"), classe: svg ? svg.getAttribute("class") : "" };
+        LIVE_RACE.finished = true;
+      }
+      return out;
+    });
+    S.verifier("karting : tentes et murs de pneus, pas de tribunes", deco["Karting Junior"].tribunes === 0 && deco["Karting Junior"].tentes > 0 && deco["Karting Junior"].pneus > 0 && /rj111-kart/.test(deco["Karting Junior"].classe), JSON.stringify(deco["Karting Junior"]));
+    S.verifier("F1 : grandes tribunes et hospitalités, paysage du lieu (forêt à Spa)", deco["Formule 1"].grandes >= 6 && deco["Formule 1"].hosp > 0 && /rj111-foret/.test(deco["Formule 1"].classe), JSON.stringify(deco["Formule 1"]));
+
+    // Cohérence : indépendant en karting junior → ni équipe ni coéquipier
+    const co = await page.evaluate(() => {
+      G.cat = "Karting Junior"; G.currentTeam = "Indépendant"; G._seasonTeam = "Indépendant"; initRivals();
+      window.CAL_RACES = []; buildCalendar(); G._scheduledEvents = []; scheduleSeasonEvents();
+      const ev = (G._scheduledEvents || []).filter(e => e.saison === G.saison).map(e => {
+        const d = SCHEDULED_EVENTS.find(x => x.id === e.eventId);
+        const p = e.preview || (d && (typeof d.gen === "function" ? d.gen({ rep: G.reputation, cat: G.cat, budget: G.budget, saison: G.saison, semaine: G.semaine, age: G.age }) : d));
+        return p && _rj152.interdit(p) ? (p.title || e.eventId) : null;
+      }).filter(Boolean);
+      const n0 = getMailbox().length;
+      const a = pushMail({ from: "Direction", role: "team_boss", subject: "Réunion", body: "x" });
+      const b = pushMail({ from: "Maman", role: "family", subject: "Courage", body: "Ton équipe compte sur toi !" });
+      const c = pushMail({ from: "Agent", role: "agent", subject: "Offre", body: "Prema te propose un baquet en Karting Senior." });
+      return { evenements: ev.length, exemple: ev[0] || "", programmes: (G._scheduledEvents || []).length, direction: a, famille: b, offre: getMailbox().length - n0 };
+    });
+    S.verifier("karting junior : aucun événement hors course qui parle d'équipe ou de coéquipier", co.programmes > 0 && co.evenements === 0, JSON.stringify(co));
+    await page.evaluate(() => {
+      G.currentTeam = "Indépendant"; window.__textes = [];
+      new MutationObserver(() => ["live-event-modal", "race-event-modal"].forEach(id => { const m = document.getElementById(id); if (m && m.innerText && m._vu !== m.innerText) { m._vu = m.innerText; window.__textes.push(m.innerText); } }))
+        .observe(document.body, { childList: true, subtree: true, characterData: true });
+    });
+    await S.repondeurAutomatique(page);
+    for (let k = 1; k < 3; k++) await S.courirUneCourse(page, { categorie: "Karting Junior", rang: k, grille: 6, equipe: "Indépendant" });
+    const enCourse = await page.evaluate(() => window.__textes.filter(t => /co-?équipi|écurie|ton ingénieur|ta? ?équipe/i.test(t)).map(t => t.slice(0, 90)));
+    S.verifier("karting junior : aucun événement de course qui parle d'équipe ou de coéquipier", enCourse.length === 0, JSON.stringify(enCourse));
+    S.verifier("messages : ni direction d'écurie ni « ton équipe » pour un indépendant ; les offres passent", co.direction === null && co.famille === null && co.offre === 1, JSON.stringify(co));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteRetoursSaison() {
   S.suite("Retours d'une saison de karting (v279)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
@@ -4586,7 +4655,8 @@ const SUITES = {
   equilibre: suiteEquilibre,
   contrats: suiteContrats,
   qualifsecteurs: suiteQualifSecteurs,
-  retourscarriere: suiteRetoursCarriere
+  retourscarriere: suiteRetoursCarriere,
+  coherence297: suiteCoherence297
 };
 
 async function principal() {
