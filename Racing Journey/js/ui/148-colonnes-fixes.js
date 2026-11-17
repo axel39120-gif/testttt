@@ -28,7 +28,8 @@
   var IMPOSEES = { "quali-screen": ["quali-timing-board"] };
   var memoire = {};
 
-  function visible(e) { return e.offsetParent !== null || getComputedStyle(e).position === "fixed"; }
+  /* Bloc du flux : visible, et ni absolu ni fixe (bandes décoratives, badges). */
+  function visible(e) { if (e.offsetParent === null) return false; var p = getComputedStyle(e).position; return p !== "absolute" && p !== "fixed"; }
   function cle(e, i) {
     if (e.id) return "#" + e.id;
     var c = (e.className && typeof e.className === "string") ? e.className.trim().split(/\s+/).filter(function (x) { return x !== COUPE; })[0] : "";
@@ -56,19 +57,36 @@
       var imp = IMPOSEES[c.id];
       if (imp) choix = imp.map(function (id) { return "#" + id; }).filter(function (k) { return cles.indexOf(k) > 0; })[0];
       if (!choix) {
-        var h = enfants.map(function (e) { return e.offsetHeight; }), tot = h.reduce(function (a, b) { return a + b; }, 0), cum = 0, best = 1, ecart = Infinity;
-        for (var i = 1; i < enfants.length; i++) {
-          cum += h[i - 1];
-          var d = Math.abs(cum - (tot - cum));
+        /* v296 : une section (son titre et tout ce qui suit jusqu'au titre
+           suivant) reste d'un seul tenant. S'il y a des titres, la coupure ne
+           tombe que juste avant l'un d'eux ; sinon, n'importe quel bloc. */
+        var TITRE = ".t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rj122-groupe-titre, .rjf-kicker, .rj125-titre";
+        /* Début de section : un titre, ou un bloc qui s'ouvre sur son propre en-tête
+           (…-hdr, …-titre, …-title, …-kicker), comme l'arbre de spécialités. */
+        var ENTETE = /(^|[\s-])(hdr|head|header|titre|title|kicker)(\s|$)/i;
+        var debut = function (e) {
+          if (e.matches(TITRE) || ENTETE.test(typeof e.className === "string" ? e.className : "")) return true;
+          var p = e.firstElementChild;
+          return !!(p && (p.matches(TITRE) || ENTETE.test(typeof p.className === "string" ? p.className : "")));
+        };
+        var titres = [];
+        enfants.forEach(function (e, i) { if (i > 0 && debut(e)) titres.push(i); });
+        /* Une seule section (titre en tête, aucun autre) : on ne la coupe pas, une colonne. */
+        if (!titres.length && debut(enfants[0])) choix = "__une";
+        var permis = titres.length ? titres : enfants.map(function (e, i) { return i; }).slice(1);
+        var h = enfants.map(function (e) { return e.offsetHeight; }), tot = h.reduce(function (a, b) { return a + b; }, 0), best = permis[0], ecart = Infinity;
+        permis.forEach(function (i) {
+          var gauche = h.slice(0, i).reduce(function (a, b) { return a + b; }, 0);
+          var d = Math.abs(gauche - (tot - gauche));
           if (d < ecart) { ecart = d; best = i; }
-        }
-        /* Un titre de section suit toujours son contenu à droite. */
-        while (best > 1 && enfants[best - 1].matches(".t-sec, .apex-sec, .sec-lbl, .rj114-titre, .rj122-groupe-titre")) best--;
-        choix = cles[best];
+        });
+        if (!titres.length) while (best > 1 && enfants[best - 1].matches(TITRE)) best--;
+        if (choix !== "__une") choix = cles[best];
       }
       memoire[nom] = choix;
     }
-    c.classList.add(DEUX);
+    c.classList.toggle("rj148-une", choix === "__une");
+    c.classList.toggle(DEUX, choix !== "__une");
     enfants.forEach(function (e, i) { e.classList.toggle(COUPE, cles[i] === choix); });
   }
 
@@ -92,7 +110,7 @@
   function boot() {
     var css = document.createElement("style");
     css.id = "rj148-css";
-    css.textContent = "." + DEUX + "{column-count:2!important;column-fill:balance}" +
+    css.textContent = "." + DEUX + "{column-count:2!important;column-fill:balance}.rj148-une{columns:auto!important;column-count:1!important;max-width:620px;margin-inline:auto!important}" +
       "." + DEUX + ">." + COUPE + "{break-before:column!important}";
     document.head.appendChild(css);
     obs = new MutationObserver(surMutation);

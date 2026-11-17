@@ -68,3 +68,4 @@
 .rj143-neutre .rj143-verdict { color: rgba(255, 255, 255, .7); }
 .rj143-recit { font-size: 12.5px; color: rgba(255, 255, 255, .78); }
 .rj143-effets { font-size: 12.5px; font-weight: 700; color: #fff; }
+.rj143-instant { font-size: 11.5px; color: rgba(255, 255, 255, .62); margin-top: 2px; }   /* v296 : l’instant présent, sans la place */

@@ -4152,6 +4152,75 @@ async function suiteQualifSecteurs() {
   } finally { await navigateur.close(); }
 }
 
+/* v296 : retours d'une carrière du karting à la F3 */
+async function suiteRetoursCarriere() {
+  S.suite("Retours de carrière (v296)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  page.on("dialog", d => d.accept().catch(() => {}));
+  try {
+    // 1. Fenêtre de conséquences : jamais la place, une info sur l'instant
+    await page.evaluate(() => {
+      window.__fenetres = [];
+      new MutationObserver(() => { const m = document.getElementById("rj47-outcome-modal"); if (m && !m._vu) { m._vu = 1; window.__fenetres.push(m.innerText || ""); }
+        const r = document.getElementById("lec-feedback-new"); if (r && r.innerText && r.style.display !== "none" && r._vu !== r.innerText) { r._vu = r.innerText; window.__fenetres.push(r.innerText); } })
+        .observe(document.body, { childList: true, subtree: true });
+    });
+    await S.repondeurAutomatique(page);
+    for (let k = 2; k < 4; k++) await S.courirUneCourse(page, { categorie: "Formule 1", rang: k, grille: 8 });
+    const fen = await page.evaluate(() => window.__fenetres);
+    const avecPlace = fen.filter(t => /\bP\d+\b|place[s]? (gagnée|perdue)/i.test(t));
+    S.verifier("après un choix, la fenêtre n'annonce pas la place", fen.length >= 1 && avecPlace.length === 0, fen.length + " fenêtres ; " + (avecPlace[0] || "").slice(0, 140));
+    S.verifier("elle décrit l'instant (qui est devant, derrière, à quel écart)", fen.some(t => /devant|tu mènes/i.test(t)), (fen[0] || "").slice(0, 160));
+
+    const r = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = {};
+      // 2. Le bilan de saison rouvert n'ajoute pas la saison en double
+      const k = G.saison + "|" + G.cat, n = () => CAREER_HISTORY.filter(h => h.saison + "|" + h.cat === k).length;
+      G.seasonOver = true;
+      for (let i = 0; i < 3; i++) { try { showSeasonEnd(); } catch (e) {} await a(300); }
+      out.lignes = n();
+      CAREER_HISTORY.push(Object.assign({}, CAREER_HISTORY[CAREER_HISTORY.length - 1]));   // doublon d'une ancienne sauvegarde
+      _rj151.nettoyer(); out.apresNettoyage = n();
+      // 3. Fiche d'un rival : toutes ses saisons
+      const P = G.driverPool || {}, d = Object.keys(P).map(c => P[c]).find(x => x && G.rivals.some(r => r.name === x.name));
+      if (d) { d.history = [{ saison: G.saison - 2, cat: "Formule 3", team: "Prema", finalPos: 2, points: 150, wins: 3, podiums: 6 }, { saison: G.saison - 1, cat: "Formule 2", team: "ART", finalPos: 5, points: 120, wins: 1, podiums: 4 }]; const rv = G.rivals.find(r => r.name === d.name); rv.careerHistory = []; }
+      if (d) {
+        const idx = G.rivals.findIndex(r => r.name === d.name);
+        showDriverProfileModal({ type: "rival", idx: idx, name: d.name }); await a(400);
+        const m = document.getElementById("driver-profile-modal");
+        out.fiche = { pool: d.history.length, lignes: m ? m.querySelectorAll("tbody tr").length : -1 };
+        if (m) m.remove();
+      } else out.fiche = null;
+      return out;
+    });
+    S.verifier("le bilan rouvert trois fois garde une seule ligne pour la saison", r.lignes === 1 && r.apresNettoyage === 1, JSON.stringify(r));
+    S.verifier("la fiche d'un rival montre ses saisons passées, pas seulement l'année en cours", r.fiche && r.fiche.lignes >= 3, JSON.stringify(r.fiche));
+
+    // 4-5. Qualif F4 : pas de micro-choix ; le tour de sortie s'affiche OUT, puis les tours chronométrés
+    const q = await page.evaluate(async () => {
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = { sequence: false, out: false, compte: false };
+      G.cat = "Formule 4"; G.currentTeam = TEAM_OFFERS["Formule 4"][3].team; initRivals();
+      window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[1].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      SETTINGS.simSpeed = "instant"; RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; G._startQualInProgress = false;
+      navTo("S-race", null); startQual(); await a(500);
+      const suivi = setInterval(() => {
+        if (document.getElementById("quali-hotlap-seq-modal")) out.sequence = true;
+        const t = (document.getElementById("quali-timing-board") || {}).innerText || "";
+        if (/OUT/.test(t)) out.out = true;
+        if (QUALI_STATE.drivers.some(d => d._toursChrono >= 1 && d.lastTime)) out.compte = true;
+        const m = document.getElementById("quali-player-lap-modal"); if (m) _closeQualiPlayerLapModal();
+      }, 30);
+      runQualiSession();
+      for (let k = 0; k < 400 && !(RACE_STATE.qualiPos > 0 && !QUALI_STATE.chronoInterval); k++) await a(250);
+      clearInterval(suivi);
+      return out;
+    });
+    S.verifier("qualif : plus de micro-choix pendant le tour lancé", q.sequence === false, JSON.stringify(q));
+    S.verifier("qualif F4 : le tour de sortie s'affiche OUT, les tours chronométrés se comptent", q.out && q.compte, JSON.stringify(q));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteRetoursSaison() {
   S.suite("Retours d'une saison de karting (v279)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
@@ -4516,7 +4585,8 @@ const SUITES = {
   retours: suiteRetoursSaison,
   equilibre: suiteEquilibre,
   contrats: suiteContrats,
-  qualifsecteurs: suiteQualifSecteurs
+  qualifsecteurs: suiteQualifSecteurs,
+  retourscarriere: suiteRetoursCarriere
 };
 
 async function principal() {

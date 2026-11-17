@@ -876,10 +876,12 @@
       + '<div class="rjf-state"><div class="rjf-state-item"><div class="rjf-state-lbl">Énergie</div>'
       + '<div class="rjf-state-bar"><div class="rjf-state-fill" style="width:' + (100 - fatigue) + "%;background:" + fatCol + '"></div></div></div>'
       + '<div class="rjf-state-eff"><div class="rjf-state-lbl">Efficacité</div><div class="rjf-state-val" style="color:' + effCol + '">' + eff + "%</div></div></div>"
+      /* v296 : « Récupérer » sous l'énergie, dans le même bloc (il ouvrait la colonne de droite). */
+      + '<button class="rjf-rest" data-rest="1"' + (pa > 0 ? "" : " disabled") + ">Récupérer · 1 PA · −35 énergie</button>"
       + (fatigue >= 60 ? '<div class="rjf-alerte">Fatigue ' + Math.round(fatigue) + '/100 : tu perds ' + (fatigue >= 80 ? "environ 3 %" : "environ 1 %") + ' de performance en course. Récupère avant la prochaine course.</div>' : "")
       + '<div class="rjf-kicker">Focus d\'entraînement <span class="rjf-pa">' + pa + " PA</span></div>"
       + '<div class="rjf-grid">' + cards + "</div></div>"
-      + '<div class="rjf-col"><button class="rjf-rest" data-rest="1"' + (pa > 0 ? "" : " disabled") + ">Récupérer · 1 PA · \u221235 énergie</button>"
+      + '<div class="rjf-col">'
       + '<div class="rjf-kicker rjf-kicker-prem">Programmes premium</div>'
       + '<div class="rjf-prem">' + prem + "</div></div></div>";
     if (!host._rjFocusBound) { host.addEventListener("click", onFocusClick); host._rjFocusBound = true; }
