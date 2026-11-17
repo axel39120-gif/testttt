@@ -54,6 +54,12 @@
       if ((G.races || []).length > 0) return false;
       /* Il faut tout de même une carrière commencée. */
       if (!G.cat) return false;
+      /* v298 : la saison a commencé dès qu'une manche est disputée ou que sa
+         semaine est passée — même sans course du joueur (saison blanche,
+         réserviste) : le bouton restait sinon sur « Plan de saison » toute l'année. */
+      var C = window.CAL_RACES || [];
+      if (C.some(function (c) { return c && c.done; })) return false;
+      if (C.length && (G.semaine || 1) > C[0].week) return false;
     } catch (e) { return false; }
     return true;
   }
@@ -67,6 +73,7 @@
     event:     { c: "#A78BFA", lbl: "Événement" },
     mediaday:  { c: "#34D399", lbl: "Conférence de presse" },
     saison:    { c: "#F5C542", lbl: "Bilan de saison" },
+    semaine:   { c: "#64748B", lbl: "Semaine suivante" },   // saison blanche : on ne court pas
     defaut:    { c: "#FF1801", lbl: "" }
   };
 
@@ -79,6 +86,10 @@
     /* La fin de saison prime : quand la saison est close, le clic mène au
        bilan quoi qu'il arrive, même si une conférence restait programmée. */
     try { if (G.seasonOver) return TEINTES.saison; } catch (e) {}
+
+    /* v298 : même ordre que les interceptions de l'avance (135 avant 99) — en
+       saison blanche, l'appui fait passer la semaine, sans course pour le joueur. */
+    try { if (window.RJSaisonBlanche && RJSaisonBlanche.active()) return TEINTES.semaine; } catch (e) {}
 
     /* Une conférence prévue cette semaine passe ensuite : c'est elle qui
        s'ouvrira au clic. */
@@ -129,10 +140,12 @@
     var btn = document.getElementById("ni-cta-continue");
     if (!btn) return;
     injecterCSS();
-    var d = destination();
+    var d = destination(), avant = btn.getAttribute("data-rj105");
     btn.style.setProperty("--rj105-c", d.c);
     if (d.lbl) btn.setAttribute("title", d.lbl);
     btn.setAttribute("data-rj105", d.lbl || "");
+    /* v298 : l'accueil (118) suit le même état, sans recopier une valeur périmée */
+    if (avant !== (d.lbl || "")) try { document.dispatchEvent(new CustomEvent("rj105-teinte", { detail: d })); } catch (e) {}
   }
 
   /* ==================================================================

@@ -129,6 +129,16 @@
 
   /* Probabilité calculée pour épuiser le quota avant la fin de saison :
      s'il reste beaucoup de convocations et peu de semaines, elle monte. */
+  /* v298 : la conférence de la semaine est décidée UNE fois (tirage gardé pour la semaine) :
+     le bouton Jouer (105) l'annonce, et l'appui l'ouvre — avant, le tirage se faisait au clic
+     et le bouton annonçait « Course » pour ouvrir une conférence. */
+  function prevue() {
+    var G = G_(); if (!G) return false;
+    if (!G._rj99Semaine || G._rj99Semaine.s !== G.semaine || G._rj99Semaine.saison !== G.saison)
+      G._rj99Semaine = { s: G.semaine, saison: G.saison, oui: disponible() && Math.random() <= chance() };
+    return !!G._rj99Semaine.oui && disponible();
+  }
+
   function chance() {
     var G = G_();
     if (!G) return 0;
@@ -223,8 +233,8 @@
         var G = G_();
         var ici = document.querySelector(".scr.on");
         var id = ici ? ici.id : "";
-        if ((id === "S-home" || id === "") && disponible() &&
-            Math.random() <= chance() && typeof window.openMediaDay === "function") {
+        if ((id === "S-home" || id === "") && prevue() && typeof window.openMediaDay === "function") {
+          G._rj99Semaine.oui = false;   // tenue : pas une seconde fois cette semaine
           if (G) G._rj99Reprendre = true;
           window.openMediaDay();
           return true;
@@ -263,7 +273,7 @@
     window._rj99 = {
       quota: quotaSaison, reste: reste, disponible: disponible,
       chance: chance, proposer: proposer, reprendre: reprendre,
-      programme: programme, convoqueCetteSemaine: convoqueCetteSemaine
+      programme: programme, prevue: prevue, convoqueCetteSemaine: function () { return prevue(); }
     };
     window._rj99Uninstall = function () {
       Object.keys(_orig).forEach(function (k) { rjDesinscrire(["99-media-days:"], k); });

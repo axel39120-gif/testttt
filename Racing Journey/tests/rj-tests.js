@@ -4290,6 +4290,41 @@ async function suiteCoherence297() {
   } finally { await navigateur.close(); }
 }
 
+/* v298 : le bouton d'action (rail et accueil) annonce ce qui s'ouvre vraiment */
+async function suiteBoutonAction() {
+  S.suite("Bouton d'action : la bonne destination (v298)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  page.on("dialog", d => d.accept().catch(() => {}));
+  try {
+    const r = await page.evaluate(async () => {
+      const vis = e => !!e && e.getClientRects().length > 0 && getComputedStyle(e).display !== "none";
+      const dormir = ms => new Promise(x => setTimeout(x, ms)), out = { marche: [] };
+      navTo("S-home", null); await dormir(500);
+      out.charge = { entete: (document.querySelector("#S-home .rj118-cta") || {}).textContent, bouton: _rj105.destination().lbl, courses: G.races.length };
+      SETTINGS.simSpeed = "instant"; G.cat = "Formule 3"; initRivals(); window.CAL_RACES = []; buildCalendar();
+      G.semaine = 1; G.races = []; G.seasonOver = false; G.preseason = { configured: true, saison: G.saison };
+      G._scheduledEvents = []; scheduleSeasonEvents();
+      for (let i = 0; i < 8; i++) {
+        navTo("S-home", null); await dormir(350);
+        const an = _rj105.destination().lbl, en = (document.querySelector("#S-home .rj118-cta") || {}).textContent;
+        advanceToNextMoment(); await dormir(900);
+        const scr = (document.querySelector(".scr.on") || {}).id, ev = [...document.querySelectorAll(".event-choice, [onclick*='resolveEventChoice']")].some(vis);
+        const vu = scr === "S-mediaday" ? "Conférence de presse" : scr === "S-race" ? "Course" : ev ? "Événement" : scr === "S-season-end" ? "Bilan de saison" : "?" + scr;
+        out.marche.push({ an, en, vu });
+        if (scr === "S-mediaday") { try { endMediaDay(); } catch (e) {} await dormir(600); }
+        else if (ev) { [...document.querySelectorAll(".event-choice, [onclick*='resolveEventChoice']")].filter(vis)[0].click(); await dormir(400);
+          [...document.querySelectorAll("div")].filter(d => { const cs = getComputedStyle(d); return cs.position === "fixed" && +cs.zIndex >= 100 && vis(d) && d.querySelector("button"); }).forEach(fe => { const bb = [...fe.querySelectorAll("button")].filter(vis).pop(); if (bb) bb.click(); }); await dormir(300); }
+        else if (scr === "S-race") { const c = getNextRace(); c.done = true; G.races.push({ pos: 5, pts: 10 }); G.semaine = c.week + 1; RACE_WEEKEND_STATE.courseDone = false; }
+      }
+      return out;
+    });
+    S.verifier("au chargement d'une saison entamée : ni « Plan de saison », et l'accueil dit comme le rail", r.charge.courses > 0 && r.charge.entete === r.charge.bouton && r.charge.bouton !== "Plan de saison", JSON.stringify(r.charge));
+    const faux = r.marche.filter(x => x.an !== x.vu || x.en !== x.an);
+    S.verifier("le bouton annonce ce qui s'ouvre (course, conférence, événement)", r.marche.length >= 6 && faux.length === 0, JSON.stringify(faux.length ? faux : r.marche.map(x => x.an)));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 async function suiteRetoursSaison() {
   S.suite("Retours d'une saison de karting (v279)");
   const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
@@ -4656,7 +4691,8 @@ const SUITES = {
   contrats: suiteContrats,
   qualifsecteurs: suiteQualifSecteurs,
   retourscarriere: suiteRetoursCarriere,
-  coherence297: suiteCoherence297
+  coherence297: suiteCoherence297,
+  boutonaction: suiteBoutonAction
 };
 
 async function principal() {
