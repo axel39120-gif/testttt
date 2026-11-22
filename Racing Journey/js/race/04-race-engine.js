@@ -19444,7 +19444,9 @@ function _startNextSeasonCoeur(e) {
     var j = CAREER_HISTORY.filter(function(e) {
       return !e.current
     }).pop();
-    j && 1 === j.pos && (G._f1Champion = !0, G._numberChosenByPlayer || (G.pilot.number = 1))
+    /* v300 : seul le titre de F1 compte (avant : un champion de F2 promu prenait le n°1) ;
+       le choix du numéro est proposé par le module 157. */
+    j && 1 === j.pos && "Formule 1" === j.cat && (G._f1Champion = !0)
   }
   G._seasonTeam = G.currentTeam || "Indépendant", "Karting Junior" === G.cat || G.currentTeam && "Indépendant" !== G.currentTeam ? (G._demoted = !1, G._saisonBlanche = !1) : G._saisonBlanche ? G._demoted = !1 : 1 === newCatIdx ? (G.cat = "Karting Junior", G.totalLaps = getCatLaps("Karting Junior"), G._demoted = !0, G._saisonBlanche = !1) : (G._saisonBlanche = !0, G._demoted = !1), Object.keys(G).filter(function(e) {
     return e.startsWith("offer_gen_") || e.startsWith("w1_") || e.startsWith("w2_") || e.startsWith("w3_")

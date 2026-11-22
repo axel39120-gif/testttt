@@ -107,9 +107,11 @@
   function hache(i) { var x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
   function motifs(defs) {
     if (defs.querySelector("#rj111-tonte")) return;
-    var t = element("pattern", { id: "rj111-tonte", width: 14, height: 14, patternUnits: "userSpaceOnUse", patternTransform: "rotate(32)" });
-    t.appendChild(element("rect", { width: 14, height: 14, fill: "#2a5d34" }));
-    t.appendChild(element("rect", { width: 7, height: 14, fill: "#2f6739" }));
+    /* v300 : herbe tondue dessinée (img/decor/herbe.jpg, 4 bandes claires/sombres par carreau),
+       sur un fond uni de la même teinte le temps que l'image arrive. */
+    var t = element("pattern", { id: "rj111-tonte", width: 56, height: 56, patternUnits: "userSpaceOnUse", patternTransform: "rotate(32)" });
+    t.appendChild(element("rect", { width: 56, height: 56, fill: "#2f6739" }));
+    t.appendChild(element("image", { href: "img/decor/herbe.jpg", width: 56, height: 56, preserveAspectRatio: "none" }));
     defs.appendChild(t);
     var v = element("pattern", { id: "rj111-vagues", width: 10, height: 6, patternUnits: "userSpaceOnUse" });
     v.appendChild(element("rect", { width: 10, height: 6, fill: "#1f5f8b" }));
@@ -236,8 +238,9 @@
           }
           var rr = (lieu === "foret" ? 1.9 : 1.6) + hache(k2 + 3) * 1.8;
           g.appendChild(element("circle", { cx: (x2 + 0.7).toFixed(1), cy: (y2 + 0.8).toFixed(1), r: rr.toFixed(2), "class": "rj111-ombre-arbre" }));
-          g.appendChild(element("circle", { cx: x2.toFixed(1), cy: y2.toFixed(1), r: rr.toFixed(2), "class": "rj111-arbre a" + Math.floor(hache(k2 + 4) * 3) }));
-          g.appendChild(element("circle", { cx: (x2 - rr * 0.3).toFixed(1), cy: (y2 - rr * 0.3).toFixed(1), r: (rr * 0.45).toFixed(2), "class": "rj111-feuille" }));
+          // v300 : feuillage dessiné (img/decor/arbre.png), un peu tourné pour varier (±25° : la lumière vient toujours d'en haut à gauche, comme les ombres)
+          g.appendChild(element("image", { href: "img/decor/arbre.png", x: (x2 - rr * 1.1).toFixed(2), y: (y2 - rr * 1.1).toFixed(2), width: (rr * 2.2).toFixed(2), height: (rr * 2.2).toFixed(2),
+            "class": "rj111-arbre a" + Math.floor(hache(k2 + 4) * 3), transform: "rotate(" + Math.round((hache(k2 + 5) - 0.5) * 50) + " " + x2.toFixed(1) + " " + y2.toFixed(1) + ")" }));
           n++;
         }
       }
@@ -312,7 +315,7 @@
     c.hidden = false;
     c.innerHTML = '<div class="rj111-tete"><span class="rj111-nom">' + esc(circuit) + "</span>" +
       '<span class="rj111-neutre" hidden></span></div><div class="rj111-corps"><div class="rj111-colonne" data-theme="' + theme().id + '">' +
-      '<div class="rj111-entete"><b>' + theme().sigle + '</b><span class="rj111-tours"></span><span class="rj111-mode"></span></div><ol class="rj111-tour"></ol></div></div>';
+      '<div class="rj111-entete"><b>' + (window.RJLogoCat && G.cat ? RJLogoCat.svg(G.cat, 14) : theme().sigle) + '</b><span class="rj111-mode"></span></div><ol class="rj111-tour"></ol></div></div>';
     var corps = c.querySelector(".rj111-corps");
     var colonne = c.querySelector(".rj111-colonne");
     /* pas de role="button" : le module 57 viderait la tour (écussons, écarts) en la prenant pour un bouton */

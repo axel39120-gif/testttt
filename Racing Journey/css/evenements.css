@@ -69,3 +69,22 @@
 .rj143-recit { font-size: 12.5px; color: rgba(255, 255, 255, .78); }
 .rj143-effets { font-size: 12.5px; font-weight: 700; color: #fff; }
 .rj143-instant { font-size: 11.5px; color: rgba(255, 255, 255, .62); margin-top: 2px; }   /* v296 : l’instant présent, sans la place */
+
+/* v300 : toutes les fenêtres d'événement en course partagent la carte 143 (module 154, 106). */
+#race-event-modal.rj143-modale, #rj47-outcome-modal.rj143-modale, #rj106-modal.rj143-modale {
+  align-items: center !important;
+  padding: 10px calc(14px + var(--sd, 0px)) 10px calc(var(--rail, 0px) + var(--rail-g, 0px) + 14px) !important;
+}
+/* le résultat s'affiche en colonne, même quand un ancien code le montre en « block » */
+.rj143-resultat:not([style*="none"]) { display: flex !important; }
+.rj154-pied { padding: 0 14px 14px; }
+.rj154-ok {
+  width: 100%; padding: 11px; border: none; border-radius: 9px; cursor: pointer;
+  background: var(--acc); color: #0d0d12; font: 900 12px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase;
+}
+.rj143-q { padding: 4px 14px 0; font-size: 13px; font-style: italic; font-weight: 600; color: #fff; }
+.rj143-note { padding: 0 14px 12px; font-size: 10.5px; font-style: italic; text-align: center; color: rgba(255, 255, 255, .45); }
+.rj143-resultat .rj143-bilan { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.rj143-bilan span { font: 800 10px/1 var(--font-display); letter-spacing: .06em; padding: 4px 8px; border-radius: 5px; }
+.rj143-bilan .up { color: #34D399; background: rgba(52, 211, 153, .13); }
+.rj143-bilan .dn { color: #F87171; background: rgba(248, 113, 113, .13); }
