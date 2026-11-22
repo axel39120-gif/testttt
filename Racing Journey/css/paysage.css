@@ -30,7 +30,8 @@
   /* Taille de l'application (l'écran, ou l'écran pivoté en portrait). */
   --app-w: 100vw; --app-h: 100dvh;
   /* Zones sûres de l'application : gauche, droite, bas. */
-  --sg: env(safe-area-inset-left, 0px); --sd: env(safe-area-inset-right, 0px); --sb: env(safe-area-inset-bottom, 0px);
+  /* v299 : + encoche ou poinçon signalés par l'application Android (00-ecran.js, --rj-enc-*) */
+  --sg: max(env(safe-area-inset-left, 0px), var(--rj-enc-g, 0px)); --sd: max(env(safe-area-inset-right, 0px), var(--rj-enc-d, 0px)); --sb: max(env(safe-area-inset-bottom, 0px), var(--rj-enc-b, 0px));
   --rail-g: var(--sg);
   --bandeau: 44px;
   --hud: 290px;         /* place des ressources à droite du bandeau ; mesurée par 109-hud.js */
@@ -467,13 +468,19 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
   #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 12px !important; max-width: 100%; }
   .rj118-info { font-size: 9.5px; max-width: 100%; }
 }
-/* Grands écrans : tuiles plus généreuses. */
+/* Grands écrans d'ordinateur (sans mise à l'échelle) : tuiles plus généreuses.
+   v299 : réservé à l'ordinateur — sur tablette, 00-ecran.js agrandit déjà tout le jeu. */
 @container app (min-height: 600px) {
-  #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: 52px minmax(0, 1fr); padding: 14px 16px !important; column-gap: 14px; }
-  #S-home > .scroll .apex-actions-grid .apex-action-icon { width: 52px !important; height: 52px !important; border-radius: var(--r) !important; }
-  #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 16px !important; }
-  .rj118-info { font-size: 12px; }
+  html[data-appareil="ordinateur"] #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: 52px minmax(0, 1fr); padding: 14px 16px !important; column-gap: 14px; }
+  html[data-appareil="ordinateur"] #S-home > .scroll .apex-actions-grid .apex-action-icon { width: 52px !important; height: 52px !important; border-radius: var(--r) !important; }
+  html[data-appareil="ordinateur"] #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 16px !important; }
+  html[data-appareil="ordinateur"] .rj118-info { font-size: 12px; }
 }
+/* Tablette (plus haute que large par rapport au téléphone) : tuiles verticales, icône au-dessus. */
+html[data-appareil="tablette"] #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; justify-items: center; align-content: center; text-align: center !important; row-gap: 6px; padding: 8px !important; }
+html[data-appareil="tablette"] #S-home > .scroll .apex-actions-grid .apex-action-icon { grid-row: auto; width: 40px !important; height: 40px !important; }
+html[data-appareil="tablette"] #S-home > .scroll .apex-actions-grid .apex-action-title { max-width: 100%; }
+html[data-appareil="tablette"] .rj118-info { max-width: 100%; }
 
 /* Boutons du menu : chacun sa couleur, une icône en pastille dégradée, une
    lueur de sa teinte et une flèche. Teintes par destination. */
@@ -886,7 +893,7 @@ button:active, .apex-action-tile:active, .tab:active, .apex-stat-pill:active, .a
 @media (orientation: portrait) and (pointer: coarse) {
   :root {
     --app-w: 100dvh; --app-h: 100dvw;
-    --sg: env(safe-area-inset-top, 0px); --sd: env(safe-area-inset-bottom, 0px); --sb: 0px;
+    --sg: max(env(safe-area-inset-top, 0px), var(--rj-enc-h, 0px)); --sd: max(env(safe-area-inset-bottom, 0px), var(--rj-enc-b, 0px)); --sb: 0px;
   }
   html, body { overflow: hidden !important; }
   body {

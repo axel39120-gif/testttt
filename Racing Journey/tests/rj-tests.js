@@ -2057,6 +2057,30 @@ async function suiteEcrans() {
     } finally { await navigateur.close(); }
   }
 
+  /* v299 : le jeu s'adapte à la taille de l'appareil (00-ecran.js) — petit téléphone, téléphone, tablette. */
+  for (const [nom, w, h, appareil, smin, smax] of [["petit téléphone", 640, 360, "petit", 0.78, 0.78],
+                                                   ["téléphone", 852, 393, "telephone", 1, 1],
+                                                   ["tablette", 1366, 1024, "tablette", 1.55, 1.65]]) {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: w, height: h }, mobile: true });
+    try {
+      await S.repondeurAutomatique(page);
+      const r = await page.evaluate(() => {
+        navTo("S-home", "ni-home");
+        const e = RJEcran.etat(), tuile = document.querySelector("#S-home .apex-action-title");
+        RJEcran.encoche({ g: 30, d: 0, h: 0, b: 0 });
+        return { echelle: e.echelle, appareil: document.documentElement.getAttribute("data-appareil"), logique: innerWidth + "×" + innerHeight,
+                 debordeX: document.documentElement.scrollWidth - innerWidth,
+                 titreCoupe: tuile ? tuile.scrollWidth > tuile.clientWidth + 1 : true,
+                 encoche: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--rj-enc-g")) };
+      });
+      S.verifier(nom + " : échelle et classe d'appareil", r.appareil === appareil && r.echelle >= smin && r.echelle <= smax, JSON.stringify(r));
+      S.verifier(nom + " : au moins 820 × 390 points logiques, sans débord", parseInt(r.logique) >= 820 && parseInt(r.logique.split("×")[1]) >= 390 && r.debordeX <= 0, JSON.stringify(r));
+      S.verifier(nom + " : libellés des tuiles entiers", !r.titreCoupe, JSON.stringify(r));
+      S.verifier(nom + " : l'encoche transmise (dp) est convertie à l'échelle", Math.abs(r.encoche - 30 / r.echelle) < 0.2, JSON.stringify(r));
+      S.verifier(nom + " : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+
   /* Une application, pas une page : écran figé, listes en panneau de choix. */
   {
     const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
