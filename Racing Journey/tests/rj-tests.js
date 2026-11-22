@@ -4314,6 +4314,119 @@ async function suiteCoherence297() {
   } finally { await navigateur.close(); }
 }
 
+/* v300 : retours de course et d'interface (tour, logos, événements, fenêtres, séances, n°1) */
+async function suiteRetours300() {
+  S.suite("Retours v300 : course, logos, fenêtres, n°1");
+  {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+    page.on("dialog", d => d.accept().catch(() => {}));
+    try {
+      const r = await page.evaluate(async () => {
+        const dormir = ms => new Promise(x => setTimeout(x, ms)), out = {};
+        SETTINGS.simSpeed = "normal"; G.cat = "Formule 1";
+        window.CAL_RACES = []; buildCalendar(); G.semaine = 6; G.seasonOver = false;
+        CAL_RACES.forEach(c => { c.done = c.week < 6; c.result = null; });
+        const c = getNextRace(); RACE_STATE.circuit = c.name; RACE_STATE.circuitData = getCircuitData(c.name);
+        RACE_STATE.weather = generateWeather(0); RACE_STATE.qualiPos = 5; G.totalLaps = 30;
+        if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+        window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+        try { confirmStrategy(); } catch (e) {}
+        if (!LIVE_RACE.total) runRaceLive();
+        navTo("S-race", null); try { rtab("course"); } catch (e) {}
+        await dormir(1500);
+        const ent = document.querySelector("#rj111-carte .rj111-entete");
+        out.tour = { compteur: !!document.querySelector("#rj111-carte .rj111-tours"), texte: ent ? ent.textContent : null, logo: !!(ent && ent.querySelector(".rj153-logo")) };
+        // fenêtres d'événement : la course en pause, sans l'événement 143 éventuel
+        await dormir(2500);
+        const l = document.getElementById("live-event-modal"); if (l) l.style.display = "none";
+        LIVE_RACE.paused = true;
+        _rj106.forcer(); await dormir(300);
+        out.m106 = !!document.querySelector("#rj106-modal .rj143-carte .rj106-c");
+        document.querySelector("#rj106-modal .rj106-c").click(); await dormir(200);
+        out.m106ok = !!document.querySelector("#rj106-modal #rj106-ok"); document.getElementById("rj106-ok").click(); await dormir(200);
+        LIVE_RACE.paused = true;
+        const ch = (t, d, a) => ({ text: t, mods: { player: .02 }, difficulty: d, actionType: a, successMod: .02, brilliantMod: .04, rateMinMod: -.01, rateMajMod: -.03, note: t });
+        RACE_STATE.events = RACE_STATE.events || [];
+        RACE_STATE.events.push({ id: "essai300", phase: "mid", lap: .5, title: "Dans les échappements", text: "Zone de dépassement.", choices: [ch("Attaquer", .55, "attaque"), ch("Attendre", .15, "gestion")] });
+        window.CURRENT_EVT_IDX = RACE_STATE.events.length - 1; showNextRaceEvent(); await dormir(300);
+        out.m04 = !!document.querySelector("#race-event-modal .rj143-carte .rj143-btn[onclick*='resolveRaceEvt']");
+        document.querySelector("#race-event-modal .rj143-btn").click(); await dormir(500);
+        out.m47 = !!document.querySelector("#rj47-outcome-modal .rj143-carte #rj47-outcome-ok");
+        document.getElementById("rj47-outcome-ok").click(); await dormir(300);
+        out.m47ferme = !document.getElementById("rj47-outcome-modal") && LIVE_RACE.paused === false;
+        // logos des catégories
+        out.logos = ["Karting Junior", "Karting Senior", "Formule 4", "Formula Regional", "Formule 3", "Formule 2", "Formule 1"].every(k => /<svg[^>]*aria-label="/.test(RJLogoCat.svg(k, 16)));
+        navTo("S-home", "ni-home"); updateUI(); await dormir(300);
+        const h = document.getElementById("h-race-circuit"); out.logoAccueil = !!(h && h.previousElementSibling && h.previousElementSibling.querySelector(".rj153-logo"));
+        // numéro 1
+        const H = CAREER_HISTORY, sauve = H.slice(), saison = G.saison;
+        G.pilot.number = 44; delete G.pilot._numeroAvant;
+        H.length = 0; H.push({ saison: saison - 1, cat: "Formule 2", pos: 1 });
+        out.f2 = RJNumeroUn.decider();
+        H.length = 0; H.push({ saison: saison - 1, cat: "Formule 1", pos: 1 });
+        out.f1 = RJNumeroUn.decider();
+        RJNumeroUn.verifier(); await dormir(400);
+        const b = document.querySelector("#rj157-modal button[data-i='0']"); if (b) b.click(); await dormir(200);
+        out.pris = { n: G.pilot.number, avant: G.pilot._numeroAvant };
+        H.push({ saison: saison, cat: "Formule 1", pos: 3 }); G.saison = saison + 1;
+        out.perdu = RJNumeroUn.decider();
+        RJNumeroUn.verifier(); await dormir(400);
+        out.fenetrePerte = !!document.querySelector("#rj157-modal");
+        const k = document.querySelector("#rj157-modal button"); if (k) k.click();
+        out.rendu = G.pilot.number;
+        G.saison = saison; H.length = 0; sauve.forEach(x => H.push(x));
+        return out;
+      });
+      S.verifier("tour du classement : plus de nombre de tours, le logo de la catégorie à la place du sigle", !r.tour.compteur && r.tour.logo && !/TOUR/i.test(r.tour.texte || ""), JSON.stringify(r.tour));
+      S.verifier("moment décisif (106) : même carte que les autres événements", r.m106 && r.m106ok, JSON.stringify(r));
+      S.verifier("ancienne fenêtre du moteur : redessinée dans la carte, ses choix gardent leur action", r.m04, JSON.stringify(r));
+      S.verifier("compte rendu (47) : même carte, « Continuer » ferme et relance la course", r.m47 && r.m47ferme, JSON.stringify(r));
+      S.verifier("un logo par catégorie, posé sur la carte « Prochaine course »", r.logos && r.logoAccueil, JSON.stringify(r));
+      S.verifier("n°1 : rien pour un champion de F2, proposé au champion du monde de F1", r.f2 === null && r.f1 === "proposer", JSON.stringify(r));
+      S.verifier("n°1 pris : l'ancien numéro est retenu", r.pris.n === 1 && r.pris.avant === 44, JSON.stringify(r.pris));
+      S.verifier("plus champion : fenêtre, et l'ancien numéro revient", r.perdu === "retirer" && r.fenetrePerte && r.rendu === 44, JSON.stringify(r));
+      S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+  /* Fenêtre trop haute pour un petit téléphone : réduite d'un bloc pour tenir entière. */
+  {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 640, height: 360 }, mobile: true });
+    try {
+      await page.evaluate(() => openPersonalizationModal());
+      await page.waitForTimeout(600);
+      const r = await page.evaluate(() => {
+        const o = [...document.body.children].filter(e => e.id !== "app" && getComputedStyle(e).position === "fixed" && getComputedStyle(e).display !== "none" && e.getBoundingClientRect().height > innerHeight * .8).pop();
+        const b = o && [...o.children].sort((a, c) => c.getBoundingClientRect().height - a.getBoundingClientRect().height)[0], rb = b.getBoundingClientRect();
+        return { zoom: b.getAttribute("data-rj155"), haut: Math.round(rb.top), bas: Math.round(rb.bottom), H: innerHeight, cache: b.scrollHeight - b.clientHeight };
+      });
+      S.verifier("petit téléphone : la fenêtre de personnalisation tient dans l'écran, sans défiler", r.zoom && r.haut >= 0 && r.bas <= r.H && r.cache <= 2, JSON.stringify(r));
+      S.verifier("fenêtres : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+  /* Séances : un saut de défilement que le joueur n'a pas fait est annulé. */
+  {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 900, height: 300 } });
+    try {
+      await page.evaluate(() => { navTo("S-race", null); rtab("essais", true);
+        // l'onglet tient souvent dans l'écran : on l'allonge pour qu'il défile
+        const t = document.getElementById("rt-essais"); if (t) { const d = document.createElement("div"); d.style.height = "1400px"; t.appendChild(d); } });
+      await page.waitForTimeout(500);
+      const el = await page.evaluate(() => { const e = [document.getElementById("S-race"), ...document.querySelectorAll("#S-race .scroll")].find(x => x.scrollHeight > x.clientHeight + 100); if (e) e.setAttribute("data-essai", "1"); return !!e; });
+      if (!el) { S.ignorer("séances : l'écran reste où le joueur l'a mis", "rien ne défile sur ce format"); }
+      else {
+        await page.mouse.move(500, 200); await page.mouse.wheel(0, 120); await page.waitForTimeout(300);
+        const avant = await page.evaluate(() => document.querySelector("[data-essai]").scrollTop);
+        await page.waitForTimeout(1200);
+        await page.evaluate(() => { document.querySelector("[data-essai]").scrollTop = 0; });
+        await page.waitForTimeout(300);
+        const apres = await page.evaluate(() => document.querySelector("[data-essai]").scrollTop);
+        S.verifier("séances : l'écran reste où le joueur l'a mis", avant > 40 && Math.abs(apres - avant) < 5, avant + " → " + apres);
+      }
+      S.verifier("séances : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+}
+
 /* v298 : le bouton d'action (rail et accueil) annonce ce qui s'ouvre vraiment */
 async function suiteBoutonAction() {
   S.suite("Bouton d'action : la bonne destination (v298)");
@@ -4716,7 +4829,8 @@ const SUITES = {
   qualifsecteurs: suiteQualifSecteurs,
   retourscarriere: suiteRetoursCarriere,
   coherence297: suiteCoherence297,
-  boutonaction: suiteBoutonAction
+  boutonaction: suiteBoutonAction,
+  retours300: suiteRetours300
 };
 
 async function principal() {

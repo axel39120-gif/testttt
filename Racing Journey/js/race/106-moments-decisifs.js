@@ -1039,11 +1039,7 @@
       "@keyframes rj106-entree{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}",
       "@keyframes rj106-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
 
-      "#rj106-boite{width:100%;max-width:410px;max-height:92vh;overflow-y:auto;border-radius:var(--r);" +
-        "background:linear-gradient(165deg,#1a1015 0%,#0d0d12 55%,#12080a 100%);" +
-        "border:1px solid rgba(255,255,255,.14);" +
-        "box-shadow:0 0 0 1px rgba(255,24,1,.22),0 24px 70px rgba(0,0,0,.75);" +
-        "animation:rj106-entree .45s cubic-bezier(.2,.9,.3,1) both}",
+      /* v300 : la boîte est une carte 143 (css/evenements.css) — même présentation que tous les événements */
 
       /* Le bandeau distingue immédiatement ce moment d'un événement ordinaire. */
       "#rj106-boite .rj106-band{position:relative;overflow:hidden;padding:16px 18px 14px;" +
@@ -1114,23 +1110,22 @@
 
     var mod = document.createElement("div");
     mod.id = "rj106-modal";
+    mod.className = "rj143-modale";
     mod.innerHTML =
-      '<div id="rj106-boite">' +
-        '<div class="rj106-band">' +
-          '<div class="rj106-eyebrow"><span class="pt"></span>Moment décisif</div>' +
-          '<div class="rj106-titre">' + esc(texteDe(moment.titre)) + '</div>' +
-          '<div class="rj106-tour">Tour ' + tour + (total ? " / " + total : "") + '</div>' +
-        '</div>' +
-        '<div class="rj106-recit">' + esc(texteDe(moment.recit)) + '</div>' +
-        '<div class="rj106-q">' + esc(texteDe(moment.question)) + '</div>' +
-        '<div class="rj106-choix">' +
+      '<div id="rj106-boite" class="rj143-carte" data-rj-noround="1" style="--acc:#FF1801">' +
+        '<div class="rj143-tete"><span class="rj143-led"></span><span class="rj143-type">Moment décisif</span>' +
+          '<span class="rj143-tour">Tour ' + tour + (total ? " / " + total : "") + '</span></div>' +
+        '<div class="rj143-corps"><div class="rj143-titre">' + esc(texteDe(moment.titre)) + '</div>' +
+          '<div class="rj143-desc">' + esc(texteDe(moment.recit)) + '</div></div>' +
+        '<div class="rj143-q">' + esc(texteDe(moment.question)) + '</div>' +
+        '<div class="rj143-choix">' +
           moment.choix.map(function (c, i) {
-            return '<button class="rj106-c" data-i="' + i + '">' +
-                   '<span class="l">' + esc(c.label) + '</span>' +
-                   '<span class="d">' + esc(c.detail) + '</span></button>';
+            return '<button class="rj143-btn rj106-c" style="--c:#FF1801" data-i="' + i + '">' +
+                   '<span class="rj143-btxt">' + esc(c.label) + '</span>' +
+                   '<span class="rj143-effet">' + esc(c.detail) + '</span></button>';
           }).join("") +
         '</div>' +
-        '<div class="rj106-note">Personne ne peut te dire ce qui va se passer.</div>' +
+        '<div class="rj143-note">Personne ne peut te dire ce qui va se passer.</div>' +
       '</div>';
     document.body.appendChild(mod);
 
@@ -1220,19 +1215,20 @@
       ? "La voiture ne repartira pas. La course s'arrête ici."
       : texteDe(r.texte);
 
+    var bon = !issue.casse && issue.bilan.some(function (b) { return b.up; });
     boite.innerHTML =
-      '<div class="rj106-band">' +
-        '<div class="rj106-eyebrow"><span class="pt"></span>' +
-          (issue.casse ? "Fin de course" : "Ce qui s'est passé") + '</div>' +
-        '<div class="rj106-titre">' + esc(texteDe(moment.titre)) + '</div>' +
+      '<div class="rj143-tete"><span class="rj143-led"></span><span class="rj143-type">' +
+        (issue.casse ? "Fin de course" : "Ce qui s'est passé") + '</span></div>' +
+      '<div class="rj143-corps"><div class="rj143-titre">' + esc(texteDe(moment.titre)) + '</div></div>' +
+      '<div class="rj143-resultat rj143-' + (issue.casse ? "mauvais" : bon ? "bon" : "neutre") + '">' +
+        '<span class="rj143-effets">' + esc(texte) + '</span>' +
+        (issue.bilan.length
+          ? '<span class="rj143-bilan">' + issue.bilan.map(function (b) {
+              return '<span class="' + (b.up ? "up" : "dn") + '">' + esc(b.t) + "</span>";
+            }).join("") + '</span>'
+          : "") +
       '</div>' +
-      '<div class="rj106-issue">' + esc(texte) + '</div>' +
-      (issue.bilan.length
-        ? '<div class="rj106-bilan">' + issue.bilan.map(function (b) {
-            return '<span class="' + (b.up ? "up" : "dn") + '">' + esc(b.t) + "</span>";
-          }).join("") + '</div>'
-        : "") +
-      '<button class="rj106-ok" id="rj106-ok">Reprendre</button>';
+      '<div class="rj154-pied"><button class="rj154-ok" id="rj106-ok">Reprendre</button></div>';
 
     var ok = document.getElementById("rj106-ok");
     if (ok) ok.addEventListener("click", fermer);

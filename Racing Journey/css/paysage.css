@@ -819,8 +819,7 @@ html[data-appareil="tablette"] .rj118-info { max-width: 100%; }
 .rj111-piste { fill: none; stroke: #3a3d44; stroke-width: 7; stroke-linejoin: round; }
 .rj111-herbe { fill: url(#rj111-tonte); }
 .rj111-gravier { fill: none; stroke: #b9a273; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
-.rj111-arbre { stroke: rgba(0, 0, 0, .35); stroke-width: .3; }
-.rj111-arbre.a0 { fill: #2f6b36; } .rj111-arbre.a1 { fill: #27592e; } .rj111-arbre.a2 { fill: #3b7a3f; }
+/* v300 : arbres dessinés (img/decor/arbre.png) ; variété par la taille et la rotation (pas de filtre par arbre : trop coûteux sur téléphone) */
 .rj111-vibreur-b { fill: none; stroke: #f2f2f2; stroke-width: .9; stroke-linejoin: round; }
 .rj111-vibreur-r { fill: none; stroke: #d32f2f; stroke-width: .9; stroke-dasharray: 1 1; stroke-linejoin: round; }
 .rj111-tribune { fill: #2b3140; stroke: #11141b; stroke-width: .25; }
@@ -1840,7 +1839,6 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 /* --- Décors v286 : herbe tondue, arbres en volume, ville et port ----------- */
 .rj111-gomme { fill: none; stroke: rgba(0, 0, 0, .22); stroke-width: 2.4; stroke-linejoin: round; }
 .rj111-ombre-arbre { fill: rgba(0, 0, 0, .28); }
-.rj111-feuille { fill: rgba(255, 255, 255, .12); }
 .rj111-svg.rj111-ville { background: #5a5f69; }
 .rj111-sol-ville { fill: #5a5f69; }
 .rj111-ville .rj111-bord { stroke: #b9bec8; }          /* murs de béton */
@@ -1876,7 +1874,7 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj111-gravier-d { stroke: #e3c48e; }
 .rj111-palme { fill: #3f7a35; stroke: rgba(0, 0, 0, .35); stroke-width: .25; }
 .rj111-dune { fill: #d9c08a; opacity: .85; }
-.rj111-foret .rj111-arbre.a0 { fill: #24552b; } .rj111-foret .rj111-arbre.a1 { fill: #1d4723; } .rj111-foret .rj111-arbre.a2 { fill: #2e6633; }
+.rj111-foret .rj111-arbres { filter: brightness(.82); }   /* forêt : feuillage plus sombre, un seul filtre pour tout le groupe */
 .rj111-tribune.grande { fill: #1f2430; }
 .rj111-spect { fill: #e8e2d0; } .rj111-spect.s1 { fill: #e05050; } .rj111-spect.s2 { fill: #4a8bd6; }
 .rj111-pneu { fill: #15161a; stroke: #3a3c44; stroke-width: .25; }
@@ -1888,3 +1886,10 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 .rj111-nuit .rj111-decors { filter: brightness(.55) saturate(.85); }
 .rj111-halo-lampe { fill: rgba(255, 214, 120, .22); }
 .rj111-lampe { fill: #ffe9a8; }
+
+/* v300 : logos des catégories (153) */
+.rj153-place { display: inline-flex; vertical-align: middle; margin-right: 6px; line-height: 0; }
+.rj153-logo { display: block; flex-shrink: 0; }
+.rj153-place + #h-race-circuit, .rj153-place + #ch-sub { display: inline-block !important; vertical-align: middle; }
+.rj111-entete:has(.rj153-logo) { background: #15151b; }
+.rj111-entete > b:has(.rj153-logo) { width: auto; padding: 0 6px; }
