@@ -57,7 +57,7 @@
       var oy = getComputedStyle(x).overflowY;
       if ((oy === "auto" || oy === "scroll") && x.scrollHeight > x.clientHeight + 2) cache = Math.max(cache, x.scrollHeight - x.clientHeight);
     });
-    return b.getBoundingClientRect().height + cache;
+    return b.offsetHeight + cache;   // offset : juste aussi quand le jeu est pivoté (téléphone en portrait)
   }
 
   function ajuster(f) {
@@ -66,7 +66,7 @@
     // mesure à taille réelle, puis réduction d'un bloc si elle dépasse
     b.style.zoom = ""; b.style.maxHeight = "";
     [].forEach.call(b.querySelectorAll("[data-rj155-libre]"), function (x) { x.style.maxHeight = ""; x.removeAttribute("data-rj155-libre"); });
-    var dispo = innerHeight - 2 * MARGE, h = besoin(b);
+    var dispo = (document.body.offsetHeight || innerHeight) - 2 * MARGE, h = besoin(b);
     if (h <= dispo + 1) { b.removeAttribute("data-rj155"); return; }
     /* Les zones intérieures qui défilent sont libérées de leur limite (souvent bien plus
        basse que l'écran) : c'est la boîte entière, réduite, qui doit tenir. */
@@ -74,7 +74,7 @@
       var oy = getComputedStyle(x).overflowY;
       if ((oy === "auto" || oy === "scroll") && x.scrollHeight > x.clientHeight + 2) { x.style.maxHeight = "none"; x.setAttribute("data-rj155-libre", "1"); }
     });
-    h = Math.max(b.getBoundingClientRect().height, b.scrollHeight);
+    h = Math.max(b.offsetHeight, b.scrollHeight);
     var z = Math.floor(Math.max(MIN, Math.min(1, dispo / h)) * 100) / 100;
     b.style.zoom = String(z);
     // la boîte occupe au plus la hauteur de l'écran ; si elle dépasse encore à 60 %, c'est elle qui défile

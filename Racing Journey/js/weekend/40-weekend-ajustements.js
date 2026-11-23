@@ -140,44 +140,17 @@
     return true;
   }
 
-  // --- BUG 2 : notif "Nouveau message" seulement à l'accueil ---
-  function installToastFix() {
-    if (typeof window.pushHomeToast !== "function") return false;
-    if (window.pushHomeToast._rjMsgGate) return true;
-    var orig = window.pushHomeToast;
-    /* Les nouveaux messages attendent le retour sur l'accueil. */
-    if (!Array.isArray(window.RJ_TOAST_FILTERS)) window.RJ_TOAST_FILTERS = [];
-    if (!window.RJ_TOAST_FILTERS.some(function (f) { return f && f.id === "42-weekend-entry"; })) {
-      window.RJ_TOAST_FILTERS.push({
-        id: "42-weekend-entry",
-        filtre: function (label) {
-          try {
-            if (label === "Nouveau message") {
-              var scr = curScreenId();
-              if (scr && scr !== "S-home") return false;
-            }
-          } catch (e) {}
-        }
-      });
-    }
-    window.pushHomeToast._rjMsgGate = true;
-    window.pushHomeToast._rjOrig = orig;
-    return true;
-  }
-
   function boot(retries) {
     if (typeof window === "undefined") return;
     var ok1 = installPracticeFix();
-    var ok2 = installToastFix();
-    if ((!ok1 || !ok2) && (retries = (retries == null ? 20 : retries)) > 0) {
+    if (!ok1 && (retries = (retries == null ? 20 : retries)) > 0) {
       setTimeout(function () { boot(retries - 1); }, 150);
       return;
     }
     window._rjWeekendEntryFixUninstall = function () {
-      window.RJ_TOAST_FILTERS = (window.RJ_TOAST_FILTERS || []).filter(function (f) { return !(f && f.id === "42-weekend-entry"); });
       console.log("[42-weekend-entry-fixes] désinstallé");
     };
-    console.log("[42-weekend-entry-fixes] actif (essais reset:" + ok1 + ", notif gate:" + ok2 + ")");
+    console.log("[42-weekend-entry-fixes] actif (essais reset:" + ok1 + ")");
   }
 
   if (document.readyState === "loading" && typeof document.addEventListener === "function") {

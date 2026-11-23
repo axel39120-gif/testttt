@@ -367,49 +367,63 @@
     }
   }
 
-  /* ------------------------------------- notifications au bon moment --- */
-  /* Le filtre de 40 (« les nouveaux messages attendent le retour sur
-     l'accueil ») les abandonnait en réalité : un message reçu pendant le
-     week-end n'était jamais signalé. Ici, une vraie file : pendant la course,
-     la conférence de presse ou un événement, les notifications attendent, et
-     s'affichent à la sortie, les messages regroupés en une seule. Dans la
-     messagerie, inutile de signaler un message qu'on a sous les yeux. */
-  var CALMES = { "S-race": 1, "S-mediaday": 1, "S-event": 1, "S-season-end": 1, "S-create": 1 };
-  var file = { messages: [], couleur: null, autres: [] };
-  function ecran() { var e = document.querySelector(".scr.on"); return e ? e.id : ""; }
-  /* Ailleurs aussi, une seule notification pour les messages : ceux qui
-     arrivent ensemble (fin de course, nouvelle semaine) sont regroupés après
-     un court délai, au lieu d'une notification chacun. */
-  var minuterie = null;
-  function filtreFile(label, texte, couleur) {
-    var id = ecran();
-    if (label === "Nouveau message") {
-      if (id === "S-mailbox") return false;
-      file.messages.push(texte); file.couleur = couleur;
-      if (!CALMES[id]) {
-        clearTimeout(minuterie);
-        minuterie = setTimeout(function () { viderFile(ecran()); }, 900);
-      }
-      return false;
-    }
-    if (CALMES[id]) { if (file.autres.length < 6) file.autres.push([label, texte, couleur]); return false; }
-  }
-  function viderFile(id) {
-    if (CALMES[id] || typeof _pushHomeToastCoeur !== "function") return;
-    var n = file.messages.length, a = file.autres.splice(0, 3);
-    if (id === "S-mailbox") n = 0;
-    if (n === 1) a.unshift(["Nouveau message", file.messages[0], file.couleur]);
-    else if (n > 1) a.unshift(["Messagerie", n + " nouveaux messages à lire", file.couleur]);
-    file.messages = []; file.autres = [];
-    a.forEach(function (x, i) { setTimeout(function () { _pushHomeToastCoeur(x[0], x[1], x[2]); }, 350 + i * 700); });
-  }
-
   /* ------------------------------------------ un contact = un fil (v289) ---
      Un même interlocuteur écrivait sous plusieurs noms : « Tes parents » et
      « Maman », « Williams » et « Williams — Direction sportive », « Salle de
      presse » et « Service de presse », « Tes amis » et « Tes potes ». Chaque
      variante ouvrait un fil (rôle::expéditeur) : doublons dans la boîte. */
+  /* v301 : qui écrit ? Des noms d'ambiance (« Intuition », « Journal intime »,
+     « Témoin ») passaient pour des contacts, et une même personne écrivait sous
+     plusieurs identités : le parent-agent en « Agent », « Papa » et « Tes
+     parents ». Chaque message reçoit l'identité réelle de son auteur. */
+  function parentAgent() {
+    var a = G.agent;
+    return a && a.type === "parent" ? a.firstName || (a.parentRole === "mother" ? "Maman" : "Papa") : null;
+  }
+  function nomAgent() {
+    var p = parentAgent(), a = G.agent;
+    if (p) return p;
+    return a && a.name ? ((a.firstName && a.name.indexOf(a.firstName) < 0 ? a.firstName + " " : "") + a.name).trim() : null;
+  }
+  function ecurieOuMecano(suffixe) { return G.currentTeam && G.currentTeam !== "Indépendant" ? G.currentTeam + " — " + suffixe : "Ton mécano"; }
+  var IDENTITES = [
+    [/^(tes amis|tes potes|ta bande|potes du bahut|un gamin plus âgé|communauté sim|réseau pilote)$/i, function () { return ["Tes potes", "friends"]; }],
+    [/^(famille|tes parents)$/i, function () { return [parentAgent() || "Tes parents", "family"]; }],
+    [/^(intuition|journal intime|coach mental|coach communication)$/i, function () { return ["Coach mental", "team"]; }],
+    [/^(témoin|un fan anonyme|.* \(fan #\d+\))$/i, function () { return ["Tes fans", "fans"]; }],
+    [/^(coach kart|coach local|ancien karteur|paddock karting|tradition paddock|.* \(karting\))$/i, function () { return ["Coach kart", "team"]; }],
+    [/^(sophie — attachée (de )?presse|léa — community manager|community manager|agence com|service de presse|salle de presse)$/i, function () { return ["Service de presse", "press"]; }],
+    [/^(presse paddock|presse spécialisée|presse — paddock insider|breaking news|journaliste sportif|vie de paddock)$/i, function () { return ["Motorsport Insider", "journalist"]; }],
+    [/^(ingénieur|ingénieur de course|ingénieur stratégie|équipe technique|équipe|atelier|ton mécano|mécanicien anonyme)$/i, function () { return [ecurieOuMecano("Ingénieur de piste"), "team"]; }],
+    [/^(direction|direction sportive|rh écurie|écurie|l'écurie|sponsors écurie)$/i, function () { return G.currentTeam && G.currentTeam !== "Indépendant" ? [G.currentTeam + " — Direction sportive", "team_boss"] : null; }],
+    [/^(médecin sportif|atelier nutrition)$/i, function () { return ["Médecin sportif", "team"]; }],
+    [/^(promoteur\b.*)$/i, function () { return ["Promoteur", "promoter"]; }],
+    [/^(anonyme|anon|)$/i, function () { return ["Paddock", "press"]; }]
+  ];
+  function identifier(m) {
+    if (!m || m._rj301) return m;
+    var de = String(m.from || "").trim(), p = parentAgent(), r = null, dir = de.match(/^direction (?:sportive|de course) — (.+)$/i);
+    // l'agent : une seule identité ; le parent-agent : un seul fil, qu'il écrive en agent ou en parent
+    var estAgent = m.role === "agent" && !/^(agent sportif|manager|agence)/i.test(de);
+    var estParent = p && (de === p || /^(ton agent|agent)$/i.test(de) || (G.agent.parentRole === "mother" ? /^(maman|ta mère)$/i : /^(papa|ton père)$/i).test(de));
+    if (p && (estAgent || estParent)) r = [p, "family"];
+    else if (estAgent || /^(ton agent|agent)$/i.test(de)) r = nomAgent() ? [nomAgent(), "agent"] : null;
+    else if (/^(papa|ton père)$/i.test(de)) r = ["Papa", "family"];
+    else if (/^(maman|ta mère)$/i.test(de)) r = ["Maman", "family"];
+    else if (dir && /^direction sportive/i.test(de)) r = [dir[1] + " — Direction sportive", "team_boss"];
+    else if (dir) r = ["Direction de course", m.role];
+    else for (var i = 0; i < IDENTITES.length && !r; i++) if (IDENTITES[i][0].test(de)) r = IDENTITES[i][1]();
+    if (r) { m.from = r[0]; if (window.MAIL_SENDERS ? MAIL_SENDERS[r[1]] : true) m.role = r[1]; }
+    m._rj301 = 1;
+    return m;
+  }
+  function identifierTout() { (getMailbox() || []).forEach(identifier); }
+
   function cleCanonique(m) {
+    var pa = parentAgent(), na = nomAgent();
+    if (pa && m.from === pa) return "parent_agent::" + pa;
+    if (na && !pa && m.role === "agent" && m.from === na) return "agent::" + na;
+    if (/^(Coach mental|Coach kart|Tes fans|Service de presse|Motorsport Insider|Médecin sportif|Promoteur|Direction de course|Ton mécano|Papa|Maman)$/.test(m.from)) return "contact::" + m.from;
     var de = String(m.from || ""), role = m.role || "x";
     if (role === "family" && /parents|maman|papa|m[èe]re|p[èe]re/i.test(de)) return "family::Tes parents";
     if (role === "friends") return "friends::Tes potes";
@@ -451,12 +465,14 @@
     } });
     /* Plus intérieur que 62 (-5100) : un message que 62 bloque comme doublon n'applique pas son effet. */
     rjInscrire("pushMail", { id: "124-messagerie:pushMail", ordre: 0, remplace: function (args, suite) {
+      if (args[0]) identifier(args[0]);
       if (args[0] && /^Merci d.avoir/i.test(args[0].subject || "")) return null;   // v289 : pas de remerciements automatiques
       if (deTrop(args[0])) return null;
       faireDeLaPlace();
       sansFauxChoix(args[0]);
       return suite();
     } });
+    rjInscrire("renderMailbox", { id: "124-messagerie:identites", ordre: -300, avant: function () { try { identifierTout(); } catch (e) { console.warn(TAG, e); } } });
     rjInscrire("renderMailbox", { id: "124-messagerie:renderMailbox", apres: function () { habiller(); } });
     rjInscrire("_renderMailAvatar", { id: "124-messagerie:logo", ordre: -200, remplace: function (args, suite) {
       var h = null; try { h = logoMail(args[0], args[1] || 40); } catch (e) {} return h || suite();
@@ -466,19 +482,6 @@
       window._mailThreadKey = function (m) { return (m && cleCanonique(m)) || cleOrigine(m); };
       window._mailThreadKey._rj124 = true;
     }
-    /* Les messages courts (showToast : « Pas assez de PA »…) avaient leur propre
-       fenêtre, posée par-dessus la pile des notifications : ils rejoignent la
-       pile, en haut de l'écran, sans passer par les filtres (réponse immédiate
-       à une action du joueur). */
-    if (typeof _pushHomeToastCoeur === "function") rjInscrire("showToast", { id: "124-messagerie:showToast", remplace: function (args) {
-      _pushHomeToastCoeur("", String(args[0] == null ? "" : args[0]), "#FF1801");
-    } });
-    if (!Array.isArray(window.RJ_TOAST_FILTERS)) window.RJ_TOAST_FILTERS = [];
-    window.RJ_TOAST_FILTERS = window.RJ_TOAST_FILTERS.filter(function (f) { return f && f.id !== "42-weekend-entry"; });
-    if (window.pushHomeToast) window.pushHomeToast._rjMsgGate = true;   // 40 ne réinstalle pas son filtre
-    window.RJ_TOAST_FILTERS.unshift({ id: "124-file", filtre: filtreFile });
-    if (!Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS = [];
-    window.RJ_SCREEN_HOOKS.push({ id: "124-file", ecran: "*", apres: viderFile });
     if (typeof window._rj64Champs === "function") window._rj64Champs("_rj124");
     return true;
   }
@@ -490,7 +493,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 
-  window._rj124 = { file: file, viderFile: viderFile, deTrop: deTrop, sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
+  window._rj124 = { identifier: identifier, identifierTout: identifierTout, deTrop: deTrop, sansFauxChoix: sansFauxChoix, priorite: priorite, expirer: expirer, tick: tick, ecrire: ecrire, sujets: sujets, enAttente: enAttente, debrief: debrief };
   window._rj124Uninstall = function () {
     window.WEEKLY_TICK_HOOKS = (window.WEEKLY_TICK_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });
     window.RACE_POST_HOOKS = (window.RACE_POST_HOOKS || []).filter(function (h) { return h.id !== "124-messagerie"; });

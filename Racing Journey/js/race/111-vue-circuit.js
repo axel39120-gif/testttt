@@ -305,6 +305,10 @@
       lum.appendChild(element("circle", { cx: (rl.x + rl.nx * ol * cl).toFixed(2), cy: (rl.y + rl.ny * ol * cl).toFixed(2), r: 1.6, "class": "rj111-halo-lampe" }));
       lum.appendChild(element("circle", { cx: (rl.x + rl.nx * ol * cl).toFixed(2), cy: (rl.y + rl.ny * ol * cl).toFixed(2), r: .35, "class": "rj111-lampe" }));
     }
+    // v301 : les repères propres à chaque Grand Prix (module 158)
+    if (window.RJReperesGP) try {
+      RJReperesGP.poser({ sous: sous, monde: monde, repere: repere, L: L, plein: plein, distPiste: distPiste, E: element, hache: hache, DEMI: DEMI, ctx: ctx });
+    } catch (e) { console.warn("[111] repères du GP :", e && e.message); }
     // vibreurs au-dessus de la piste, sous les voitures
     monde.appendChild(dessus);
   }
@@ -412,7 +416,7 @@
     var tout = monde.getBBox();   // la voie peut déborder du cadre de la piste
     var plein = { x: tout.x - 4, y: tout.y - 4, w: tout.width + 8, h: tout.height + 8 };
     svg.setAttribute("viewBox", [plein.x, plein.y, plein.w, plein.h].join(" "));
-    decors(monde, L, repere, plein, PLEIN, { lieu: lieuDe(circuit, donnees), niveau: niveauDe(typeof G !== "undefined" && G ? G.cat : ""), nuit: !!donnees.nightRace });
+    decors(monde, L, repere, plein, PLEIN, { nom: circuit, lieu: lieuDe(circuit, donnees), niveau: niveauDe(typeof G !== "undefined" && G ? G.cat : ""), nuit: !!donnees.nightRace });
 
     var groupe = element("g", { "class": "rj111-voitures" });
     monde.appendChild(groupe);

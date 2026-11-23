@@ -350,7 +350,7 @@
     var overlay = document.createElement('div');
     overlay.id = 'rj-bilan-overlay';
     overlay.style.cssText = [
-      'position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center',
+      'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px',
       'background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)',
       'animation:rjFadeIn .18s ease'
     ].join(';');
@@ -358,7 +358,7 @@
     var card = document.createElement('div');
     card.style.cssText = [
       'width:100%;max-width:420px;background:var(--bg2)',
-      'border-top:1px solid var(--border);border-radius:24px 24px 0 0',
+      'border:1px solid var(--border);border-radius:var(--r)',
       'padding:0 0 env(safe-area-inset-bottom,0)',
       'animation:rjSlideUp .22s cubic-bezier(.32,.72,0,1)',
       'max-height:80vh;overflow-y:auto'
@@ -372,7 +372,7 @@
     // Header
     html += '<div style="padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between">';
     html += '<div>';
-    html += '<div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--white)">Bilan financier</div>';
+    html += '<div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--white)">Bilan financier du mois</div>';
     html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + weekLabel + ' · ' + G.cat + '</div>';
     html += '</div>';
     html += '<button onclick="document.getElementById(\'rj-bilan-overlay\').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>';
@@ -491,6 +491,33 @@
     // Il sera affiché à la FIN du week-end, au retour vers l'accueil.
     var _rjPending = null;
 
+    function moisDe(sem) { return Math.floor((Math.max(1, sem) - 1) / 4); }
+    function libre() {
+      var e = document.querySelector('.scr.on');
+      if (!e || e.id !== 'S-home' || document.getElementById('rj-bilan-overlay')) return false;
+      return ![].some.call(document.body.children, function(x) {
+        if (x.id === 'app' || x.id === 'rj-hud' || x.id === 'rj-toast-container') return false;
+        var cs = getComputedStyle(x);
+        return cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && x.offsetWidth > document.body.offsetWidth * 0.8 && x.offsetHeight > document.body.offsetHeight * 0.8;
+      });
+    }
+    var attente = null;
+    function montrerSiPret() {
+      clearTimeout(attente);
+      var p = _rjPending;
+      if (!p) return;
+      if (p.saison !== G.saison) { _rjPending = null; return; }   // nouvelle saison : le bilan de saison a déjà parlé
+      if (moisDe(G.semaine) <= moisDe(p.debut)) return;
+      attente = setTimeout(function() {
+        if (!_rjPending) return;
+        if (!libre()) { attente = setTimeout(montrerSiPret, 1500); return; }
+        _rjPending = null;
+        try { _rjShowWeeklyBilan(p.before, p.weeks, G.budget || 0); } catch(e) { console.warn('[10-finance] bilan du mois :', e); }
+      }, 900);
+    }
+    window._rjBilanMois = { verifier: montrerSiPret, enAttente: function() { return _rjPending; } };
+    if (Array.isArray(window.RJ_SCREEN_HOOKS)) window.RJ_SCREEN_HOOKS.push({ id: '10-bilan', ecran: 'S-home', apres: montrerSiPret });
+
     function doWrap() {
       if (window.RJ_ADVANCE_HOOKS.some(function (h) { return h && h.id === '10-finance'; })) return;
       var scrBefore = '', weekBefore = 0, snapshot = null;
@@ -513,31 +540,15 @@
         try {
           var weeksAdvanced = Math.max(0, (G.semaine || 0) - (weekBefore || 0));
 
-          /* Le temps avance (vers un week-end ou non) : le bilan ne s'affiche
-             jamais sur le moment. Les semaines s'additionnent en un seul bilan,
-             montré à la fin du prochain week-end de course. Avant, avancer hors
-             week-end (événement, semaine de pause) ouvrait le bilan au milieu de
-             l'événement. */
+          /* v301 : UN bilan par mois (4 semaines), une fois le mois terminé. Il ne
+             s'ouvre que sur l'accueil, écran libre : jamais au milieu d'un
+             événement ou d'un week-end (bug signalé en v279). */
           if (snapshot && weeksAdvanced > 0) {
             _rjApplyMaterialCosts(weeksAdvanced);
-            _rjPending = {
-              before: _rjPending ? _rjPending.before : snapshot,
-              weeks: (_rjPending ? _rjPending.weeks : 0) + weeksAdvanced,
-              afterBudget: (G.budget || 0)
-            };
+            if (!_rjPending) _rjPending = { before: snapshot, weeks: 0, debut: weekBefore, saison: G.saison };
+            _rjPending.weeks += weeksAdvanced;
           }
-
-          // FLUSH : on QUITTE le week-end (S-race → autre écran) avec un bilan en
-          // attente → on l'affiche maintenant, à la fin du week-end.
-          if (scrBefore === 'S-race' && scrAfter !== 'S-race' && _rjPending) {
-            var pend = _rjPending;
-            _rjPending = null;
-            setTimeout(function() {
-              try { _rjShowWeeklyBilan(pend.before, pend.weeks, pend.afterBudget); } catch(e) {
-                console.warn('[10-finance] bilan popup (fin week-end):', e);
-              }
-            }, 450);
-          }
+          montrerSiPret();
         } catch(e) { console.warn('[10-finance] wrap advance:', e); }
 
       } });

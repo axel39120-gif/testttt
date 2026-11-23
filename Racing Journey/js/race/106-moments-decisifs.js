@@ -1112,20 +1112,20 @@
     mod.id = "rj106-modal";
     mod.className = "rj143-modale";
     mod.innerHTML =
-      '<div id="rj106-boite" class="rj143-carte" data-rj-noround="1" style="--acc:#FF1801">' +
+      '<div id="rj106-boite" class="rj143-carte" data-rj-noround="1">' +
         '<div class="rj143-tete"><span class="rj143-led"></span><span class="rj143-type">Moment décisif</span>' +
           '<span class="rj143-tour">Tour ' + tour + (total ? " / " + total : "") + '</span></div>' +
+        '<div class="rj143-situation">' + (window.RJ143 && RJ143.situation ? RJ143.situation() : "") + '</div>' +
         '<div class="rj143-corps"><div class="rj143-titre">' + esc(texteDe(moment.titre)) + '</div>' +
-          '<div class="rj143-desc">' + esc(texteDe(moment.recit)) + '</div></div>' +
-        '<div class="rj143-q">' + esc(texteDe(moment.question)) + '</div>' +
+          '<div class="rj143-desc">' + esc(texteDe(moment.recit)) + ' <b>' + esc(texteDe(moment.question)) + '</b></div></div>' +
         '<div class="rj143-choix">' +
           moment.choix.map(function (c, i) {
-            return '<button class="rj143-btn rj106-c" style="--c:#FF1801" data-i="' + i + '">' +
+            return '<button class="rj143-btn rj143-ose rj106-c" data-i="' + i + '">' +
                    '<span class="rj143-btxt">' + esc(c.label) + '</span>' +
+                   '<span class="rj143-risque">Issue inconnue</span>' +
                    '<span class="rj143-effet">' + esc(c.detail) + '</span></button>';
           }).join("") +
         '</div>' +
-        '<div class="rj143-note">Personne ne peut te dire ce qui va se passer.</div>' +
       '</div>';
     document.body.appendChild(mod);
 
@@ -1218,17 +1218,18 @@
     var bon = !issue.casse && issue.bilan.some(function (b) { return b.up; });
     boite.innerHTML =
       '<div class="rj143-tete"><span class="rj143-led"></span><span class="rj143-type">' +
-        (issue.casse ? "Fin de course" : "Ce qui s'est passé") + '</span></div>' +
+        "Résultat" + '</span></div>' +
       '<div class="rj143-corps"><div class="rj143-titre">' + esc(texteDe(moment.titre)) + '</div></div>' +
       '<div class="rj143-resultat rj143-' + (issue.casse ? "mauvais" : bon ? "bon" : "neutre") + '">' +
-        '<span class="rj143-effets">' + esc(texte) + '</span>' +
+        '<span class="rj143-verdict">' + (issue.casse ? "Abandon" : bon ? "Réussi" : "Raté") + '</span>' +
+        '<span class="rj143-recit">' + esc(texte) + '</span>' +
         (issue.bilan.length
           ? '<span class="rj143-bilan">' + issue.bilan.map(function (b) {
               return '<span class="' + (b.up ? "up" : "dn") + '">' + esc(b.t) + "</span>";
             }).join("") + '</span>'
           : "") +
       '</div>' +
-      '<div class="rj154-pied"><button class="rj154-ok" id="rj106-ok">Reprendre</button></div>';
+      '<div class="rj154-pied"><button class="rj154-ok" id="rj106-ok">Continuer</button></div>';
 
     var ok = document.getElementById("rj106-ok");
     if (ok) ok.addEventListener("click", fermer);

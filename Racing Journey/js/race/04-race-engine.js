@@ -2419,16 +2419,20 @@ function _resolveRaceEvtCoeur(e, t) {
             _hasExp = true;
           }
         }
-        // Priorité 2 : outcomes globaux du choix (sans dépendre du roll)
+        // Priorité 2 : outcomes globaux du choix (sans dépendre du roll).
+        // v301 : sauf leurs bénéfices quand le geste est raté (« tu perds 3 places » ET « tu gagnes 0,5 s »).
+        var _rate = s === "Raté" || s === "Gros raté", _gain = function(p) { return (Array.isArray(p) ? p : [p]).some(function(x) { return x && x.deltaSec < 0; }); };
+        if (_rate && _pOut2.paceMod && _gain(_pOut2.paceMod)) delete _pOut2.paceMod;
+        if (_rate && _pOut2.posGain) delete _pOut2.posGain;
         if (typeof n.posLoss === "number" && n.posLoss > 0 && !_pOut2.posLoss) {
           _pOut2.posLoss = n.posLoss;
           _hasExp = true
         }
-        if (typeof n.posGain === "number" && n.posGain > 0 && !_pOut2.posGain) {
+        if (!_rate && typeof n.posGain === "number" && n.posGain > 0 && !_pOut2.posGain) {
           _pOut2.posGain = n.posGain;
           _hasExp = true
         }
-        if (n.paceMod && !_pOut2.paceMod) {
+        if (n.paceMod && !_pOut2.paceMod && !(_rate && _gain(n.paceMod))) {
           _pOut2.paceMod = n.paceMod;
           _hasExp = true
         }
@@ -2437,6 +2441,7 @@ function _resolveRaceEvtCoeur(e, t) {
           _hasExp = true
         }
         // Fallback : conversion automatique du `mod` legacy
+        if (_rate && o > 0) o = -o;
         if (!_hasExp && Math.abs(o) >= 0.012) {
           var _conv2 = _convertLegacyMod(m, o, r.title || "événement");
           if (_conv2 && _conv2.paceMod) _pOut2.paceMod = _conv2.paceMod;
@@ -16404,7 +16409,11 @@ function _resolveLiveEventCoeur(e) {
     }
     if (r.chance && Math.random() < r.chance.fail) {
       var s;
-      if (n += r.chance.failMod || 0, a = r.chance.msg || "", r.chance.dnf && (i = !0), !i && a) /abandon|abandonne|abandonnes|dnf|explose|tu pars dans le rail|course terminée|suspension cassée|crevaison.*éclat|chaîne lâche|casse moteur|panne sèche|moteur fond/i.test(a) && (i = !0);
+      // v301 : raté = jamais de gain, et les places annoncées sont vraiment perdues
+      r = Object.assign({}, r), delete r.posGain;
+      if (r.paceMod && [].concat(r.paceMod).some(function(x) { return x && x.deltaSec < 0; })) delete r.paceMod;
+      if (!r.posLoss && /(perds?|concèdes?|lâches?) (une|plusieurs|deux|trois|\d) places?/i.test(r.chance.msg || "")) r.posLoss = /une place/i.test(r.chance.msg) ? 1 : 2;
+      if (n = Math.min(-.006, n + (r.chance.failMod || 0)), a = r.chance.msg || "", r.chance.dnf && (i = !0), !i && a) /abandon|abandonne|abandonnes|dnf|explose|tu pars dans le rail|course terminée|suspension cassée|crevaison.*éclat|chaîne lâche|casse moteur|panne sèche|moteur fond/i.test(a) && (i = !0);
       r.chance.penalty && (o = r.chance.penalty)
     }
     r.penalty && (o = r.penalty);
@@ -16441,7 +16450,7 @@ function _resolveLiveEventCoeur(e) {
           hasExplicit = true
         }
         // Si pas d'output explicite et un mod non-trivial, on convertit
-        if (!hasExplicit && Math.abs(n) >= 0.004) {
+        if ((!hasExplicit || r.posLoss && !r.paceMod) && Math.abs(n) >= 0.004) {
           var _conv = _convertLegacyMod(l, n, t.title);
           if (_conv && _conv.paceMod) pOut.paceMod = _conv.paceMod;
         }
@@ -16481,9 +16490,13 @@ function _resolveLiveEventCoeur(e) {
       var f = _otxt2 || ((a ? a + " — " : "") + (n > .02 ? "Bonne décision !" : n < -.02 ? "Coup dur." : "Impact limité.")),
         m = n > .01 ? "#34D399" : n < -.01 ? "#EF4444" : "var(--text3)",
         g = n > .01 ? renderIcon("trend", 16, "#34D399") : n < -.01 ? renderIcon("downtrend", 16, "#EF4444") : "";
-      p.style.display = "block", p.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><span>' + g + '</span><span style="font-size:13px;font-weight:700;color:' + m + '">' + f + "</span></div>", setTimeout(function() {
-        d && (d.style.display = "none"), u && (u.style.display = "flex"), p && (p.style.display = "none", p.innerHTML = ""), LIVE_RACE.paused = !1, updateLivePositions(), renderLiveLeaderboard()
-      }, 2600)
+      u && (u.innerHTML = "");   // choix faits : seul « Continuer » reste (module 143)
+      var _ferme = !1, _fermer = function() {
+        if (_ferme) return;
+        _ferme = !0, d && (d.style.display = "none"), p && (p.style.display = "none", p.innerHTML = ""), LIVE_RACE.paused = !1, updateLivePositions(), renderLiveLeaderboard()
+      };
+      window._fermerEvenementCourse = _fermer;
+      p.style.display = "block", p.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><span>' + g + '</span><span style="font-size:13px;font-weight:700;color:' + m + '">' + f + "</span></div>", setTimeout(_fermer, 8e3)
     } else d && (d.style.display = "none"), LIVE_RACE.paused = !1;
     LIVE_RACE.pendingEvent = null
   }

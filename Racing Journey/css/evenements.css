@@ -88,3 +88,8 @@
 .rj143-bilan span { font: 800 10px/1 var(--font-display); letter-spacing: .06em; padding: 4px 8px; border-radius: 5px; }
 .rj143-bilan .up { color: #34D399; background: rgba(52, 211, 153, .13); }
 .rj143-bilan .dn { color: #F87171; background: rgba(248, 113, 113, .13); }
+
+/* v301 : trois choix tiennent sur une ligne, même sur un téléphone tenu en portrait (jeu pivoté). */
+.rj143-choix { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.rj143-resultat .rj154-ok { margin-top: 8px; }
+.rj143-carte { max-height: calc(var(--app-h, 100dvh) - 20px); }

@@ -56,6 +56,24 @@
     return Math.max(0.2, Math.min(1.4, 0.25 + 1.6 * (0.6 - facilite)));
   }
 
+  /* v301 : on ne double pas autant partout. seuil : multiplie l'avance de rythme
+     nécessaire ; chance : probabilité de passer en étant simplement dans le sillage
+     (aspiration, freinage) ; aspi : gain de celui qui suit, en part du temps au tour ;
+     aller : écart minimal derrière une voiture qu'on ne passe pas (s). */
+  var STYLES = {
+    "Karting Junior":   { seuil: .35, chance: .5, aspi: .0032, aller: .06 },
+    "Karting Senior":   { seuil: .35, chance: .48, aspi: .0034, aller: .06 },
+    "Formule 4":        { seuil: .6, chance: .17, aspi: .001, aller: .2 },
+    "Formula Regional": { seuil: 1, chance: .03, aspi: .0003, aller: .3 },
+    "Formule 3":        { seuil: .6, chance: .17, aspi: .001, aller: .2 },
+    "Formule 2":        { seuil: 1, chance: .02, aspi: 0, aller: .3 },
+    "Formule 1":        { seuil: .9, chance: .06, aspi: .0003, aller: .3 },
+    "Super Formula":    { seuil: 1.6, chance: .01, aspi: 0, aller: .3 },
+    "Endurance WEC":    { seuil: .8, chance: .06, aspi: .0003, aller: .3 },
+    "IndyCar":          { seuil: .5, chance: .32, aspi: .0024, aller: .1 }
+  };
+  function style() { return STYLES[(typeof G !== "undefined" && G && G.cat) || ""] || { seuil: 1, chance: 0, aspi: 0, aller: AIR_SALE[0] }; }
+
   function regularite(d) {
     if (d.isPlayer) return (G && G.stats && typeof G.stats.regularite === "number") ? G.stats.regularite / 100 : 0.75;
     var r = (typeof d.rivalIdx === "number" && G && G.rivals && G.rivals[d.rivalIdx]) || null;
@@ -89,7 +107,7 @@
   function avancerUnTour(lr, c, vivants) {
     var premier = lr.cur <= 1, neutre = neutralisation(lr);
     var ordre = vivants.slice().sort(function (a, b) { return a._t - b._t; });   // ordre sur la piste
-    var devant = null;
+    var devant = null, st = style();
     ordre.forEach(function (d) {
       var r = rythme(d, c), tour = r + gauss() * c.base * 0.0022 * (1.25 - regularite(d));
       /* Effets d'événements du tour (secondes, posées par le cœur) : un bon choix fait gagner
@@ -101,16 +119,19 @@
       d._tPen = d.penaltySec || 0;
       if (neutre === "vsc") tour = c.base * 1.35;
       if (premier) tour += ((d.gridPos || d.pos || 1) - 1) * GRILLE_PAS + Math.abs(gauss()) * 0.25;
+      // aspiration : celui qui suit de près reste dans le paquet
+      if (devant && !premier && !neutre && d._t - devant._t < 1.2) tour -= c.base * st.aspi;
       var arrivee = d._t + tour + pen;
 
       /* Rattrape la voiture de devant (même tour, sur la piste) : passe-t-il ? */
-      if (devant && !d._mc && !devant._mc && !pen && d._t - devant._t < c.base * 0.5 && arrivee < devant._arrivee + AIR_SALE[0]) {
+      if (devant && !d._mc && !devant._mc && !pen && d._t - devant._t < c.base * 0.5 && arrivee < devant._arrivee + st.aller) {
         var avance = (rythme(devant, c) + (devant._rj81EvtTour || 0)) - (r + evt);
-        var seuil = c.seuil * (premier ? 0.5 : 1);
-        var chance = Math.min(0.8, Math.max(0, (avance - 0.03) / seuil) * 0.9);
-        if (neutre === "vsc" || Math.random() >= chance) {
-          arrivee = Math.max(arrivee, devant._arrivee + AIR_SALE[0] + Math.random() * (AIR_SALE[1] - AIR_SALE[0]));
-        }
+        var seuil = c.seuil * st.seuil * (premier ? 0.5 : 1);
+        // sur un tracé où l'on ne double pas (Monaco), le sillage ne suffit pas non plus
+        var chance = Math.min(0.8, Math.max(0, (avance - 0.03) / seuil) * 0.9 + st.chance * Math.max(.2, 1.15 - c.seuil * .6));
+        if (neutre || (d._rj81Gele || 0) >= lr.cur || Math.random() >= chance) {
+          arrivee = Math.max(arrivee, devant._arrivee + st.aller + Math.random() * (AIR_SALE[1] - AIR_SALE[0]));
+        } else if (st.chance) arrivee = Math.min(arrivee, devant._arrivee - .05 - Math.random() * .15);   // il passe vraiment
       }
       d._arrivee = arrivee;
       // La suivante se mesure à la voiture physiquement juste devant elle :
@@ -132,6 +153,9 @@
     var bouge = vivants.some(function (d) { return typeof d._rj81PosLaissee === "number" && d.pos !== d._rj81PosLaissee; });
     if (!bouge) return;
     var parPos = vivants.slice().sort(function (a, b) { return a.pos - b.pos; });
+    // v301 : des places perdues sur un événement se voient — pas de revanche dans le tour qui suit
+    var lrG = LR();
+    vivants.forEach(function (d) { if (typeof d._rj81PosLaissee === "number" && d.pos > d._rj81PosLaissee) d._rj81Gele = (lrG && lrG.cur || 0) + 1; });
     for (var i = 0; i < parPos.length; i++) {
       var d = parPos[i];
       if (d.pos === d._rj81PosLaissee) continue;

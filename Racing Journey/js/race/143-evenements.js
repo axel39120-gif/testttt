@@ -505,7 +505,8 @@
     p.innerHTML = '<span class="rj143-verdict">' + verdict + "</span>" +
       (rate && c.msg ? '<span class="rj143-recit">' + esc(c.msg) + "</span>" : "") +
       '<span class="rj143-effets">' + (fin ? "Ta course s'arrête ici." : (lignes.join(" · ") || "Aucun changement notable")) + "</span>" +
-      (fin ? "" : '<span class="rj143-instant">' + instant() + "</span>");
+      (fin ? "" : '<span class="rj143-instant">' + instant() + "</span>") +
+      '<button class="rj154-ok" onclick="_fermerEvenementCourse()">Continuer</button>';
   }
 
   /* L'instant présent, sans la place : qui est devant, derrière, à quel écart. */
@@ -557,7 +558,7 @@
         ecrire: function () { return vus().length ? vus().slice() : null; },
         lire: function (bloc, G_) { if (Array.isArray(bloc)) G_._rj143Vus = bloc.slice(-MEMOIRE); } });
     }
-    window.RJ143 = { banque: BANQUE, enrichir: enrichir, lecture: lecture, contexte: contexte };
+    window.RJ143 = { banque: BANQUE, enrichir: enrichir, lecture: lecture, contexte: contexte, situation: situation };
     window._rj143Uninstall = function () {
       rjDesinscrire("143-");
       window.RJ_SAVE_HOOKS = (window.RJ_SAVE_HOOKS || []).filter(function (h) { return !(h && h.cle === "rj143"); });
