@@ -46,7 +46,8 @@
       '<span class="rj-hud-chip" title="Réputation">Rép ' + esc(G.reputation) + "</span>" +
       (note === null ? "" :
         '<span class="rj-hud-chip rj-hud-note" title="Note du pilote" style="color:' + esc(palier.color) + ";border-color:" + esc(palier.color) + '66">' +
-        esc(note) + " " + esc(palier.tier || "") + "</span>");
+        esc(note) + " " + esc(palier.tier || "") + "</span>") +
+      (window.RJNotifs ? RJNotifs.cloche() : "");
     // Le bandeau réserve au HUD sa largeur réelle (css/paysage.css, --hud).
     var l = hud().offsetWidth;
     if (l) document.documentElement.style.setProperty("--hud", l + "px");

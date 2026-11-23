@@ -16,6 +16,35 @@
  *
  * Aucun état. Réversible : window._rj142Uninstall().
  * =================================================================== */
+/* v301 : le menu de l'en-tête finit au même endroit que le contenu. Le bord droit
+   du contenu dépend de l'écran (pleine largeur, colonne centrée) : on le mesure. */
+(function () {
+  "use strict";
+  function aligner() {
+    var s = document.querySelector(".scr.on"), t = s && s.querySelector(":scope > .tabs"), sc = s && s.querySelector(":scope > .scroll");
+    if (!t || !sc) return;
+    // offset* : juste aussi quand le jeu est pivoté (portrait)
+    var bord = 0;
+    sc.querySelectorAll(".t-sec, .sec-lbl, .apex-sec, div, section, button").forEach(function (e) {
+      if (!e.offsetParent || e.offsetWidth < 200 || e.offsetWidth >= sc.clientWidth) return;
+      var cs = getComputedStyle(e);
+      if (!(parseFloat(cs.borderRightWidth) > 0) && !/\b(t-sec|sec-lbl|apex-sec)\b/.test(e.className)) return;
+      var x = e.offsetWidth; for (var n = e; n && n !== sc && sc.contains(n); n = n.offsetParent) x += n.offsetLeft;
+      if (!sc.contains(n)) x -= sc.offsetLeft;
+      if (x <= sc.clientWidth) bord = Math.max(bord, x);
+    });
+    s.style.setProperty("--menu-d", (bord > sc.offsetWidth * .8 ? Math.max(8, sc.offsetWidth - bord) : 14) + "px");
+  }
+  function boot() {
+    if (!Array.isArray(window.RJ_SCREEN_HOOKS)) return setTimeout(boot, 100);
+    var m = 0, tard = function () { clearTimeout(m); m = setTimeout(aligner, 120); };
+    window.RJ_SCREEN_HOOKS.push({ id: "142-menu", ecran: "*", apres: tard });
+    document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".scr > .tabs")) tard(); });
+    addEventListener("resize", tard);
+  }
+  boot();
+})();
+
 (function () {
   "use strict";
 

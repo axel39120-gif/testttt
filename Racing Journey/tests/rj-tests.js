@@ -478,7 +478,7 @@ const APLATIES = {
   _psPickObj: "rjPsPickObjNew", _psPickAngle: "rjPsPickAngleNew", _psAdjustBudget: "rjPsAdjustBudgetNew",
   renderF1Stats: "_rjNeutralized", openNeg: "_rjNegFixed",
   _socialFanHandle: null, recomputeGlobalRep: null,
-  startNextSeason: null, navTo: null, refreshScreen: null, pushHomeToast: null,
+  startNextSeason: null, navTo: null, refreshScreen: null, 
   mtab: null, rtab: null, showResult: null, runRaceLive: null,
   advanceToNextMoment: null, goToRaceWeekend: null,
   updateHomeBadges: null, startQual: null, resolveLiveEvent: null, renderCal: null, generateSeasonObjectives: null
@@ -558,16 +558,16 @@ async function suiteCouches() {
     S.verifier("fin de course en panne : le jeu reprend la main", filet.err === null && filet.bouton === true && filet.course,
       JSON.stringify(filet));
     /* Une notification reçue hors de l'accueil est gardée, puis affichée au
-       retour (filtre de file de 53, placé avant ceux de 40 et 28). */
+       retour (160-notifications). */
     const notif = await page.evaluate(async () => {
       const vus = [], coeur = window._pushHomeToastCoeur;
       window._pushHomeToastCoeur = function (l) { vus.push(l); };
       try {
-        navTo("S-media", "ni-media"); await new Promise(r => setTimeout(r, 200));
+        navTo("S-race", null); await new Promise(r => setTimeout(r, 200));
         pushHomeToast("Nouveau message", "Sonde de file d'attente", "#fff");
         const pendant = vus.length;
-        navTo("S-home", "ni-home"); await new Promise(r => setTimeout(r, 1200));
-        return { pendant, apres: vus.filter(l => l === "Nouveau message").length };
+        navTo("S-home", "ni-home"); await new Promise(r => setTimeout(r, 2500));
+        return { pendant, apres: vus.filter(l => l === "Nouveau message" || l === "Messagerie").length, etat: RJNotifs.etat().file.length, aff: RJNotifs.etat().affichee, calme: RJNotifs.calme(), vus, fen: [...document.body.children].filter(x => getComputedStyle(x).position === "fixed" && x.offsetHeight > innerHeight * .8).map(x => x.id + "." + x.className) };
       } finally { window._pushHomeToastCoeur = coeur; }
     });
     S.verifier("notification hors accueil : gardée puis affichée au retour", notif.pendant === 0 && notif.apres === 1, JSON.stringify(notif));
@@ -2620,15 +2620,15 @@ async function suiteHabillage() {
     const haut = await page.evaluate(async () => {
       navTo("S-home", "ni-home");
       document.querySelectorAll(".rj-toast").forEach(t => t.remove());
-      pushHomeToast("Test", "Une notification", "#22D3EE");
-      await new Promise(r => setTimeout(r, 400));
+      RJNotifs.vider(); pushHomeToast("Test", "Une notification", "#22D3EE");
+      await new Promise(r => setTimeout(r, 1500));
       const t = document.querySelector("#rj-toast-container .rj-toast"), b = t && t.getBoundingClientRect();
       return { vue: !!t, haut: b && Math.round(b.top), centre: b && Math.round(b.left + b.width / 2 - innerWidth / 2) };
     });
     S.verifier("une notification s'affiche en haut, au centre", haut.vue && haut.haut < 60 && Math.abs(haut.centre) < 30, JSON.stringify(haut));
 
     const file = await page.evaluate(async () => {
-      document.querySelectorAll(".rj-toast").forEach(t => t.remove());
+      RJNotifs.vider(); document.querySelectorAll(".rj-toast").forEach(t => t.remove());
       navTo("S-race", null);
       pushHomeToast("Nouveau message", "Agent — Une offre", "#34D399");
       pushHomeToast("Nouveau message", "Team Principal — Débrief", "#F59E0B");
@@ -2636,12 +2636,12 @@ async function suiteHabillage() {
       await new Promise(r => setTimeout(r, 300));
       const pendant = document.querySelectorAll(".rj-toast").length;
       navTo("S-home", "ni-home");
-      await new Promise(r => setTimeout(r, 1800));
-      const apres = [...document.querySelectorAll(".rj-toast")].map(t => t.textContent);
-      return { pendant, apres };
+      const apres = []; let max = 0;
+      for (let i = 0; i < 90; i++) { await new Promise(r => setTimeout(r, 100)); const L = [...document.querySelectorAll(".rj-toast:not(.sort)")]; max = Math.max(max, L.length); L.forEach(t => { if (!apres.includes(t.textContent)) apres.push(t.textContent); }); }
+      return { pendant, apres, max };
     });
     S.verifier("pendant la course, les notifications attendent", file.pendant === 0, JSON.stringify(file));
-    S.verifier("au retour, elles s'affichent, les messages regroupés", file.apres.length === 2 && file.apres.some(t => /2 nouveaux messages/.test(t)) && file.apres.some(t => /podium/.test(t)), JSON.stringify(file));
+    S.verifier("au retour, une à la fois, les messages regroupés", file.max === 1 && file.apres.length === 2 && file.apres.some(t => /2 nouveaux messages/.test(t)) && file.apres.some(t => /podium/.test(t)), JSON.stringify(file));
 
     const court = await page.evaluate(async () => {
       document.querySelectorAll(".rj-toast").forEach(t => t.remove());
@@ -4314,6 +4314,139 @@ async function suiteCoherence297() {
   } finally { await navigateur.close(); }
 }
 
+/* v301 : contacts uniques et nommés, bande collée à l'en-tête, menus alignés */
+async function suiteContacts301() {
+  S.suite("Contacts et en-têtes (v301)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const r = await page.evaluate(async () => {
+      const dormir = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      const fils = L => { G.mailbox = L.map((m, i) => Object.assign({ id: "t" + i, subject: "s" + i, body: "x", week: 1, saison: 1 }, m)); _rj124.identifierTout(); return _getMailThreads().map(t => t.from).sort(); };
+      G.agent = { type: "parent", parentRole: "father", firstName: "" };
+      o.parent = fils([{ from: "Agent", role: "agent" }, { from: "Ton agent", role: "agent" }, { from: "Papa", role: "family" }, { from: "Ton père", role: "family" }, { from: "Tes parents", role: "family" }, { from: "Maman", role: "family" }]);
+      G.agent = { type: "pro", firstName: "Léo", name: "Martin" }; G.currentTeam = "Williams";
+      o.pro = fils([{ from: "Agent", role: "agent" }, { from: "Ton agent", role: "agent" }, { from: "Léo Martin", role: "agent" }, { from: "Martin", role: "agent" }]);
+      o.etranges = fils([{ from: "Intuition", role: "team_boss" }, { from: "Journal intime", role: "family" }, { from: "Témoin", role: "fans" }, { from: "Max (Fan #1234)", role: "fans" }, { from: "Ingénieur", role: "team" }, { from: "Équipe technique", role: "team" }, { from: "Direction sportive", role: "team_boss" }, { from: "Direction sportive — Prema", role: "team_boss" }, { from: "Tes amis", role: "friends" }, { from: "Ta bande", role: "friends" }]);
+      G.mailbox = []; for (let i = 0; i < 6; i++) G.mailbox.push({ id: "l" + i, from: "Motorsport Insider", role: "journalist", subject: "s" + i, body: "Texte long. ".repeat(60), week: 1, saison: 1, read: false });
+      navTo("S-mailbox", null); await dormir(300); openMailThread(_getMailThreads()[0].key); await dormir(400);
+      const sc = document.querySelector("#S-mailbox .scroll"), b = document.querySelector("#mailbox-list > [style*='sticky']");
+      o.trou0 = Math.round(b.getBoundingClientRect().top - sc.getBoundingClientRect().top); sc.scrollTop = 150; await dormir(100); o.trou = Math.round(b.getBoundingClientRect().top - sc.getBoundingClientRect().top); o.defile = sc.scrollTop;
+      o.menus = {};
+      for (const id of ["S-contracts", "S-champ", "S-media", "S-mailbox", "S-pilot", "S-lifestyle", "S-sponsors", "S-patrimoine", "S-race"]) {
+        navTo(id, null); await dormir(500);
+        const s = document.getElementById(id), t = [...s.querySelectorAll(":scope > .tabs > *")].filter(e => e.getClientRects().length).pop();
+        let d = 0; s.querySelectorAll(":scope > .scroll *").forEach(e => { const c = getComputedStyle(e), q = e.getBoundingClientRect(); if (e.offsetParent && q.width > 200 && q.right <= innerWidth && (parseFloat(c.borderRightWidth) > 0 || /t-sec|sec-lbl/.test(e.className))) d = Math.max(d, q.right); });
+        o.menus[id] = Math.round(d - t.getBoundingClientRect().right);
+      }
+      return o;
+    });
+    S.verifier("parent-agent : un seul fil (l'autre parent à part)", JSON.stringify(r.parent) === '["Maman","Papa"]', JSON.stringify(r.parent));
+    S.verifier("agent : une seule identité", JSON.stringify(r.pro) === '["Léo Martin"]', JSON.stringify(r.pro));
+    S.verifier("plus de noms étranges ni de doublons", !r.etranges.some(x => /Intuition|Journal|Témoin|Fan #|^Ingénieur$/.test(x)) && r.etranges.length === 6, JSON.stringify(r.etranges));
+    S.verifier("bande du contact collée à l'en-tête", r.trou === 0 && r.trou0 === 0 && r.defile > 50, JSON.stringify([r.trou0, r.trou, r.defile]));
+    S.verifier("menus alignés à droite sur le contenu", Object.values(r.menus).every(x => Math.abs(x) <= 3), JSON.stringify(r.menus));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* v301 : bilan du mois, grille filmée, effets d'événements, dépassements, cadres vides */
+async function suiteRetours301() {
+  S.suite("Retours v301");
+  for (const [nom, w, h] of [["paysage", 852, 393], ["portrait", 393, 852]]) {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: w, height: h }, mobile: true });
+    try {
+      const r = await page.evaluate(async () => {
+        const dormir = ms => new Promise(x => setTimeout(x, ms)), o = {};
+        G.cat = "Formule 1"; SETTINGS.simSpeed = "normal"; window.CAL_RACES = []; buildCalendar(); G.semaine = 6; CAL_RACES.forEach(x => { x.done = x.week < 6; });
+        const c = getNextRace(); RACE_STATE.circuit = c.name; RACE_STATE.circuitData = getCircuitData(c.name); RACE_STATE.weather = generateWeather(0);
+        navTo("S-race", null); resetRaceScreen();
+        QUALI_STATE.drivers = [{ name: "Moi", isPlayer: true, team: "Williams", bestTime: 81 }].concat(G.rivals.slice(0, 19).map((x, i) => ({ name: x.name, team: x.team, rivalIdx: i, bestTime: 80 + i * .1 })));
+        RACE_STATE.qualiPos = 4; G.totalLaps = 12; rtab("course", true); await dormir(400);
+        const g = document.getElementById("rj159"), b = document.getElementById("race-btn"), vis = e => !!e && e.getClientRects().length > 0;
+        o.grille = { n: document.querySelectorAll(".rj159-place").length, moi: document.querySelector(".rj159-place.moi .n").textContent, large: g.offsetWidth, bandeau: vis(document.getElementById("rj145-bandeau")),
+          basBouton: b.getBoundingClientRect(), corps: [innerWidth, innerHeight], anime: g.querySelector(".rj159-piste").getAnimations().length };
+        o.grille.basBouton = [Math.round(o.grille.basBouton.left), Math.round(o.grille.basBouton.top), Math.round(o.grille.basBouton.right), Math.round(o.grille.basBouton.bottom)];
+        runRaceLive(); await dormir(300); o.partie = !document.getElementById("rj159"); clearInterval(LIVE_RACE.interval);
+        // un raté ne rapporte rien, quel que soit l'ancien format
+        const hasard = Math.random, capt = [];
+        rjInscrire("applyEventOutcome", { id: "t301", apres: (res, a) => { if (a[0].isPlayer) capt.push(a[1]); } });
+        for (let k = 0; k < 40; k++) {
+          const j = LIVE_RACE.drivers.find(d => d.isPlayer); j.dnf = false; LIVE_RACE.paused = true; LIVE_RACE.cur = 3;
+          RACE_STATE.events = [{ id: "x", phase: "mid", ctx: { ahead: null, behind: null, isRival: () => false }, title: "t", text: "t", choices: [{ text: "a", mods: { player: .02 }, difficulty: .5, actionType: "gestion", successMod: .02, posGain: 1, paceMod: { deltaSec: -.4, laps: 3 },
+            posLossOnRateMin: 3, posLossOnRateMaj: 3, _frozenOutcomes: { brillant: 0, succes: 0, neutre: 0, rateMin: 100, rateMaj: 0 } }] }];
+          window.CURRENT_EVT_IDX = 0; resolveRaceEvt(0, 0);
+        }
+        const m = document.getElementById("rj47-outcome-modal"); if (m) m.remove();
+        o.rates = capt.length; o.absurdes = capt.filter(x => x.posLoss && (x.posGain || [].concat(x.paceMod || []).some(p => p.deltaSec < 0))).length;
+        // les places perdues le restent au tour suivant
+        let tenu = 0; LIVE_RACE.paused = false;
+        for (let k = 0; k < 20; k++) {
+          LIVE_RACE.drivers.forEach((d, i) => { d.dnf = false; d.penaltySec = 0; d._tPen = 0; d._t = 100 + i * 1; d.pos = i + 1; d._rj81PosLaissee = i + 1; d.score = .5; d._rj81Gele = 0; });
+          const j = LIVE_RACE.drivers[4]; j.score = .55; LIVE_RACE.total = 200; if (!LIVE_RACE._chrono) updateLivePositions(); LIVE_RACE.cur += 2; LIVE_RACE._chrono.tour = LIVE_RACE.cur; LIVE_RACE.drivers.forEach(d => { delete d._lastPitLap; });
+          applyEventOutcome(j, { posLoss: 3, reason: "t" }); const p = j.pos; LIVE_RACE.cur++; updateLivePositions(); if (p === 8 && j.pos >= 7) tenu++; else (o.rate = o.rate || []).push(p + ">" + j.pos);
+        }
+        o.tenu = tenu;
+        navTo("S-contracts", null); G.offers = []; G.currentTeam = "Indépendant"; ctab("offres"); await dormir(900);
+        const v = [...document.querySelectorAll("#S-contracts *")].find(x => !x.children.length && /^Aucune offre/.test(x.textContent));
+        o.vide = v ? getComputedStyle(v).borderTopStyle : "absent";
+        // bilan du mois : jamais dans un événement ni un week-end, une fois sur l'accueil, un seul
+        const av = RJ_ADVANCE_HOOKS.find(x => x.id === "10-finance"), ouvert = () => document.querySelectorAll("#rj-bilan-overlay").length;
+        G.currentTeam = "Williams"; navTo("S-home", "ni-home"); await dormir(200);
+        G.semaine = 5; av.avant(); G.semaine = 7; G.budget += 500; av.apres(); await dormir(1300); o.pasFini = ouvert();
+        av.avant(); G.semaine = 9; G.budget += 500; navTo("S-race", null); av.apres(); await dormir(1300); o.weekend = ouvert();
+        navTo("S-home", "ni-home"); await dormir(2800); o.accueil = ouvert();
+        if (ouvert()) document.getElementById("rj-bilan-overlay").remove(); navTo("S-home", "ni-home"); await dormir(1400); o.deux = ouvert();
+        return o;
+      });
+      const g = r.grille, b = g.basBouton;
+      S.verifier(nom + " : grille complète, animée, sans bandeau, bouton Départ visible", g.n === 20 && g.moi === "4" && g.anime > 0 && !g.bandeau && g.large > 600 && b[0] >= 0 && b[1] >= 0 && b[2] <= g.corps[0] && b[3] <= g.corps[1] && r.partie, JSON.stringify(r));
+      S.verifier(nom + " : un choix raté ne rapporte ni place ni temps", r.rates > 20 && r.absurdes === 0, r.rates + " ratés, " + r.absurdes + " absurdes");
+      S.verifier(nom + " : les places perdues se voient au tour suivant", r.tenu >= 18, r.tenu + "/20 " + (r.rate || []));
+      S.verifier(nom + " : « Aucune offre » dans le cadre gris", r.vide === "dashed", r.vide);
+      S.verifier(nom + " : bilan du mois à l'accueil seulement, une fois", r.pasFini === 0 && r.weekend === 0 && r.accueil === 1 && r.deux === 0, [r.pasFini, r.weekend, r.accueil, r.deux].join());
+      S.verifier(nom + " : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+    } finally { await navigateur.close(); }
+  }
+}
+
+/* v301 : chaque Grand Prix a ses repères, posés à côté de la piste */
+async function suiteReperesGP() {
+  S.suite("Repères des Grands Prix (v301)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await S.repondeurAutomatique(page);
+    const gps = ["Melbourne", "Shanghai", "Kyalami", "Suzuka", "Bahrain", "Jeddah", "Portimao", "Miami", "Imola", "Montréal", "Monaco", "Barcelone", "Spielberg", "Paul Ricard", "Silverstone", "Nürburgring", "Spa", "Budapest", "Zandvoort", "Istanbul", "Monza", "Madrid", "Baku", "Singapore", "Sepang", "Austin", "Mexico", "Sao Paulo", "Las Vegas", "Qatar", "Abu Dhabi"];
+    const r = { vides: [], touche: [], lent: 0 };
+    await page.evaluate(() => { const vrai = RJReperesGP.poser; RJReperesGP.poser = x => { const t = performance.now(), n = vrai(x); x.ms = performance.now() - t; window.__gp = x; return n; }; });
+    for (const nom of [...gps, "GP Monaco Kart"]) {
+      const g = await page.evaluate(async nom => {
+        window.__gp = null; SETTINGS.simSpeed = "normal"; G.cat = /Kart/.test(nom) ? "Karting Junior" : "Formule 1";
+        window.CAL_RACES = []; buildCalendar(); G.semaine = 6; G.seasonOver = false;
+        CAL_RACES.forEach(c => { c.done = c.week < 6; c.result = null; });
+        getNextRace().name = nom; RACE_STATE.circuit = nom; RACE_STATE.circuitData = getCircuitData(nom);
+        RACE_STATE.weather = generateWeather(0); RACE_STATE.qualiPos = 6; G.totalLaps = 20;
+        if (window.LIVE_RACE && LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+        window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null };
+        try { confirmStrategy(); } catch (e) {}
+        if (!LIVE_RACE.total) runRaceLive();
+        navTo("S-race", null); try { rtab("course"); } catch (e) {}
+        for (let i = 0; i < 80 && !(window.__gp && __gp.ctx.nom === nom); i++) await new Promise(x => setTimeout(x, 50));
+        if (LIVE_RACE.interval) clearInterval(LIVE_RACE.interval);
+        const c = window.__gp; if (!c || c.ctx.nom !== nom) return null;
+        return { n: c.pris.length, attendus: RJReperesGP.decorDe(nom).reperes.length, ms: Math.round(c.ms), touche: c.pris.some(q => c.distPiste(q.x, q.y) < q.t + c.DEMI) };
+      }, nom);
+      if (/Kart/.test(nom)) { r.kart = g && g.n; continue; }
+      if (!g || !g.n || g.n < g.attendus) r.vides.push(nom + " " + JSON.stringify(g));
+      if (g) { if (g.touche) r.touche.push(nom); r.lent = Math.max(r.lent, g.ms); }
+    }
+    S.verifier("chaque Grand Prix a tous ses repères", r.vides.length === 0, JSON.stringify(r));
+    S.verifier("aucun repère ne touche la piste", r.touche.length === 0, JSON.stringify(r.touche));
+    S.verifier("le karting de Monaco garde son décor de karting", r.kart === 0, "repères : " + r.kart);
+    S.verifier("pose rapide (< 500 ms)", r.lent < 500, r.lent + " ms");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v300 : retours de course et d'interface (tour, logos, événements, fenêtres, séances, n°1) */
 async function suiteRetours300() {
   S.suite("Retours v300 : course, logos, fenêtres, n°1");
@@ -4830,7 +4963,10 @@ const SUITES = {
   retourscarriere: suiteRetoursCarriere,
   coherence297: suiteCoherence297,
   boutonaction: suiteBoutonAction,
-  retours300: suiteRetours300
+  retours300: suiteRetours300,
+  reperesgp: suiteReperesGP,
+  retours301: suiteRetours301,
+  contacts301: suiteContacts301
 };
 
 async function principal() {

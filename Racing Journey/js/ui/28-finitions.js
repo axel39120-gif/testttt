@@ -134,46 +134,7 @@
  * Option A (wrap), réversible, idempotent, try/catch.
  * ORDRE : après 03 (pushHomeToast).
  * ===========================================================================*/
-(function () {
-  'use strict';
-  var TAG = '[21-ux-fixes]';
-
-  // Écrans sur lesquels aucune notification ne doit apparaître.
-  var SILENT_SCREENS = ['S-create', 'S-agent'];
-
-  function activeScreenId() {
-    try {
-      var s = document.querySelector('.scr.on');
-      return s ? s.id : '';
-    } catch (e) { return ''; }
-  }
-
-  function boot(retries) {
-    if (typeof window === 'undefined') return;
-    if (typeof window.pushHomeToast === 'function' && !window.pushHomeToast._ux21) {
-      var orig = window.pushHomeToast;
-      /* Pas de notification pendant l'accueil de partie. */
-      if (!Array.isArray(window.RJ_TOAST_FILTERS)) window.RJ_TOAST_FILTERS = [];
-      if (!window.RJ_TOAST_FILTERS.some(function (f) { return f && f.id === "28-polish"; })) {
-        window.RJ_TOAST_FILTERS.push({
-          id: "28-polish",
-          filtre: function () {
-            if (SILENT_SCREENS.indexOf(activeScreenId()) >= 0) return false;
-          }
-        });
-      }
-      window.pushHomeToast._ux21 = true;
-      console.log(TAG, 'activé — notifications masquées pendant création/agent');
-      return;
-    }
-    if (retries > 0) { setTimeout(function () { boot(retries - 1); }, 400); return; }
-    console.warn(TAG, 'abandon — pushHomeToast introuvable.');
-  }
-
-  boot(50);
-})();
-
-
+/* Retiré (v301) : les notifications sont gérées par 160-notifications. */
 
 // ===================================================================
 

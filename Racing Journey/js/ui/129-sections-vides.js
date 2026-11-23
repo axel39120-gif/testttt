@@ -51,9 +51,24 @@
     return h < 10 && texte.length < 3;
   }
 
+  /* v301 : un « Aucune offre… » écrit en texte nu par un écran prend le même cadre gris. */
+  function encadrer(ecran) {
+    ecran.querySelectorAll("div, p").forEach(function (e) {
+      if (e.children.length || e.classList.contains("rj-vide") || e.classList.contains("rj-vide-txt") || !e.offsetParent) return;
+      var t = (e.textContent || "").trim();
+      if (t.length > 160 || !/^(Aucune?|Rien|Pas encore|Pas de|Pas d['’])(\s|\S)*\.$/.test(t)) return;
+      for (var x = e, k = 0; x && x !== ecran && k < 3; x = x.parentElement, k++) {   // déjà dans une carte
+        var cs = getComputedStyle(x);
+        if (parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none" || parseFloat(cs.borderLeftWidth) > 1) return;
+      }
+      e.classList.add("rj-vide-txt");
+    });
+  }
+
   function passer() {
     var ecran = document.querySelector(".scr.on");
     if (!ecran) return;
+    encadrer(ecran);
     ecran.querySelectorAll(TITRES).forEach(function (t) {
       if (!t.offsetParent) return;
       var suivant = t.nextElementSibling, deja = suivant && suivant.classList.contains("rj-vide");

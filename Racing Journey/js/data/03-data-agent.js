@@ -9190,8 +9190,6 @@ function go(e) {
   if (_nav) _nav.classList.toggle("show", t.includes(e));
   if (typeof G !== "undefined" && G && G.moreOpen && typeof closeMore === "function") closeMore();
   if (typeof _scrollScreenTop === "function") _scrollScreenTop(e);
-  // Notifications gardées hors de l'accueil (53).
-  if (typeof viderNotificationsEnAttente === "function") viderNotificationsEnAttente();
 }
 
 function _scrollScreenTop(e) {
@@ -15639,64 +15637,9 @@ function sendContactMessage(e, t) {
 }
 
 /* Les filtres RJ_TOAST_FILTERS (86) peuvent taire ou modifier une notification. */
-function pushHomeToast() {
-  var args = [].slice.call(arguments);
-  if (typeof filtrerNotification === "function") args = filtrerNotification(args);
-  if (!args) return;
-  return _pushHomeToastCoeur.apply(this, args);
-}
+/* Notifications : pushHomeToast est défini par le module 160. */
 
-function _pushHomeToastCoeur(label, text, color) {
-  try {
-    color = color || "#60A5FA";
-    label = label || "";
-    text = text || "";
-    var ctn = document.getElementById("rj-toast-container");
-    if (!ctn) {
-      ctn = document.createElement("div");
-      ctn.id = "rj-toast-container";
-      ctn.style.cssText = "position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;z-index:9998;pointer-events:none;display:flex;flex-direction:column;align-items:center;padding:8px 12px 0;gap:6px";
-      document.body.appendChild(ctn);
-    }
-    var t = document.createElement("div");
-    t.className = "rj-toast";
-    t.style.cssText = "pointer-events:auto;display:flex;align-items:flex-start;gap:10px;max-width:380px;width:100%;padding:10px 12px;background:linear-gradient(180deg,var(--bg3,#0e0e12) 0%,var(--bg2,#08080a) 100%);border:1px solid var(--border-hi,rgba(255,255,255,.10));border-left:3px solid " + color + ";border-radius:var(--r);color:var(--text,#e8e8ec);box-shadow:0 6px 22px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.25);transform:translateY(-12px);opacity:0;transition:transform .22s cubic-bezier(.2,.7,.3,1),opacity .22s ease;font-family:var(--font-body,system-ui,sans-serif);cursor:pointer";
-    var dot = document.createElement("div");
-    dot.style.cssText = "flex-shrink:0;width:8px;height:8px;border-radius:50%;background:" + color + ";box-shadow:0 0 8px " + color + ";margin-top:5px";
-    var body = document.createElement("div");
-    body.style.cssText = "flex:1;min-width:0";
-    var lbl = document.createElement("div");
-    lbl.style.cssText = "font-family:var(--font-display,inherit);font-size:10px;font-weight:800;color:" + color + ";letter-spacing:.10em;text-transform:uppercase;line-height:1.2;margin-bottom:2px";
-    lbl.textContent = label;
-    var txt = document.createElement("div");
-    txt.style.cssText = "font-size:12.5px;color:var(--text,#e8e8ec);line-height:1.35";
-    txt.textContent = text;
-    body.appendChild(lbl);
-    body.appendChild(txt);
-    t.appendChild(dot);
-    t.appendChild(body);
-    ctn.appendChild(t);
-    requestAnimationFrame(function() {
-      t.style.transform = "translateY(0)";
-      t.style.opacity = "1"
-    });
-    var killed = false;
 
-    function kill() {
-      if (killed) return;
-      killed = true;
-      t.style.transform = "translateY(-12px)";
-      t.style.opacity = "0";
-      setTimeout(function() {
-        if (t.parentNode) t.parentNode.removeChild(t)
-      }, 240);
-    }
-    t.addEventListener("click", kill);
-    setTimeout(kill, 3500);
-  } catch (e) {
-    console.warn("pushHomeToast:", e)
-  }
-}
 
 function _dismissHomeToast() {
   try {
