@@ -336,7 +336,7 @@
       fils[t.key] = { role: t.role, p: p, exp: t.messages.filter(expirable).map(function (m) { return EXPIRATION - age(m); }).sort()[0] };
     });
     cartes.forEach(function (carte) {
-      var cle = (carte.getAttribute("onclick").match(/openMailThread\('(.*)'\)/) || [])[1];
+      var cle = ((carte.getAttribute("onclick").match(/openMailThread\('(.*)'\)/) || [])[1] || "").replace(/\\'/g, "'");   // apostrophe échappée dans onclick (« Bureau d'études »)
       var f = fils[cle] || { p: "info" };
       carte.setAttribute("data-rj124", f.p);
       carte.classList.add("rj124-carte");

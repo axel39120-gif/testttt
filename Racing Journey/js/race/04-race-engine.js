@@ -21691,7 +21691,7 @@ function renderConstructeurs() {
           d = t + 1,
           p = 1 === d ? "var(--gold)" : 2 === d ? "#9098b0" : 3 === d ? "#c07840" : "var(--muted)",
           u = l ? "var(--red2)" : 1 === d ? "var(--gold)" : 2 === d ? "#9098b0" : 3 === d ? "#c07840" : "var(--line2)",
-          f = e.replace(/'/g, "\'"),
+          f = e.replace(/'/g, "\\'"),
           m = TEAM_LOGOS[e] ? TEAM_LOGOS[e].replace('width="40" height="40"', 'width="22" height="22"') : "";
         s += '<div style="position:relative;padding:11px 14px 12px;border-bottom:1px solid var(--line);' + (l ? "background:var(--red-lo)" : "") + ';cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="showTeamProfileModal(\'' + f + "')\">", l && (s += '<div style="position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--red2)"></div>'), s += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">', s += '<span style="font-family:var(--font-display);font-size:20px;font-weight:900;color:' + p + ';min-width:26px;line-height:1">' + d + "</span>", m && (s += '<span style="display:inline-flex;width:22px;height:22px;overflow:hidden;flex-shrink:0">' + m + "</span>"), s += '<span style="flex:1;font-family:var(--font-display);font-size:14px;font-weight:700;color:' + (l ? "var(--white)" : "var(--text)") + ';letter-spacing:.02em;text-transform:uppercase;line-height:1.1">' + e + "</span>", s += '<span style="font-family:var(--font-display);font-size:22px;font-weight:900;color:' + (l ? "var(--red3)" : "var(--white)") + ';letter-spacing:-.01em;line-height:1">' + a + "</span>", s += '<span style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-left:-4px">PTS</span>', s += "</div>", s += '<div style="height:3px;background:var(--line);overflow:hidden">', s += '<div style="height:100%;width:' + c + "%;background:" + u + ';transition:width .5s ease"></div>', s += "</div>", i.length > 0 && (s += '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-family:var(--font-body)">', i.forEach(function(e) {
           var t = e.me ? "var(--red3)" : "var(--soft)";
@@ -21720,7 +21720,7 @@ function renderTeamPerf() {
             a = Math.max(1, Math.round((n - 55) / 43 * 100)),
             i = r + 1,
             l = G.currentTeam === e,
-            c = e.replace(/'/g, "\'"),
+            c = e.replace(/'/g, "\\'"),
             d = n >= 88 ? "S" : n >= 80 ? "A" : n >= 72 ? "B" : "C",
             p = n >= 88 ? "var(--gold)" : n >= 80 ? "var(--amber)" : n >= 72 ? "var(--soft)" : "var(--muted)",
             u = n >= 88 ? "var(--gold-bg)" : n >= 80 ? "var(--amber-bg)" : n >= 72 ? "rgba(152,152,184,.08)" : "rgba(96,96,122,.08)",

@@ -4603,26 +4603,68 @@ async function suiteRetours300() {
       S.verifier("fenêtres : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
     } finally { await navigateur.close(); }
   }
-  /* Séances : un saut de défilement que le joueur n'a pas fait est annulé. */
-  {
-    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 900, height: 300 } });
+}
+
+/* v303 : un expéditeur avec une apostrophe (« Bureau d'études ») s'ouvre et se supprime */
+async function suiteApostrophe303() {
+  S.suite("Messagerie : expéditeur avec apostrophe (v303)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const r = await page.evaluate(async () => {
+      const dormir = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      G.currentTeam = "Williams";
+      G.mailbox = [{ id: "a", from: "Williams — Bureau d'études", role: "team", subject: "Évolution", body: "Corps du message", week: 1, saison: 1, read: false, deletable: true }];
+      navTo("S-mailbox", null); await dormir(400);
+      const c = document.querySelector('#S-mailbox [onclick^="openMailThread("]'); o.prio = c.getAttribute("data-rj124"); c.click(); await dormir(400);
+      o.ouvert = /études$/.test(_MAIL_OPEN_THREAD || "") && document.getElementById("mailbox-list").classList.contains("rj124-fil");
+      const b = document.querySelector('#mailbox-list [onclick^="_deleteEntireThread("]'); o.bouton = !!b;
+      if (b) { let vu = null; const f = window._deleteEntireThread; window._deleteEntireThread = k => { vu = k; }; b.click(); window._deleteEntireThread = f; o.suppr = vu; }
+      return o;
+    });
+    S.verifier("le message du bureau d'études s'ouvre", r.ouvert, JSON.stringify(r));
+    S.verifier("et se supprime", !r.bouton || /d'études$/.test(r.suppr), JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
+async function suiteDefilement303() {
+  S.suite("Séances : plus de remontée (v303)");
+  for (const vp of [{ width: 852, height: 393 }, { width: 393, height: 852 }]) for (const cat of ["Karting Junior", "Formule 4", "Formule 1"]) {
+    const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: vp, mobile: true });
+    const nom = (vp.width > vp.height ? "paysage" : "portrait") + ", " + cat;
     try {
-      await page.evaluate(() => { navTo("S-race", null); rtab("essais", true);
-        // l'onglet tient souvent dans l'écran : on l'allonge pour qu'il défile
-        const t = document.getElementById("rt-essais"); if (t) { const d = document.createElement("div"); d.style.height = "1400px"; t.appendChild(d); } });
-      await page.waitForTimeout(500);
-      const el = await page.evaluate(() => { const e = [document.getElementById("S-race"), ...document.querySelectorAll("#S-race .scroll")].find(x => x.scrollHeight > x.clientHeight + 100); if (e) e.setAttribute("data-essai", "1"); return !!e; });
-      if (!el) { S.ignorer("séances : l'écran reste où le joueur l'a mis", "rien ne défile sur ce format"); }
-      else {
-        await page.mouse.move(500, 200); await page.mouse.wheel(0, 120); await page.waitForTimeout(300);
-        const avant = await page.evaluate(() => document.querySelector("[data-essai]").scrollTop);
-        await page.waitForTimeout(1200);
-        await page.evaluate(() => { document.querySelector("[data-essai]").scrollTop = 0; });
-        await page.waitForTimeout(300);
-        const apres = await page.evaluate(() => document.querySelector("[data-essai]").scrollTop);
-        S.verifier("séances : l'écran reste où le joueur l'a mis", avant > 40 && Math.abs(apres - avant) < 5, avant + " → " + apres);
+      const clic = re => page.evaluate(re => { const b = [...document.querySelectorAll("#S-race button")].find(x => new RegExp(re, "i").test(x.textContent) && x.getClientRects().length); if (b) b.click(); return !!b; }, re);
+      await page.addStyleTag({ content: "*{overflow-anchor:none!important}" });   // Safari n'a pas d'ancrage de défilement
+      await page.evaluate(cat => {
+        const st = document.documentElement.style; st.setProperty("--sg", "59px"); st.setProperty("--sd", "59px"); st.setProperty("--sb", "21px");
+        SETTINGS.simSpeed = "normal"; G.cat = cat; G.currentTeam = "Indépendant"; initRivals(); window.CAL_RACES = []; buildCalendar();
+        G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine); RACE_WEEKEND_STATE.fpDone = false; navTo("S-race", null);
+      }, cat);
+      await page.waitForTimeout(700); await clic("^\s*continuer"); await page.waitForTimeout(1200);
+      const trop = () => page.evaluate(() => { const e = document.querySelector("#S-race > .scroll"); return e.scrollHeight - e.clientHeight; });
+      const r = { stand: await trop() };
+      const parti = await clic("envoyer en piste"); await page.waitForTimeout(2500); r.piste = await trop();
+      if (cat === "Formule 1") {
+        /* Élan de Safari : doigt levé, l'écran défile encore 2 s pendant que la séance se redessine. */
+        r.elan = await page.evaluate(() => new Promise(fin => {
+          const e = document.querySelector("#S-race > .scroll"), d = document.createElement("div"); d.style.cssText = "height:1500px"; e.appendChild(d);
+          e.scrollTop = 0; dispatchEvent(new Event("touchstart"));
+          const t0 = performance.now(); let voulu = 0, sauts = 0;
+          (function f() {
+            const t = performance.now() - t0; if (e.scrollTop < voulu - 3) sauts++;
+            if (t < 2000) e.scrollTop += 4;
+            voulu = e.scrollTop;
+            if (t < 6000) requestAnimationFrame(f); else { d.remove(); fin({ sauts, y: Math.round(voulu) }); }
+          })();
+        }));
       }
-      S.verifier("séances : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+      await page.evaluate(() => { RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; rtab("qualif", true); startQual(); });
+      await page.waitForTimeout(1200); r.avantQualif = await trop();
+      const lance = await clic("lancer|q1"); await page.waitForTimeout(4000); r.qualif = await trop();
+      S.verifier(nom + " : essais et qualif tiennent dans l'écran", parti && lance && [r.stand, r.piste, r.avantQualif, r.qualif].every(x => x <= 0), JSON.stringify(r));
+      if (r.elan) S.verifier(nom + " : le défilement au doigt n'est jamais tiré vers le haut", r.elan.sauts === 0 && r.elan.y > 100, JSON.stringify(r.elan));
+      S.verifier(nom + " : aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
     } finally { await navigateur.close(); }
   }
 }
@@ -5034,7 +5076,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303
 };
 
 async function principal() {
