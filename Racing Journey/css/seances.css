@@ -113,3 +113,17 @@ div:has(> #fpl-board-body) { padding-bottom: 0 !important; }
 .rja-essais .rja-bornes span:first-child { grid-column: 2; text-align: right; }
 .rja-essais .rja-bornes span:last-child { grid-column: 4; }
 .rja-essais .rja-barre[data-rja-r] { grid-column: 3; grid-row: 1; margin: 0; }
+
+/* --- v303 : téléphone à encoche -----------------------------------------------------
+   Les zones sûres (59 px de chaque côté) ne laissent que ~640 px : à 340 px la colonne,
+   les séances passaient sur une seule, deux fois plus hautes que l'écran, et défilaient. */
+#S-race > .scroll:has(#race-practice-section, #quali-screen) { --colonne: 290px; }
+#race-practice-section:has(#fpl-chrono) > div { margin-bottom: 6px !important; }
+/* Colonne étroite : on retire le nombre de tours et les secteurs des feuilles de temps, les noms restent lisibles. */
+#quali-timing-board, div:has(> #fpl-board-body), .rja-essais { container-type: inline-size; }
+@container (max-width: 335px) {
+  #quali-timing-board > div > span:is(:nth-child(3), :nth-child(5)):nth-last-child(n+3) { display: none !important; }
+  #fpl-board-body > div > div:nth-child(3), div:has(+ #fpl-board-body) > :nth-child(3) { display: none !important; }
+  .rja-essais .rja-r { grid-template-columns: 97px 50px minmax(56px, 1fr) 50px; }
+  .rja-essais .rja-bornes span { white-space: normal; font-size: 8px; line-height: 1; }
+}
