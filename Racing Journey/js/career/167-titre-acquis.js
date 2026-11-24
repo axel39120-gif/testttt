@@ -49,7 +49,7 @@
     var texte = "Titre de " + G.cat + " acquis " + quand + " : " + avance + " point" + (avance > 1 ? "s" : "") + " d'avance sur " + (e.second.moi ? "toi" : e.second.nom) + ".";
     if (typeof pushHomeToast === "function") pushHomeToast(p.moi ? "Titre : tu es champion" : "Titre joué : " + p.nom, texte, "#FACC15");
     var v = document.createElement("div"); v.className = "rj166-voile"; v.id = "rj167";
-    v.innerHTML = '<div class="rj166-carte rj167' + (p.moi ? " moi" : "") + '"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z M7 6H4a3 3 0 0 0 3 4 M17 6h3a3 3 0 0 1-3 4 M12 14v4 M8 20h8"/></svg>' +
+    v.innerHTML = '<div class="rj166-carte rj167' + (p.moi ? " moi" : "") + '"><svg viewBox="0 0 48 48" width="46" height="46" aria-hidden="true"><use href="#ic-trophee"/></svg>' +
       "<em>" + esc(G.cat) + " · Saison " + G.saison + "</em><h2>" + esc(titre) + "</h2>" + (p.equipe ? "<span>" + esc(p.equipe) + "</span>" : "") + "<p>" + esc(texte) + '</p><button type="button">Continuer</button></div>';
     v.addEventListener("click", function (x) { if (x.target.closest("button")) v.remove(); });
     document.body.appendChild(v);

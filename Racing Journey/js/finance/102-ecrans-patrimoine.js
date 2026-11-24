@@ -303,16 +303,8 @@
      qu'on met de côté pour plus tard — ce que sont les projets.
      Tracé au trait, comme les huit autres icônes de l'accueil. */
   var ICONE_PATRIMOINE =
-    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
-    /* Les quatre repères du cadran et la porte intérieure surchargeaient
-       le tracé : à vingt pixels, tout se refermait en une tache. On garde
-       le corps, le cadran, la poignée et les pieds. */
-    '<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/>' +
-    '<circle cx="10" cy="12" r="3.6"/>' +
-    '<path d="M10 9.6v4.8M7.6 12h4.8"/>' +
-    '<path d="M17.5 9.5v5"/>' +
-    '<path d="M5.5 19.5v2M18.5 19.5v2"/></svg>';
+    '<svg viewBox="0 0 48 48" width="20" height="20" ' +
+    'stroke-width="1.7"><use href="#ic-coffre"/></svg>';
 
   function remanierAccueil() {
     var home = document.getElementById("S-home");

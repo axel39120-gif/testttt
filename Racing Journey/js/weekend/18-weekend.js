@@ -383,11 +383,11 @@
       head.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none";
       head.innerHTML =
         '<div style="display:flex;align-items:center;gap:8px">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+        '<svg viewBox="0 0 48 48" color="#22D3EE" width="14" height="14"><use href="#ic-reglages"/></svg>' +
         '<span style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#22D3EE;letter-spacing:.16em;text-transform:uppercase">Réglages voiture</span>' +
         '<span style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.08em">' + params.length + ' param' + (params.length > 1 ? 's' : '') + '</span>' +
         '</div>' +
-        '<svg id="fp-setup-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s ease;transform:rotate(' + (_setupPanelOpen ? '180' : '0') + 'deg)"><polyline points="6 9 12 15 18 9"/></svg>';
+        '<svg viewBox="0 0 48 48" color="var(--muted)" id="fp-setup-chevron" width="16" height="16" style="transition:transform .2s ease;transform:rotate(' + (_setupPanelOpen ? '180' : '0') + 'deg)"><use href="#ic-bas"/></svg>';
       panel.appendChild(head);
 
       // Corps : on réutilise EXACTEMENT le rendu de réglages de l'onglet
@@ -574,7 +574,7 @@
       var pr = (typeof RACE_STATE !== "undefined") ? RACE_STATE.practice : null;
       var playerLap = (pr && typeof _getBestPracticeLap === "function") ? _getBestPracticeLap(pr.tests) : null;
       var baseRef = _fpBaseRef();
-      var K = baseRef * 0.022;         // même échelle que la qualif (qualiDriverTime)
+      var K = baseRef * rjEchelleQualif();         // même échelle que la qualif (qualiDriverTime)
       var noiseAmp = baseRef * 0.004;  // bruit déterministe (~±0.3s en F1)
       var rng = _fpRng(_fpSeed());
       var pScore = _fpPlayerScore();
@@ -834,7 +834,7 @@
        0,1 de niveau vaut 0,22 % du temps au tour. Avant, les essais ignoraient la
        voiture et étiraient l'échelle par cinq : le joueur d'une petite écurie
        dominait les essais puis finissait au fond en qualif. */
-    function rythmeQualif(base, niveau) { return base * (1 - (niveau - 0.75) * 0.022); }
+    function rythmeQualif(base, niveau) { return base * (1 - (niveau - 0.75) * rjEchelleQualif()); }
 
 
 
@@ -1516,7 +1516,7 @@
       if (atelierEssais) c += '<div class="rja rja-essais" style="margin-bottom:10px">' + atelierEssais + "</div>";
       else {
         c += '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.25);border-radius:6px;display:flex;align-items:center;gap:8px">';
-        c += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+        c += '<svg viewBox="0 0 48 48" color="#A78BFA" width="14" height="14"><use href="#ic-reglages"/></svg>';
         c += '<span style="font-size:11px;color:var(--soft);line-height:1.4">Les réglages de la voiture se font dans l\'onglet <b style="color:#A78BFA">Préparation</b>. Le travail en piste affine le retour de l\'ingénieur sur ces réglages.</span>';
         c += '</div>';
       }
@@ -1529,7 +1529,7 @@
       c += '<div style="margin-bottom:8px;display:flex;gap:6px">';
       if (enoughTime) {
         c += '<button id="fpl-send-btn" style="flex:1;min-width:0;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">';
-        c += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21"/></svg>';
+        c += '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-play"/></svg>';
         c += 'Envoyer en piste';
         c += '</button>';
         if (!fige) c += '<button id="fpl-deleguer-btn" style="flex:0 0 92px;background:transparent;border:1px solid var(--line2);color:var(--text2);font-family:var(--font-display);font-size:11px;font-weight:700;border-radius:4px;cursor:pointer">Déléguer</button>';
@@ -1630,7 +1630,7 @@
 
       // Bouton BOX
       c += '<button id="fpl-box-btn" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">';
-      c += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
+      c += '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-stop"/></svg>';
       c += 'Rentrer au stand (Box)';
       c += '</button>';
 
@@ -1869,7 +1869,7 @@
       // Header
       h += '<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">';
       h += '<div style="width:36px;height:36px;background:' + vc + '22;border:1px solid ' + vc + '55;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">';
-      h += '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + vc + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+      h += '<svg viewBox="0 0 48 48" color="' + vc + '" width="18" height="18"><use href="#ic-micro"/></svg>';
       h += '</div>';
       h += '<div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:' + vc + ';letter-spacing:.2em;text-transform:uppercase">Débrief relais — ' + esc(engName) + '</div>';
       h += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px">' + (deb.titre || verdictLabels[deb.verdict]) + '</div></div>';
@@ -1924,7 +1924,7 @@
       var noTime = clockRemaining(pr) <= OUTLAP_MS + FLYLAP_MS + 500;
       h += '<div style="padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px">';
       if (!noTime) {
-        h += '<button id="fpl-debrief-retrack" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21"/></svg>Repartir en piste</button>';
+        h += '<button id="fpl-debrief-retrack" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r)"><svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-play"/></svg>Repartir en piste</button>';
       }
       h += '<button id="fpl-debrief-close" style="width:100%;padding:13px 16px;background:' + (noTime ? 'linear-gradient(135deg,var(--red2) 0%,var(--red) 100%)' : '#13131c') + ';border:' + (noTime ? 'none' : '1px solid var(--line2)') + ';color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:var(--r)">Retour au stand</button>';
       h += '</div>';
@@ -1972,7 +1972,7 @@
         c += '<div data-fpl-bilan style="break-inside:avoid;margin-bottom:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid #22D3EE;font-size:13px;color:var(--white)"><b>' + esc(RJEssais.bilan(circuitBaseRef())) + '</b><div style="margin-top:5px;font-size:11px;color:var(--muted)">' + PROGRAMMES.map(function (p) { return pastille(medaille(p.id)) + ' ' + p.nom; }).join(' &nbsp; ') + '</div></div>';
       }
       c += '<div style="padding:12px 14px;background:var(--green-bg);border:1px solid var(--green);color:var(--green);font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-bottom:10px;border-radius:4px">✓ Essais libres terminés</div>';
-      c += '<button id="fpl-go-qualif" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">Aller en qualif<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>';
+      c += '<button id="fpl-go-qualif" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">Aller en qualif<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-fleche"/></svg></button>';
       sec.innerHTML = c;
       var b2 = sec.querySelector("#fpl-go-qualif");
       if (b2) b2.addEventListener("click", function () { if (typeof goToQualifStep === "function") goToQualifStep(); });
@@ -2847,8 +2847,8 @@
       "-webkit-tap-highlight-color:transparent", "border-radius:var(--r)",
       "display:flex", "align-items:center", "justify-content:center", "gap:8px"
     ].join(";");
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
-      'stroke="currentColor" stroke-width="2.4"><polyline points="9 18 15 12 9 6"/></svg>' +
+    btn.innerHTML = '<svg viewBox="0 0 48 48" width="16" height="16" ' +
+      'stroke="currentColor"><use href="#ic-suivant"/></svg>' +
       'Acc\u00E9der aux qualifs';
 
     btn.addEventListener("click", function () {

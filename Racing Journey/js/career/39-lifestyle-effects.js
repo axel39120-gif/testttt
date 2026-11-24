@@ -86,8 +86,8 @@
     var note = eff.happy >= 65 ? "Ton équilibre de vie te fait récupérer plus vite et soutient ton moral."
       : eff.happy <= 35 ? "Un bonheur trop bas te fatigue et entame ton moral. Soigne ta vie hors-piste."
       : "Maintiens ou élève ton bonheur pour transformer ton style de vie en récupération et en moral.";
-    var bolt = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>';
-    var heart = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
+    var bolt = '<svg viewBox="0 0 48 48"><use href="#ic-eclair"/></svg>';
+    var heart = '<svg viewBox="0 0 48 48"><use href="#ic-coeur"/></svg>';
     return '<div class="rjlife-stripe" style="background:linear-gradient(180deg,' + accent + ',transparent 80%);box-shadow:0 0 16px ' + accent + '66"></div>'
       + '<div class="rjlife-kicker">Effet de ton style de vie</div>'
       + '<div class="rjlife-rows">'
