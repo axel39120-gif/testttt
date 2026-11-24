@@ -30,24 +30,24 @@
   // ========================================================================
 
   var _PS_OBJ_ICONS = {
-    titre: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21-1.15.53-2.03 1.55-2.03 2.79h10c0-1.24-.88-2.26-2.03-2.79-.5-.23-.97-.66-.97-1.21V14.66M18 2v6.36C18 11.32 15.31 14 12 14s-6-2.68-6-5.64V2"/></svg>',
-    victoires: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 21 6 12 16 3 6"/><line x1="3" y1="6" x2="3" y2="20"/><line x1="21" y1="6" x2="21" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/></svg>',
-    podium: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="6" width="6" height="14"/><rect x="2" y="11" width="7" height="9"/><rect x="15" y="9" width="7" height="11"/></svg>',
-    constance: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+    titre: '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-trophee"/></svg>',
+    victoires: '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-trophee"/></svg>',
+    podium: '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-podium"/></svg>',
+    constance: '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-pouls"/></svg>'
   };
 
   var _PS_BUDGET_ICONS = {
-    sim: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-    coach: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11l-1.5 7h-8z"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
-    lifestyle: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
-    savings: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'
+    sim: '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-simu"/></svg>',
+    coach: '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-user"/></svg>',
+    lifestyle: '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-coeur"/></svg>',
+    savings: '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-piece"/></svg>'
   };
 
   var _PS_ANGLE_ICONS = {
-    humble: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    provocateur: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-    technique: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
-    mysterieux: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
+    humble: '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-user"/></svg>',
+    provocateur: '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-eclair"/></svg>',
+    technique: '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-cible"/></svg>',
+    mysterieux: '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-musique"/></svg>'
   };
 
   function _psBudgetMeta() {
@@ -95,7 +95,7 @@
     html += '  <div class="rj-ps-hero-strip"></div>';
     html += '  <div class="rj-ps-hero-grid">';
     html += '    <div class="rj-ps-hero-icon">';
-    html += '      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
+    html += '      <svg viewBox="0 0 48 48" width="28" height="28"><use href="#ic-cible"/></svg>';
     html += '    </div>';
     html += '    <div class="rj-ps-hero-stack">';
     html += '      <div class="rj-ps-hero-kicker">Saison ' + saison + ' · ' + year + '</div>';
@@ -121,7 +121,7 @@
       html += '    <div class="rj-ps-obj-desc">' + _psSafe(o.desc) + '</div>';
       html += '  </div>';
       html += '  <div class="rj-ps-obj-check">';
-      html += '    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      html += '    <svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-coche"/></svg>';
       html += '  </div>';
       html += '</div>';
     });
@@ -185,7 +185,7 @@
     html += '  <button id="ps-validate-btn" class="rj-ps-cta" onclick="_psValidate()">';
     html += '    <span class="rj-ps-cta-label">Valider mon plan</span>';
     html += '    <span class="rj-ps-cta-arrow">';
-    html += '      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    html += '      <svg viewBox="0 0 48 48" width="18" height="18"><use href="#ic-fleche"/></svg>';
     html += '    </span>';
     html += '  </button>';
     html += '</div>';

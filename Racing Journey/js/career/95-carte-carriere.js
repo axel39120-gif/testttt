@@ -585,14 +585,9 @@
   /* Icônes de titre, en SVG : les émojis sont convertis par le module de
      pictogrammes, et le trophée y devenait un cercle vide. */
   var ICONE_PILOTE =
-    '<svg viewBox="0 0 24 24" width="13" height="13" aria-label="Champion pilote">' +
-    '<path fill="#F59E0B" d="M18 4V2H6v2H2v3a5 5 0 0 0 4.6 5A5.5 5.5 0 0 0 11 15.9V18H7v2h10v-2h-4v-2.1' +
-    'A5.5 5.5 0 0 0 17.4 12 5 5 0 0 0 22 7V4zM4 7V6h2v4.8A3 3 0 0 1 4 7m16 0a3 3 0 0 1-2 2.8V6h2z"/></svg>';
+    '<svg viewBox="0 0 48 48" color="#F59E0B" width="13" height="13" aria-label="Champion pilote"><use href="#ic-trophee"/></svg>';
   var ICONE_CONSTRUCTEUR =
-    '<svg viewBox="0 0 24 24" width="13" height="13" aria-label="Champion constructeur">' +
-    '<path fill="#00D4FF" d="M20.8 11.3 19 8.4A2.6 2.6 0 0 0 16.8 7H7.2A2.6 2.6 0 0 0 5 8.4l-1.8 2.9' +
-    'A3 3 0 0 0 2.7 13v3.2c0 .5.4.9.9.9h1.1a2.2 2.2 0 0 0 4.3 0h6a2.2 2.2 0 0 0 4.3 0h1.1c.5 0 .9-.4.9-.9V13' +
-    'a3 3 0 0 0-.5-1.7M6.7 9.4c.1-.2.3-.3.5-.3h9.6c.2 0 .4.1.5.3l1.2 1.9H5.5z"/></svg>';
+    '<svg viewBox="0 0 48 48" color="#00D4FF" width="13" height="13" aria-label="Champion constructeur"><use href="#ic-voiture"/></svg>';
 
   function iconesTitres(s) {
     var h = "";
@@ -605,10 +600,7 @@
      reconnaît d'abord à son blason. Sans logo connu (indépendant, écurie
      hors catalogue), un casque tient lieu de marque. */
   var CASQUE_SVG =
-    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none">' +
-    '<path d="M4 13.5c0-4.4 3.6-8 8-8s8 3.6 8 8v2a1.5 1.5 0 01-1.5 1.5H14L13 19h-2l-1-2H5.5' +
-    'A1.5 1.5 0 014 15.5v-2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' +
-    '<path d="M8 13h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    '<svg viewBox="0 0 48 48" width="15" height="15"><use href="#ic-pilote"/></svg>';
 
   function blasonHTML(equipe) {
     try {

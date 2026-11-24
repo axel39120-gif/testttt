@@ -100,3 +100,8 @@
 /* Bandeau du haut : les infos se redessinent, la cloche reste */
 .rj-hud-infos { display: contents; }
 .rj160-cloche i[hidden] { display: none; }
+
+/* v310 : icônes pleines, grandes dans les carrés du menu */
+svg.ic { flex: none; }
+#S-home > .scroll .apex-actions-grid .apex-action-icon > svg { width: 76% !important; height: 76% !important; max-width: none !important; stroke: none !important; }
+#S-home > .scroll .apex-actions-grid .apex-action-icon .apex-action-badge { top: -8px !important; right: -8px !important; left: auto !important; }

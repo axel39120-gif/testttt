@@ -731,20 +731,24 @@ function getQualiElimCount(e) {
   return Math.max(0, t - r)
 }
 
+/* Part du tour que vaut un point de niveau. En F4, Regional, F3 et F2 les niveaux sont plus
+   serrés : à 0,022 tout le plateau tenait en 0,6 % et le hasard décidait (v310). */
+function rjEchelleQualif() { return /^(Formule [234]|Formula Regional)$/.test(G.cat) ? 0.034 : 0.022; }
 function qualiDriverTime() { return rjAppeler("qualiDriverTime", _qualiDriverTimeCoeur, this, arguments); }
 function _qualiDriverTimeCoeur(e, t, r, n, a) {
   var baseRef = QUALI_STATE.baseRef;
   // Effet du niveau (pilote + voiture) : 0,1 de niveau vaut 0,22 % du temps
   // au tour. Avec 0,055, l'écart du premier au dernier atteignait 4 à 6 %
   // (F1 réelle : 2 à 3 % ; audit du week-end, étape 6).
-  var skillDelta = -(e.skill - 0.75) * 0.022;
+  var skillDelta = -(e.skill - 0.75) * rjEchelleQualif();
   // Consistency variation
-  var i = 0.022 * baseRef;
+  /* v310 : le hasard pesait plus que le niveau (le plus rapide de F3 se qualifiait 10e en moyenne) */
+  var i = 0.013 * baseRef;
   var consVar = (Math.random() - 0.5) * i * (1.0 - e.consistency + 0.20);
   // Session form factor : chaque pilote a une "forme" du jour (-0.4% à +0.4%)
   // Stockée dans e._sessionForm pour rester cohérente sur tous les tours de la session
   if (typeof e._sessionForm !== 'number') {
-    e._sessionForm = (Math.random() - 0.5) * 0.008
+    e._sessionForm = (Math.random() - 0.5) * 0.005
   }
   var formBonus = e._sessionForm * baseRef;
   // Session bonus: Q3 cars are lighter, fresh tyres → marginally faster
@@ -765,7 +769,7 @@ function _qualiDriverTimeCoeur(e, t, r, n, a) {
     if (e.team && typeof _getTeamCircuitAffinity === 'function') {
       var aff = _getTeamCircuitAffinity(e.team, G.cat, QUALI_STATE.circuitName);
       // Impact : -aff * 0.012 du baseRef → environ -0.5s pour aff=+0.5 sur un ref de 84s
-      affinityBonus = -aff * 0.012 * baseRef;
+      affinityBonus = -aff * 0.008 * baseRef;
     }
   } catch (_eAff) {}
   var lap = baseRef * (1 + totalDelta) + consVar + formBonus + affinityBonus;
@@ -796,8 +800,9 @@ function _qualiDriverTimeCoeur(e, t, r, n, a) {
         }
       }
     } catch (_e) {}
+    if (e.bestTime == null) errorRisk *= 0.4; // seul tour chronométré : on assure, une faute y coûtait la dernière place
     if (e.isPlayer && window.RJEssais) errorRisk *= RJEssais.risque(); // v305 : voiture mieux connue, moins de fautes
-    if (Math.random() < errorRisk) lap += 0.018 * baseRef; // mistake costs ~1.8%
+    if (Math.random() < errorRisk) lap += 0.012 * baseRef; // mistake costs ~1.2%
   }
   /* Plancher souple à 96,5 % de la référence : au-delà, l'avance n'est plus
      gardée qu'au quart. Un plancher dur donnait le même temps aux meilleures
@@ -2155,19 +2160,19 @@ function concludeQualiSession(e, t, r) {
 }
 
 function svgArrowRight(e) {
-  return '<svg width="' + (e = e || 16) + '" height="' + e + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:5px"><polyline points="9 18 15 12 9 6"></polyline></svg>'
+  return '<svg viewBox="0 0 48 48" width="' + (e = e || 16) + '" height="' + e + '" style="vertical-align:middle;margin-left:5px"><use href="#ic-suivant"/></svg>'
 }
 
 function svgPlay(e) {
-  return '<svg width="' + (e = e || 16) + '" height="' + e + '" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:5px"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>'
+  return '<svg viewBox="0 0 48 48" width="' + (e = e || 16) + '" height="' + e + '" style="vertical-align:middle;margin-right:5px"><use href="#ic-play"/></svg>'
 }
 
 function svgEye(e) {
-  return '<svg width="' + (e = e || 15) + '" height="' + e + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+  return '<svg viewBox="0 0 48 48" width="' + (e = e || 15) + '" height="' + e + '" style="vertical-align:middle;margin-right:5px"><use href="#ic-oeil"/></svg>'
 }
 
 function svgFlag(e) {
-  return '<svg width="' + (e = e || 15) + '" height="' + e + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>'
+  return '<svg viewBox="0 0 48 48" width="' + (e = e || 15) + '" height="' + e + '" style="vertical-align:middle;margin-right:5px"><use href="#ic-drapeau"/></svg>'
 }
 
 function watchNextQuali(e) {
@@ -11714,7 +11719,7 @@ function renderRivalriesPage() {
         return !e.active
       }),
       a = "";
-    a += '<div style="margin:12px 14px 0;padding:14px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Rivalités</div></div><div style="font-size:12px;color:var(--text2);line-height:1.5">Les rivalités naissent de l\'histoire. Un pilote qui te bat souvent, un accrochage, des duels serrés — chaque rivalité colore la saison et influence tes courses.</div></div>', 0 === r.length ? a += '<div class="t-sec">Aucune rivalité active</div><div style="margin:0 14px 12px;padding:18px 16px;background:var(--surface2);border:1px dashed var(--border);border-radius:var(--r);text-align:center;color:var(--text3);font-size:13px">Les rivalités émergeront avec tes premières courses.</div>' : (a += '<div class="t-sec">Rivalités actives · ' + r.length + "</div>", a += '<div style="margin:0 14px 12px;display:flex;flex-direction:column;gap:10px">', r.forEach(function(e) {
+    a += '<div style="margin:12px 14px 0;padding:14px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg viewBox="0 0 48 48" color="#EF4444" width="16" height="16"><use href="#ic-etoile"/></svg><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Rivalités</div></div><div style="font-size:12px;color:var(--text2);line-height:1.5">Les rivalités naissent de l\'histoire. Un pilote qui te bat souvent, un accrochage, des duels serrés — chaque rivalité colore la saison et influence tes courses.</div></div>', 0 === r.length ? a += '<div class="t-sec">Aucune rivalité active</div><div style="margin:0 14px 12px;padding:18px 16px;background:var(--surface2);border:1px dashed var(--border);border-radius:var(--r);text-align:center;color:var(--text3);font-size:13px">Les rivalités émergeront avec tes premières courses.</div>' : (a += '<div class="t-sec">Rivalités actives · ' + r.length + "</div>", a += '<div style="margin:0 14px 12px;display:flex;flex-direction:column;gap:10px">', r.forEach(function(e) {
       a += _renderRivalryCard(e, !0)
     }), a += "</div>"), n.length > 0 && (a += '<div class="t-sec">Apaisées · ' + n.length + "</div>", a += '<div style="margin:0 14px 12px;display:flex;flex-direction:column;gap:8px;opacity:.7">', n.slice(0, 5).forEach(function(e) {
       a += _renderRivalryCard(e, !1)
@@ -12191,7 +12196,7 @@ function renderRaceObjective() {
     var lbl = pressLabels[obj.pressureLvl];
     var html = '<div style="background:linear-gradient(135deg,' + col + '14 0%,' + col + '06 100%);border:1px solid ' + col + '40;border-left:3px solid ' + col + ';border-radius:0 10px 10px 0;padding:12px 14px">';
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">';
-    html += '<div style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--r);background:' + col + '24;color:' + col + ';flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + col + ';letter-spacing:.14em;text-transform:uppercase">Objectif course</span></div>';
+    html += '<div style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--r);background:' + col + '24;color:' + col + ';flex-shrink:0"><svg viewBox="0 0 48 48" width="15" height="15"><use href="#ic-cible"/></svg></span><span style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + col + ';letter-spacing:.14em;text-transform:uppercase">Objectif course</span></div>';
     html += '<span style="font-family:var(--font-display);font-size:9.5px;font-weight:700;color:' + col + ';background:' + col + '14;border:1px solid ' + col + '40;padding:2px 8px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase">' + lbl + '</span>';
     html += '</div>';
     html += '<div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Vise <span style="color:' + col + '">P' + obj.suggestedPos + '</span> ou mieux</div>';
@@ -15715,7 +15720,7 @@ function _renderLiveLeaderboardCoeur() {
   if (!e) return;
   var a = LIVE_RACE.total > 0 ? LIVE_RACE.cur / LIVE_RACE.total : 0;
   t && (t.style.width = Math.round(100 * a) + "%");
-  var _pauseIcon = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style="vertical-align:-1px;margin-right:4px"><rect x="1.5" y="1.5" width="2.2" height="7" rx="0.6"/><rect x="6.3" y="1.5" width="2.2" height="7" rx="0.6"/></svg>';
+  var _pauseIcon = '<svg viewBox="0 0 48 48" width="10" height="10" style="vertical-align:-1px;margin-right:4px"><use href="#ic-pause"/></svg>';
   r && (r.innerHTML = (LIVE_RACE.paused ? _pauseIcon + "Évènement — " : "") + (LIVE_RACE._isSprintMode ? '<span style="display:inline-block;padding:1px 5px;margin-right:6px;background:#F59E0B;color:#0a0510;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:.06em">' + renderIcon('zap', 14, '#F59E0B') + ' SPRINT</span>' : "") + (PHASE_LABELS[LIVE_RACE.phase] || ""));
   n && (n.textContent = "Tour " + LIVE_RACE.cur + " / " + LIVE_RACE.total);
 
@@ -15891,7 +15896,7 @@ function _renderLiveLeaderboardCoeur() {
         bg: "rgba(245,158,11,0.13)",
         border: "rgba(245,158,11,0.40)",
         accent: "#F59E0B",
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        icon: '<svg viewBox="0 0 48 48" color="#F59E0B" width="14" height="14"><use href="#ic-alerte"/></svg>',
         label: "VIRTUAL SAFETY CAR",
         desc: "Tous ralentissent · Pit avantageux"
       },
@@ -15899,7 +15904,7 @@ function _renderLiveLeaderboardCoeur() {
         bg: "rgba(245,158,11,0.18)",
         border: "rgba(245,158,11,0.55)",
         accent: "#F59E0B",
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+        icon: '<svg viewBox="0 0 48 48" color="#F59E0B" width="14" height="14"><use href="#ic-safety_car"/></svg>',
         label: "SAFETY CAR",
         desc: "Regroupement · Pit quasi gratuit"
       },
@@ -15907,7 +15912,7 @@ function _renderLiveLeaderboardCoeur() {
         bg: "rgba(239,68,68,0.16)",
         border: "rgba(239,68,68,0.55)",
         accent: "#EF4444",
-        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="#EF4444"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
+        icon: '<svg viewBox="0 0 48 48" color="#EF4444" width="14" height="14"><use href="#ic-alerte_rond"/></svg>',
         label: "DRAPEAU ROUGE",
         desc: "Course suspendue · Pit gratuit"
       }
@@ -15949,7 +15954,7 @@ function _renderLiveLeaderboardCoeur() {
     var _wx_color = _wx_worse ? "var(--blue,#3B82F6)" : "var(--amber,#F59E0B)";
     var _wx_bg = _wx_worse ? "rgba(59,130,246,0.14)" : "rgba(245,158,11,0.13)";
     var _wx_border = _wx_worse ? "rgba(59,130,246,0.45)" : "rgba(245,158,11,0.40)";
-    var _wx_icon = _wx_worse ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>';
+    var _wx_icon = _wx_worse ? '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-pluie"/></svg>' : '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-soleil"/></svg>';
     _wxBanner = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;background:' + _wx_bg + ';border-bottom:1.5px solid ' + _wx_border + '">' + '<div style="display:flex;align-items:center;gap:7px">' + '<span style="color:' + _wx_color + ';display:inline-flex;align-items:center">' + _wx_icon + '</span>' + '<div><div style="font-family:var(--font-display);font-size:11px;font-weight:800;color:' + _wx_color + ';letter-spacing:.06em">' + (_wx_worse ? "CHANGEMENT MÉTÉO — PLUIE" : "CHANGEMENT MÉTÉO — SÉCHAGE") + '</div>' + '<div style="font-size:9px;color:' + _wx_color + ';opacity:.75;margin-top:1px">' + _pwc.toLabel + ' imminent' + '</div></div></div>' + '<div style="font-size:10px;font-weight:700;color:' + _wx_color + '">Décision ?</div>' + '</div>';
   } else if (LIVE_RACE._weatherChanged && (LIVE_RACE._weatherChangeTour || 0) === 0) {
     LIVE_RACE._weatherChangeTour = LIVE_RACE.cur;
@@ -16846,7 +16851,7 @@ function showWeekendRecap() {
     var card = document.createElement("div");
     card.id = "rj-recap-card";
     card.style.cssText = "max-width:380px;width:100%;background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.7);max-height:90vh;overflow-y:auto;animation:apex-modal-slide-in .3s cubic-bezier(.2,.7,.3,1)";
-    card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--red3);letter-spacing:.18em;text-transform:uppercase">Récap week-end</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px;line-height:1.1">' + (G.cat || "Course") + '</div></div><div style="display:flex;gap:6px"><button onclick="exportRecapAsImage(event)" title="Partager / Exporter" style="background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.30);color:#22D3EE;font-size:14px;cursor:pointer;width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button><button onclick="closeWeekendRecap()" style="background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px">×</button></div></div>' + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px"><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">QUALI</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">P' + quali + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid ' + pCol + '40;border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:' + pCol + ';letter-spacing:.12em">FINAL</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + pCol + ';margin-top:2px">' + (typeof finalPos === "number" ? "P" + finalPos : finalPos) + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">DELTA</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + deltaColor + ';margin-top:2px">' + deltaStr + '</div></div></div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px">Évolution position par tour</div>' + svg + '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:6px;font-family:monospace"><span>Tour 1</span><span>Tour ' + totalLaps + '</span></div>' + legendHtml + (bestPos !== null ? '<div style="display:flex;gap:10px;margin-top:10px"><div style="flex:1;padding:8px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#34D399;letter-spacing:.12em">MEILLEURE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#34D399;margin-top:2px">P' + bestPos + '</div></div><div style="flex:1;padding:8px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.20);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#EF4444;letter-spacing:.12em">PIRE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#EF4444;margin-top:2px">P' + worstPos + '</div></div></div>' : "") + advancedStatsHtml + (bestSecsHtml ? '<div style="margin-top:12px"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px">Meilleurs secteurs</div>' + bestSecsHtml + '</div>' : "") + keyEvents + '<button onclick="closeWeekendRecap()" style="display:block;width:100%;margin-top:14px;padding:12px;background:var(--red2);border:none;border-radius:var(--r);color:#fff;font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Fermer</button>';
+    card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--red3);letter-spacing:.18em;text-transform:uppercase">Récap week-end</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px;line-height:1.1">' + (G.cat || "Course") + '</div></div><div style="display:flex;gap:6px"><button onclick="exportRecapAsImage(event)" title="Partager / Exporter" style="background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.30);color:#22D3EE;font-size:14px;cursor:pointer;width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-partager"/></svg></button><button onclick="closeWeekendRecap()" style="background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px">×</button></div></div>' + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px"><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">QUALI</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-top:2px">P' + quali + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid ' + pCol + '40;border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:' + pCol + ';letter-spacing:.12em">FINAL</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + pCol + ';margin-top:2px">' + (typeof finalPos === "number" ? "P" + finalPos : finalPos) + '</div></div><div style="padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.12em">DELTA</div><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:' + deltaColor + ';margin-top:2px">' + deltaStr + '</div></div></div>' + '<div style="font-family:var(--font-display);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px">Évolution position par tour</div>' + svg + '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:6px;font-family:monospace"><span>Tour 1</span><span>Tour ' + totalLaps + '</span></div>' + legendHtml + (bestPos !== null ? '<div style="display:flex;gap:10px;margin-top:10px"><div style="flex:1;padding:8px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#34D399;letter-spacing:.12em">MEILLEURE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#34D399;margin-top:2px">P' + bestPos + '</div></div><div style="flex:1;padding:8px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.20);border-radius:var(--r);text-align:center"><div style="font-family:var(--font-display);font-size:9px;color:#EF4444;letter-spacing:.12em">PIRE</div><div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:#EF4444;margin-top:2px">P' + worstPos + '</div></div></div>' : "") + advancedStatsHtml + (bestSecsHtml ? '<div style="margin-top:12px"><div style="font-family:var(--font-display);font-size:9px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px">Meilleurs secteurs</div>' + bestSecsHtml + '</div>' : "") + keyEvents + '<button onclick="closeWeekendRecap()" style="display:block;width:100%;margin-top:14px;padding:12px;background:var(--red2);border:none;border-radius:var(--r);color:#fff;font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Fermer</button>';
     ov.appendChild(card);
     ov.addEventListener("click", function(e) {
       if (e.target === ov) closeWeekendRecap()
@@ -16879,7 +16884,7 @@ function exportRecapAsImage(ev) {
 
   function setBtnSuccess() {
     if (!btn) return;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    btn.innerHTML = '<svg viewBox="0 0 48 48" color="#34D399" width="16" height="16"><use href="#ic-coche"/></svg>';
     btn.style.borderColor = "rgba(52,211,153,0.4)";
     setTimeout(function() {
       if (btn) {
@@ -16891,7 +16896,7 @@ function exportRecapAsImage(ev) {
 
   function setBtnError() {
     if (!btn) return;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    btn.innerHTML = '<svg viewBox="0 0 48 48" color="#EF4444" width="16" height="16"><use href="#ic-croix"/></svg>';
     btn.style.borderColor = "rgba(239,68,68,0.4)";
     setTimeout(function() {
       if (btn) {
@@ -18123,7 +18128,7 @@ function buildResultScreen(e, t, r, n, a) {
           if (lapHist.length >= 2) {
             var btn = document.createElement("button");
             btn.style.cssText = "display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:0 14px 10px;padding:10px 12px;background:linear-gradient(135deg,rgba(96,165,250,0.12) 0%,rgba(168,85,247,0.10) 100%);border:1px solid rgba(96,165,250,0.30);border-radius:var(--r);color:var(--text);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:transform .12s,border-color .15s";
-            btn.innerHTML = '<span style="display:inline-flex;width:34px;height:34px;border-radius:var(--r);background:rgba(96,165,250,0.18);border:1px solid rgba(96,165,250,0.35);color:#60A5FA;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.2"><span style="display:inline-flex;vertical-align:-2px;margin-right:6px;color:#60A5FA"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Voir le récap visuel</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Évolution position, secteurs, moments-clés</div></div><span style="color:var(--text3);font-size:18px;flex-shrink:0">›</span>';
+            btn.innerHTML = '<span style="display:inline-flex;width:34px;height:34px;border-radius:var(--r);background:rgba(96,165,250,0.18);border:1px solid rgba(96,165,250,0.35);color:#60A5FA;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.2"><span style="display:inline-flex;vertical-align:-2px;margin-right:6px;color:#60A5FA"><svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-donnees"/></svg></span>Voir le récap visuel</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Évolution position, secteurs, moments-clés</div></div><span style="color:var(--text3);font-size:18px;flex-shrink:0">›</span>';
             btn.addEventListener("click", function() {
               if (typeof showWeekendRecap === "function") showWeekendRecap()
             });
@@ -18981,7 +18986,7 @@ function _showSeasonEndCoeur() {
   if (v) {
     var x = document.getElementById("se-hero");
     if (x) {
-      var y, b = '<div style="font-size:56px">' + (y = 1 === t ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 21h8m-4-4v4M5 3H2l3 9a4 4 0 008 0l3-9h-3"/><path d="M19 3h3l-3 9"/></svg>' : t <= 3 ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="10" r="6"/><path d="M9 17l-3 4h12l-3-4"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 15V5l4 4 4-4 4 4 4-4v10"/><line x1="4" y1="19" x2="4" y2="15"/></svg>') + "</div>";
+      var y, b = '<div style="font-size:56px">' + (y = 1 === t ? '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-trophee"/></svg>' : t <= 3 ? '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-medaille"/></svg>' : '<svg viewBox="0 0 48 48" width="20" height="20"><use href="#ic-couronne"/></svg>') + "</div>";
       b += '<div style="font-size:22px;font-weight:800;color:var(--text);margin:8px 0 4px">' + (1 === t ? "Champion !" : t <= 3 ? "Podium au championnat" : "Saison terminée") + "</div>", b += '<div style="font-size:14px;color:var(--text3)">P' + t + " — " + G.champPts + " pts</div>", n && (b += '<div style="display:inline-flex;align-items:center;gap:5px;background:#1a1100;border:1px solid #F59E0B;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:#F59E0B;margin-top:6px">Champion Constructeur · ' + (r ? r.team : "") + "</div>"), x.innerHTML = b
     }
     var A = document.getElementById("se-stats");
@@ -19091,7 +19096,7 @@ function renderPathsVisual() {
         s += '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--border)"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:rgba(245,158,11,0.12)">' + ("JP" === t.icon || "US" === t.icon ? flagSvg(t.icon, 22) : renderIcon("chrono", 18, "#F59E0B")) + '</span><div><div style="font-size:13px;font-weight:600;color:var(--text)">' + e + '</div><div style="font-size:11px;color:var(--text3)">' + t.desc + '</div></div><span class="badge b-gold" style="margin-left:auto;font-size:10px">Alt</span></div>'
       }), a.forEach(function(e) {
         var t = e.minAge - r;
-        s += '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--border);opacity:.55"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:rgba(156,163,175,0.10)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><div><div style="font-size:13px;font-weight:600;color:var(--text2)">' + e.cat + '</div><div style="font-size:11px;color:#EF4444">Âge requis : ' + e.minAge + " ans (dans " + t + " saison" + (t > 1 ? "s" : "") + ')</div></div><span class="badge b-red" style="margin-left:auto;font-size:10px">Trop jeune</span></div>'
+        s += '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--border);opacity:.55"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:rgba(156,163,175,0.10)"><svg viewBox="0 0 48 48" color="#9CA3AF" width="16" height="16"><use href="#ic-cadenas"/></svg></span><div><div style="font-size:13px;font-weight:600;color:var(--text2)">' + e.cat + '</div><div style="font-size:11px;color:#EF4444">Âge requis : ' + e.minAge + " ans (dans " + t + " saison" + (t > 1 ? "s" : "") + ')</div></div><span class="badge b-red" style="margin-left:auto;font-size:10px">Trop jeune</span></div>'
       }), e.innerHTML = s
     } else e.style.display = "none"
   }
@@ -19756,7 +19761,7 @@ function renderSaveSlots() {
         }) : "";
       a.style.cssText = "border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;background:var(--surface2);overflow:hidden";
       var d = document.createElement("div");
-      d.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px 14px", d.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0;color:var(--text3)"><path d="M4 15V5l4 4 4-4 4 4 4-4v10"/><line x1="4" y1="19" x2="4" y2="15"/></svg><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + l + '</div><div style="font-size:11px;color:var(--text3)">S' + (n.saison || 1) + " · " + (n.cat || "Karting") + (c ? " · " + c : "") + "</div></div>";
+      d.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px 14px", d.innerHTML = '<svg viewBox="0 0 48 48" width="18" height="18" style="flex-shrink:0;color:var(--text3)"><use href="#ic-couronne"/></svg><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + l + '</div><div style="font-size:11px;color:var(--text3)">S' + (n.saison || 1) + " · " + (n.cat || "Karting") + (c ? " · " + c : "") + "</div></div>";
       var p = document.createElement("button");
       p.textContent = "Jouer", p.style.cssText = "padding:6px 10px;background:var(--red);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0";
       var u = document.createElement("button");

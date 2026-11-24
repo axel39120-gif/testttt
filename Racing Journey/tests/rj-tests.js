@@ -3949,9 +3949,9 @@ async function suiteCoherenceEssais() {
     const el = await page.evaluate(() => {
       const pr = RACE_STATE.practice, N = window._rjNiveauEssais;
       const base = getCircuitBaseRef(RACE_STATE.circuit, G.cat);
-      const attendu = base * (1 - (N.joueur() - 0.75) * 0.022) * (1 + window._rj76Delta());
+      const attendu = base * (1 - (N.joueur() - 0.75) * rjEchelleQualif()) * (1 + window._rj76Delta());
       const meilleur = Math.min(...(pr.tests || []).map(t => t.lapTime).filter(x => x > 0));
-      const ecarts = pr._live.field.map(f => f.target - base * (1 - (N.rival(G.rivals.find(r => (r.name || r.nom) === f.name)) - 0.75) * 0.022));
+      const ecarts = pr._live.field.map(f => f.target - base * (1 - (N.rival(G.rivals.find(r => (r.name || r.nom) === f.name)) - 0.75) * rjEchelleQualif()));
       return { attendu: +attendu.toFixed(3), meilleur: +meilleur.toFixed(3), relatif: +((meilleur / attendu - 1) * 100).toFixed(2), bruitRivauxMax: +Math.max(...ecarts.map(Math.abs)).toFixed(3), base };
     });
     S.verifier("meilleur tour d'essais à moins de 0,8 % du rythme de qualif", Math.abs(el.relatif) < 0.8, JSON.stringify(el));
@@ -4842,6 +4842,62 @@ async function suiteCloche309() {
   } finally { await navigateur.close(); }
 }
 
+/* v310 : un seul catalogue d'icônes, grandes dans le menu */
+async function suiteIcones310() {
+  S.suite("Icônes (v310)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const r = await page.evaluate(async () => {
+      const dors = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      o.alias = Object.keys(RJIcones.alias).filter(a => !RJIcones.noms.includes(RJIcones.alias[a])); o.vides = RJIcones.noms.filter(n => !document.getElementById("ic-" + n) || document.querySelector("#ic-" + n).getBBox === undefined);
+      o.nan = document.getElementById("rj169").innerHTML.includes("NaN") || document.getElementById("rj169").innerHTML.includes("undefined");
+      o.rendu = /#ic-trophee/.test(renderIcon("trophy", 20, "#f00")) && /color:#f00/.test(renderIcon("trophy", 20, "#f00")) && /width="20"/.test(renderIcon("trophy", 20)) && /#ic-rond/.test(renderIcon("inconnu"));
+      o.casses = new Set();
+      for (const e of ["S-home", "S-pilot", "S-training", "S-contracts", "S-media", "S-lifestyle", "S-sponsors", "S-mailbox", "S-patrimoine", "S-settings", "S-champ", "S-achievements", "S-pantheon", "S-race"]) { navTo(e, null); await dors(250); document.querySelectorAll("svg use").forEach(u => { if (!document.querySelector(u.getAttribute("href"))) o.casses.add(u.getAttribute("href")); }); }
+      o.casses = [...o.casses]; navTo("S-home", null); await dors(400);
+      o.menu = [...document.querySelectorAll("#S-home .apex-action-icon > svg")].filter(x => x.getClientRects().length).map(x => Math.round(x.getBoundingClientRect().width));
+      const b = document.querySelector("#S-home .apex-action-icon .apex-action-badge"); o.n = o.menu.length; return o;
+    });
+    S.verifier("tous les noms mènent à un dessin du catalogue", !r.alias.length && !r.vides.length && !r.nan && r.rendu, JSON.stringify(r));
+    S.verifier("aucune icône cassée sur quatorze écrans", !r.casses.length, r.casses.join());
+    S.verifier("les neuf icônes du menu sont grandes dans leur carré", r.n >= 9 && r.menu.every(x => x >= 30), JSON.stringify(r.menu));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* v310 : drapeaux de tous les circuits, essais neufs à chaque course, qualif qui suit le niveau */
+async function suiteRetours310() {
+  S.suite("Retours v310");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const d = await page.evaluate(async () => {
+      const sans = new Set(), vus = new Set();
+      for (const cat of CATEGORIES) for (let s = 1; s <= 4; s++) { G.cat = cat; G.saison = s; initRivals(); window.CAL_RACES = []; buildCalendar();
+        for (const c of CAL_RACES) { if (vus.has(c.name)) continue; vus.add(c.name); CAL_RACES.forEach(x => x.done = x.week < c.week); G.semaine = c.week; initRaceState(); navTo("S-race", null); await new Promise(r => setTimeout(r, 90)); const f = document.getElementById("rj-race-flag-wrap"); if (!f || f.style.display === "none" || !f.querySelector("svg")) sans.add(c.name); } }
+      return { n: vus.size, sans: [...sans] };
+    });
+    S.verifier("chaque circuit a son drapeau dans l'en-tête du week-end", d.n > 60 && !d.sans.length, JSON.stringify(d));
+    const e = await page.evaluate(() => {
+      const o = {}; G.saison = 2; G.cat = "Formule 1"; G.currentTeam = "Williams"; initRivals(); window.CAL_RACES = []; buildCalendar(); const aller = k => { CAL_RACES.forEach((x, i) => x.done = i < k); G.semaine = CAL_RACES[k].week; initRaceState(); };
+      RACE_STATE.practice = null; aller(1); navTo("S-race", null); rtab("essais", true); renderPracticeSection();
+      for (let k = 0; k < 3; k++) { const b = document.getElementById("fpl-deleguer-btn"); if (b) b.click(); } o.faites = RACE_STATE.practice.sessionsCompleted; Object.keys(G.setupAdv).forEach(k => G.setupAdv[k] = 9);
+      initRaceState(); o.memeCourse = RACE_STATE.practice.sessionsCompleted;
+      aller(2); const p = RACE_STATE.practice, depart = getCircuitStartPreset(); o.seances = p.sessionsCompleted; o.circuit = p._circuit === RACE_STATE.circuit; o.reglages = getAvailableSetupParams(G.cat).every(k => depart[k] === undefined || G.setupAdv[k] === depart[k]); o.connaissance = p.carKnowledge === undefined; return o;
+    });
+    S.verifier("après trois séances déléguées, la course suivante repart de zéro (séances et réglages)", e.faites === 3 && e.memeCourse === 3 && e.seances === 0 && e.circuit && e.reglages && e.connaissance, JSON.stringify(e));
+    const q = await page.evaluate(() => {
+      const o = {};
+      for (const [cat, team] of [["Formule 4", "Prema"], ["Formule 3", "Trident"], ["Formule 1", "Williams"]]) { G.cat = cat; G.currentTeam = team; initRivals(); window.CAL_RACES = []; buildCalendar(); let r = 0, a = 0; const N = 80;
+        for (let k = 0; k < N; k++) { G.semaine = CAL_RACES[k % CAL_RACES.length].week + 60 * Math.floor(k / CAL_RACES.length); G._essais = null; G._startQualInProgress = false; RACE_WEEKEND_STATE.fpDone = true; initRaceState(); RJEssais.noter("rapide", 2); RJEssais.connaitre(60); _startQualCoeur();
+          const D = QUALI_STATE.drivers, t = D.map(x => { delete x._sessionForm; x.bestTime = null; const T = Math.random() < .45 ? 3 : 2; let m = 1e9; for (let n = 2; n <= T; n++, x.bestTime = m) m = Math.min(m, qualiDriverTime(x, 1, n, T, n / T)); return m; }), i = D.findIndex(x => x.isPlayer);
+          r += t.filter(x => x < t[i]).length + 1; a += D.filter(x => x.skill > D[i].skill).length + 1; }
+        o[cat] = [+(r / N).toFixed(1), +(a / N).toFixed(1)]; } return o;
+    });
+    S.verifier("en qualif, le rang moyen d'un joueur préparé reste près de son niveau", Object.values(q).every(x => Math.abs(x[0] - x[1]) < 4), JSON.stringify(q));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5291,7 +5347,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310
 };
 
 async function principal() {

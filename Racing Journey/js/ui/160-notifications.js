@@ -48,9 +48,9 @@
   var CIBLES = [[/message|messagerie/i, "S-mailbox"], [/sponsor/i, "S-sponsors"], [/offre|baquet|contrat|a signé|transfert|saison blanche/i, "S-contracts"],
     [/budget|prime|patrimoine/i, "S-patrimoine"], [/super licence|spécialité|casque|identité|rêve|troph/i, "S-pilot"], [/rivalité|titre|règlement/i, "S-champ"], [/abonnés|moment marquant/i, "S-media"], [/rupture/i, "S-lifestyle"]];
   function cibleDe(t) { for (var i = 0; i < CIBLES.length; i++) if (CIBLES[i][0].test(t)) return document.getElementById(CIBLES[i][1]) ? CIBLES[i][1] : null; return null; }
-  var ICONES = { "S-mailbox": "M3 6h18v12H3z M3 7l9 6 9-6", "S-sponsors": "M12 2l8 4v6c0 5-3.5 8-8 10-4.500-2-8-5-8-10V6z", "S-contracts": "M6 2h9l4 4v16H6z M9 12h7 M9 16h7", "S-pilot": "M12 3a8 8 0 0 0-8 8v6h16v-6a8 8 0 0 0-8-8z M4 13h9l7 1", "S-champ": "M7 4h10v5a5 5 0 0 1-10 0z M12 14v5 M8 20h8" };
-  var CLOCHE = "M6 17V11a6 6 0 0 1 12 0v6l2 2H4z M10 21h4";
-  function icone(d) { return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>'; }
+  var ICONES = { "S-mailbox": "message", "S-sponsors": "sponsor", "S-contracts": "contrat", "S-pilot": "pilote", "S-champ": "trophee" };
+  var CLOCHE = "cloche";
+  function icone(nom) { return RJIcones.svg(nom, 16); }
 
   function retenir(n) {
     if (n.court) return;

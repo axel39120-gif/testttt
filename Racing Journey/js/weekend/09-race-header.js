@@ -55,6 +55,25 @@
     'gp cote azur':      { country: 'France',        code: 'FR' },
 
     // ─── Karting Senior ─────────────────────────────────────────────────────
+    // v310 : pistes de karting sans drapeau
+    'angerville': { country: 'France', code: 'FR' },
+    'salbris': { country: 'France', code: 'FR' },
+    'val dargenton': { country: 'France', code: 'FR' },
+    'laval': { country: 'France', code: 'FR' },
+    'varennes': { country: 'France', code: 'FR' },
+    'lavelanet': { country: 'France', code: 'FR' },
+    'ostricourt': { country: 'France', code: 'FR' },
+    'aunay-les-bois': { country: 'France', code: 'FR' },
+    'gp valence': { country: 'France', code: 'FR' },
+    'zuera': { country: 'Espagne', code: 'ES' },
+    'lonato': { country: 'Italie', code: 'IT' },
+    'franciacorta': { country: 'Italie', code: 'IT' },
+    'adria': { country: 'Italie', code: 'IT' },
+    'sarno': { country: 'Italie', code: 'IT' },
+    'genk': { country: 'Belgique', code: 'BE' },
+    'wackersdorf': { country: 'Allemagne', code: 'DE' },
+    'kristianstad': { country: 'Suède', code: 'SE' },
+    'milwaukee': { country: 'États-Unis', code: 'US' },
     'gp monaco kart':       { country: 'Monaco',       code: 'MC' },
     'gp lyon':              { country: 'France',       code: 'FR' },
     'gp valencia':          { country: 'Espagne',      code: 'ES' },
@@ -222,6 +241,7 @@
     }
     return { country: '', code: '' };
   }
+  if (typeof FLAGS !== 'undefined' && FLAGS && !FLAGS.MO) FLAGS.MO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><rect width="30" height="20" fill="#067662"/><path d="M15 6c2 2 2 4 0 6-2-2-2-4 0-6zM10 8c2 0 4 1 4.500 4-3 0-4.500-1-4.500-4zM20 8c-2 0-4 1-4.500 4 3 0 4.500-1 4.500-4z" fill="#fff"/><path d="M10 14h10" stroke="#fff"/><circle cx="15" cy="3.500" r="1" fill="#FBD116"/></svg>';
 
   // ========================================================================
   // CSS — drapeau à gauche dans le .hdr de S-race

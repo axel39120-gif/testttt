@@ -8236,7 +8236,7 @@ function showConfirmDialog(opts) {
   card.style.cssText = "background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid " + (danger ? "rgba(232,16,48,0.5)" : "var(--border-hi)") + ";border-radius:var(--r);max-width:380px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04)" + (danger ? ",0 0 32px rgba(232,16,48,0.15)" : "") + ";overflow:hidden;animation:apex-modal-slide-in .22s cubic-bezier(.2,.7,.3,1)";
   var headerBg = danger ? "linear-gradient(180deg,rgba(232,16,48,0.12) 0%,rgba(232,16,48,0.04) 100%)" : "linear-gradient(180deg,var(--surface2) 0%,var(--bg2) 100%)";
   var iconColor = danger ? "#EF4444" : "var(--text2)";
-  var icon = danger ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  var icon = danger ? '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-alerte"/></svg>' : '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-info"/></svg>';
   var safe = typeof _ppEscSafe === "function" ? _ppEscSafe : function(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
   };
@@ -8494,19 +8494,19 @@ function showAlertDialog(opts) {
     iconBg = "rgba(245,158,11,0.15)";
     iconBorder = "rgba(245,158,11,0.3)";
     iconColor = "#F59E0B";
-    icon = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+    icon = '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-alerte"/></svg>'
   } else if (variant === "error") {
     headerBg = "linear-gradient(180deg,rgba(232,16,48,0.12) 0%,rgba(232,16,48,0.04) 100%)";
     iconBg = "rgba(232,16,48,0.15)";
     iconBorder = "rgba(232,16,48,0.3)";
     iconColor = "#EF4444";
-    icon = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+    icon = '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-croix_rond"/></svg>'
   } else {
     headerBg = "linear-gradient(180deg,var(--surface2) 0%,var(--bg2) 100%)";
     iconBg = "var(--surface2)";
     iconBorder = "var(--border)";
     iconColor = "var(--text2)";
-    icon = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    icon = '<svg viewBox="0 0 48 48" width="22" height="22"><use href="#ic-info"/></svg>'
   }
   var safe = typeof _ppEscSafe === "function" ? _ppEscSafe : function(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
@@ -8803,7 +8803,7 @@ function renderEventFeedback(e, t, r) {
   var n = _getEventContentEl();
   if (n) {
     var a = "";
-    a += '<div class="event-fb">', a += '<div class="event-fb-ico">', a += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>', a += "</div>", a += '<div class="event-fb-title">' + (t.feedbackTitle || "Choix validé") + "</div>", a += '<div class="event-fb-text">' + (t.feedback || "Ta décision est prise.") + "</div>", r.length && (a += '<div class="event-fb-effects">', r.forEach(function(e) {
+    a += '<div class="event-fb">', a += '<div class="event-fb-ico">', a += '<svg viewBox="0 0 48 48"><use href="#ic-coche"/></svg>', a += "</div>", a += '<div class="event-fb-title">' + (t.feedbackTitle || "Choix validé") + "</div>", a += '<div class="event-fb-text">' + (t.feedback || "Ta décision est prise.") + "</div>", r.length && (a += '<div class="event-fb-effects">', r.forEach(function(e) {
       var t = 0 === e.indexOf("-") ? "loss" : 0 === e.indexOf("+") ? "gain" : "neutral";
       a += '<span class="event-choice-chip ' + t + '">' + e + "</span>"
     }), a += "</div>"), a += '<button class="event-continue-btn" onclick="closeEventScreen()">Continuer</button>', a += "</div>", a += '<div style="height:20px"></div>', n.innerHTML = a
@@ -18405,7 +18405,7 @@ function renderDecisionsPage() {
     var t = G.decisions || [],
       r = getScarredEntities(),
       n = "";
-    n += '<div style="margin:12px 14px 0;padding:14px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Tes choix et leurs suites</div></div><div style="font-size:12px;color:var(--text2);line-height:1.5">Chaque décision laisse une trace. Les équipes, les académies et les sponsors ont de la mémoire — ils se souviennent de ce que tu as accepté ou refusé.</div></div>', r.length > 0 && (n += '<div class="t-sec">Relations tendues · ' + r.length + "</div>", n += '<div style="margin:0 14px 10px;display:flex;flex-direction:column;gap:8px">', r.forEach(function(e) {
+    n += '<div style="margin:12px 14px 0;padding:14px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg viewBox="0 0 48 48" color="#F59E0B" width="16" height="16"><use href="#ic-bouclier"/></svg><div style="font-family:var(--font-display);font-size:12px;font-weight:800;color:var(--text);letter-spacing:.08em;text-transform:uppercase">Tes choix et leurs suites</div></div><div style="font-size:12px;color:var(--text2);line-height:1.5">Chaque décision laisse une trace. Les équipes, les académies et les sponsors ont de la mémoire — ils se souviennent de ce que tu as accepté ou refusé.</div></div>', r.length > 0 && (n += '<div class="t-sec">Relations tendues · ' + r.length + "</div>", n += '<div style="margin:0 14px 10px;display:flex;flex-direction:column;gap:8px">', r.forEach(function(e) {
       var t = "broken" === e.memory.status ? "#EF4444" : "conflict" === e.memory.status ? "#F59E0B" : "#A78BFA",
         r = "broken" === e.memory.status ? "Rupture" : "conflict" === e.memory.status ? "Conflit" : "Refus";
       n += '<div style="padding:12px 14px;background:var(--surface2);border:1px solid ' + t + "33;border-left:3px solid " + t + ';border-radius:var(--r)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:600;color:var(--text)">' + _ppEscSafe(e.name) + '</div><span style="padding:2px 7px;background:' + t + "22;border:1px solid " + t + "55;border-radius:4px;font-family:var(--font-display);font-size:9px;font-weight:800;color:" + t + ';letter-spacing:.08em;text-transform:uppercase">' + r + "</span></div>" + (e.memory.reason ? '<div style="font-size:11px;color:var(--text3);margin-top:4px">' + _ppEscSafe(e.memory.reason) + "</div>" : "") + (e.memory.lastUpdate ? '<div style="font-size:10px;color:var(--text3);margin-top:2px">Saison ' + e.memory.lastUpdate.saison + " · Manche " + e.memory.lastUpdate.manche + "</div>" : "") + "</div>"
@@ -18591,7 +18591,7 @@ function _computeHomePriorityNotif() {
 }
 
 function _getNotifIcon(e, t) {
-  return t = t || "currentColor", "mail" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>' : "swap" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' : "star" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="' + t + '" stroke="' + t + '" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>' : "warn" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : "flag" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>' : "mic" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' : "clock" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' : "alert" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' : "target" === e ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + t + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  return t = t || "currentColor", "mail" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-enveloppe"/></svg>' : "swap" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-echange"/></svg>' : "star" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-etoile"/></svg>' : "warn" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-alerte"/></svg>' : "flag" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-drapeau"/></svg>' : "mic" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-micro"/></svg>' : "clock" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-horloge"/></svg>' : "alert" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-alerte_rond"/></svg>' : "target" === e ? '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-cible"/></svg>' : '<svg viewBox="0 0 48 48" color="' + t + '" width="16" height="16"><use href="#ic-alerte_rond"/></svg>'
 }
 
 function _updateHomeNotifBar() {
@@ -19139,7 +19139,7 @@ var PRACTICE_MAX_SESSIONS = 3,
 function initPracticeState() {
   if (hasPracticeSystem()) {
     /* L'estimation de la zone optimale contient un bruit aléatoire, qui représente l'incertitude de l'ingénieur. Cette fonction étant appelée depuis huit endroits, la zone était retirée au sort à chaque appel : elle sautait dès le premier réglage. On ne réinitialise donc que si aucune estimation n'existe pour ce week-end. */
-    if (RACE_STATE.practice && RACE_STATE.practice.knowledge && RACE_STATE.practice._circuit === RACE_STATE.circuit) return;
+    if (RACE_STATE.practice && RACE_STATE.practice.knowledge && RACE_STATE.practice._circuit === RACE_STATE.circuit && RACE_STATE.practice._sem === G.saison + "#" + G.semaine) return;
     var e = getAvailableSetupParams(G.cat),
       t = {},
       r = "function" == typeof calcEngineerPrecision ? calcEngineerPrecision() : .5,
@@ -19163,7 +19163,8 @@ function initPracticeState() {
       tests: [],
       knowledge: t,
       presetApplied: !1,
-      _circuit: RACE_STATE.circuit
+      _circuit: RACE_STATE.circuit,
+      _sem: G.saison + "#" + G.semaine
     }, resetSetupToCircuitPreset()
   } else RACE_STATE.practice = null
 }
@@ -19482,7 +19483,7 @@ function _renderPracticeSectionInner(container) {
     c += '<div style="padding:12px 14px;background:var(--green-bg);border:1px solid var(--green);color:var(--green);font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-bottom:10px">✓ Essais libres terminés</div>';
     c += '<button onclick="goToQualifStep()" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px">';
     c += 'Aller en qualif';
-    c += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>';
+    c += '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-fleche"/></svg>';
     c += '</button>';
     container.innerHTML = c;
     return;
@@ -19556,7 +19557,7 @@ function _renderPracticeSectionInner(container) {
     }
     c += '<div style="margin-bottom:6px">';
     c += '<button onclick="doPracticeTest()" id="fp-launch-btn" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px">';
-    c += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21"/></svg>';
+    c += '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-play"/></svg>';
     c += 'Envoyer en piste (' + testsLeft + ' tour' + (testsLeft > 1 ? 's' : '') + ')';
     c += '</button>';
     c += '</div>';
@@ -19579,9 +19580,9 @@ function _renderPracticeSectionInner(container) {
       c += '<div style="padding:8px 10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:7px;font-size:11px;color:#34D399;margin-bottom:8px;text-align:center">✓ Setup validé pour la qualif</div>';
     }
     if (curSession < maxSessions) {
-      c += '<button onclick="doEndPracticeSession()" style="width:100%;padding:13px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px">Passer à EL' + (curSession + 1) + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>';
+      c += '<button onclick="doEndPracticeSession()" style="width:100%;padding:13px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px">Passer à EL' + (curSession + 1) + '<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-fleche"/></svg></button>';
     }
-    c += '<button onclick="goToQualifStep()" style="width:100%;padding:' + (curSession < maxSessions ? '11' : '14') + 'px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px">Partir en qualif<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>';
+    c += '<button onclick="goToQualifStep()" style="width:100%;padding:' + (curSession < maxSessions ? '11' : '14') + 'px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px">Partir en qualif<svg viewBox="0 0 48 48" width="16" height="16"><use href="#ic-fleche"/></svg></button>';
   }
   container.innerHTML = c;
 }
@@ -19637,7 +19638,7 @@ function _fpShowEngineerModal(testResult, delta, isPB, s1info, s2info, s3info, o
   // Header
   html += '<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">';
   html += '<div style="width:36px;height:36px;background:' + vc + '22;border:1px solid ' + vc + '55;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">';
-  html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + vc + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+  html += '<svg viewBox="0 0 48 48" color="' + vc + '" width="18" height="18"><use href="#ic-micro"/></svg>';
   html += '</div>';
   html += '<div style="flex:1;min-width:0">';
   html += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:' + vc + ';letter-spacing:.2em;text-transform:uppercase">Débriefing — ' + _ppEscSafe(engName) + '</div>';
@@ -19941,7 +19942,7 @@ function _doPracticeTestCoeur() {
               _pilName = G.pilot && (G.pilot.prenom || G.pilot.nom) || "Pilote",
               _radioEl = document.createElement("div");
             _radioEl.style.cssText = "margin:6px 14px 14px;display:flex;flex-direction:column;gap:8px";
-            _radioEl.innerHTML = '<div style="padding:9px 11px 10px;background:linear-gradient(135deg,rgba(255,32,64,.08) 0%,rgba(255,32,64,.02) 100%);border:1px solid rgba(255,32,64,.18);border-left:2px solid #ff2040;border-radius:6px;animation:practice-pulse .9s ease-in-out 1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#ff2040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0114 0v1"/></svg><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#ff2040;letter-spacing:.18em;text-transform:uppercase">Pilote \u2014 ' + _ppEscSafe(_pilName) + '</span></div><div style="font-family:var(--font-body);font-size:12.5px;color:var(--text);line-height:1.45;font-style:italic">\u00ab ' + _dialogue.pilot + ' \u00bb</div></div><div id="_radio-eng" style="padding:9px 11px 10px;background:linear-gradient(135deg,rgba(34,211,238,.06) 0%,rgba(34,211,238,.01) 100%);border:1px solid rgba(34,211,238,.18);border-left:2px solid #22D3EE;border-radius:6px;opacity:0;transition:opacity .4s ease,transform .4s ease;transform:translateY(4px)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#22D3EE;letter-spacing:.18em;text-transform:uppercase">Ing\u00e9 \u2014 ' + _ppEscSafe(_engName) + '</span></div><div style="font-family:var(--font-body);font-size:12.5px;color:var(--text);line-height:1.45;font-style:italic">\u00ab ' + _dialogue.engineer + ' \u00bb</div></div>';
+            _radioEl.innerHTML = '<div style="padding:9px 11px 10px;background:linear-gradient(135deg,rgba(255,32,64,.08) 0%,rgba(255,32,64,.02) 100%);border:1px solid rgba(255,32,64,.18);border-left:2px solid #ff2040;border-radius:6px;animation:practice-pulse .9s ease-in-out 1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><svg viewBox="0 0 48 48" color="#ff2040" width="12" height="12"><use href="#ic-user"/></svg><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#ff2040;letter-spacing:.18em;text-transform:uppercase">Pilote \u2014 ' + _ppEscSafe(_pilName) + '</span></div><div style="font-family:var(--font-body);font-size:12.5px;color:var(--text);line-height:1.45;font-style:italic">\u00ab ' + _dialogue.pilot + ' \u00bb</div></div><div id="_radio-eng" style="padding:9px 11px 10px;background:linear-gradient(135deg,rgba(34,211,238,.06) 0%,rgba(34,211,238,.01) 100%);border:1px solid rgba(34,211,238,.18);border-left:2px solid #22D3EE;border-radius:6px;opacity:0;transition:opacity .4s ease,transform .4s ease;transform:translateY(4px)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><svg viewBox="0 0 48 48" color="#22D3EE" width="12" height="12"><use href="#ic-micro"/></svg><span style="font-family:var(--font-display);font-size:9px;font-weight:800;color:#22D3EE;letter-spacing:.18em;text-transform:uppercase">Ing\u00e9 \u2014 ' + _ppEscSafe(_engName) + '</span></div><div style="font-family:var(--font-body);font-size:12.5px;color:var(--text);line-height:1.45;font-style:italic">\u00ab ' + _dialogue.engineer + ' \u00bb</div></div>';
             _container && _container.appendChild(_radioEl);
             setTimeout(function() {
               var _re = document.getElementById("_radio-eng");
@@ -21013,14 +21014,14 @@ function _renderH2HCoeur() {
     else if (b.winner === 'r') rWins++
   });
   var html = '';
-  var checkSvg = '<svg class="cf-dd-opt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  var checkSvg = '<svg viewBox="0 0 48 48" class="cf-dd-opt-check"><use href="#ic-coche"/></svg>';
   html += '<div id="h2h-rival-dd" class="cf-dd">';
   html += '<button type="button" class="cf-dd-btn" onclick="toggleH2HRivalDD(event)">';
   html += '<span class="cf-dd-lbl-wrap">';
   html += '<span class="cf-dd-lbl">Comparer avec</span>';
   html += '<span class="cf-dd-val" id="h2h-dd-val">' + _ppEscSafe(rName) + '</span>';
   html += '</span>';
-  html += '<span class="cf-dd-car"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>';
+  html += '<span class="cf-dd-car"><svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-bas"/></svg></span>';
   html += '</button>';
   html += '<div class="cf-dd-menu" role="listbox">';
   sortedRivals.forEach(function(o) {
@@ -23087,7 +23088,7 @@ function _renderOffersCoeur() {
           return '<span style="display:inline-flex;align-items:center;padding:2px 7px;background:' + e.color + "22;border:1px solid " + e.color + "55;border-radius:4px;font-family:var(--font-display);font-size:9px;font-weight:800;color:" + e.color + ';letter-spacing:.06em;text-transform:uppercase"> Prog. ' + o + "</span>"
         }).join("")) + "</div>");
         var u = "";
-        e.isInternalPromotion && (u = '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.45);border-radius:5px;font-family:var(--font-display);font-size:9px;font-weight:800;color:#34D399;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10V2M6 2L2 6M6 2L10 6"/></svg>Promotion interne — ' + G.currentTeam + "</span>");
+        e.isInternalPromotion && (u = '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.45);border-radius:5px;font-family:var(--font-display);font-size:9px;font-weight:800;color:#34D399;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px"><svg viewBox="0 0 48 48" color="#34D399" width="11" height="11"><use href="#ic-fleche_haut"/></svg>Promotion interne — ' + G.currentTeam + "</span>");
         var f = '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px"><div style="flex-shrink:0;width:40px;height:40px;border-radius:4px;overflow:hidden;border:1px solid var(--line)">' + getTeamLogo(e.team) + '</div><div style="flex:1;min-width:0">' + (u ? "<div>" + u + "</div>" : "") + '<div style="font-family:var(--font-display);font-size:16px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--white);cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="showTeamProfileModal(\'' + e.team.replace(/'/g, "\\'") + "')\">" + e.team + ' <span style="font-size:11px;color:var(--red3)">›</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-display);letter-spacing:.06em;text-transform:uppercase">' + e.cat + " · " + e.duration + " sais.</div>" + p + '</div><span class="badge b-red" style="flex-shrink:0">' + (e._accord ? "Fin de saison" : e.expire + (e.expire > 1 ? " courses" : " course")) + "</span></div>",
           m = [{
             l: "Ton apport",
@@ -25906,6 +25907,9 @@ function _initRaceStateCoeur() {
     qualiPos: 0,
     practice: null
   };
+  /* v310 : des essais d'une autre course (séances déléguées ou roulées) étaient repris tels
+     quels : ni les séances ni les réglages ne repartaient du circuit. */
+  if (_prevPractice && (_prevPractice._circuit !== t || _prevPractice._sem !== G.saison + "#" + G.semaine)) _prevPractice = null;
   if (hasPracticeSystem() && (!_prevPractice || !_prevPractice.sessionsCompleted)) {
     initPracticeState();
   } else if (_prevPractice) {
@@ -25955,7 +25959,7 @@ function renderRivalryAlertForRace() {
             return r.indexOf(e.name) >= 0
           });
         if (0 !== n.length) {
-          var a = '<div style="padding:10px 12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.35);border-left:3px solid #EF4444;border-radius:var(--r)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg><div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#EF4444;letter-spacing:.1em;text-transform:uppercase">Rivalités en piste</div></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+          var a = '<div style="padding:10px 12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.35);border-left:3px solid #EF4444;border-radius:var(--r)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><svg viewBox="0 0 48 48" color="#EF4444" width="12" height="12"><use href="#ic-etoile"/></svg><div style="font-family:var(--font-display);font-size:10px;font-weight:800;color:#EF4444;letter-spacing:.1em;text-transform:uppercase">Rivalités en piste</div></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
           n.slice(0, 4).forEach(function(e) {
             var t = RIVALRY_TYPES[e.type] || {
               color: "#EF4444",

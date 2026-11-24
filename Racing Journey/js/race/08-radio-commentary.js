@@ -75,68 +75,39 @@
        assise au muret, pas d'un émetteur. L'arceau, les deux coquilles et la
        perche suffisent à l'identifier à quatorze pixels. */
     radio:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M4.5 13v-1.5a7.5 7.5 0 0 1 15 0V13"/>' +
-      '<rect x="2" y="12" width="4.2" height="6.4" rx="1.6"/>' +
-      '<rect x="17.8" y="12" width="4.2" height="6.4" rx="1.6"/>' +
-      '<path d="M19.9 18.4v1a2.4 2.4 0 0 1-2.4 2.4h-3.4"/>' +
-      '<circle cx="12.7" cy="21.8" r="1.35" fill="currentColor" stroke="none"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-casque_audio"/></svg>',
     lead_change:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M3 17l3-9 4 5 2-8 2 8 4-5 3 9z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-couronne"/></svg>',
     overtake:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-fleche_haut"/></svg>',
     downgrade:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-fleche_bas"/></svg>',
     battle:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/>' +
-      '<path d="M19 21l2-2"/><path d="M9.5 14.5L21 3"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-duel"/></svg>',
     pressure:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-cible"/></svg>',
     chase:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M3 12h3"/><path d="M9 12h2"/><path d="M14 12h2"/><path d="M19 12l2 0"/>' +
-      '<path d="M17 8l4 4-4 4"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-avance"/></svg>',
     safety:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M12 3l9 16H3z"/><line x1="12" y1="10" x2="12" y2="14"/>' +
-      '<circle cx="12" cy="17" r="0.8" fill="currentColor"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-alerte"/></svg>',
     flag:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M4 21V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-drapeau"/></svg>',
     penalty:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M6 2h12"/><path d="M6 22h12"/><path d="M6 2v4l6 6-6 6v4"/><path d="M18 2v4l-6 6 6 6v4"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-sablier"/></svg>',
     dnf:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-      '<circle cx="12" cy="12" r="9"/><line x1="8" y1="8" x2="16" y2="16"/><line x1="16" y1="8" x2="8" y2="16"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-croix_rond"/></svg>',
     weather:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M16 17a4 4 0 0 0 0-8 6 6 0 0 0-11.7 1.5A4 4 0 0 0 6 17"/>' +
-      '<line x1="9" y1="20" x2="9" y2="22"/><line x1="13" y1="20" x2="13" y2="22"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-pluie"/></svg>',
     best_lap:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/>' +
-      '<path d="M9 2h6"/><path d="M12 2v3"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-chrono"/></svg>',
     phase:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M5 21V4"/><rect x="5" y="4" width="14" height="10"/>' +
-      '<path d="M5 4h3v3H5z" fill="currentColor"/><path d="M11 4h3v3h-3z" fill="currentColor"/>' +
-      '<path d="M8 7h3v3H8z" fill="currentColor"/><path d="M14 7h3v3h-3z" fill="currentColor"/>' +
-      '<path d="M5 10h3v3H5z" fill="currentColor"/><path d="M11 10h3v3h-3z" fill="currentColor"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-damier"/></svg>',
     comment:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1-4.6a8.4 8.4 0 1 1 17 0z"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-commentaire"/></svg>',
     strategy:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M4 8h11"/><path d="M12 5l3 3-3 3"/><path d="M20 16H9"/><path d="M12 13l-3 3 3 3"/></svg>',
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-echange"/></svg>',
     pit:
-      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M9 11a3 3 0 1 0 6 0 3 3 0 0 0-6 0z"/><path d="M12 8V3"/><path d="M5 21l2-7"/><path d="M19 21l-2-7"/></svg>'
+      '<svg viewBox="0 0 48 48" width="14" height="14"><use href="#ic-cle"/></svg>'
   };
 
   // ========================================================================
