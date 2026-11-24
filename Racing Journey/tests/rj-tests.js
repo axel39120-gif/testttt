@@ -4627,6 +4627,58 @@ async function suiteApostrophe303() {
   } finally { await navigateur.close(); }
 }
 
+/* v304 : un programme par séance, médaille, effets en qualif et en course */
+async function suiteEssais304() {
+  S.suite("Essais libres : programmes (v304)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await page.evaluate(() => {
+      const st = document.documentElement.style; st.setProperty("--sg", "59px"); st.setProperty("--sd", "59px"); st.setProperty("--sb", "21px");
+      G.cat = "Formule 1"; G.currentTeam = "Williams"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.fpDone = false; RACE_STATE.practice = null; initRaceState(); navTo("S-race", null); rtab("essais", true);
+    });
+    await page.waitForTimeout(1500);
+    const zone = await page.evaluate(() => {
+      let contient = true, ecart = 0, n = 0; const ideal = getSetupSweetSpots();
+      for (let k = 0; k < 40; k++) { RACE_STATE.practice = null; initPracticeState(); for (const p in RACE_STATE.practice.knowledge) { const z = RACE_STATE.practice.knowledge[p]; if (ideal[p] < z.lowerBound || ideal[p] > z.upperBound) contient = false; ecart += Math.abs((z.lowerBound + z.upperBound) / 2 - ideal[p]); n++; } }
+      return { contient, ecart: ecart / n };
+    });
+    S.verifier("la zone de départ contient l'idéal mais n'y est pas centrée", zone.contient && zone.ecart > 0.6, JSON.stringify(zone));
+    await page.evaluate(() => renderPracticeSection());
+    await page.click('[data-fpl-prog="relais"]'); await page.waitForTimeout(300);
+    const choix = await page.evaluate(() => ({ actif: document.querySelector('[data-fpl-prog][aria-pressed="true"]').dataset.fplProg, objectif: document.querySelector("[data-fpl-objectif]").textContent, trop: (e => e.scrollHeight - e.clientHeight)(document.querySelector("#S-race > .scroll")) }));
+    S.verifier("le programme se choisit d'un appui, son objectif est chiffré, rien ne défile", choix.actif === "relais" && /bronze ±[0-9]/.test(choix.objectif) && choix.trop <= 0, JSON.stringify(choix));
+    await page.click('[data-fpl-prog="reglages"]');
+    const largeur = () => page.evaluate(() => Object.values(RACE_STATE.practice.knowledge).reduce((s, z) => s + z.upperBound - z.lowerBound, 0));
+    const avant = await largeur();
+    await page.click("#fpl-send-btn"); await page.waitForSelector("#fpl-debrief", { timeout: 40000 });
+    const apres = await largeur(), deb = await page.evaluate(() => (document.querySelector("[data-fpl-verdict]") || {}).textContent || "");
+    S.verifier("rouler en « Réglages » resserre la zone", apres < avant * 0.75, avant.toFixed(1) + " → " + apres.toFixed(1));
+    S.verifier("le débrief donne le résultat et l'objectif", /Réglages : (bronze|argent|or|objectif manqué)/.test(deb) && /Confiance/.test(deb), deb);
+    await page.click("#fpl-debrief-close"); await page.waitForTimeout(300);
+    S.verifier("le programme est figé pour la séance", await page.evaluate(() => document.querySelector('[data-fpl-prog="rapide"]').disabled));
+    const fx = await page.evaluate(() => {
+      G._essais = null; const o = {}; QUALI_STATE.baseRef = 84;
+      const tour = d => { const h = Math.random; Math.random = () => 0.5; const t = qualiDriverTime(d, 1, 1, 3, 0.5); Math.random = h; return t; };
+      const moi = { isPlayer: true, name: "Moi", skill: .8, consistency: .85 };
+      const t0 = tour(Object.assign({}, moi)); RJEssais.noter("rapide", 3); o.qualif = +(t0 - tour(Object.assign({}, moi))).toFixed(4);
+      RJEssais.noter("rapide", 1); o.garde = RJEssais.medaille("rapide");
+      RJEssais.noter("relais", 3);
+      const h = RJ_LAP_HOOKS.find(x => x.id === "163-programmes"), d = { isPlayer: true, name: "Moi" };
+      h.run(10, { total: 50, baseRef: 84, drivers: [d] }); o.debut = d._rj81EvtSec || 0;
+      h.run(40, { total: 50, baseRef: 84, drivers: [d] }); o.fin = +d._rj81EvtSec.toFixed(4);
+      o.niveaux = G.rivals.map(r => RJEssais.niveauRival(r, "rapide")); o.stable = o.niveaux.join() === G.rivals.map(r => RJEssais.niveauRival(r, "rapide")).join();
+      o.bilan = RJEssais.bilan(84); G.semaine++; o.perime = RJEssais.medaille("rapide"); G.semaine--;
+      return o;
+    });
+    S.verifier("médaille d'or : 0,14 s en qualif, la meilleure est gardée", Math.abs(fx.qualif - 0.1386) < 0.002 && fx.garde === 3, JSON.stringify(fx));
+    S.verifier("long relais : rien au début, un gain par tour en fin de course", fx.debut === 0 && Math.abs(fx.fin + 0.126) < 0.001, JSON.stringify(fx));
+    S.verifier("les rivaux se préparent aussi, de façon stable sur le week-end", fx.stable && new Set(fx.niveaux).size >= 3, fx.niveaux.join());
+    S.verifier("le bilan tient en une ligne et s'efface au week-end suivant", /^Qualif .* · Fin de course −0,13 s par tour$/.test(fx.bilan) && fx.perime === 0, fx.bilan);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5076,7 +5128,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304
 };
 
 async function principal() {

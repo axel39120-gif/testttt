@@ -19143,12 +19143,12 @@ function initPracticeState() {
     var e = getAvailableSetupParams(G.cat),
       t = {},
       r = "function" == typeof calcEngineerPrecision ? calcEngineerPrecision() : .5,
-      n = Math.max(1.2, 5 - 4 * r),
+      n = Math.max(2.2, 4.6 - 2.4 * r), // v304 : zone large et décalée, rouler la resserre (18)
       a = Math.round(22 * r),
       i = "function" == typeof getSetupSweetSpots ? getSetupSweetSpots() : null;
     e.forEach(function(e) {
       var o = i && "number" == typeof i[e] ? i[e] : 5,
-        s = (1 - r) * (Math.random() - .5) * 2,
+        s = (Math.random() < .5 ? -1 : 1) * (.8 + 1.4 * Math.random()) * (1.5 - .7 * r),
         l = Math.max(0, Math.min(10, o + s)),
         c = Math.max(0, l - n),
         d = Math.min(10, l + n);
@@ -20164,8 +20164,10 @@ function _askEngineerHintCoeur() {
     var setup = G.setupAdv || (G.setupAdv = {});
     var moved = 0;
     avail.forEach(function(p) {
-      var ideal = typeof sweet[p] === "number" ? sweet[p] : 5;
-      var noise = (1 - precision) * (Math.random() - .5) * 4;
+      /* v304 : l'ingénieur ne sait que ce que les essais lui ont appris */
+      var sait = RACE_STATE.practice && RACE_STATE.practice.knowledge && RACE_STATE.practice.knowledge[p];
+      var ideal = sait ? (sait.lowerBound + sait.upperBound) / 2 : typeof sweet[p] === "number" ? sweet[p] : 5;
+      var noise = sait ? 0 : (1 - precision) * (Math.random() - .5) * 4;
       var target = Math.round(Math.max(0, Math.min(10, ideal + noise)));
       var current = typeof setup[p] === "number" ? setup[p] : 5;
       if (target !== current) {
@@ -23278,7 +23280,8 @@ function _applyAutoSetup() {
   var i = "function" == typeof getSetupSweetSpots ? getSetupSweetSpots() : null,
     o = "function" == typeof getAvailableSetupParams ? getAvailableSetupParams(G.cat) : [];
   i && o && o.length && o.forEach(function(e) {
-    var t = "number" == typeof i[e] ? i[e] : 5;
+    var k = RACE_STATE.practice && RACE_STATE.practice.knowledge && RACE_STATE.practice.knowledge[e],
+      t = k ? (k.lowerBound + k.upperBound) / 2 : "number" == typeof i[e] ? i[e] : 5;
     G.setupAdv[e] = a(t)
   });
   try {
