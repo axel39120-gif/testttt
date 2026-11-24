@@ -796,6 +796,7 @@ function _qualiDriverTimeCoeur(e, t, r, n, a) {
         }
       }
     } catch (_e) {}
+    if (e.isPlayer && window.RJEssais) errorRisk *= RJEssais.risque(); // v305 : voiture mieux connue, moins de fautes
     if (Math.random() < errorRisk) lap += 0.018 * baseRef; // mistake costs ~1.8%
   }
   /* Plancher souple à 96,5 % de la référence : au-delà, l'avance n'est plus

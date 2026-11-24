@@ -921,11 +921,13 @@
     var PROGRAMMES = [
       { id: "reglages", nom: "Réglages", pneu: "medium", push: "norm", plan: 3, effet: "resserre la zone idéale" },
       { id: "rapide", nom: "Tour rapide", pneu: "soft", push: "push", plan: 3, effet: "gagne du temps en qualif" },
-      { id: "relais", nom: "Long relais", pneu: "medium", push: "norm", plan: 8, effet: "plus vite en fin de course" }
+      { id: "relais", nom: "Long relais", pneu: "medium", push: "norm", plan: 8, effet: "plus vite en fin de course" },
+      { id: "departs", nom: "Départs", pneu: "soft", push: "norm", plan: 5, effet: "gagne du temps à l'envol" }
     ];
     var SEUILS = {
       reglages: [78, 86, 92],          // confiance du pilote (%)
       rapide: [-0.0020, -0.0032, -0.0039], // écart au tour attendu (part du tour)
+      departs: [0.058, 0.042, 0.026],  // temps de réaction moyen au-dessus du meilleur du pilote (s)
       relais: [0.30, 0.23, 0.16]       // écart moyen au rythme (part du bruit du pilote)
     };
     function programme(id) { return PROGRAMMES.filter(function (p) { return p.id === id; })[0] || PROGRAMMES[0]; }
@@ -933,6 +935,17 @@
     function seuils(id) {
       var moins = id === "reglages" ? 3 * Math.max(0, getAvailableSetupParams(G.cat).length - 4) : 0;
       return SEUILS[id].map(function (x) { return x - moins; });
+    }
+    // Les départs ne se travaillent qu'à la dernière séance.
+    function programmesOuverts(pr) {
+      var max = (typeof getPracticeMaxSessions === "function") ? getPracticeMaxSessions() : 3;
+      return PROGRAMMES.filter(function (p) { return p.id !== "departs" || pr.sessionsCompleted >= max - 1; });
+    }
+    // Meilleure réaction du pilote (sang-froid), et un envol d'essai : plus on en fait, plus on s'en approche.
+    function reactionIdeale() { return 0.2 + (100 - ((G.stats && G.stats.sangfroid) || 50)) * 0.0012; }
+    function envol(pr) {
+      pr._envols = (pr._envols || 0) + 1;
+      return +(reactionIdeale() + 0.045 * Math.exp(-pr._envols / 8) + Math.random() * 0.06).toFixed(3);
     }
     function bruitPilote() {
       var prec = (typeof calcEngineerPrecision === "function") ? calcEngineerPrecision() : 0.6;
@@ -946,18 +959,22 @@
     }
     function seuil(id, m, run) {
       var v = seuils(id)[m - 1];
-      return id === "rapide" ? fmtLap(tourAttendu(run) * (1 + v)) : id === "relais" ? "±" + (v * bruitPilote()).toFixed(3).replace(".", ",") + " s" : v + " %";
+      return id === "departs" ? (reactionIdeale() + v).toFixed(3).replace(".", ",") + " s" : id === "rapide" ? fmtLap(tourAttendu(run) * (1 + v)) : id === "relais" ? "±" + (v * bruitPilote()).toFixed(3).replace(".", ",") + " s" : v + " %";
     }
     function runType(id) { var p = programme(id), c = availableCompounds(); return { compound: c.indexOf(p.pneu) < 0 ? c[0] : p.pneu, push: p.push }; }
     function objectif(id) {
-      var quoi = id === "rapide" ? "Tour en " : id === "relais" ? "8 tours réguliers, écart moyen " : "Confiance du pilote, 3 tours : ";
+      var quoi = id === "departs" ? "5 envols, réaction moyenne : " : id === "rapide" ? "Tour en " : id === "relais" ? "8 tours réguliers, écart moyen " : "Confiance du pilote, 3 tours : ";
       var r = runType(id);
       return quoi + "bronze " + seuil(id, 1, r) + " · argent " + seuil(id, 2, r) + " · or " + seuil(id, 3, r);
     }
     // Médaille d'un relais : { m: 0–3, texte }
     function juger(run) {
       var tours = run.laps.filter(function (l) { return !l.outLap; }), id = run.programme, s = seuils(id), v, texte, pire = id !== "reglages";
-      if (id === "rapide") {
+      if (id === "departs") {
+        if (run.envols.length < run.plan) return { m: 0, texte: run.envols.length + " envols sur " + run.plan };
+        var reac = run.envols.reduce(function (a, x) { return a + x; }, 0) / run.plan;
+        v = reac - reactionIdeale(); texte = "réaction " + reac.toFixed(3).replace(".", ",") + " s";
+      } else if (id === "rapide") {
         if (!run.bestLap) return null;
         v = run.bestLap / tourAttendu(run) - 1; texte = fmtLap(run.bestLap);
       } else if (id === "relais") {
@@ -1017,7 +1034,7 @@
           _actif: 0, _dernier: 0,   // temps de séance réellement passé à l'écran (ms)
           ended: false,
           onTrack: false,
-          programme: (PROGRAMMES.filter(function (p) { return !medaille(p.id); })[0] || PROGRAMMES[0]).id,
+          programme: (programmesOuverts(pr).filter(function (p) { return !medaille(p.id); })[0] || PROGRAMMES[0]).id,
           runs: [],
           bestLap: null,
           run: null,               // relais en cours
@@ -1455,7 +1472,7 @@
       // Programme de la séance, figé dès le premier relais
       var fige = L.runs.length > 0;
       c += '<div style="display:flex;gap:6px">';
-      PROGRAMMES.forEach(function (p) {
+      programmesOuverts(pr).forEach(function (p) {
         var on = L.programme === p.id;
         c += '<button data-fpl-prog="' + p.id + '"' + (fige && !on ? ' disabled' : '') + ' aria-pressed="' + on + '" style="flex:1;min-width:0;min-height:44px;padding:5px 3px;background:' + (on ? '#22D3EE22' : 'transparent') + ';border:1px solid ' + (on ? '#22D3EE' : 'var(--line2)') + ';border-radius:6px;color:' + (on ? '#22D3EE' : 'var(--text2)') + ';font-size:11px;font-weight:800;opacity:' + (fige && !on ? '.4' : '1') + '">' + p.nom + (medaille(p.id) ? ' · ' + RJEssais.NOMS[medaille(p.id)].toLowerCase() : '') + '</button>';
       });
@@ -1484,12 +1501,13 @@
 
       // -- Bouton ENVOYER --
       var enoughTime = clockRemaining(pr) > OUTLAP_MS + FLYLAP_MS + 500;
-      c += '<div style="margin-bottom:8px">';
+      c += '<div style="margin-bottom:8px;display:flex;gap:6px">';
       if (enoughTime) {
-        c += '<button id="fpl-send-btn" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">';
+        c += '<button id="fpl-send-btn" style="flex:1;min-width:0;padding:14px 16px;background:linear-gradient(135deg,#22D3EE 0%,#0EA5E9 100%);border:none;color:#07151c;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">';
         c += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21"/></svg>';
         c += 'Envoyer en piste';
         c += '</button>';
+        if (!fige) c += '<button id="fpl-deleguer-btn" style="flex:0 0 92px;background:transparent;border:1px solid var(--line2);color:var(--text2);font-family:var(--font-display);font-size:11px;font-weight:700;border-radius:4px;cursor:pointer">Déléguer</button>';
       } else {
         c += '<div style="padding:12px 14px;background:var(--bg3);border:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center;border-radius:6px">Plus assez de temps pour un tour — termine la séance.</div>';
       }
@@ -1521,6 +1539,8 @@
       });
       var send = sec.querySelector("#fpl-send-btn");
       if (send) send.addEventListener("click", function () { startRun(pr); });
+      var del = sec.querySelector("#fpl-deleguer-btn");
+      if (del) del.addEventListener("click", function () { deleguer(pr); });
       var next = sec.querySelector("#fpl-next-btn");
       if (next) next.addEventListener("click", function () { advanceSession(pr); });
       var qual = sec.querySelector("#fpl-qualif-btn");
@@ -1549,7 +1569,7 @@
 
       // Chrono tour courant
       c += '<div style="padding:16px 14px 6px;text-align:center">';
-      c += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.28em;text-transform:uppercase;margin-bottom:6px">Tour en cours <span id="fpl-lapnum" style="color:' + col + '"></span></div>';
+      c += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.28em;text-transform:uppercase;margin-bottom:6px">' + (run.programme === 'departs' ? 'Essais de départ' : 'Tour en cours') + ' <span id="fpl-lapnum" style="color:' + col + '"></span></div>';
       c += '<div id="fpl-chrono" style="font-family:var(--font-display);font-size:34px;font-weight:900;color:var(--dim);line-height:1;letter-spacing:.02em">0:00.000</div>';
       c += '<div style="margin:12px 14px 0;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;position:relative"><div id="fpl-lap-prog" style="position:absolute;top:0;left:0;height:100%;width:0%;background:linear-gradient(90deg,#22D3EE 0%,' + col + ' 100%);transition:width .1s linear"></div></div>';
       c += '<div id="fpl-sectorlbl" style="margin-top:10px;font-family:var(--font-display);font-size:11px;font-weight:800;color:#F59E0B;letter-spacing:.2em;text-transform:uppercase;min-height:14px">Sortie des stands…</div>';
@@ -1572,7 +1592,7 @@
       c += '<span id="fpl-wear-lbl" style="font-family:var(--font-display);font-size:11px;font-weight:800;color:#34D399">' + Math.round(run.wear) + '%</span>';
       c += '</div>';
       c += '<div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden"><div id="fpl-wear-bar" style="height:100%;width:' + Math.round(run.wear) + '%;background:#34D399;transition:width .25s ease;border-radius:3px"></div></div>';
-      c += '<div style="margin-top:6px;font-size:10px;color:var(--muted)">Relais : <span id="fpl-runlaps" style="color:var(--white);font-weight:700">' + run.flyingLaps + '</span>' + (run.plan ? ' / ' + run.plan : '') + ' tour' + (run.plan && run.plan > 1 ? 's' : '') + '</div>';
+      c += '<div style="margin-top:6px;font-size:10px;color:var(--muted)">Relais : <span id="fpl-runlaps" style="color:var(--white);font-weight:700">' + run.flyingLaps + '</span>' + (run.plan ? ' / ' + run.plan : '') + (run.programme === 'departs' ? ' envols' : ' tour' + (run.plan && run.plan > 1 ? 's' : '')) + '</div>';
       c += '</div></div>';
 
       // Meilleur tour du relais
@@ -1603,7 +1623,7 @@
       var prog = programme(L.programme), type = runType(prog.id);
       L.run = {
         programme: prog.id, compound: type.compound, push: type.push, plan: prog.plan,
-        wear: 0, flyingLaps: 0, laps: [], bestLap: null, boxRequested: false, phase: "outlap"
+        envols: [], wear: 0, flyingLaps: 0, laps: [], bestLap: null, boxRequested: false, phase: "outlap"
       };
       L.onTrack = true;
       render();
@@ -1631,8 +1651,29 @@
       setTimeout(function () {
         clearInterval(run._anim);
         if (clockRemaining(pr) <= 0) { finishRun(pr, "time"); return; }
-        runFlyingLap(pr);
+        if (run.programme === "departs") runEnvol(pr); else runFlyingLap(pr);
       }, OUTLAP_MS);
+    }
+
+    // Un essai de départ : les feux s'allument, s'éteignent, la réaction s'affiche.
+    function runEnvol(pr) {
+      var run = pr._live && pr._live.run;
+      if (!run) return;
+      var sec = document.getElementById("race-practice-section");
+      var $ = function (s) { return sec && sec.querySelector(s); };
+      var ecrire = function (s, t, coul) { var e = $(s); if (e) { e.textContent = t; if (coul) e.style.color = coul; } };
+      ecrire("#fpl-phase", "Départ " + (run.envols.length + 1) + " / " + run.plan, "#EF4444");
+      ecrire("#fpl-lapnum", ""); ecrire("#fpl-sectorlbl", "Feux rouges…", "#EF4444"); ecrire("#fpl-chrono", "● ● ● ● ●", "#EF4444");
+      var prog = $("#fpl-lap-prog"); if (prog) prog.style.width = "0%";
+      setTimeout(function () {
+        var t = envol(pr);
+        run.envols.push(t);
+        ecrire("#fpl-sectorlbl", "Réaction", "#34D399"); ecrire("#fpl-chrono", t.toFixed(3).replace(".", ",") + " s", "var(--white)");
+        ecrire("#fpl-runlaps", run.envols.length);
+        if (prog) prog.style.width = 100 * run.envols.length / run.plan + "%";
+        var fin = clockRemaining(pr) <= 0 ? "time" : run.boxRequested ? "box" : run.envols.length >= run.plan ? "plan" : null;
+        setTimeout(function () { if (fin) finishRun(pr, fin); else runEnvol(pr); }, 1500);
+      }, FLYLAP_MS);
     }
 
     function runFlyingLap(pr) {
@@ -1792,14 +1833,15 @@
       L.runs.push(run);
       L.run = null;
       run.verdict = juger(run);
-      if (run.verdict && window.RJEssais) RJEssais.noter(run.programme, run.verdict.m);
+      if (run.verdict && window.RJEssais) { RJEssais.noter(run.programme, run.verdict.m); RJEssais.connaitre(pr.carKnowledge || 0); }
 
       // Débrief seulement si le relais a produit des tours lancés
-      var hadLaps = run.flyingLaps > 0;
+      var hadLaps = run.flyingLaps > 0 || run.envols.length > 0;
       stopClockTicker();
 
       if (hadLaps) {
         var deb = engRunDebrief(run, feedback);
+        if (run.envols.length) deb = { verdict: ["adjust", "good", "good", "excellent"][run.verdict.m], titre: "Essais de départ", msg: ["Trop lent à réagir. On recommence.", "C'est propre, mais on peut réagir plus vite.", "Bons envols. Encore un peu de précision.", "Envols parfaits. Garde ce geste pour dimanche."][run.verdict.m] };
         showRunDebrief(pr, run, feedback, deb, reason);
       } else {
         render();
@@ -1820,6 +1862,7 @@
 
       var overlay = document.createElement("div");
       overlay.id = "fpl-debrief";
+      overlay.setAttribute("data-rj-noround", "1");   // sinon « 0,231 s » s'affichait « 0 s »
       overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9500;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)";
       var card = document.createElement("div");
       card.style.cssText = "background:var(--bg2);border-top:2px solid " + vc + ";border-left:1px solid var(--line2);border-right:1px solid var(--line2);max-width:440px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.7);border-radius:var(--r) 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)";
@@ -1831,9 +1874,9 @@
       h += '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="' + vc + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
       h += '</div>';
       h += '<div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:' + vc + ';letter-spacing:.2em;text-transform:uppercase">Débrief relais — ' + esc(engName) + '</div>';
-      h += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px">' + verdictLabels[deb.verdict] + '</div></div>';
-      h += '<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:var(--white)">' + fmtLap(run.bestLap) + '</div>';
-      h += '<div style="font-size:10px;color:' + col + ';font-family:var(--font-display);font-weight:700">' + esc(compoundProfile(run.compound).label) + ' · ' + run.flyingLaps + ' tour' + (run.flyingLaps > 1 ? 's' : '') + '</div></div>';
+      h += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px">' + (deb.titre || verdictLabels[deb.verdict]) + '</div></div>';
+      h += '<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-display);font-size:17px;font-weight:900;color:var(--white)">' + (run.envols.length ? Math.min.apply(null, run.envols).toFixed(3).replace('.', ',') + ' s' : fmtLap(run.bestLap)) + '</div>';
+      h += '<div style="font-size:10px;color:' + col + ';font-family:var(--font-display);font-weight:700">' + esc(compoundProfile(run.compound).label) + ' · ' + (run.envols.length ? run.envols.length + ' envols' : run.flyingLaps + ' tour' + (run.flyingLaps > 1 ? 's' : '')) + '</div></div>';
       h += '</div>';
       // Quote
       h += '<div style="padding:11px 14px;background:var(--bg3);border-bottom:1px solid var(--line);font-style:italic;font-size:13px;color:var(--soft);line-height:1.5;font-family:var(--font-body)">« ' + esc(deb.msg) + ' »</div>';
@@ -1939,13 +1982,25 @@
         c += '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + esc(compoundProfile(bestLap.compound).label) + '</div></div>';
       }
       if (window.RJEssais) {
-        c += '<div data-fpl-bilan style="margin-bottom:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid #22D3EE;font-size:13px;color:var(--white)"><b>' + esc(RJEssais.bilan(circuitBaseRef())) + '</b><div style="margin-top:5px;font-size:11px;color:var(--muted)">' + PROGRAMMES.map(function (p) { return pastille(medaille(p.id)) + ' ' + p.nom; }).join(' &nbsp; ') + '</div></div>';
+        c += '<div data-fpl-bilan style="break-inside:avoid;margin-bottom:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid #22D3EE;font-size:13px;color:var(--white)"><b>' + esc(RJEssais.bilan(circuitBaseRef())) + '</b><div style="margin-top:5px;font-size:11px;color:var(--muted)">' + PROGRAMMES.map(function (p) { return pastille(medaille(p.id)) + ' ' + p.nom; }).join(' &nbsp; ') + '</div></div>';
       }
       c += '<div style="padding:12px 14px;background:var(--green-bg);border:1px solid var(--green);color:var(--green);font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-bottom:10px;border-radius:4px">✓ Essais libres terminés</div>';
       c += '<button id="fpl-go-qualif" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">Aller en qualif<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>';
       sec.innerHTML = c;
       var b2 = sec.querySelector("#fpl-go-qualif");
       if (b2) b2.addEventListener("click", function () { if (typeof goToQualifStep === "function") goToQualifStep(); });
+    }
+
+    // L'équipe fait la séance seule : bronze au mieux, un peu de connaissance, séance suivante.
+    function deleguer(pr) {
+      var id = pr._live.programme;
+      for (var i = 0; i < 4; i++) addKnowledgeForLap(pr);
+      for (i = 0; i < 6 && id !== "departs"; i++) apprendre(pr, JSON.parse(JSON.stringify(pr.knowledge || {})), id);
+      if (id === "reglages" && window.RJAtelier) RJAtelier.RESSENTIS.forEach(function (r) { RJAtelier.amener(r, 0); });
+      pr._knowSetup = setupSnapshot();   // c'est l'équipe qui a réglé : rien à revalider
+      if (window.RJEssais) { RJEssais.noter(id, 1); RJEssais.connaitre(pr.carKnowledge || 0); }
+      if (typeof showToast === "function") showToast("Séance déléguée — " + programme(id).nom + " : bronze.");
+      advanceSession(pr);
     }
 
     function advanceSession(pr) {
