@@ -81,3 +81,18 @@
 .rj164-pied button { min-height: 40px; }
 .rj164-pied { padding: 4px 0 0; }
 #res-content.rj166 > #rj56-podium { zoom: .8; max-height: 126px; }
+
+/* Notes de version (168) */
+#rj168 { z-index: 100000; }
+#rj168 section { padding: 8px 2px 10px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+#rj168 section.neuf { margin-bottom: 4px; padding: 10px 12px; border: 1px solid rgba(52, 211, 153, .4); border-radius: 12px; background: rgba(52, 211, 153, .07); }
+#rj168 h3 { margin: 0 0 4px; font: 800 14px/1.3 var(--font-display); color: #fff; }
+#rj168 h3 b { margin-right: 6px; color: #34D399; }
+#rj168 h3 i { margin-left: 8px; padding: 2px 7px; border-radius: 9px; background: rgba(52, 211, 153, .18); font: 700 10px/1 var(--font-display); font-style: normal; color: #34D399; }
+#rj168 h4 { margin: 5px 0 1px; font: 800 11px/1.3 var(--font-display); color: #22D3EE; }
+#rj168 h4.fix { color: #F59E0B; }
+#rj168 ul { margin: 0; padding-left: 16px; }
+#rj168 li { font-size: 13px; line-height: 1.4; color: #dcdce4; }
+#rj168 .rj168-alerte { color: #FF7A6B; font-size: 13px; }
+#rj168 .rj168-diag { margin: 12px 0 2px; min-height: 40px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px; background: none; color: #a9a9b5; font: 700 12px/1 var(--font-display); }
+#rj168 pre { white-space: pre-wrap; font-size: 11px; color: #a9a9b5; }
