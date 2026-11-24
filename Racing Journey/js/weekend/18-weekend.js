@@ -914,19 +914,88 @@
       return k >= 75 ? "#34D399" : k >= 45 ? "#22D3EE" : k >= 20 ? "#F59E0B" : "#EF4444";
     }
 
+    // ------------------------------------------------------------------------
+    // Programmes de séance (v304) : un choix par séance, une médaille, un effet
+    // sur le week-end (163). Le programme fixe pneus, rythme et longueur du relais.
+    // ------------------------------------------------------------------------
+    var PROGRAMMES = [
+      { id: "reglages", nom: "Réglages", pneu: "medium", push: "norm", plan: 3, effet: "resserre la zone idéale" },
+      { id: "rapide", nom: "Tour rapide", pneu: "soft", push: "push", plan: 3, effet: "gagne du temps en qualif" },
+      { id: "relais", nom: "Long relais", pneu: "medium", push: "norm", plan: 8, effet: "plus vite en fin de course" }
+    ];
+    var SEUILS = {
+      reglages: [78, 86, 92],          // confiance du pilote (%)
+      rapide: [-0.0020, -0.0032, -0.0039], // écart au tour attendu (part du tour)
+      relais: [0.30, 0.23, 0.16]       // écart moyen au rythme (part du bruit du pilote)
+    };
+    function programme(id) { return PROGRAMMES.filter(function (p) { return p.id === id; })[0] || PROGRAMMES[0]; }
+    // cinq ressentis pour neuf réglages : la confiance plafonne dans les catégories complexes
+    function seuils(id) {
+      var moins = id === "reglages" ? 3 * Math.max(0, getAvailableSetupParams(G.cat).length - 4) : 0;
+      return SEUILS[id].map(function (x) { return x - moins; });
+    }
+    function bruitPilote() {
+      var prec = (typeof calcEngineerPrecision === "function") ? calcEngineerPrecision() : 0.6;
+      return circuitBaseRef() * 0.004 * (1.2 - prec);
+    }
+    // Tour attendu au premier tour chaud, réglage et connaissance neutres : la cible du « Tour rapide ».
+    function tourAttendu(run) {
+      var base = circuitBaseRef();
+      var grip = 0.996 * (1 - wearPerLap(run) / 100 * 0.07);
+      return rythmeQualif(base, window._rjNiveauEssais.joueur()) * (1 - 0.08 * 0.07) / grip * 0.997;
+    }
+    function seuil(id, m, run) {
+      var v = seuils(id)[m - 1];
+      return id === "rapide" ? fmtLap(tourAttendu(run) * (1 + v)) : id === "relais" ? "±" + (v * bruitPilote()).toFixed(3).replace(".", ",") + " s" : v + " %";
+    }
+    function runType(id) { var p = programme(id), c = availableCompounds(); return { compound: c.indexOf(p.pneu) < 0 ? c[0] : p.pneu, push: p.push }; }
+    function objectif(id) {
+      var quoi = id === "rapide" ? "Tour en " : id === "relais" ? "8 tours réguliers, écart moyen " : "Confiance du pilote, 3 tours : ";
+      var r = runType(id);
+      return quoi + "bronze " + seuil(id, 1, r) + " · argent " + seuil(id, 2, r) + " · or " + seuil(id, 3, r);
+    }
+    // Médaille d'un relais : { m: 0–3, texte }
+    function juger(run) {
+      var tours = run.laps.filter(function (l) { return !l.outLap; }), id = run.programme, s = seuils(id), v, texte, pire = id !== "reglages";
+      if (id === "rapide") {
+        if (!run.bestLap) return null;
+        v = run.bestLap / tourAttendu(run) - 1; texte = fmtLap(run.bestLap);
+      } else if (id === "relais") {
+        var utiles = tours.slice(2);
+        if (tours.length < run.plan) return { m: 0, texte: tours.length + " tours sur " + run.plan };
+        var moy = utiles.reduce(function (a, l) { return a + l.ecart; }, 0) / utiles.length;
+        var mad = utiles.reduce(function (a, l) { return a + Math.abs(l.ecart - moy); }, 0) / utiles.length;
+        v = mad / bruitPilote(); texte = "±" + mad.toFixed(3).replace(".", ",") + " s";
+      } else {
+        v = window.RJAtelier ? RJAtelier.confiance() : null;
+        if (v == null || tours.length < run.plan) return { m: 0, texte: tours.length + " tours sur " + run.plan };
+        texte = "Confiance " + v + " %";
+      }
+      var m = 0;
+      s.forEach(function (x, i) { if (pire ? v <= x : v >= x) m = i + 1; });
+      return { m: m, texte: texte };
+    }
+    // Ce qu'un tour apprend du réglage : la zone se resserre vers l'idéal, cinq fois moins hors programme « Réglages ».
+    function apprendre(pr, avant, id) {
+      var ideal = getSetupSweetSpots() || {}, prec = (typeof calcEngineerPrecision === "function") ? calcEngineerPrecision() : 0.6;
+      var f = (0.10 + 0.10 * prec) * (id === "reglages" ? 1 : 0.2);
+      Object.keys(avant).forEach(function (k) {
+        var z = pr.knowledge[k], c = (avant[k].lowerBound + avant[k].upperBound) / 2, d = (avant[k].upperBound - avant[k].lowerBound) / 2;
+        if (typeof ideal[k] === "number") c += (ideal[k] - c) * f;
+        d = Math.max(0.5, d * (1 - f));
+        z.lowerBound = Math.max(0, c - d); z.upperBound = Math.min(10, c + d);
+      });
+    }
+    function pastille(m) {
+      return '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + ["rgba(255,255,255,.14)", "#CD7F32", "#D1D5DB", "#FBBF24"][m] + '"></span>';
+    }
+    function medaille(id) { return window.RJEssais ? RJEssais.medaille(id) : 0; }
+
     function availableCompounds() {
       var w = (RACE_STATE && RACE_STATE.weather && RACE_STATE.weather.id) || "dry";
       if (w === "wet" || w === "storm") return ["wet"];
       if (isKart()) return ["medium"]; // karting : pneu unique
       return ["soft", "medium", "hard"];
-    }
-
-    // Stock de trains par séance (réinitialisé à chaque séance)
-    function defaultStock() {
-      var w = (RACE_STATE && RACE_STATE.weather && RACE_STATE.weather.id) || "dry";
-      if (w === "wet" || w === "storm") return { wet: 6 };
-      if (isKart()) return { medium: 99 };
-      return { soft: 3, medium: 4, hard: 3 };
     }
 
     // ------------------------------------------------------------------------
@@ -940,8 +1009,7 @@
       if (typeof pr.sessionsCompleted !== "number") pr.sessionsCompleted = 0;
       if (typeof pr.testsThisSession !== "number") pr.testsThisSession = 0;
       if (!pr._live || pr._live.sessionIdx !== pr.sessionsCompleted) {
-        // Nouvelle séance → chrono neuf, stock neuf
-        var comps = availableCompounds();
+        // Nouvelle séance → chrono neuf
         pr._live = {
           sessionIdx: pr.sessionsCompleted,
           clockTotal: sessionMs(),
@@ -949,10 +1017,7 @@
           _actif: 0, _dernier: 0,   // temps de séance réellement passé à l'écran (ms)
           ended: false,
           onTrack: false,
-          stock: defaultStock(),
-          compound: comps[0],
-          push: "norm",
-          plan: 5,                 // tours planifiés (0 = libre)
+          programme: (PROGRAMMES.filter(function (p) { return !medaille(p.id); })[0] || PROGRAMMES[0]).id,
           runs: [],
           bestLap: null,
           run: null,               // relais en cours
@@ -1122,7 +1187,7 @@
       }
 
       lap = Math.max(0.92 * base, lap);
-      return { lapTime: +lap.toFixed(3), gripPct: Math.round(100 * grip / peak), incident: incident };
+      return { lapTime: +lap.toFixed(3), gripPct: Math.round(100 * grip / peak), incident: incident, ecart: lap - (rythme * tyreMult * pushMult - knowledgeGain) };
     }
 
     function wearPerLap(run) {
@@ -1384,32 +1449,19 @@
 
       // -- Panneau de configuration du relais --
       c += '<div style="margin-bottom:10px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid #22D3EE;border-radius:6px;overflow:hidden">';
-      c += '<div style="padding:9px 14px;border-bottom:1px solid var(--line);font-family:var(--font-display);font-size:10px;font-weight:800;color:#22D3EE;letter-spacing:.16em;text-transform:uppercase">Stand — préparation du relais</div>';
+      c += '<div style="padding:9px 14px;border-bottom:1px solid var(--line);font-family:var(--font-display);font-size:10px;font-weight:800;color:#22D3EE;letter-spacing:.16em;text-transform:uppercase">Programme de la séance</div>';
       c += '<div style="padding:12px 14px">';
 
-      // Composé (si choix)
-      var comps = availableCompounds();
-      if (typeof L.stock[L.compound] === "number" && L.stock[L.compound] <= 0) {
-        var dispo = comps.filter(function (id) { return !(typeof L.stock[id] === "number" && L.stock[id] <= 0); });
-        if (dispo.length) L.compound = dispo[0];
-      }
-      if (comps.length > 1) {
-        c += '<div style="font-size:10px;color:var(--muted);font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Pneus</div>';
-        c += '<div style="display:flex;gap:6px;margin-bottom:12px">';
-        comps.forEach(function (id) {
-          var prof = compoundProfile(id);
-          var col = COMPOUND_COLORS[id] || "#9CA3AF";
-          var stock = L.stock[id] || 0;
-          var on = L.compound === id;
-          var disabled = stock <= 0;
-          c += '<button data-fpl-comp="' + id + '"' + (disabled ? ' disabled' : '') + ' style="flex:1;padding:9px 4px;background:' + (on ? col + '22' : 'transparent') + ';border:1px solid ' + (on ? col : 'var(--line2)') + ';border-radius:6px;cursor:' + (disabled ? 'not-allowed' : 'pointer') + ';opacity:' + (disabled ? '.4' : '1') + '; -webkit-tap-highlight-color:transparent">';
-          c += '<div style="line-height:0;display:flex;justify-content:center">' + (typeof rjPneu === "function" ? rjPneu({ color: col, label: prof.label, short: COMPOUND_SHORT[id] }, 30) : (COMPOUND_SHORT[id] || '?')) + '</div>';
-          c += '<div style="font-size:9px;color:' + (on ? col : 'var(--muted)') + ';font-weight:700;margin-top:2px">' + esc(prof.label) + '</div>';
-          c += '<div style="font-size:9px;color:var(--dim);font-family:var(--font-display);margin-top:1px">' + stock + ' set' + (stock > 1 ? 's' : '') + '</div>';
-          c += '</button>';
-        });
-        c += '</div>';
-      }
+      // Programme de la séance, figé dès le premier relais
+      var fige = L.runs.length > 0;
+      c += '<div style="display:flex;gap:6px">';
+      PROGRAMMES.forEach(function (p) {
+        var on = L.programme === p.id;
+        c += '<button data-fpl-prog="' + p.id + '"' + (fige && !on ? ' disabled' : '') + ' aria-pressed="' + on + '" style="flex:1;min-width:0;min-height:44px;padding:5px 3px;background:' + (on ? '#22D3EE22' : 'transparent') + ';border:1px solid ' + (on ? '#22D3EE' : 'var(--line2)') + ';border-radius:6px;color:' + (on ? '#22D3EE' : 'var(--text2)') + ';font-size:11px;font-weight:800;opacity:' + (fige && !on ? '.4' : '1') + '">' + p.nom + (medaille(p.id) ? ' · ' + RJEssais.NOMS[medaille(p.id)].toLowerCase() : '') + '</button>';
+      });
+      c += '</div>';
+      var prog = programme(L.programme);
+      c += '<div data-fpl-objectif style="margin-top:5px;font-size:10px;line-height:1.3;color:var(--muted)"><b style="color:var(--soft)">' + esc(prog.effet.charAt(0).toUpperCase() + prog.effet.slice(1)) + '.</b> ' + esc(objectif(prog.id)) + '</div>';
 
       // Style de pilotage et longueur de relais retirés : le pilote part en piste
       // directement (consigne "norm" + relais libre par défaut), puis on le rappelle
@@ -1455,15 +1507,16 @@
 
       sec.innerHTML = c;
       wireGarage(sec, pr, maxSessions);
+      if (window._rj84) _rj84.compacter();   // la feuille de temps reste repliée après chaque redessin
       startClockTicker(pr);
     }
 
     function wireGarage(sec, pr, maxSessions) {
       var L = pr._live;
-      sec.querySelectorAll("[data-fpl-comp]").forEach(function (btn) {
+      sec.querySelectorAll("[data-fpl-prog]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           if (btn.disabled) return;
-          L.compound = btn.getAttribute("data-fpl-comp"); render();
+          L.programme = btn.getAttribute("data-fpl-prog"); render();
         });
       });
       var send = sec.querySelector("#fpl-send-btn");
@@ -1471,7 +1524,7 @@
       var next = sec.querySelector("#fpl-next-btn");
       if (next) next.addEventListener("click", function () { advanceSession(pr); });
       var qual = sec.querySelector("#fpl-qualif-btn");
-      if (qual) qual.addEventListener("click", function () { stopClockTicker(); if (typeof goToQualifStep === "function") goToQualifStep(); });
+      if (qual) qual.addEventListener("click", function () { stopClockTicker(); if (typeof showToast === "function" && window.RJEssais) showToast("Bilan des essais : " + RJEssais.bilan(circuitBaseRef())); if (typeof goToQualifStep === "function") goToQualifStep(); });
     }
 
     // ========================================================================
@@ -1547,15 +1600,9 @@
     // ========================================================================
     function startRun(pr) {
       var L = pr._live;
-      var comp = L.compound;
-      if (availableCompounds().indexOf(comp) < 0) comp = availableCompounds()[0];
-      // Consommer un train
-      if (typeof L.stock[comp] === "number" && L.stock[comp] < 99) {
-        if (L.stock[comp] <= 0) { if (typeof showToast === "function") showToast("Plus de trains de ce composé."); return; }
-        L.stock[comp]--;
-      }
+      var prog = programme(L.programme), type = runType(prog.id);
       L.run = {
-        compound: comp, push: L.push, plan: L.plan,
+        programme: prog.id, compound: type.compound, push: type.push, plan: prog.plan,
         wear: 0, flyingLaps: 0, laps: [], bestLap: null, boxRequested: false, phase: "outlap"
       };
       L.onTrack = true;
@@ -1596,11 +1643,13 @@
       // 1) Apprentissage setup via runPracticeTest (on garde le feedback)
       var feedback = {};
       try {
+        var avant = JSON.parse(JSON.stringify(pr.knowledge || {}));
         // Empêcher le plafond + saturer l'apprentissage (évite la dérive infinie)
         var realTests = pr.testsThisSession;
         if (realTests > 5) pr.testsThisSession = 5;
         var res = runPracticeTest();
         pr.testsThisSession = realTests + 1;
+        apprendre(pr, avant, run.programme);
         if (pr.tests && pr.tests.length) feedback = pr.tests[pr.tests.length - 1].feedback || {};
       } catch (e) { console.warn("[13] runPracticeTest:", e); }
 
@@ -1695,7 +1744,7 @@
         // Comptabiliser le tour
         run.flyingLaps++;
         run.wear = Math.min(100, run.wear + wearPerLap(run));
-        run.laps.push({ outLap: false, compound: run.compound, lapTime: lapTime, wearAfter: run.wear, incident: comp.incident });
+        run.laps.push({ outLap: false, compound: run.compound, lapTime: lapTime, wearAfter: run.wear, incident: comp.incident, ecart: comp.ecart });
         if (run.bestLap == null || lapTime < run.bestLap) { run.bestLap = lapTime; run.bestSectors = secData.slice(); }
         if (L.bestLap == null || lapTime < L.bestLap.lapTime) { L.bestLap = { lapTime: lapTime, compound: run.compound, sectors: secData.slice() }; try { refreshBoard(pr); } catch (e) {} }
         // Meilleurs temps perso par secteur (référence pour le coloriage des tours suivants)
@@ -1742,6 +1791,8 @@
       var feedback = (pr.tests && pr.tests.length) ? (pr.tests[pr.tests.length - 1].feedback || {}) : {};
       L.runs.push(run);
       L.run = null;
+      run.verdict = juger(run);
+      if (run.verdict && window.RJEssais) RJEssais.noter(run.programme, run.verdict.m);
 
       // Débrief seulement si le relais a produit des tours lancés
       var hadLaps = run.flyingLaps > 0;
@@ -1786,6 +1837,9 @@
       h += '</div>';
       // Quote
       h += '<div style="padding:11px 14px;background:var(--bg3);border-bottom:1px solid var(--line);font-style:italic;font-size:13px;color:var(--soft);line-height:1.5;font-family:var(--font-body)">« ' + esc(deb.msg) + ' »</div>';
+      if (run.verdict) {
+        h += '<div data-fpl-verdict style="padding:9px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--white)">' + pastille(run.verdict.m) + ' <b>' + esc(programme(run.programme).nom) + ' : ' + (run.verdict.m ? RJEssais.NOMS[run.verdict.m].toLowerCase() : 'objectif manqué') + '</b> · ' + esc(run.verdict.texte) + '<div style="margin-top:3px;font-size:11px;color:var(--muted)">' + esc(objectif(run.programme)) + '</div></div>';
+      }
       // Détail du meilleur tour : secteurs au millième
       if (run.bestSectors && run.bestSectors.length === 3 && run.bestLap) {
         h += '<div data-rj-noround style="padding:11px 14px;border-bottom:1px solid var(--line)">';
@@ -1884,6 +1938,9 @@
         c += '<div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--white)">' + fmtLap(bestLap.lapTime) + '</div>';
         c += '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + esc(compoundProfile(bestLap.compound).label) + '</div></div>';
       }
+      if (window.RJEssais) {
+        c += '<div data-fpl-bilan style="margin-bottom:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid #22D3EE;font-size:13px;color:var(--white)"><b>' + esc(RJEssais.bilan(circuitBaseRef())) + '</b><div style="margin-top:5px;font-size:11px;color:var(--muted)">' + PROGRAMMES.map(function (p) { return pastille(medaille(p.id)) + ' ' + p.nom; }).join(' &nbsp; ') + '</div></div>';
+      }
       c += '<div style="padding:12px 14px;background:var(--green-bg);border:1px solid var(--green);color:var(--green);font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-bottom:10px;border-radius:4px">✓ Essais libres terminés</div>';
       c += '<button id="fpl-go-qualif" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,var(--red2) 0%,var(--red) 100%);border:none;color:#fff;font-family:var(--font-display);font-size:13px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px">Aller en qualif<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>';
       sec.innerHTML = c;
@@ -1895,7 +1952,7 @@
       stopClockTicker();
       if (typeof endPracticeSession === "function") endPracticeSession();
       else { pr.sessionsCompleted = Math.min((typeof getPracticeMaxSessions === "function" ? getPracticeMaxSessions() : 3), pr.sessionsCompleted + 1); pr.testsThisSession = 0; }
-      pr._live = null; // forcera une nouvelle séance (chrono + stock neufs)
+      pr._live = null; // forcera une nouvelle séance (chrono neuf)
       render();
       if (typeof renderAdvancedSetupUI === "function") { try { renderAdvancedSetupUI(); } catch (e) {} }
     }
