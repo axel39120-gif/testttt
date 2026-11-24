@@ -4803,6 +4803,26 @@ async function suiteRetours306() {
   }
 }
 
+/* v308 : le bouton Build ouvre les notes de version, à jour */
+async function suiteNotes308() {
+  S.suite("Notes de version");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await page.waitForSelector("#rj-build-badge");
+    const r = await page.evaluate(async () => {
+      const o = { version: RJNotesVersion.notes[0].v === RJ_BUILD }, alerte = window.alert; let vu = false; window.alert = () => { vu = true; };
+      document.getElementById("rj-build-badge").click(); await new Promise(x => setTimeout(x, 500));
+      const c = document.querySelector("#rj168 .rj166-corps"); o.texte = c.innerText.slice(0, 120); c.scrollTop = 200; await new Promise(x => setTimeout(x, 300)); o.defile = c.scrollTop > 100 || document.querySelector("#rj168 .rj166-carte").scrollTop > 100;
+      const k = document.querySelector("#rj168 .rj166-carte").getBoundingClientRect(); o.dedans = k.top >= 0 && k.bottom <= innerHeight;
+      document.querySelector(".rj168-diag").click(); o.diag = /Écran/.test(document.querySelector("#rj168 pre").textContent);
+      document.querySelector("#rj168 .rj166-x").click(); o.ferme = !document.getElementById("rj168"); o.alerte = vu; window.alert = alerte; return o;
+    });
+    S.verifier("la première note est celle de la version en cours", r.version, JSON.stringify(r));
+    S.verifier("le bouton Build ouvre les notes, qui tiennent, défilent et se ferment ; diagnostic conservé", /Nouveautés|Corrections/i.test(r.texte) && r.defile && r.dedans && r.diag && r.ferme && !r.alerte, JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5252,7 +5272,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308
 };
 
 async function principal() {
