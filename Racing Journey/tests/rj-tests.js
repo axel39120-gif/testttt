@@ -4673,8 +4673,40 @@ async function suiteEssais304() {
     });
     S.verifier("médaille d'or : 0,14 s en qualif, la meilleure est gardée", Math.abs(fx.qualif - 0.1386) < 0.002 && fx.garde === 3, JSON.stringify(fx));
     S.verifier("long relais : rien au début, un gain par tour en fin de course", fx.debut === 0 && Math.abs(fx.fin + 0.126) < 0.001, JSON.stringify(fx));
+    /* v305 : départs, délégation, connaissance */
+    const suite = await page.evaluate(async () => {
+      const dors = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      G._essais = null; G.setupAdv = {}; RACE_STATE.practice = null; initPracticeState(); renderPracticeSection();
+      o.el1 = !!document.querySelector('[data-fpl-prog="departs"]');
+      const z0 = Object.values(RACE_STATE.practice.knowledge).reduce((s, z) => s + z.upperBound - z.lowerBound, 0);
+      document.getElementById("fpl-deleguer-btn").click(); await dors(200);
+      const p = RACE_STATE.practice;
+      o.del = { seance: p.sessionsCompleted, m: RJEssais.medaille("reglages"), zone: Object.values(p.knowledge).reduce((s, z) => s + z.upperBound - z.lowerBound, 0) < z0, risque: RJEssais.risque() };
+      RJEssais.noter("reglages", 3); p.sessionsCompleted = 2; renderPracticeSection();
+      o.el3 = !!document.querySelector('[data-fpl-prog="departs"]');
+      document.querySelector('[data-fpl-prog="departs"]').click(); await dors(100);
+      o.trop = (e => e.scrollHeight - e.clientHeight)(document.querySelector("#S-race > .scroll"));
+      document.getElementById("fpl-send-btn").click();
+      return o;
+    });
+    await page.waitForSelector("#fpl-debrief", { timeout: 60000 });
+    suite.deb = await page.evaluate(() => { const t = document.querySelector("[data-fpl-verdict]").textContent; document.getElementById("fpl-debrief-close").click(); return t; });
+    S.verifier("déléguer : bronze, zone resserrée, séance suivante, moins de fautes", suite.del.seance === 1 && suite.del.m === 1 && suite.del.zone && suite.del.risque < 1 && suite.del.risque >= 0.7, JSON.stringify(suite));
+    S.verifier("départs : seulement à la dernière séance, 5 envols jugés, rien ne défile", !suite.el1 && suite.el3 && suite.trop <= 0 && /Départs : /.test(suite.deb) && /réaction 0,\d{3} s/.test(suite.deb), JSON.stringify(suite));
+    const env = await page.evaluate(() => {
+      const sauve = window.LIVE_RACE, place = m => {
+        G._essais = null; if (m) RJEssais.noter("departs", m); let s = 0; const N = 300;
+        for (let k = 0; k < N; k++) {
+          const D = []; for (let i = 0; i < 20; i++) D.push({ name: "r" + i, isPlayer: i === 9, pos: i + 1, gridPos: i + 1, score: .8, baseScore: .8 });
+          window.LIVE_RACE = { drivers: D, cur: 1, total: 50, baseRef: 84 };
+          RJ_RACE_START_HOOKS.find(x => x.id === "163-programmes").apres(LIVE_RACE); updateLivePositions(); s += D.find(d => d.isPlayer).pos;
+        } return s / N;
+      };
+      const h = window.RJ_LAP_HOOKS; window.RJ_LAP_HOOKS = []; const r = { sans: place(0), or: place(3) }; window.RJ_LAP_HOOKS = h; window.LIVE_RACE = sauve; return r;
+    });
+    S.verifier("départs en or : des places gagnées en moyenne au premier tour, sans excès", env.sans - env.or > 0.4 && env.sans - env.or < 3, JSON.stringify(env));
     S.verifier("les rivaux se préparent aussi, de façon stable sur le week-end", fx.stable && new Set(fx.niveaux).size >= 3, fx.niveaux.join());
-    S.verifier("le bilan tient en une ligne et s'efface au week-end suivant", /^Qualif .* · Fin de course −0,13 s par tour$/.test(fx.bilan) && fx.perime === 0, fx.bilan);
+    S.verifier("le bilan tient en une ligne et s'efface au week-end suivant", /^Qualif .* · Fin de course −0,13 s par tour · Départ = · Fautes =$/.test(fx.bilan) && fx.perime === 0, fx.bilan);
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }

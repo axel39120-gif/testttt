@@ -48,6 +48,7 @@
   /* Une faute commise ce tour-ci par ce pilote ? Rend la faute ou null. */
   function fauteDuTour(d, kart) {
     var p = (kart ? BASE_KART : BASE) * Math.max(0.3, (1.25 - regularite(d)) / 0.45);
+    if (d.isPlayer && window.RJEssais) p *= RJEssais.risque();   // voiture connue aux essais (163)
     return Math.random() < p ? tirer() : null;
   }
 
