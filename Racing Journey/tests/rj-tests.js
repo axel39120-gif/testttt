@@ -4314,6 +4314,73 @@ async function suiteCoherence297() {
   } finally { await navigateur.close(); }
 }
 
+/* v302 : note figée, millièmes, négociation, accords, tuiles, carrière complète, logos */
+async function suiteRetours302() {
+  S.suite("Retours v302");
+  for (const [nom, w, h] of [["téléphone", 852, 393], ["petit téléphone", 640, 360], ["tablette", 1280, 800]]) {
+    const { navigateur, page } = await S.ouvrirJeu({ viewport: { width: w, height: h }, mobile: true });
+    try {
+      const r = await page.evaluate(async () => { navTo("S-home", "ni-home"); await new Promise(x => setTimeout(x, 600));
+        return [...document.querySelectorAll("#S-home .apex-action-tile")].map(t => { const e = t.querySelector(".apex-action-title"), q = t.getBoundingClientRect(), z = e.getBoundingClientRect(), i = t.querySelector(".rj118-info"), y = i.getBoundingClientRect(); return { t: e.textContent, coupe: e.scrollWidth > e.clientWidth + 1, sort: z.top < q.top || y.bottom > q.bottom + 1 }; }); });
+      S.verifier(nom + " : titres des boutons entiers", r.length === 9 && r.every(x => !x.coupe && !x.sort), JSON.stringify(r.filter(x => x.coupe || x.sort)));
+    } finally { await navigateur.close(); }
+  }
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  page.on("dialog", d => d.accept().catch(() => {}));
+  try {
+    const r = await page.evaluate(async () => {
+      const dormir = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      // note de fin de saison figée
+      CAREER_HISTORY.length = 0; G.races = [{ pos: 2, pts: 18 }]; saveSeasonToHistory(); o.n1 = CAREER_HISTORY[0].rating;
+      Object.keys(G.substats).forEach(k => G.substats[k] = Math.max(20, G.substats[k] - 25)); o.actuelle = calcPlayerRating(); saveSeasonToHistory(); o.n2 = CAREER_HISTORY[0].rating; o.lignes = CAREER_HISTORY.length;
+      // grille : millièmes conservés malgré l'arrondi des nombres de la page
+      navTo("S-race", null); resetRaceScreen(); QUALI_STATE.drivers = [{ name: "Moi", isPlayer: true, team: "Williams", bestTime: 51.1234 }].concat(G.rivals.slice(0, 9).map((x, i) => ({ name: x.name, team: x.team, rivalIdx: i, bestTime: 51.3 + i * .1237 })));
+      RACE_STATE.qualiPos = 1; rtab("course", true); await dormir(2500); RJGrille.finir(); o.temps = [...document.querySelectorAll(".rj159-place .t")].map(x => x.textContent); RJGrille.retirer();
+      // négociation conservée
+      G.seasonOver = false; G.pendingTransfer = null; G.budget = 85000; G.cat = "Formule 4"; G.currentTeam = "Indépendant"; G.agent = { type: "pro", firstName: "Léo", name: "Martin", skill: 50 };
+      const t = TEAM_OFFERS["Formule 4"][0], autre = TEAM_OFFERS["Formule 4"][1];
+      G.offers = [buildOffer(Object.assign({}, t, { cat: "Formule 4", cost: 100000, expire: 9 }))];
+      openNeg(0); negDoAction("salary_up"); const a1 = Object.keys(NEG_STATE.usedActions).length + NEG_STATE.history.length; G.offers[0].cCost = 95000; NEG_STATE.patience = 37; closeNeg(); await dormir(120);
+      saveGame(0); openNeg(0); o.neg = { p: NEG_STATE.patience, c: G.offers[0].cCost, h: NEG_STATE.history.length, a1 }; o.serialisable = JSON.parse(JSON.stringify(G.offers[0]))._neg.patience; closeNeg(); await dormir(120);
+      // accord sous condition : rien payé, rien signé, un repli ailleurs
+      signContract(0); o.accord = { budget: G.budget, transfert: !!G.pendingTransfer, ok: !!G.offers[0]._accord, offres: G.offers.length, repli: !!(G.offers[1] && G.offers[1].team !== t.team) };
+      navTo("S-contracts", null); ctab("offres"); await dormir(700); o.carte = (document.querySelector("#offers-list .offer-card") || {}).innerText || "";
+      // fin de saison sans l'argent : l'accord tombe, l'autre piste reste
+      const n = G.offers.length; G.seasonOver = true; RJAccords.echeance(); o.rompu = { reste: G.offers.length === n - 1, transfert: !!G.pendingTransfer };
+      // au mercato, impossible de signer sans la somme
+      G.offers = [buildOffer(Object.assign({}, t, { cat: "Formule 4", cost: 100000 }))]; signContract(0); o.mercato = { transfert: !!G.pendingTransfer, budget: G.budget };
+      // avec l'argent : honoré
+      G.seasonOver = false; G._rj161Fin = 0; signContract(0); G.budget = 130000; G.seasonOver = true; RJAccords.echeance(); o.honore = { team: G.pendingTransfer && G.pendingTransfer.team, paye: G.budget < 130000 };
+      // deux accords financés : le choix reste au joueur
+      G.pendingTransfer = null; G._rj161Fin = 0; G.seasonOver = false; G.budget = 1000; G.offers = [t, autre].map(x => buildOffer(Object.assign({}, x, { cat: "Formule 4", cost: 50000 }))); signContract(0); signContract(1); G.budget = 500000; G.seasonOver = true; RJAccords.echeance(); o.deux = { n: G.offers.filter(x => x._accord).length, transfert: !!G.pendingTransfer };
+      o.primes = !/Primes sponsors/.test(String(window._checkSponsorPerfCoeur || ""));
+      // carrière complète
+      G.cat = "Formule 1"; G.saison = 8; initRivals(); const riv = G.rivals[0], L = RJCarriereComplete(riv, [{ saison: 7, cat: "Formule 1", team: "Ferrari", pos: 3, pts: 200, races: 22 }]).sort((x, y) => x.saison - y.saison), L2 = RJCarriereComplete(riv, [{ saison: 7, cat: "Formule 1", team: "Ferrari", pos: 3, pts: 200, races: 22 }]).sort((x, y) => x.saison - y.saison);
+      const ordre = ["Karting Junior", "Karting Senior", "Formule 4", "Formula Regional", "Formule 3", "Formule 2", "Formule 1"];
+      o.car = { n: L.length, debut: L[0].cat, suite: L.every((x, i) => !i || x.saison === L[i - 1].saison + 1), monte: L.every((x, i) => !i || ordre.indexOf(x.cat) >= ordre.indexOf(L[i - 1].cat)), stable: JSON.stringify(L) === JSON.stringify(L2), reel: L[L.length - 1].team === "Ferrari", pleins: L.every(x => x.team && x.races > 0 && x.pos > 0) };
+      showDriverProfileModal({ idx: 0 }); await dormir(300); const m = document.getElementById("driver-profile-modal"); o.fiche = { lignes: m.querySelectorAll(".rj-career-table tbody tr").length, logos: m.querySelectorAll(".rj-career-table .eq svg").length };
+      o.logos = Object.keys(RJDessins).filter(k => !TEAM_LOGOS[k] || !/rjlogo/.test(TEAM_LOGOS[k])).concat(Object.keys(TEAM_LOGOS).filter(k => !RJDessins[k] && !/Ferrari|Red Bull|Mercedes|McLaren|Aston|Alpine|Haas|Williams|Racing Bulls|Audi/.test(k)));
+      // un an par saison
+      const d = G.driverPool.find(x => !x.retired && x.age < 20), age = d.age; _progressDriverPool(); o.age = d.age - age;
+      return o;
+    });
+    S.verifier("note de fin de saison figée, même si l'on rouvre le bilan", r.n1 === r.n2 && r.actuelle !== r.n1 && r.lignes === 1, JSON.stringify([r.n1, r.actuelle, r.n2, r.lignes]));
+    S.verifier("grille : temps au millième", r.temps.length === 10 && r.temps.every(x => /\.\d{3}$/.test(x)), JSON.stringify(r.temps));
+    S.verifier("négociation reprise au même stade", r.neg.p === 37 && r.neg.c === 95000 && r.neg.h > 0 && r.serialisable === 37, JSON.stringify(r.neg));
+    S.verifier("fonds insuffisants : accord sous condition, rien payé, une autre piste ouverte", r.accord.ok && !r.accord.transfert && r.accord.budget === 85000 && r.accord.repli, JSON.stringify(r.accord));
+    S.verifier("la carte montre l'accord et ce qu'il manque", /accord sous condition/i.test(r.carte) && /Il manque 10.000/.test(r.carte) && /Fin de saison/i.test(r.carte) && !/99 course/i.test(r.carte), r.carte.replace(/\n/g, " · ").slice(0, 300));
+    S.verifier("fin de saison sans les fonds : accord rompu, l'autre piste reste", r.rompu.reste && !r.rompu.transfert, JSON.stringify(r.rompu));
+    S.verifier("mercato : pas de signature sans la somme", !r.mercato.transfert && r.mercato.budget === 85000, JSON.stringify(r.mercato));
+    S.verifier("fonds réunis : accord honoré", !!r.honore.team && r.honore.paye, JSON.stringify(r.honore));
+    S.verifier("deux accords financés : le joueur choisit", r.deux.n === 2 && !r.deux.transfert, JSON.stringify(r.deux));
+    S.verifier("carrière complète d'un pilote, sans trou, stable et cohérente", r.car.n >= 6 && /Karting/.test(r.car.debut) && r.car.suite && r.car.monte && r.car.stable && r.car.reel && r.car.pleins, JSON.stringify(r.car));
+    S.verifier("fiche : historique long, logos d'écurie", r.fiche.lignes >= 6 && r.fiche.logos >= 3, JSON.stringify(r.fiche));
+    S.verifier("tous les logos hors F1 redessinés", r.logos.length === 0, r.logos.join());
+    S.verifier("les pilotes ne vieillissent plus deux fois", r.age === 0, String(r.age));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v301 : contacts uniques et nommés, bande collée à l'en-tête, menus alignés */
 async function suiteContacts301() {
   S.suite("Contacts et en-têtes (v301)");
@@ -4966,7 +5033,8 @@ const SUITES = {
   retours300: suiteRetours300,
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
-  contacts301: suiteContacts301
+  contacts301: suiteContacts301,
+  retours302: suiteRetours302
 };
 
 async function principal() {

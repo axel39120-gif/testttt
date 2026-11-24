@@ -49,7 +49,8 @@
     var k = RACE_STATE.circuit + "|" + G.saison + "|" + L.map(function (d) { return d.name; }).join();
     if (vue && k === cle && ecran.contains(vue)) return;
     retirer(); cle = k;
-    vue = document.createElement("div"); vue.id = "rj159"; vue.setAttribute("aria-label", "Grille de départ");
+    vue = document.createElement("div"); vue.id = "rj159"; vue.setAttribute("data-rj-noround", "1");   // 04q arrondit les nombres de la page : les millièmes disparaissaient
+    vue.setAttribute("aria-label", "Grille de départ");
     vue.innerHTML = '<div class="rj159-piste">' + L.map(function (d, i) {
       var logo = window.TEAM_LOGOS && TEAM_LOGOS[d.team];
       return '<div class="rj159-place ' + (i % 2 ? "d" : "g") + (d.isPlayer ? " moi" : "") + '"><span class="n">' + (i + 1) + "</span>" + voiture(d) +

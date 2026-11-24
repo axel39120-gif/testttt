@@ -28,7 +28,7 @@
   function _gameYearForSaison(saison) {
     try {
       var startY = (window.G && window.G.pilot && window.G.pilot.startYear) || 2024;
-      return startY + ((saison || 1) - 1);
+      return startY + ((saison == null ? 1 : saison) - 1);
     } catch (e) { return saison || 1; }
   }
 
@@ -43,6 +43,67 @@
       .replace('Endurance WEC', 'WEC')
       .replace('IndyCar', 'Indy');
   }
+
+  /* v302 : l'écurie avec son logo. */
+  function _ecurie(t) {
+    var svg = t && window.TEAM_LOGOS && TEAM_LOGOS[t];
+    return '<span class="eq">' + (svg || '') + _safeEsc(t || '—') + '</span>';
+  }
+
+  /* v302 : la carrière ENTIÈRE d'un pilote. Les saisons qu'il a courues hors de la
+     catégorie du joueur, ou avant le début de la partie, sont reconstituées :
+     toujours les mêmes (tirage fixé par le nom), cohérentes avec son âge, sa
+     catégorie connue la plus proche et son niveau. */
+  var ECHELLE = ["Karting Junior", "Karting Senior", "Formule 4", "Formula Regional", "Formule 3", "Formule 2", "Formule 1"];
+  var ARRIVEE = [10, 13, 15, 17, 18, 20, 22];          // âge habituel d'arrivée
+  var MANCHES = { "Karting Junior": 8, "Karting Senior": 10, "Formule 4": 14, "Formula Regional": 18, "Formule 3": 18, "Formule 2": 24, "Formule 1": 22, "Super Formula": 12, "Endurance WEC": 8, "IndyCar": 17 };
+  var BAREME = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+  function _tirage(t) { var h = 2166136261; t = String(t); for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; }
+  function _ecuriesDe(cat) {
+    var L = (typeof TEAM_OFFERS !== 'undefined' && TEAM_OFFERS[cat] || []).map(function (t) { return t.team; });
+    return L.length ? L : ['Indépendant'];
+  }
+  function _saisonReconstituee(nom, saison, cat, niveau, suivante) {
+    var r = _tirage(nom + saison + cat), n = MANCHES[cat] || 14, L = _ecuriesDe(cat);
+    var pos = Math.max(1, Math.min(20, Math.round(1 + (1 - niveau) * 12 + r * 7)));
+    var moyen = BAREME[Math.min(9, pos - 1)] * .72, wins = pos <= 4 ? Math.round(n * [.42, .22, .12, .06][pos - 1] * (.7 + r * .6)) : 0;
+    // deux saisons de suite dans la même catégorie : même écurie deux fois sur trois
+    var team = suivante && suivante.cat === cat && suivante.team && r < .66 ? suivante.team : cat === "Karting Junior" ? "Indépendant" : L[Math.floor(_tirage(nom + cat + Math.floor(saison / 2)) * L.length)];
+    return { saison: saison, cat: cat, team: team, pos: pos, pts: pos > 10 ? Math.round((20 - pos) * r) : Math.round(moyen * n), races: n, wins: wins, pods: pos <= 7 ? Math.min(n, wins + Math.round(n * Math.max(0, .5 - pos * .07))) : 0, _rec: true };
+  }
+  function _carriereComplete(rival, connu) {
+    var L = connu.slice().sort(function (a, b) { return a.saison - b.saison; }), S = (window.G && G.saison) || 1, d = null;
+    (Array.isArray(G.driverPool) ? G.driverPool : Object.keys(G.driverPool || {}).map(function (k) { return G.driverPool[k]; })).forEach(function (x) { if (x && x.name === rival.name) d = x; });
+    var age = d && d.age, an = typeof gameYear === 'function' ? gameYear() : 2024;
+    if (!age && rival.dob && rival.dob.year) age = an - rival.dob.year;
+    if (!age) age = ARRIVEE[Math.max(0, ECHELLE.indexOf(G.cat))] + 2;
+    var rs = G.rivals || [], rang = rs.filter(function (x) { return (x.skill || 0) > (rival.skill || 0); }).length, niveau = rs.length ? 1 - rang / rs.length : .5;
+    // saisons connues mais simulées sans écurie ni nombre de courses
+    L.forEach(function (h) {
+      if (!h.races) h.races = MANCHES[h.cat] || 14;
+      if (!h.team || h.team === "—") h.team = h.cat === "Karting Junior" ? "Indépendant" : _ecuriesDe(h.cat)[Math.floor(_tirage(rival.name + h.cat + Math.floor(h.saison / 2)) * _ecuriesDe(h.cat).length)];
+    });
+    var par = {}; L.forEach(function (h) { par[h.saison] = h; });
+    var ref = L[0] || { saison: S, cat: G.cat, team: rival.team }, ageRef = age - (S - ref.saison);
+    // à reculons, depuis la première saison connue
+    var rung = ECHELLE.indexOf(ref.cat), alt = rung < 0; if (alt) rung = 5;
+    var entree = Math.min(ageRef, (alt ? 23 : ARRIVEE[rung]) + Math.floor(_tirage(rival.name + "entree") * 3)), suiv = ref;
+    for (var s = ref.saison - 1, a = ageRef - 1; a >= 10; s--, a--) {
+      var cat = ref.cat;
+      if (a < entree) {
+        var avant = entree - 1 - a, i = alt ? rung + 1 : rung;      // deux saisons par échelon environ
+        while (i > 0 && avant >= 0) { i--; avant -= i <= 1 ? 3 : 1 + Math.floor(_tirage(rival.name + i) * 2); }
+        cat = ECHELLE[i];
+        var min = typeof CAT_MIN_AGE !== 'undefined' ? CAT_MIN_AGE[cat] : undefined;
+        while (min !== undefined && a < min && i > 0) { cat = ECHELLE[--i]; min = CAT_MIN_AGE[cat]; }
+      }
+      suiv = par[s] = _saisonReconstituee(rival.name, s, cat, niveau, suiv);
+    }
+    // trous entre deux saisons connues, jusqu'à la saison passée
+    for (var t = ref.saison + 1; t < S; t++) if (!par[t]) par[t] = _saisonReconstituee(rival.name, t, par[t - 1].cat, niveau, par[t - 1]);
+    return Object.keys(par).map(function (k) { return par[k]; });
+  }
+  window.RJCarriereComplete = _carriereComplete;
 
   function _posClass(pos) {
     if (pos === 1) return 'rj-pos-1';
@@ -132,9 +193,7 @@
         html += '<tr>' +
                 '<td style="font-weight:600">' + year + liveBadge + '</td>' +
                 '<td style="color:var(--text2)">' + _safeEsc(_catShort(s.cat)) + '</td>' +
-                '<td style="color:var(--text2);max-width:90px;overflow:hidden;' +
-                'text-overflow:ellipsis;white-space:nowrap">' +
-                _safeEsc(s.team || '—') + '</td>' +
+                '<td style="color:var(--text2);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _ecurie(s.team) + '</td>' +
                 '<td class="' + posClass + '" style="text-align:center">' + posTxt + '</td>' +
                 '<td style="text-align:center;color:var(--text2)">' + (s.races || 0) + '</td>' +
                 '<td style="text-align:center;color:#FFD23F">' + (s.wins || 0) + '</td>' +
@@ -175,6 +234,7 @@
           });
         });
       } catch (e) {}
+      hist = _carriereComplete(rival, hist.map(function (h) { return Object.assign({}, h); }));
       hist.sort(function (a, b) { return a.saison - b.saison; });
 
       // Ajouter la saison courante si pas déjà dedans
@@ -260,9 +320,7 @@
         html += '<tr>' +
                 '<td style="font-weight:600">' + year + liveBadge + '</td>' +
                 '<td style="color:var(--text2)">' + _safeEsc(_catShort(s.cat)) + '</td>' +
-                '<td style="color:var(--text2);max-width:90px;overflow:hidden;' +
-                'text-overflow:ellipsis;white-space:nowrap">' +
-                _safeEsc(s.team || '—') + '</td>' +
+                '<td style="color:var(--text2);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _ecurie(s.team) + '</td>' +
                 '<td class="' + posClass + '" style="text-align:center">' + posTxt + '</td>' +
                 '<td style="text-align:center;color:var(--text2)">' + (s.races || 0) + '</td>' +
                 '<td style="text-align:center;color:#FFD23F">' + (s.wins || 0) + '</td>' +

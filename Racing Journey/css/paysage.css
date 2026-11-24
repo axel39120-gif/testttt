@@ -462,11 +462,12 @@ body:not(:has(#S-home.on)) { --hud: 0px; }
 .rj118-info:empty { display: none; }
 #S-home > .scroll .apex-action-tile:has(.rj118-info:empty) .apex-action-title { grid-row: 1 / 3; align-self: center; }
 /* Tuiles étroites (petit téléphone) : icône au-dessus, texte centré. */
-@container app (max-width: 800px) {
-  #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; justify-items: center; text-align: center !important; row-gap: 3px; padding: 6px !important; }
-  #S-home > .scroll .apex-actions-grid .apex-action-icon { grid-row: auto; width: 32px !important; height: 32px !important; }
-  #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 12px !important; max-width: 100%; }
-  .rj118-info { font-size: 9.5px; max-width: 100%; }
+/* v302 : partout sauf grand écran d'ordinateur — à côté de l'icône, « Entraînement » était coupé. */
+@container app (max-width: 1100px) {
+  #S-home > .scroll .apex-actions-grid > .apex-action-tile { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; justify-items: center; text-align: center !important; row-gap: 2px; padding: 4px 6px !important; }
+  #S-home > .scroll .apex-actions-grid .apex-action-icon { grid-row: auto; width: 30px !important; height: 30px !important; }
+  #S-home > .scroll .apex-actions-grid .apex-action-title { font-size: 12.5px !important; max-width: 100%; grid-row: auto !important; }
+  .rj118-info { font-size: 10px; max-width: 100%; align-self: auto; }
 }
 /* Grands écrans d'ordinateur (sans mise à l'échelle) : tuiles plus généreuses.
    v299 : réservé à l'ordinateur — sur tablette, 00-ecran.js agrandit déjà tout le jeu. */
@@ -1944,3 +1945,15 @@ img.rja { display: block; object-fit: cover; object-position: center 18%; }
 
 /* v301 : la bande du contact touche l'en-tête (le défilement a 12 px de marge haute) */
 #mailbox-list.rj124-fil > [style*="sticky"] { top: -12px !important; margin-top: -12px; background: #0a0a0e !important; }
+
+/* v302 : accord sous condition (161) */
+.rj161 { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; padding: 9px 12px; border-radius: var(--r); background: rgba(245, 158, 11, .08); border: 1px solid rgba(245, 158, 11, .28); font-size: 12px; color: #e8e8ec; }
+.rj161 b { font: 800 11px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; color: #F59E0B; }
+.rj161 i { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; } .rj161 u { display: block; height: 100%; background: #F59E0B; }
+/* v302 : écurie avec son logo dans l'historique */
+.rj-career-table .eq { display: inline-flex; align-items: center; gap: 6px; } .rj-career-table .eq svg { width: 18px; height: 18px; flex: none; }
+
+/* v302 : fiche pilote large et défilante, l'historique tient sur la largeur */
+#driver-profile-modal > div { max-width: 660px !important; max-height: calc(var(--app-h, 100dvh) - 16px) !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+#driver-profile-modal > div > * { flex-shrink: 0; }
+#driver-profile-modal .rj-career-table { width: 100%; }

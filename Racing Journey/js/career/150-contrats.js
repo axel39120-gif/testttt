@@ -61,8 +61,8 @@
     var signe = (G.pendingTransfer && G.pendingTransfer !== avant && G.pendingTransfer.team === o.team) ||
       (o.team === G.currentTeam && o.cat === G.cat && (G.contractDur !== dureeAvant || G.budget !== budgetAvant || !(G.offers || []).some(function (x) { return x === o; })));
     if (!signe) {
-      message(Math.round(cout / 3) > G.budget
-        ? "Signature impossible avec " + o.team + " : il faut " + euros(Math.round(cout / 3)) + " à la signature (un tiers du baquet de " + euros(cout) + "), ton budget est de " + euros(G.budget) + ". Négocie dans Contrats & revenus, ou choisis une autre offre."
+      message(cout > G.budget
+        ? "Signature impossible avec " + o.team + " : il faut " + euros(cout) + ", ton budget est de " + euros(G.budget) + ". Négocie dans Contrats & revenus, ou choisis une autre offre."
         : "Signature impossible avec " + o.team + " pour le moment. Ouvre Contrats & revenus pour voir pourquoi.");
       return null;
     }
@@ -82,8 +82,8 @@
       var c = prix(o), btn = div.querySelector("button");
       var p = document.createElement("div");
       var tiers = Math.round(c / 3);
-      p.className = "rj150-prix" + (c > 0 ? (tiers > G.budget ? " trop" : "") : " offert");
-      p.textContent = c > 0 ? "Baquet : " + euros(c) + " — " + euros(tiers) + " à la signature, le reste sur huit mois" + (o._prixAvantAcademie ? " (l'académie a payé " + euros(o._prixAvantAcademie) + ")" : "") + (tiers > G.budget ? " · budget " + euros(G.budget) + " : insuffisant" : "")
+      p.className = "rj150-prix" + (c > 0 ? (c > G.budget ? " trop" : "") : " offert");
+      p.textContent = c > 0 ? "Baquet : " + euros(c) + " — " + euros(tiers) + " à la signature, le reste sur huit mois" + (o._prixAvantAcademie ? " (l'académie a payé " + euros(o._prixAvantAcademie) + ")" : "") + (c > G.budget ? " · budget " + euros(G.budget) + " : insuffisant" : "")
         : "Baquet offert";
       if (btn) div.insertBefore(p, btn); else div.appendChild(p);
     });
