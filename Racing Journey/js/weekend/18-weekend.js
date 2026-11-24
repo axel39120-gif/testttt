@@ -1081,7 +1081,7 @@
           // les premiers tours sont plus lents, on converge vers target
           var prog = nReveals > 1 ? r / (nReveals - 1) : 1;
           var slowOff = base * (0.02 * (1 - prog)) + base * (Math.random() * 0.003);
-          reveals.push({ atFrac: frac, time: fond + slowOff });
+          reveals.push({ atFrac: frac, time: fond + slowOff, secteurs: decouper(fond + slowOff) });
         }
         reveals.sort(function (a, b) { return a.atFrac - b.atFrac; });
         // Décalage de tours par rapport au joueur : chaque pilote tourne autant que le
@@ -1090,6 +1090,26 @@
         field.push({ name: rv.name || rv.nom || ("Pilote " + (i + 1)), nat: rv.nat || null, team: rv.team || null, skill: sk, target: target, reveals: reveals, lapOffset: lapOffset });
       });
       L.field = field;
+    }
+
+    // Un tour en trois secteurs (millièmes), un peu différents d'un tour à l'autre.
+    function decouper(t) {
+      var p = [0.32, 0.36, 0.32].map(function (x) { return x * (1 + (Math.random() - 0.5) * 0.012); }), tot = p[0] + p[1] + p[2];
+      var a = +(t * p[0] / tot).toFixed(3), b = +(t * p[1] / tot).toFixed(3);
+      return [a, b, +(t - a - b).toFixed(3)];
+    }
+    /* Couleur d'un secteur (v307), chacun le sien : violet = meilleur de la séance, tous pilotes
+       (donc le tout premier temps posé) ; vert = meilleur du pilote, ou son premier temps ;
+       jaune = il a déjà fait mieux. Jamais de blanc. */
+    function couleurSecteur(pr, idx, st) {
+      var L = pr._live, perso = L.secBestPerso && L.secBestPerso[idx], seance = typeof perso === "number" ? perso : null;
+      var frac = L.clockTotal > 0 ? (L.clockTotal - clockRemaining(pr)) / L.clockTotal : 1, aRoule = (L.runs || []).concat(L.run || []).some(function (x) { return x.flyingLaps > 0; });
+      (L.field || []).forEach(function (d) {
+        d.reveals.forEach(function (v, k) {      // mêmes temps dévoilés que la feuille de temps
+          if ((v.atFrac <= frac || (k === 0 && aRoule)) && (seance === null || v.secteurs[idx] < seance)) seance = v.secteurs[idx];
+        });
+      });
+      return seance === null || st <= seance - 0.0005 ? "#7C3AED" : typeof perso !== "number" || st <= perso - 0.0005 ? "#34D399" : "#FBBF24";
     }
 
     // Classement courant : rivaux (temps dévoilés selon le chrono) + joueur
@@ -1712,17 +1732,7 @@
       // Secteurs : proportions de base + variation INDÉPENDANTE par secteur (réalisme F1 :
       // on peut améliorer un secteur sans les autres). On renormalise pour que la somme
       // des trois secteurs égale exactement le temps du tour (cohérence avec le meilleur tour).
-      var _baseProp = [0.32, 0.36, 0.32];
-      var _rawP = [
-        _baseProp[0] * (1 + (Math.random() - 0.5) * 0.07),
-        _baseProp[1] * (1 + (Math.random() - 0.5) * 0.07),
-        _baseProp[2] * (1 + (Math.random() - 0.5) * 0.07)
-      ];
-      var _sumP = _rawP[0] + _rawP[1] + _rawP[2];
-      var s1 = +(lapTime * _rawP[0] / _sumP).toFixed(3);
-      var s2 = +(lapTime * _rawP[1] / _sumP).toFixed(3);
-      var s3 = +(lapTime - s1 - s2).toFixed(3);
-      var secData = [s1, s2, s3];
+      var secData = decouper(lapTime);
 
       var sec = document.getElementById("race-practice-section");
       var chronoEl = sec && sec.querySelector("#fpl-chrono");
@@ -1758,26 +1768,8 @@
           if (!sec) return;
           var row = sec.querySelector('.fpl-sec[data-sec="' + (idx + 1) + '"]');
           if (!row) return;
-          var scol = (function () {
-            try {
-              var L = (typeof pr !== "undefined" && pr) ? pr._live : null;
-              if (!L || st == null) return "#E5E7EB";
-              var baseProp = [0.32, 0.36, 0.32];
-              // Meilleur temps PERSO de CE secteur, avant ce tour
-              var pbSec = (L.secBestPerso && typeof L.secBestPerso[idx] === "number") ? L.secBestPerso[idx] : null;
-              // Référence séance pour CE secteur : meilleur tour du peloton réparti au prorata du secteur
-              var fb = null;
-              fieldStandings(pr).forEach(function (f) { if (!f.isPlayer && f.time != null && (fb == null || f.time < fb)) fb = f.time; });
-              var fbSec = (fb != null) ? fb * baseProp[idx] : null;
-              // Meilleur de la séance sur ce secteur = min(perso, peloton)
-              var sessSec = pbSec;
-              if (fbSec != null && (sessSec == null || fbSec < sessSec)) sessSec = fbSec;
-              if (sessSec != null && st < sessSec - 1e-6) return "#7C3AED"; // violet : meilleur de la séance sur ce secteur
-              if (pbSec == null) return "#E5E7EB";                           // blanc : premier temps, rien à comparer
-              if (st < pbSec - 1e-6) return "#34D399";     // vert : meilleur temps perso sur ce secteur
-              return "#FBBF24";                                             // jaune : secteur non amélioré
-            } catch (e) { return "#34D399"; }
-          })();
+          var scol = couleurSecteur(pr, idx, st);
+          (run._couleurs = run._couleurs || [])[idx] = scol;
           row.style.opacity = "1"; row.style.background = scol + "22"; row.style.borderColor = scol; row.style.boxShadow = "0 0 12px " + scol + "33";
           var tn = row.querySelector(".fpl-sec-t"); if (tn) { tn.textContent = st.toFixed(3); tn.style.color = scol; }
         }, FLYLAP_MS * (idx + 1) / 3 * 0.92);
@@ -1792,7 +1784,7 @@
         run.flyingLaps++;
         run.wear = Math.min(100, run.wear + wearPerLap(run));
         run.laps.push({ outLap: false, compound: run.compound, lapTime: lapTime, wearAfter: run.wear, incident: comp.incident, ecart: comp.ecart });
-        if (run.bestLap == null || lapTime < run.bestLap) { run.bestLap = lapTime; run.bestSectors = secData.slice(); }
+        if (run.bestLap == null || lapTime < run.bestLap) { run.bestLap = lapTime; run.bestSectors = secData.slice(); run.bestCouleurs = (run._couleurs || []).slice(); }
         if (L.bestLap == null || lapTime < L.bestLap.lapTime) { L.bestLap = { lapTime: lapTime, compound: run.compound, sectors: secData.slice() }; try { refreshBoard(pr); } catch (e) {} }
         // Meilleurs temps perso par secteur (référence pour le coloriage des tours suivants)
         if (!L.secBestPerso) L.secBestPerso = [null, null, null];
@@ -1895,18 +1887,7 @@
         h += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px">Meilleur tour — détail</div>';
         h += '<div style="display:flex;gap:7px;margin-bottom:8px">';
         ["S1", "S2", "S3"].forEach(function (lbl, i) {
-          var scol = (function () {
-            try {
-              var L = (typeof pr !== "undefined" && pr) ? pr._live : null;
-              if (!L) return "#34D399";
-              var pb = (L.bestLap && L.bestLap.lapTime != null) ? L.bestLap.lapTime : null; // meilleur tour perso
-              var fb = null;
-              fieldStandings(pr).forEach(function (f) { if (!f.isPlayer && f.time != null && (fb == null || f.time < fb)) fb = f.time; });
-              // Le détail affiche le meilleur tour perso : violet s'il est aussi le meilleur de la séance, sinon vert.
-              if (pb != null && fb != null && run.bestLap <= pb + 1e-6 && pb <= fb + 1e-6) return "#7C3AED";
-              return "#34D399";
-            } catch (e) { return "#34D399"; }
-          })();
+          var scol = run.bestCouleurs && run.bestCouleurs[i] || "#34D399";
           h += '<div style="flex:1;padding:8px 6px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:6px;text-align:center">';
           h += '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.2em;margin-bottom:3px">' + lbl + '</div>';
           h += '<div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:' + scol + '">' + run.bestSectors[i].toFixed(3) + '</div>';
