@@ -1068,6 +1068,11 @@
         var noiseAmp = base * 0.003 * (1.2 - cons);
         target += (Math.random() - 0.5) * 2 * noiseAmp;
         // planning : 2 à 4 sorties, dont la dernière proche du temps cible
+        /* v306 : comme le joueur, un rival attaque, règle sa voiture et garde le meilleur de
+           plusieurs tours. Sans cela il ne descendait jamais sous son rythme de base et le
+           joueur signait presque toujours le meilleur temps. */
+        var prepare = window.RJEssais ? RJEssais.niveauRival({ name: rv.name, team: rv.team }, "reglages") : 1.5;
+        var fond = target - base * (0.0045 + 0.0008 * prepare);
         var nReveals = 2 + Math.floor(Math.random() * 3);
         var reveals = [];
         var firstFrac = 0.04 + Math.random() * 0.12;     // 1re sortie très tôt (4–16 %)
@@ -1075,8 +1080,8 @@
           var frac = Math.min(0.95, firstFrac + r * (0.58 / nReveals) + Math.random() * 0.05);
           // les premiers tours sont plus lents, on converge vers target
           var prog = nReveals > 1 ? r / (nReveals - 1) : 1;
-          var slowOff = base * (0.02 * (1 - prog)) + base * (Math.random() * 0.004);
-          reveals.push({ atFrac: frac, time: target + slowOff });
+          var slowOff = base * (0.02 * (1 - prog)) + base * (Math.random() * 0.003);
+          reveals.push({ atFrac: frac, time: fond + slowOff });
         }
         reveals.sort(function (a, b) { return a.atFrac - b.atFrac; });
         // Décalage de tours par rapport au joueur : chaque pilote tourne autant que le
@@ -1756,19 +1761,20 @@
           var scol = (function () {
             try {
               var L = (typeof pr !== "undefined" && pr) ? pr._live : null;
-              if (!L || st == null) return "#34D399";
+              if (!L || st == null) return "#E5E7EB";
               var baseProp = [0.32, 0.36, 0.32];
               // Meilleur temps PERSO de CE secteur, avant ce tour
               var pbSec = (L.secBestPerso && typeof L.secBestPerso[idx] === "number") ? L.secBestPerso[idx] : null;
               // Référence séance pour CE secteur : meilleur tour du peloton réparti au prorata du secteur
               var fb = null;
-              if (L.field && L.field.length) L.field.forEach(function (f) { if (f && f.time != null && (fb == null || f.time < fb)) fb = f.time; });
+              fieldStandings(pr).forEach(function (f) { if (!f.isPlayer && f.time != null && (fb == null || f.time < fb)) fb = f.time; });
               var fbSec = (fb != null) ? fb * baseProp[idx] : null;
               // Meilleur de la séance sur ce secteur = min(perso, peloton)
               var sessSec = pbSec;
               if (fbSec != null && (sessSec == null || fbSec < sessSec)) sessSec = fbSec;
               if (sessSec != null && st < sessSec - 1e-6) return "#7C3AED"; // violet : meilleur de la séance sur ce secteur
-              if (pbSec == null || st < pbSec - 1e-6) return "#34D399";     // vert : meilleur temps perso sur ce secteur
+              if (pbSec == null) return "#E5E7EB";                           // blanc : premier temps, rien à comparer
+              if (st < pbSec - 1e-6) return "#34D399";     // vert : meilleur temps perso sur ce secteur
               return "#FBBF24";                                             // jaune : secteur non amélioré
             } catch (e) { return "#34D399"; }
           })();
@@ -1895,9 +1901,9 @@
               if (!L) return "#34D399";
               var pb = (L.bestLap && L.bestLap.lapTime != null) ? L.bestLap.lapTime : null; // meilleur tour perso
               var fb = null;
-              if (L.field && L.field.length) L.field.forEach(function (f) { if (f && f.time != null && (fb == null || f.time < fb)) fb = f.time; });
+              fieldStandings(pr).forEach(function (f) { if (!f.isPlayer && f.time != null && (fb == null || f.time < fb)) fb = f.time; });
               // Le détail affiche le meilleur tour perso : violet s'il est aussi le meilleur de la séance, sinon vert.
-              if (pb != null && (fb == null || pb <= fb + 1e-6)) return "#7C3AED";
+              if (pb != null && fb != null && run.bestLap <= pb + 1e-6 && pb <= fb + 1e-6) return "#7C3AED";
               return "#34D399";
             } catch (e) { return "#34D399"; }
           })();

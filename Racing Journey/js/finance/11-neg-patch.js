@@ -99,56 +99,6 @@
       disabledIf: function(offer) { return !!offer.cBonusTop3Season; }
     },
 
-    // -- CLAUSES CONTRACTUELLES --
-
-    'clause_preseason': {
-      section: 'clauses',
-      label: 'Présence pré-saison garantie',
-      sub: 'Tests hiver assurés — pas de mise à l\'écart',
-      iconColor: '#A78BFA',
-      patienceCost: 8,
-      acceptanceMod: 0.05,
-      labelSuccess: 'Présence pré-saison garantie',
-      labelFail: 'Clause pré-saison refusée',
-      apply: function(offer) { offer.cPreseasonGuaranteed = true; },
-      summaryKey: 'cPreseasonGuaranteed',
-      summaryLabel: 'Pré-saison garantie',
-      summaryColor: '#A78BFA',
-      disabledIf: function(offer) { return !!offer.cPreseasonGuaranteed; }
-    },
-
-    'clause_media_cap': {
-      section: 'clauses',
-      label: 'Plafond jours médias',
-      sub: 'Max 8 obligations médias/an',
-      iconColor: '#60A5FA',
-      patienceCost: 7,
-      acceptanceMod: 0.03,
-      labelSuccess: 'Plafond médias accordé',
-      labelFail: 'Plafond médias refusé',
-      apply: function(offer) { offer.cMediaCap = true; },
-      summaryKey: 'cMediaCap',
-      summaryLabel: 'Médias plafonnés',
-      summaryColor: '#60A5FA',
-      disabledIf: function(offer) { return !!offer.cMediaCap; }
-    },
-
-    'clause_performance': {
-      section: 'clauses',
-      label: 'Clause de performance',
-      sub: 'Si top 5 champ → automatiquement libre',
-      iconColor: '#EF4444',
-      patienceCost: 20,
-      acceptanceMod: -0.25,
-      labelSuccess: 'Clause de performance accordée',
-      labelFail: 'Clause de performance refusée',
-      apply: function(offer) { offer.cPerformanceClause = true; },
-      summaryKey: 'cPerformanceClause',
-      summaryLabel: 'Clause performance (Top 5)',
-      summaryColor: '#EF4444',
-      disabledIf: function(offer) { return !!offer.cPerformanceClause || !!offer.cReleaseClause; }
-    },
-
     'clause_no_dump': {
       section: 'clauses',
       label: 'Clause anti-remplacement',
@@ -261,69 +211,6 @@
         return html;
   }
 
-  function _rjNegSections(html, offer) {
-        // Injecter avant la section "Décision finale" (qui est à la fin)
-        var decisionIdx = html.lastIndexOf('<div class="neg-section-title">');
-        if (decisionIdx < 0) decisionIdx = html.length;
-
-        var newHtml = '';
-
-        // Section : Primes bonus
-        newHtml += '<div class="neg-section-title">';
-        newHtml += (typeof renderIcon === 'function' ? renderIcon('trophy', 14, '#FBBF24') : '🏆');
-        newHtml += ' Primes & Bonus</div>';
-        newHtml += '<div class="neg-actions-grid">';
-        ['bonus_champ_driver','bonus_champ_constructor','bonus_fastest_lap','bonus_top3_season'].forEach(function(id) {
-          var def = NEG_NEW_ACTIONS[id];
-          var disabled = def.disabledIf(offer);
-          newHtml += _rjNegActionBtn(id, def.label, def.sub, {
-            iconColor: def.iconColor,
-            disabled: disabled,
-            patienceCost: def.patienceCost
-          });
-        });
-        newHtml += '</div>';
-
-        // Section : Clauses contractuelles avancées
-        newHtml += '<div class="neg-section-title">';
-        newHtml += (typeof renderIcon === 'function' ? renderIcon('diplome', 14, '#A78BFA') : '📋');
-        newHtml += ' Clauses avancées</div>';
-        newHtml += '<div class="neg-actions-grid">';
-        ['clause_preseason','clause_media_cap','clause_performance','clause_no_dump'].forEach(function(id) {
-          var def = NEG_NEW_ACTIONS[id];
-          var disabled = def.disabledIf(offer);
-          newHtml += _rjNegActionBtn(id, def.label, def.sub, {
-            iconColor: def.iconColor,
-            disabled: disabled,
-            patienceCost: def.patienceCost
-          });
-        });
-        newHtml += '</div>';
-
-        return html.slice(0, decisionIdx) + newHtml + html.slice(decisionIdx);
-  }
-
-  // Helper : bouton d'action compatible avec le style existant
-  function _rjNegActionBtn(action, label, sub, opts) {
-    opts = opts || {};
-    var disabled = opts.disabled || false;
-    var iconColor = opts.iconColor || 'var(--text2)';
-    var cost = opts.patienceCost || 10;
-    var html = '<button class="neg-action-btn"'
-      + (disabled
-        ? ' disabled style="opacity:.4;cursor:not-allowed"'
-        : ' onclick="negDoAction(\'' + action + '\')"')
-      + '>';
-    html += '<div class="neg-action-stripe" style="background:' + iconColor + '"></div>';
-    html += '<div class="neg-action-body">';
-    html += '<div class="neg-action-label">' + label + '</div>';
-    html += '<div class="neg-action-sub">' + sub + '</div>';
-    html += '</div>';
-    html += '<div class="neg-action-cost" style="color:' + iconColor + '">−' + cost + '</div>';
-    html += '</button>';
-    return html;
-  }
-
   rjInscrire("_negActionPatienceCost", { id: "11-neg-patch:cout", remplace: function (args, suite) {
     var def = NEG_NEW_ACTIONS[args[0]];
     return def ? def.patienceCost : suite();
@@ -335,7 +222,6 @@
     return _rjNegNouvelle(args[2]) ? _rjNegAppliquer(args[0], args[1], args[2]) : suite();
   } });
   rjInscrire("_negSummaryHTML", { id: "11-neg-patch:resume", apres: function (html, args) { return _rjNegResume(html, args[0]); } });
-  rjInscrire("_negActionsListHTML", { id: "11-neg-patch:sections", apres: function (html, args) { return _rjNegSections(html, args[1]); } });
   rjInscrire("negDoAction", { id: "11-neg-patch:routage", remplace: function (args, suite) {
     var action = args[0];
     if (!_rjNegNouvelle(action)) return suite();
@@ -849,255 +735,8 @@
     cleanMoney(list);
   }
 
-  /* ============================================== B. ÉCRAN NÉGOCIATION */
-
-  // Rubriques : on regroupe les 24 options par intention.
-  var GROUPES = [
-    { id: 'fin', titre: 'Finances', ids: ['cut_cost_10', 'cut_cost_25', 'cut_cost_50', 'up_salary_10', 'up_salary_25', 'up_salary_50'] },
-    { id: 'pri', titre: 'Primes', ids: ['up_bonus_win', 'up_bonus_podium', 'bonus_champ_driver', 'bonus_champ_constructor', 'bonus_fastest_lap', 'bonus_top3_season'] },
-    { id: 'dur', titre: 'Durée et sécurité', ids: ['duration_extend', 'duration_shorten', 'clause_preseason', 'clause_performance', 'clause_no_dump', 'ask_release'] },
-    { id: 'sta', titre: 'Statut dans l\'équipe', ids: ['ask_veto', 'clause_media_cap'] },
-    { id: 'pre', titre: 'Coups de pression', ids: ['use_other_offer', 'bring_sponsor', 'walk_away_bluff'] }
-  ];
-
-  function actionId(el) {
-    var m = (el.getAttribute('onclick') || '').match(/negDoAction\('([^']+)'\)/);
-    return m ? m[1] : null;
-  }
-
-  function offerNow() {
-    try {
-      var idx = (typeof NEG_IDX !== 'undefined') ? NEG_IDX : -1;
-      if (idx < 0 || !G.offers || !G.offers[idx]) return null;
-      var o = G.offers[idx];
-      return { salary: o.salary || 0, bonusWin: o.bonusWin || 0, bonusPodium: o.bonusPodium || 0,
-               duration: o.duration || o.dur || 1, cost: o.cost || 0 };
-    } catch (e) { return null; }
-  }
-
-  // Progression = concessions RÉELLEMENT obtenues (actions réussies).
-  // NEG_STATE.history journalise chaque tentative avec son succès : c'est la
-  // mesure fiable de « la négociation avance dans le bon sens ».
-  var CONCESSIONS_ACCORD = 5;   // nb de succès pour que les mains se rejoignent
-  function progres() {
-    if (typeof accordForce === "number") return accordForce;
-    try {
-      if (typeof NEG_STATE === 'undefined' || !NEG_STATE || !NEG_STATE.history) return 0;
-      var ok = 0;
-      NEG_STATE.history.forEach(function (h) { if (h && h.success) ok++; });
-      return Math.max(0, Math.min(1, ok / CONCESSIONS_ACCORD));
-    } catch (e) { return 0; }
-  }
-
-  function patience() {
-    try {
-      if (typeof NEG_STATE !== 'undefined' && NEG_STATE && typeof NEG_STATE.patience === 'number') {
-        var init = (typeof NEG_STATE.initialPatience === 'number' && NEG_STATE.initialPatience > 0) ? NEG_STATE.initialPatience : 100;
-        return Math.max(0, Math.min(1, NEG_STATE.patience / init));
-      }
-    } catch (e) {}
-    return 1;
-  }
-
-  /* ---------------------------------------------------------------------
-   * Deux mains qui se rapprochent : l'écart traduit les concessions
-   * obtenues, la couleur la marge de patience de l'écurie.
-   *
-   * QUATRE STYLES sont fournis : je ne peux pas juger correctement le rendu
-   * de mes propres dessins, donc le choix te revient — un appui sur le bloc
-   * fait défiler les styles, et le choix est mémorisé.
-   * ------------------------------------------------------------------- */
-  var STYLES = ['A', 'B', 'C', 'D'];
-  var STYLE_NOMS = { A: 'Poignée de profil', B: 'Paumes ouvertes', C: 'Chevrons', D: 'Mitaines' };
-
-  function styleActuel() {
-    try { return localStorage.getItem('rj_neg_hands') || 'B'; } catch (e) { return 'B'; }
-  }
-
-  // Recentrage du style B après rotation (valeurs ajustées par mesure).
-  var BR_DX = 2.2, BR_DY = 0.9;
-
-  function dessinMain(style, dirn, gap, col) {
-    var x = dirn < 0 ? -gap / 2 : gap / 2;
-    var sc = dirn < 0 ? 1 : -1;
-    var open = '<g transform="translate(' + x + ',0) scale(' + sc + ',1)" fill="none" stroke="' + col +
-               '" stroke-linecap="round" stroke-linejoin="round">';
-    var d = '';
-    if (style === 'B') {
-      // Paumes ouvertes, orientées à l'HORIZONTALE : on fait pivoter de 90°
-      // le dessin vertical (rotate(90) envoie les doigts vers la droite),
-      // puis on recentre le tout dans la bande via BR_DX / BR_DY.
-      d = '<g stroke-width="1.5" transform="translate(' + BR_DX + ',' + BR_DY + ') rotate(90 -23 14.5)">' +
-          '<path d="M-30 26 v-9 a3 3 0 0 1 3 -3 h8"/>' +
-          '<path d="M-27 14 v-9 a2 2 0 0 1 4 0 v9"/>' +
-          '<path d="M-23 14 v-11 a2 2 0 0 1 4 0 v11"/>' +
-          '<path d="M-19 14 v-10 a2 2 0 0 1 4 0 v10"/>' +
-          '<path d="M-15 14 v-7 a2 2 0 0 1 4 0 v9"/>' +
-          '<path d="M-30 20 h-5 a3 3 0 0 0 0 6 h5"/></g>';
-    } else if (style === 'C') {
-      d = '<g stroke-width="2">' +
-          '<path d="M-34 4 l10 10 l-10 10" opacity=".35"/>' +
-          '<path d="M-26 4 l10 10 l-10 10" opacity=".7"/>' +
-          '<path d="M-18 6 l8 8 l-8 8"/></g>';
-    } else if (style === 'D') {
-      d = '<g stroke-width="1.6">' +
-          '<path d="M-44 10 h10 v8 h-10 z" opacity=".45"/>' +
-          '<path d="M-34 8 h8 c7 0 11 3 11 6 c0 3 -4 6 -11 6 h-8 a2 2 0 0 1 -2 -2 v-8 a2 2 0 0 1 2 -2 z"/>' +
-          '<path d="M-26 8 v-3 a3 3 0 0 1 6 1 v2"/>' +
-          '<path d="M-15 12 h4 M-15 16 h4" opacity=".5"/></g>';
-    } else {
-      d = '<g stroke-width="1.6">' +
-          '<path d="M-46 9 h14"/><path d="M-46 19 h14"/>' +
-          '<path d="M-32 6 h6 a4 4 0 0 1 4 4 v2"/>' +
-          '<path d="M-22 12 c6 0 9 2 9 6 c0 4 -3 6 -9 6 h-10 v-12 z"/>' +
-          '<path d="M-24 12 v-3 a3 3 0 0 1 6 0 v3"/></g>';
-    }
-    return open + d + '</g>';
-  }
-
-  function handshakeSVG(prog, pat) {
-    var col = pat > 0.6 ? '#34D399' : pat > 0.3 ? '#F59E0B' : '#EF4444';
-    // 46 d'écart au départ ; on retire en plus la largeur propre des mains à
-    // mesure qu'on progresse, pour qu'elles se TOUCHENT à l'accord (mesuré :
-    // 11 unités de séparation résiduelle à écart nul).
-    var gap = Math.round((1 - prog) * 46 - prog * 11);
-    var joint = prog >= 0.92;
-    var st = styleActuel();
-    var etat = joint ? 'Accord à portée' : prog > 0.55 ? 'Ça se rapproche' : prog > 0.2 ? 'Discussions engagées' : 'Premiers échanges';
-    var tension = pat > 0.6 ? 'Écurie sereine' : pat > 0.3 ? 'Écurie qui se crispe' : 'Écurie à bout';
-
-    return '' +
-      '<div id="rj-handshake" style="padding:14px 12px 10px;border-radius:var(--r,10px);' +
-      'border:1px solid ' + rgba(col, .35) + ';' +
-      'background:linear-gradient(160deg,' + rgba(col, .10) + ' 0%,var(--bg2) 60%,var(--bg) 100%)">' +
-        '<div style="font-family:var(--font-display);font-size:9px;font-weight:800;color:var(--dim,#6b6b78);' +
-        'letter-spacing:.14em;text-transform:uppercase;text-align:center">Où en est la négociation</div>' +
-        '<svg viewBox="-60 -4 120 36" width="100%" height="76" style="display:block;margin:6px 0 2px">' +
-          dessinMain(st, -1, gap, col) + dessinMain(st, 1, gap, col) +
-          (joint ? '<circle cx="0" cy="14" r="15" fill="none" stroke="' + col + '" stroke-width="1.2" opacity=".5"/>' : '') +
-        '</svg>' +
-        '<div style="text-align:center;font-family:var(--font-display);font-size:13px;font-weight:900;color:' + col + ';' +
-        'letter-spacing:.04em">' + etat + '</div>' +
-        '<div style="text-align:center;font-size:11px;color:var(--text2);margin-top:3px">' + tension + '</div>' +
-      '</div>';
-  }
-
-  function enhanceNeg() {
-    var scr = document.getElementById('S-neg');
-    if (!scr) return;
-
-    // 7. les boutons de décision ne doivent plus passer sous la barre du bas
-    var sc = scr.querySelector('.scroll');
-    if (sc) sc.style.paddingBottom = '110px';
-
-    // Niveau de l'écurie : rangé avec les conditions du contrat, en bas du bloc.
-    try {
-      var idxOffre = (typeof NEG_IDX !== 'undefined') ? NEG_IDX : -1;
-      var equipe = (idxOffre >= 0 && G.offers && G.offers[idxOffre]) ? G.offers[idxOffre].team : null;
-      var hote = document.getElementById('neg-summary');
-      if (equipe && hote && !hote.querySelector('#rj-neg-projection')) {
-        var html = blocProjection(equipe);
-        if (html) {
-          var tmp = document.createElement('div');
-          tmp.innerHTML = html;
-          // on vise la carte des conditions plutôt que le conteneur nu
-          var carte = hote.lastElementChild && hote.lastElementChild.children.length
-            ? hote.lastElementChild : hote;
-          carte.appendChild(tmp.firstChild);
-        }
-      }
-    } catch (e) {}
-
-    try { masquerCouts(scr); } catch (e) {}
-
-    // 5. patience → poignée de main
-    var sum = document.getElementById('neg-summary');
-    var bar = document.getElementById('neg-round-bar');
-    if (bar) {
-      var prog = progres(), pat = patience();
-      bar.innerHTML = handshakeSVG(prog, pat);
-      // on retire l'ancien affichage « Patience de l'écurie xx/100 »
-      if (sum) {
-        sum.querySelectorAll('div').forEach(function (d) {
-          if (d.children.length) return;
-          if (/Patience de l'?équipe|Patience de l'?écurie|\/\s*100/i.test(d.textContent || '')) {
-            var p = d.parentElement;
-            if (p && p !== sum && p.children.length <= 3) p.style.display = 'none';
-            else d.style.display = 'none';
-          }
-        });
-      }
-    }
-
-    // 6. regroupement des options en rubriques dépliables
-    var opts = document.getElementById('neg-options');
-    if (opts && !opts.getAttribute('data-rjui')) {
-      var items = Array.prototype.slice.call(opts.querySelectorAll('[onclick*="negDoAction"]'));
-      if (items.length > 6) {
-        opts.setAttribute('data-rjui', '1');
-        var reste = [], parGroupe = {};
-        items.forEach(function (el) {
-          var id = actionId(el);
-          var trouve = null;
-          GROUPES.forEach(function (g) { if (g.ids.indexOf(id) >= 0) trouve = g.id; });
-          if (id === 'sign_now') { reste.push(el); return; }
-          if (!trouve) { reste.push(el); return; }
-          (parGroupe[trouve] = parGroupe[trouve] || []).push(el);
-        });
-
-        // On conserve TOUT élément interactif qui n'est PAS une option
-        // (« Quitter sans signer », aide…), où qu'il soit dans l'arbre :
-        // il sera réinséré sous les rubriques.
-        var autres = Array.prototype.slice.call(opts.querySelectorAll('[onclick]'))
-          .filter(function (n) { return !/negDoAction/.test(n.getAttribute('onclick') || ''); });
-
-        var host = document.createElement('div');
-        GROUPES.forEach(function (g) {
-          var lot = parGroupe[g.id];
-          if (!lot || !lot.length) return;
-          var sec = document.createElement('div');
-          sec.style.cssText = 'margin-bottom:8px;border:1px solid var(--border-hi);border-radius:var(--r);overflow:hidden;background:var(--bg2)';
-          var head = document.createElement('button');
-          head.type = 'button';
-          head.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;' +
-            'padding:12px 13px;background:transparent;border:0;cursor:pointer;touch-action:manipulation;' +
-            'font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.08em;' +
-            'text-transform:uppercase;color:var(--text);text-align:left';
-          head.innerHTML = '<span>' + g.titre + '</span><span style="display:flex;align-items:center;gap:8px">' +
-            '<span style="font-size:10px;color:var(--dim,#6b6b78)">' + lot.length + '</span>' +
-            '<span data-caret style="font-size:13px;color:var(--text3);transition:transform .15s">▾</span></span>';
-          var body = document.createElement('div');
-          body.style.cssText = 'display:none;padding:0 10px 10px';
-          lot.forEach(function (el) { body.appendChild(el); });
-          head.addEventListener('click', function () {
-            var ouvert = body.style.display !== 'none';
-            // une seule rubrique ouverte à la fois
-            host.querySelectorAll('[data-body]').forEach(function (b) { b.style.display = 'none'; });
-            host.querySelectorAll('[data-caret]').forEach(function (c) { c.style.transform = ''; });
-            if (!ouvert) {
-              body.style.display = 'block';
-              var car = head.querySelector('[data-caret]');
-              if (car) car.style.transform = 'rotate(180deg)';
-            }
-          });
-          body.setAttribute('data-body', '1');
-          sec.appendChild(head); sec.appendChild(body);
-          host.appendChild(sec);
-        });
-        reste.forEach(function (el) { host.appendChild(el); });
-        opts.innerHTML = '';
-        opts.appendChild(host);
-        autres.forEach(function (n) { opts.appendChild(n); });
-      }
-    }
-
-    cleanMoney(scr);
-  }
-
-
   /* ============================================================ SECTION E
-   * Négociation : projection de performance, badges de coût retirés,
-   * poignée de main conclue à la signature.
+   * Négociation : projection de performance (affichée par 164).
    * ================================================================== */
 
   /* --- 1. Projection : où l'écurie devrait se situer la saison prochaine ---
@@ -1188,86 +827,7 @@
       '</div>';
   }
 
-  /* --- 2. Retrait des badges de coût sur les options --------------------- */
-  function masquerCouts(scr) {
-    var opts = scr.querySelector("#neg-options");
-    if (!opts) return;
-    var boutons = opts.querySelectorAll('[onclick*="negDoAction"]');
-    for (var i = 0; i < boutons.length; i++) {
-      var b = boutons[i];
-      if (b.getAttribute("data-rj-cout")) continue;
-      b.setAttribute("data-rj-cout", "1");
-      var els = b.querySelectorAll("div,span");
-      for (var j = 0; j < els.length; j++) {
-        var t = (els[j].textContent || "").trim();
-        // badge de coût : uniquement un nombre, éventuellement signé
-        if (els[j].children.length === 0 && /^[−+-]?\d{1,3}$/.test(t)) {
-          els[j].style.display = "none";
-        }
-        // la bande de couleur annonçait elle aussi la difficulté : on la
-        // rend neutre pour ne plus dévoiler l'effet à l'avance
-        if (els[j].className && String(els[j].className).indexOf("neg-action-stripe") >= 0) {
-          els[j].style.background = "var(--border-hi)";
-        }
-      }
-    }
-  }
-
-  /* --- 3. Poignée de main conclue à la signature ------------------------- */
-  var accordForce = null;   // null = progression normale, sinon valeur 0..1
-
-  function animerAccord(fin) {
-    var debut = progres();
-    var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
-    var duree = 620;
-    function frame() {
-      var t = ((window.performance && performance.now) ? performance.now() : Date.now()) - t0;
-      var k = Math.max(0, Math.min(1, t / duree));
-      // départ rapide puis ralentissement, comme une main qui se pose
-      var e = 1 - Math.pow(1 - k, 3);
-      accordForce = debut + (1 - debut) * e;
-      try { enhanceNeg(); } catch (err) {}
-      if (k < 1) requestAnimationFrame(frame);
-      else if (typeof fin === "function") fin();
-    }
-    requestAnimationFrame(frame);
-  }
-
   /* ------------------------------------------------------------- montage */
-  // La signature déclenche d'abord la poignée de main, puis l'action réelle.
-  function wrapSignature() {
-    if (typeof window.negDoAction !== 'function' || window.negDoAction._rjSign) return false;
-    var orig = window.negDoAction;
-    var fn = function (action) {
-      if (action === 'sign_now' && accordForce === null) {
-        var args = arguments, self = this;
-        animerAccord(function () {
-          // on laisse les mains jointes : accordForce n'est PAS remis à zéro
-          // ici, il le sera à la prochaine ouverture d'une négociation.
-          setTimeout(function () { orig.apply(self, args); }, 300);
-        });
-        return;
-      }
-      return orig.apply(this, arguments);
-    };
-    fn._rjSign = true;
-    wrapped.negDoAction = orig;
-    rjInscrire("negDoAction", { id: "11-neg-patch:negDoAction", ordre: -3600, remplace: function (args, suite) {
-      var action = args[0];
-      if (action === 'sign_now' && accordForce === null) {
-        var args = args, self = this;
-        animerAccord(function () {
-          // on laisse les mains jointes : accordForce n'est PAS remis à zéro
-          // ici, il le sera à la prochaine ouverture d'une négociation.
-          setTimeout(function () { suite(args); }, 300);
-        });
-        return;
-      }
-      return suite();
-    } });
-    return true;
-  }
-
   function wrap(name, after) {
     if (typeof window[name] !== 'function' || window[name]._rjui) return false;
     rjInscrire(name, { id: "11-ui-" + name, ordre: -3650, apres: function () {
@@ -1345,27 +905,8 @@
   var tries = 0;
   function boot() {
     var a = wrap('renderOffers', enhanceOffers);
-    var b = wrap('renderNegScreen', enhanceNeg);
-    wrapSignature();
-    // instantané de l'offre à l'entrée en négociation (base des concessions)
-    if (typeof window.negEnter === 'function' && !window.negEnter._rjui) {
-      var orig = window.negEnter;
-      var fn = function () {
-        accordForce = null;                     // nouvelle négociation : on repart à zéro
-        var r = orig.apply(this, arguments);
-        try { negSnapshot = offerNow(); setTimeout(enhanceNeg, 0); } catch (e) {}
-        return r;
-      };
-      fn._rjui = true;
-      wrapped.negEnter = orig;
-      rjInscrire("negEnter", { id: "11-neg-patch:negEnter", ordre: -3600, remplace: function (args, suite) {
-        accordForce = null;                     // nouvelle négociation : on repart à zéro
-        var r = suite();
-        try { negSnapshot = offerNow(); setTimeout(enhanceNeg, 0); } catch (e) {}
-        return r;
-      } });
-    }
-    if (a && b) {
+    window.RJProjection = blocProjection;
+    if (a) {
       if (document.body) {
         sweepAll();
         sweepObs.observe(document.body, { childList: true, subtree: true, characterData: true });
@@ -1377,14 +918,6 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
-
-  // Changement de style possible si besoin : _rjNegHands('A'|'B'|'C'|'D')
-  window._rjNegHands = function (st) {
-    if (STYLES.indexOf(st) < 0) return STYLES.join(', ');
-    try { localStorage.setItem('rj_neg_hands', st); } catch (e) {}
-    try { enhanceNeg(); } catch (e) {}
-    return 'style ' + st + ' — ' + (STYLE_NOMS[st] || '');
-  };
 
   window._rjContractsUIUninstall = function () {
     sweepObs.disconnect();

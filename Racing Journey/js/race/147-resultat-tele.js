@@ -25,7 +25,12 @@
     if (!c || !c.children.length || !c.offsetParent) return;
     var course = (window.G && G.races || [])[G.races.length - 1];
     var lr = window.LIVE_RACE, pilotes = lr && lr.drivers ? lr.drivers.filter(function (d) { return !d.dnf; }).slice().sort(function (a, b) { return a.pos - b.pos; }) : [];
-    if (!course || !pilotes.length) return;
+    if (!pilotes.length) return;
+    if (lr._isSprintMode && G.racePhase === "sprint_done") {     // v306 : le sprint affichait le résultat de la course d'avant
+      var js = lr.drivers.filter(function (d) { return d.isPlayer; })[0] || {};
+      course = { saison: G.saison, nom: "Sprint", circuit: ((window.RACE_STATE && RACE_STATE.circuit) || "") + " · Sprint", pos: js.pos, pts: js.dnf ? 0 : (_getSprintPtsTable()[js.pos - 1] || 0) };
+    }
+    if (!course) return;
     var cle = (course.saison || "") + "|" + (course.nom || "") + "|" + course.pos;
     var b = document.getElementById("rj147");
     if (b && b.getAttribute("data-cle") === cle && b.parentNode === c && c.firstChild === b) return;

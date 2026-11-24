@@ -60,9 +60,19 @@
     return b.offsetHeight + cache;   // offset : juste aussi quand le jeu est pivoté (téléphone en portrait)
   }
 
+  /* Ce que la fenêtre montre : tant que rien ne change, on n'y touche pas. */
+  function empreinte(b) { return besoin(b) + "|" + b.scrollHeight + "|" + innerWidth + "x" + innerHeight; }
+
   function ajuster(f) {
     var b = boite(f);
     if (!b) return;
+    // v306 : remesurer vidait un instant la hauteur de la boîte et l'écran remontait en haut à chaque geste
+    if (b._rj155 && b._rj155 === empreinte(b)) return;
+    var defiles = [f, b].concat([].slice.call(b.querySelectorAll("*"))).filter(function (x) { return x.scrollTop > 0; }).map(function (x) { return [x, x.scrollTop]; });
+    try { mesurer(b); }
+    finally { defiles.forEach(function (d) { d[0].scrollTop = d[1]; }); b._rj155 = empreinte(b); }
+  }
+  function mesurer(b) {
     // mesure à taille réelle, puis réduction d'un bloc si elle dépasse
     b.style.zoom = ""; b.style.maxHeight = "";
     [].forEach.call(b.querySelectorAll("[data-rj155-libre]"), function (x) { x.style.maxHeight = ""; x.removeAttribute("data-rj155-libre"); });

@@ -22600,7 +22600,9 @@ function generateTeamOffers(e) {
         return e.team === G.currentTeam && e.cat === G.cat
       }),
       d = !(!G.pendingTransfer || !G.pendingTransfer.team);
-    if (l && !c && !d) {
+    /* v306 : plus d'offre de prolongation quand le contrat court encore au-delà de la saison
+       (c'est aussi le cas dès qu'une prolongation est signée). */
+    if (l && !c && !d && (G.contractDur || 0) <= 1) {
       var p = (TEAM_OFFERS[G.cat] || []).find(function(e) {
         return e.team === G.currentTeam
       });
@@ -23135,7 +23137,7 @@ function _signContractCoeur(e) {
         s = null !== t.cBonus && void 0 !== t.cBonus ? t.cBonus : t.bonusWin;
       if (i > 0 && G.budget < i) showFb("cont-fb", "err", "Budget insuffisant", "Il manque " + (i - G.budget).toLocaleString("fr-FR") + " e.");
       else {
-        i > 0 && (G.budget -= i), (t.team === G.currentTeam && t.cat === G.cat) ? (G.contractDur = (G.contractDur || 0) + (t.duration || t.dur || 1), G._contractExpired = !1, G._isRenewal = !0, G.pendingTransfer = null) : (G._isRenewal = !1, G.pendingTransfer = {
+        i > 0 && (G.budget -= i), (t.team === G.currentTeam && t.cat === G.cat) ? (G.contractDur = (G.contractDur || 0) + (t.duration || t.dur || 1), G.contractWeeksLeft = (G.contractWeeksLeft || 0) + 48 * (t.duration || t.dur || 1), G._contractExpired = !1, G._isRenewal = !0, G.pendingTransfer = null) : (G._isRenewal = !1, G.pendingTransfer = {
           team: t.team,
           cat: t.cat,
           salary: o,
