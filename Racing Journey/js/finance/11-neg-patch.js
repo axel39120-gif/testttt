@@ -621,15 +621,8 @@
     window.openNeg = function(idx) {
       var offer = G.offers && G.offers[idx];
       if (!offer) return;
-      // Offre déjà signée via négociation
-      if (offer.negOk) {
-        if (typeof showFb === 'function')
-          showFb('cont-fb', 'ok', 'Offre déjà négociée', 'Tu peux signer cette offre directement.');
-        return;
-      }
       // Négociation précédente terminée sur cette même offre
-      if (typeof NEG_STATE !== 'undefined' && NEG_STATE &&
-          NEG_STATE.status === 'expired' && NEG_IDX === idx) {
+      if (offer._neg && (offer._neg.status === 'expired' || offer._neg.status === 'walked_away')) {
         if (typeof showFb === 'function')
           showFb('cont-fb', 'err', 'Négociation terminée', "L'écurie ne souhaite plus discuter des conditions.");
         return;

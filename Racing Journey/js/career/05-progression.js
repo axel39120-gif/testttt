@@ -3738,7 +3738,7 @@ function _progressDriverPool() {
   Object.keys(G.driverPool).forEach(function(id) {
     var d = G.driverPool[id];
     if (!d || d.retired) return;
-    d.age = (d.age || 25) + 1;
+    // v302 : l'âge avance dans 04o (les deux le faisaient : +2 ans par saison)
     var dskill = _computeAnnualSkillDelta(d);
     d.skill = Math.max(30, Math.min(99, (d.skill || 60) + dskill));
     var dco = _computeAnnualConsistencyDelta(d);

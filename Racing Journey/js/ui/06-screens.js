@@ -1331,6 +1331,7 @@ function _negStart(idx){
   lastChance: 0
  };
  NEG_STATE.initialPatience = NEG_STATE.patience;
+ offer._neg = NEG_STATE;   // v302 : l'état vit sur l'offre, la négociation reprend où on l'a laissée
  // Reset offer counter values
  offer.cCost = null;
  offer.cSalary = null;
@@ -1489,7 +1490,7 @@ function renderNegScreen(){
  if(!offer) return;
  if(!NEG_STATE || NEG_STATE.status === "expired" && !offer.negOk) {
   // Initialize fresh on first render or after expiry
-  if(!NEG_STATE) _negStart(NEG_IDX);
+  if(!NEG_STATE){ if(offer._neg) NEG_STATE = offer._neg; else _negStart(NEG_IDX); }
  }
  var titleEl = document.getElementById("neg-team");
  if(titleEl) titleEl.textContent = offer.team + " — " + offer.cat;
@@ -1503,7 +1504,7 @@ function renderNegScreen(){
  // Status check
  if(NEG_STATE.status === "signed"){
   if(optsEl){
-   optsEl.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:#34D399;margin-bottom:6px">✓ Contrat conclu</div><div style="font-size:13px;color:var(--text2);margin-bottom:14px">Tu as accepté les conditions. Confirme depuis le prochain écran.</div><button class="btn btn-prim" style="width:100%" onclick="signContract(NEG_IDX);closeNeg();">Signer définitivement →</button><button class="btn btn-sec" style="width:100%;margin-top:8px" onclick="closeNeg()">Retour</button></div>';
+   optsEl.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:#34D399;margin-bottom:6px">✓ Contrat conclu</div><div style="font-size:13px;color:var(--text2);margin-bottom:14px">Tu as accepté les conditions. Confirme depuis le prochain écran.</div><button class="btn btn-prim" style="width:100%" onclick="signContract(NEG_IDX);closeNeg();">' + ((offer.cCost != null ? offer.cCost : offer.cost || 0) > G.budget && !offer._rj79Immediate && offer.role !== "num3" ? "Conclure sous condition →" : "Signer définitivement →") + '</button><button class="btn btn-sec" style="width:100%;margin-top:8px" onclick="closeNeg()">Retour</button></div>';
   }
  } else if(NEG_STATE.status === "expired" || NEG_STATE.status === "walked_away"){
   if(optsEl){
@@ -1523,7 +1524,8 @@ function renderNegScreen(){
 function negEnter() { return rjAppeler("negEnter", _negEnterCoeur, this, arguments); }
 function _negEnterCoeur(idx){
  NEG_IDX = idx;
- _negStart(idx);
+ var _o = G.offers[idx];
+ if(_o && _o._neg) NEG_STATE = _o._neg; else _negStart(idx);
  renderNegScreen();
  go("S-neg");
 }

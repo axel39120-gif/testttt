@@ -20442,7 +20442,7 @@ function applySponsorBonuses(e) {
     var t = 0;
     G.sponsors.forEach(function(r) {
       1 === e ? t += r.perfBonus : e <= 3 ? t += Math.round(.5 * r.perfBonus) : e <= 5 && (t += Math.round(.2 * r.perfBonus))
-    }), t > 0 && ("function" == typeof applyAgentCommission && (t = applyAgentCommission(t)), G.budget += t, showFb("cont-fb", "ok", "Primes sponsors", "+" + t.toLocaleString("fr-FR") + " e verses par tes sponsors !"))
+    }), t > 0 && ("function" == typeof applyAgentCommission && (t = applyAgentCommission(t)), G.budget += t)
   }
 }
 

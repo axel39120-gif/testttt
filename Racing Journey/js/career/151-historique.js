@@ -49,8 +49,12 @@
        les modules accrochés à l'enregistrement (Super Licence, rêves…) ne voient
        jamais la saison en double. Le plus à l'extérieur possible (ordre bas). */
     rjInscrire("saveSeasonToHistory", { id: "151-historique:saison", ordre: -99000, remplace: function (args, suite) {
+      var noteFin = 0;
       try {
-        var k = G.saison + "|" + (G.cat || ""), hors = function (L) {
+        var k = G.saison + "|" + (G.cat || "");
+        // v302 : note figée à la première clôture — rouvrir le bilan après un entraînement ne la change plus
+        (typeof CAREER_HISTORY !== "undefined" ? CAREER_HISTORY : []).forEach(function (h) { if (h && h.saison + "|" + (h.cat || "") === k && h.rating) noteFin = h.rating; });
+        var hors = function (L) {
           if (!Array.isArray(L)) return;
           for (var i = L.length - 1; i >= 0; i--) if (L[i] && L[i].saison + "|" + (L[i].cat || "") === k) L.splice(i, 1);
         };
@@ -58,6 +62,7 @@
         (G.rivals || []).forEach(function (r) { if (r) hors(r.careerHistory); });
       } catch (e) {}
       var r = suite();
+      if (noteFin) { var L = CAREER_HISTORY[CAREER_HISTORY.length - 1]; if (L && L.saison === G.saison) L.rating = noteFin; }
       nettoyer();
       return r;
     } });

@@ -75,11 +75,13 @@
       if ((oy === "auto" || oy === "scroll") && x.scrollHeight > x.clientHeight + 2) { x.style.maxHeight = "none"; x.setAttribute("data-rj155-libre", "1"); }
     });
     h = Math.max(b.offsetHeight, b.scrollHeight);
-    var z = Math.floor(Math.max(MIN, Math.min(1, dispo / h)) * 100) / 100;
-    b.style.zoom = String(z);
+    // v302 : trop longue pour tenir même réduite (fiche, historique) : taille normale, lisible, et elle défile
+    var z = dispo / h < MIN ? 1 : Math.floor(Math.min(1, dispo / h) * 100) / 100;
+    b.style.overflowY = "";
+    b.style.zoom = z === 1 ? "" : String(z);
     // la boîte occupe au plus la hauteur de l'écran ; si elle dépasse encore à 60 %, c'est elle qui défile
     b.style.maxHeight = Math.floor(dispo / z) + "px";
-    if (getComputedStyle(b).overflowY === "visible") b.style.overflowY = "auto";
+    if (z === 1 || getComputedStyle(b).overflowY === "visible") b.style.overflowY = "auto";
     b.setAttribute("data-rj155", String(z));
   }
 

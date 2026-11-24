@@ -516,7 +516,7 @@
     "Audi":"<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#34363a\"/><stop offset=\"1\" stop-color=\"#0c0d0f\"/></linearGradient><linearGradient id=\"c\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\".5\" stop-color=\"#c3c7cc\"/><stop offset=\".55\" stop-color=\"#8b9096\"/><stop offset=\"1\" stop-color=\"#e2e4e7\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M4 10 h32 v20 H4z\" fill=\"none\" stroke=\"url(#c)\" stroke-width=\"1.2\"/><text x=\"20\" y=\"23.6\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"10\" font-weight=\"900\" fill=\"url(#c)\" letter-spacing=\"1.2\">AUDI</text><path d=\"M8 26.6 h24\" stroke=\"#f50537\" stroke-width=\"1.6\"/><text x=\"20\" y=\"35.4\" text-anchor=\"middle\" font-family=\"Arial,sans-serif\" font-size=\"2.8\" font-weight=\"700\" fill=\"#f50537\" letter-spacing=\"1.4\">F1 TEAM</text></svg>"};
   var ALIAS_F1 = {"Scuderia Ferrari":"Ferrari","Mercedes AMG F1":"Mercedes","McLaren F1 Team":"McLaren","Aston Martin F1":"Aston Martin","Alpine F1 Team":"Alpine","Williams Racing":"Williams"};
   function original(team) {
-    var dessin = DESSINS_F1[team] || DESSINS_F1[ALIAS_F1[team]];
+    var dessin = DESSINS_F1[team] || DESSINS_F1[ALIAS_F1[team]] || (window.RJDessins && RJDessins[team]);   // 162 : écuries hors F1
     if (dessin) return dessin;
     if (!(team in ORIGINAUX)) ORIGINAUX[team] = (typeof TEAM_LOGOS !== "undefined" && TEAM_LOGOS[team]) || "";
     return ORIGINAUX[team];
