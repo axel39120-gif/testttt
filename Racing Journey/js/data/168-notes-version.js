@@ -10,6 +10,8 @@
   "use strict";
 
   var NOTES = [
+    { v: "v309", titre: "Cloche des notifications",
+      fix: ["La cloche ne disparaît plus à partir de dix notifications ; elle et sa pastille rouge restent en place."] },
     { v: "v308", titre: "Notes de version",
       plus: ["Le bouton Build ouvre ces notes : nouveautés et corrections de chaque version."] },
     { v: "v307", titre: "Couleurs des secteurs",

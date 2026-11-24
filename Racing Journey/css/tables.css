@@ -96,3 +96,7 @@
 #rj168 .rj168-alerte { color: #FF7A6B; font-size: 13px; }
 #rj168 .rj168-diag { margin: 12px 0 2px; min-height: 40px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px; background: none; color: #a9a9b5; font: 700 12px/1 var(--font-display); }
 #rj168 pre { white-space: pre-wrap; font-size: 11px; color: #a9a9b5; }
+
+/* Bandeau du haut : les infos se redessinent, la cloche reste */
+.rj-hud-infos { display: contents; }
+.rj160-cloche i[hidden] { display: none; }
