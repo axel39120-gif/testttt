@@ -4823,6 +4823,25 @@ async function suiteNotes308() {
   } finally { await navigateur.close(); }
 }
 
+/* v309 : la cloche et sa pastille restent en place */
+async function suiteCloche309() {
+  S.suite("Cloche des notifications (v309)");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    const r = await page.evaluate(async () => {
+      const dors = ms => new Promise(x => setTimeout(x, ms)), o = { nombres: [] }; navTo("S-home", null); await dors(500);
+      const c = document.querySelector("#rj-hud .rj160-cloche"), svg = c.querySelector("svg"), pastille = c.querySelector("i"); o.meme = true; o.dessin = true;
+      RJNotifs.ouvrir(); document.querySelector(".rj160-x").click(); o.zero = getComputedStyle(pastille).display;
+      for (let k = 0; k < 12; k++) { pushHomeToast("Titre " + k, "t" + k, "#f00"); updateUI(); if (k % 4 === 3) { navTo("S-cal", null); await dors(250); navTo("S-home", null); } await dors(250);
+        const d = document.querySelector("#rj-hud .rj160-cloche"); o.meme = o.meme && d === c && d.querySelector("svg") === svg && d.querySelector("i") === pastille; o.dessin = o.dessin && svg.getBoundingClientRect().width > 10; o.nombres.push(pastille.textContent); }
+      o.dernier = document.querySelector("#rj-hud").lastElementChild === c; c.click(); o.ouvre = !!document.getElementById("rj160-journal"); document.querySelector(".rj160-x").click(); await dors(100); o.vide = getComputedStyle(pastille).display; return o;
+    });
+    S.verifier("la cloche garde son dessin et sa pastille, de 1 à 12 avis, sans être recréée", r.meme && r.dessin && r.nombres[0] === "1" && r.nombres[11] === "12" && r.dernier, JSON.stringify(r));
+    S.verifier("elle ouvre le journal ; sans avis, pas de pastille", r.ouvre && r.zero === "none" && r.vide === "none", JSON.stringify(r));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5272,7 +5291,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309
 };
 
 async function principal() {

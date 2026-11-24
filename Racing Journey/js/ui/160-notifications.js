@@ -125,8 +125,26 @@
   }
 
   /* --- La cloche et son journal ------------------------------------- */
-  function cloche() { return '<button type="button" class="rj-hud-chip rj160-cloche" aria-label="Notifications" onclick="RJNotifs.ouvrir()">' + icone(CLOCHE) + (nonLus ? "<i>" + Math.min(nonLus, 99) + "</i>" : "") + "</button>"; }
-  function majCloche() { var c = document.querySelector("#rj-hud .rj160-cloche"); if (c) c.outerHTML = cloche(); }
+  /* v309 : un seul bouton pour toute la partie. Seul le nombre change ; la cloche
+     et sa pastille ne sont plus jamais recréées. */
+  var bouton = null;
+  function cloche() {
+    if (!bouton) {
+      bouton = document.createElement("button");
+      bouton.type = "button"; bouton.className = "rj-hud-chip rj160-cloche";
+      bouton.innerHTML = icone(CLOCHE) + "<i></i>";
+      bouton.addEventListener("click", function () { ouvrir(); });
+    }
+    majCloche();
+    return bouton;
+  }
+  function majCloche() {
+    if (!bouton) return;
+    var n = bouton.querySelector("i"), t = nonLus ? String(Math.min(nonLus, 99)) : "";
+    if (n.textContent !== t) n.textContent = t;
+    n.hidden = !t;
+    bouton.setAttribute("aria-label", t ? "Notifications, " + t + " non lues" : "Notifications");
+  }
   function ouvrir() {
     nonLus = 0; majCloche(); fermer(true); file = [];
     var m = document.createElement("div"); m.id = "rj160-journal"; m.className = "rj160-voile";
@@ -159,7 +177,7 @@
     rjInscrire("showToast", { id: "160-notifications:showToast", remplace: function (args) { recevoir("", args[0], "#FF1801", { court: true }); } });
     window.RJ_SCREEN_HOOKS.push({ id: "160-notifications", ecran: "*", apres: function () { if (OCCUPE[ecran()]) fermer(true); if (file.length) planifier(500); } });
     window.RJ_SAVE_HOOKS.push({ cle: "rj160", ecrire: function () { return { h: historique, n: nonLus, d: discret }; },
-      lire: function (b) { historique = (b && b.h) || []; nonLus = (b && b.n) || 0; discret = !!(b && b.d); file = []; derniers = {}; } });
+      lire: function (b) { historique = (b && b.h) || []; nonLus = (b && b.n) || 0; discret = !!(b && b.d); file = []; derniers = {}; majCloche(); } });
     console.log(TAG, "actif — une notification à la fois, jamais pendant qu'on joue");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

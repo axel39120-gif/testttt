@@ -40,14 +40,16 @@
     if (typeof G === "undefined" || !G || !G.pilot) return;
     var note = typeof calcPlayerRating === "function" ? calcPlayerRating() : null;
     var palier = note !== null && typeof getRatingTier === "function" ? getRatingTier(note) : null;
-    hud().innerHTML =
+    var h = hud(), cloche = window.RJNotifs ? RJNotifs.cloche() : null, infos = h.querySelector(".rj-hud-infos");
+    if (!infos) { infos = document.createElement("span"); infos.className = "rj-hud-infos"; h.insertBefore(infos, h.firstChild); }
+    if (cloche && cloche.parentNode !== h) h.appendChild(cloche);      // une fois pour toutes, jamais redessinée
+    infos.innerHTML =
       '<span class="rj-hud-chip" title="Saison et semaine">S' + esc(G.saison) + ' · Sem ' + esc(G.semaine) + "</span>" +
       '<span class="rj-hud-chip rj-hud-argent" title="Budget">' + esc(argent(G.budget)) + "</span>" +
       '<span class="rj-hud-chip" title="Réputation">Rép ' + esc(G.reputation) + "</span>" +
       (note === null ? "" :
         '<span class="rj-hud-chip rj-hud-note" title="Note du pilote" style="color:' + esc(palier.color) + ";border-color:" + esc(palier.color) + '66">' +
-        esc(note) + " " + esc(palier.tier || "") + "</span>") +
-      (window.RJNotifs ? RJNotifs.cloche() : "");
+        esc(note) + " " + esc(palier.tier || "") + "</span>");
     // Le bandeau réserve au HUD sa largeur réelle (css/paysage.css, --hud).
     var l = hud().offsetWidth;
     if (l) document.documentElement.style.setProperty("--hud", l + "px");
