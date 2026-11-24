@@ -1693,7 +1693,7 @@ async function suiteNegociation() {
         await new Promise(r => setTimeout(r, 300));
         const opts = document.getElementById("neg-options");
         res.ecran = { ouvert: document.getElementById("S-neg").classList.contains("on"),
-          base: !!opts && /Réduire apport/.test(opts.textContent), clauses: !!opts && /Prime championnat pilotes/.test(opts.textContent) };
+          base: !!opts && /Baquet −10/.test(opts.textContent), clauses: RJTable.demandes(G.offers[0]).primes.some(d => d[0] === "bonus_champ_driver") };
         Math.random = () => 0.01;
         negDoAction("bonus_fastest_lap");
         res.clause = !!G.offers[0].cBonusFastestLap;
@@ -4711,6 +4711,93 @@ async function suiteEssais304() {
   } finally { await navigateur.close(); }
 }
 
+/* v306 : fenêtre qui ne remonte pas, essais réalistes, résultat sur une page, titre acquis, contrats tenus */
+async function suiteRetours306() {
+  S.suite("Retours v306");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await page.evaluate(() => {
+      const st = document.documentElement.style; st.setProperty("--sg", "59px"); st.setProperty("--sd", "59px"); st.setProperty("--sb", "21px");
+      G.cat = "Formule 1"; G.currentTeam = "Williams"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
+      RACE_WEEKEND_STATE.fpDone = false; RACE_STATE.practice = null; G._essais = null; initRaceState(); navTo("S-race", null); rtab("essais", true);
+    });
+    await page.waitForTimeout(1500);
+    await page.click("#fpl-send-btn");
+    await page.waitForFunction(() => [...document.querySelectorAll(".fpl-sec-t")].every(e => /\d/.test(e.textContent)), { timeout: 20000 });
+    const sect = await page.evaluate(() => [...document.querySelectorAll(".fpl-sec-t")].map(e => e.style.color));
+    S.verifier("premier tour d'essais : aucun secteur vert, il n'y a rien à comparer", sect.length === 3 && !sect.some(c => /52, 211, 153|34D399/i.test(c)), sect.join(" | "));
+    await page.waitForSelector("#fpl-debrief", { timeout: 40000 }); await page.waitForTimeout(700);
+    const defil = await page.evaluate(async () => {
+      const card = document.querySelector("#fpl-debrief > div"), dors = ms => new Promise(r => setTimeout(r, ms)), o = { mini: 1e9 };
+      card.scrollTop = card.scrollHeight; await dors(200); o.avant = card.scrollTop;
+      const b = [...card.querySelectorAll(".rja-barre")].pop(), r = b.getBoundingClientRect();
+      const ev = (t, x) => b.dispatchEvent(new PointerEvent(t, { bubbles: true, cancelable: true, clientX: x, clientY: r.top + 4, pointerId: 1 }));
+      ev("pointerdown", r.left + r.width * .3);
+      for (let k = 0; k < 10; k++) { ev("pointermove", r.left + r.width * (.3 + k * .03)); await dors(30); o.mini = Math.min(o.mini, card.scrollTop); }
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 })); await dors(500); o.apres = card.scrollTop; return o;
+    });
+    S.verifier("toucher un curseur de réglage ne remonte pas la fenêtre", defil.avant > 20 && defil.mini >= defil.avant - 4 && defil.apres >= defil.avant - 4, JSON.stringify(defil));
+    await page.click("#fpl-debrief-close"); await page.waitForTimeout(200);
+    const essais = await page.evaluate(() => {
+      const N = window._rjNiveauEssais, base = getCircuitBaseRef(RACE_STATE.circuit, G.cat), moi = base * (1 - (N.joueur() - .75) * .022), o = { gagne: 0, rang: 0, attendu: 0 }, K = 60;
+      for (let k = 0; k < K; k++) {
+        G.semaine = 5 + k; RACE_STATE.practice._live = null; renderPracticeSection();
+        const temps = RACE_STATE.practice._live.field.map(f => Math.min(...f.reveals.map(r => r.time))), t = moi * (1 - .0045 - .0012) ;   // joueur préparé, meilleur de quelques tours
+        const r = temps.filter(x => x < t).length + 1; o.rang += r / K; if (r === 1) o.gagne++;
+        o.attendu += (G.rivals.filter(x => N.rival(x) > N.joueur()).length + 1) / K;
+      } return o;
+    });
+    S.verifier("le rang en essais suit le niveau du joueur, il ne gagne pas toutes les séances", Math.abs(essais.rang - essais.attendu) < 4 && (essais.attendu < 2 || essais.gagne < 15), JSON.stringify(essais));
+    const c = await page.evaluate(() => {
+      const o = {}; G.cat = "Formule 3"; G.currentTeam = "Prema"; G.contractDur = 1; G.budget = 9e6; G.pendingTransfer = null; initRivals(); buildCalendar(); G.sponsors = [{ name: "x", fee: 1000, dur: 3, weeksLeft: 140 }]; G.revenue = 1000;
+      const of = (t, s, x) => Object.assign(buildOffer({ team: t, cat: "Formule 3", cost: 0, salary: s, bonusWin: 5000, bonusPodium: 2000, duration: 1, expire: 6, role: "num2" }), { salary: s, cost: 0 }, x);
+      G.offers = [of("ART Grand Prix", 20000, { cDuration: 2, cSalary: 25000, cBonusPodium: 2600, cRole: "num1" })]; signContract(0); G.seasonOver = true; startNextSeason(null);
+      o.saison = { rev: G.revenue, dur: G.contractDur, role: G._playerRole };
+      G.races = [{ pos: 2, pts: 18 }]; const b = G.budget; RACE_POST_HOOKS.find(h => h.id === "165-contrat").run(); RACE_POST_HOOKS.find(h => h.id === "165-contrat").run(); o.prime = G.budget - b;
+      G.contractDur = 1; G.offers = [of("ART Grand Prix", 30000)]; signContract(0); o.dur = G.contractDur;
+      G.races = CAL_RACES.slice(0, Math.ceil(CAL_RACES.length * .5)).map(() => ({ pos: 1, pts: 25 })); G.champPts = 300; for (let k = 0; k < 5; k++) generateTeamOffers(1);
+      o.relance = G.offers.filter(x => x.team === G.currentTeam && x.cat === G.cat).length; return o;
+    });
+    S.verifier("salaire, durée et statut négociés tiennent après le changement de saison", c.saison.rev === 26000 && c.saison.dur === 2 && c.saison.role === "num1", JSON.stringify(c));
+    S.verifier("la prime de podium négociée est versée, une seule fois", c.prime === 2600, JSON.stringify(c));
+    S.verifier("une prolongation signée n'est plus proposée à nouveau", c.dur === 2 && c.relance === 0, JSON.stringify(c));
+    const titre = await page.evaluate(() => {
+      const o = {}, n = CAL_RACES.length; G._titreAcquis = ""; CAL_RACES.forEach((x, i) => x.done = i < n - 2); G.races = CAL_RACES.slice(0, n - 2).map(() => ({ pos: 1 }));
+      const max = RJTitre.etat().enJeu; G.rivals.forEach(r => r.pts = 10); G.champPts = 10 + max; o.juste = !!RJTitre.verifier(); G.champPts = 11 + max; o.moi = !!RJTitre.verifier(); o.texte = (document.getElementById("rj167") || {}).innerText || ""; document.getElementById("rj167").remove(); o.deux = !!RJTitre.verifier();
+      G._titreAcquis = ""; G.rivals[0].pts = 900; o.rival = !!RJTitre.verifier(); o.texteRival = document.getElementById("rj167").innerText; document.getElementById("rj167").remove(); return o;
+    });
+    S.verifier("titre annoncé dès qu'il est mathématiquement acquis, une fois, joueur ou rival", !titre.juste && titre.moi && /champion/i.test(titre.texte) && !titre.deux && titre.rival && /est champion/.test(titre.texteRival) && /2 manches de la fin/.test(titre.texteRival), JSON.stringify(titre));
+    const neg = await page.evaluate(async () => {
+      const dors = ms => new Promise(r => setTimeout(r, ms)), o = {}, vrai = Math.random; G.pendingTransfer = null; G.cat = "Formule 2"; G.budget = 9e6; G.pilot.dob = null; G.age = 25;
+      G.offers = [Object.assign(buildOffer({ team: "Campos Racing", cat: "Formule 2", cost: 1e6, salary: 0, bonusWin: 9000, bonusPodium: 4000, duration: 1, expire: 6, role: "num2" }), { cost: 1e6, salary: 0 })];
+      openNeg(0); NEG_STATE.patience = NEG_STATE.initialPatience = 60; await dors(300);
+      o.pasSalaire = !document.querySelector("[onclick*=up_salary]"); o.trop = (e => e.scrollHeight - e.clientHeight)(document.querySelector("#S-neg > .scroll"));
+      const p0 = _negComputeAcceptance(NEG_STATE, G.offers[0], "cut_cost_25"); NEG_STATE.bonusChance = .1; o.levier = +(_negComputeAcceptance(NEG_STATE, G.offers[0], "cut_cost_25") - p0).toFixed(2); NEG_STATE.bonusChance = 0;
+      Math.random = () => .99; negDoAction("cut_cost_10"); const pat = NEG_STATE.patience; negDoAction("cut_cost_10"); o.uneFois = NEG_STATE.patience === pat;
+      let n = 0; Math.random = () => (n++ === 0 ? .99 : .1); negDoAction("cut_cost_50"); o.contre = [G.offers[0].cCost, NEG_STATE.lastMsg]; Math.random = vrai;
+      negDoAction("sign_now"); await dors(2300); o.fb = (document.getElementById("cont-fb") || {}).innerText; o.accord = !!(G.offers[0] && G.offers[0]._accord); o.signe = G.pendingTransfer && G.pendingTransfer.team; return o;
+    });
+    S.verifier("négociation : sur une page, sans demande sans objet, une fois chacune, levier compté", neg.pasSalaire && neg.trop <= 0 && neg.levier === .1 && neg.uneFois, JSON.stringify(neg));
+    S.verifier("négociation : contre-proposition possible, « Signer » signe", neg.contre[0] === 750000 && /Contre-proposition/.test(neg.contre[1]) && neg.signe === "Campos Racing", JSON.stringify(neg));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+  for (const vp of [{ width: 852, height: 393 }, { width: 393, height: 852 }]) {
+    const { navigateur, page } = await S.ouvrirJeu({ viewport: vp, mobile: true });
+    try {
+      await S.repondeurAutomatique(page);
+      await page.evaluate(() => {
+        const st = document.documentElement.style; st.setProperty("--sg", "59px"); st.setProperty("--sd", "59px"); st.setProperty("--sb", "21px");
+        SETTINGS.simSpeed = "instant"; G.cat = "Formule 4"; G.currentTeam = "Prema"; G.contractDur = 2; initRivals(); window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[2].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine); initRaceState(); navTo("S-race", null);
+        RACE_WEEKEND_STATE.fpDone = RACE_WEEKEND_STATE.qualifDone = RACE_WEEKEND_STATE.essaisDone = true; rtab("course", true); runRaceLive();
+      });
+      await page.waitForFunction(() => document.getElementById("rj166-boutons"), { timeout: 150000 }); await page.waitForTimeout(6000);
+      const r = await page.evaluate(() => { const s = document.getElementById("res-content").closest(".scroll"), o = { trop: s.scrollHeight - s.clientHeight, b: [...document.querySelectorAll("[data-ouvre]")].map(x => x.dataset.ouvre) };
+        document.querySelector('[data-ouvre="classement"]').click(); o.lignes = document.querySelectorAll('#rj166-fenetre [data-rj90], #rj166-fenetre [style*="border-bottom"]').length; document.querySelector("#rj166-fenetre .rj166-x").click(); o.ferme = !document.getElementById("rj166-fenetre") && !!document.querySelector('#rj166-reserve [data-k="classement"]'); o.suite = !!document.querySelector(".rj166-suite"); return o; });
+      S.verifier("résultat sur une page (" + vp.width + "×" + vp.height + "), le classement en fenêtre", r.trop <= 0 && r.b.indexOf("championnat") >= 0 && r.lignes >= 10 && r.ferme && r.suite, JSON.stringify(r));
+    } finally { await navigateur.close(); }
+  }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5160,7 +5247,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306
 };
 
 async function principal() {

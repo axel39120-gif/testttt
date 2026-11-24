@@ -522,6 +522,7 @@
 
   function fireMidSeason() {
     var G = G_();
+    if (G._negClauses && G._negClauses.cNoDump) return;   // clause anti-remplacement négociée (11)
     var team = G.currentTeam;
     var m = mem();
     m.midFiredSeason = seasonNum();

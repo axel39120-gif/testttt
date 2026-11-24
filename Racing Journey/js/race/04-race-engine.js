@@ -20613,7 +20613,7 @@ function tickContractTime(e) {
         })
       }), a.length > 0 && (G.revenue = G.sponsors.reduce(function(e, t) {
         return e + (t.fee || 0)
-      }, 0), G._lastSponsorsExpired = a.map(function(e) {
+      }, G._contrat && G._contrat.salaire || 0), G._lastSponsorsExpired = a.map(function(e) {
         return e.name || e.id
       }), "function" == typeof pushMail && a.forEach(function(e) {
         pushMail({
