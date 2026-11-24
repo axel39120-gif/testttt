@@ -4724,8 +4724,13 @@ async function suiteRetours306() {
     await page.waitForTimeout(1500);
     await page.click("#fpl-send-btn");
     await page.waitForFunction(() => [...document.querySelectorAll(".fpl-sec-t")].every(e => /\d/.test(e.textContent)), { timeout: 20000 });
-    const sect = await page.evaluate(() => [...document.querySelectorAll(".fpl-sec-t")].map(e => e.style.color));
-    S.verifier("premier tour d'essais : aucun secteur vert, il n'y a rien à comparer", sect.length === 3 && !sect.some(c => /52, 211, 153|34D399/i.test(c)), sect.join(" | "));
+    const sect = await page.evaluate(() => {
+      const pr = RACE_STATE.practice, L = pr._live, V = [...document.querySelectorAll(".fpl-sec-t")].map((e, i) => {
+        const frac = (L.clockTotal - L._actif) / L.clockTotal, f = L.field.flatMap(d => d.reveals.filter(r => r.atFrac <= 1 - frac).map(r => r.secteurs[i])), t = parseFloat(e.textContent);
+        return { c: e.style.color, t, meilleur: f.length ? Math.min(...f) : null };
+      }); return V;
+    });
+    S.verifier("premier tour : chaque secteur violet (meilleur de la séance) ou vert, jamais blanc ni jaune", sect.length === 3 && sect.every(x => x.c === (x.meilleur === null || x.t < x.meilleur ? "rgb(124, 58, 237)" : "rgb(52, 211, 153)")), JSON.stringify(sect));
     await page.waitForSelector("#fpl-debrief", { timeout: 40000 }); await page.waitForTimeout(700);
     const defil = await page.evaluate(async () => {
       const card = document.querySelector("#fpl-debrief > div"), dors = ms => new Promise(r => setTimeout(r, ms)), o = { mini: 1e9 };
