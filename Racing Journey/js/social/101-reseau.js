@@ -507,7 +507,10 @@
     if (!G || !m) return null;
     var nom = m.from && !/^(Team Principal|Presse|Rival|Sponsor|Agent|Anonyme)$/i.test(m.from) ? m.from : null;
     switch (m.role) {
-      case "team_boss": case "team": return decideur(G.currentTeam);
+      case "team_boss": case "team":
+        var ec = (String(m.from || "").match(/ · TP (.+)$|^(?:Team Principal|Direction sportive) — (.+)$/) || []).slice(1).filter(Boolean)[0] || String(m.from || "").split(/ — /)[0];
+        if (ec !== G.currentTeam && window.TEAM_LOGOS && TEAM_LOGOS[ec]) return decideur(ec);
+        return decideur(G.currentTeam);
       case "journalist": case "press": return nom ? inscrireJournaliste({ prenom: nom.split(" ")[0], nom: nom.split(" ").slice(1).join(" "), media: null }, 0) : null;
       case "rival": return nom ? inscrirePilote({ name: nom }, 0) : null;
       case "sponsor": return nom ? inscrireSponsor(nom, 0) : null;

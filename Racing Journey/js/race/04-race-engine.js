@@ -901,7 +901,7 @@ function _showQualiPlayerLapModal(driver, session, lap, totalLaps, lapTime, sect
   }
   var lapLabel = lap + "/" + totalLaps;
   var sessLabel = "Q" + session;
-  var lapTypeLabel = lap === 1 && totalLaps > 1 ? "Tour de sortie" : lap === totalLaps ? "Dernière tentative" : "Tour lancé";
+  var lapTypeLabel = lap === totalLaps ? "Dernière tentative" : "Tour lancé";
   // Build modal HTML
   var html = '<div style="background:linear-gradient(180deg,#0a0a0a 0%,#0d0d12 100%);border:1px solid #1a1a24;border-left:3px solid #FF1801;border-radius:var(--r);max-width:430px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,24,1,.12)">';
   // Header
@@ -1779,7 +1779,7 @@ function _renderQualiSessionCoeur() {
     QUALI_STATE.drivers[e].bestTime = null;
     QUALI_STATE.drivers[e].lastTime = null;
     QUALI_STATE.drivers[e].laps = 0;
-    QUALI_STATE.drivers[e]._toursChrono = 0; QUALI_STATE.drivers[e]._enSortie = false;
+    QUALI_STATE.drivers[e]._toursChrono = 0;
     QUALI_STATE.drivers[e].improved = false;
     QUALI_STATE.drivers[e]._sessionForm = (Math.random() - 0.5) * 0.008;
   });
@@ -1876,7 +1876,7 @@ function _renderTimingBoardCoeur(e, t, r) {
       h = i.bestTime ? formatQualiTime(i.bestTime) : "—:---.---",
       v = i.bestTime && o ? i.bestTime === o ? "POLE" : "+" + (i.bestTime - o).toFixed(3) : "",
       x = i.improved ? "#4ADE80" : i.bestTime ? 1 === c ? "#F59E0B" : "var(--text)" : "var(--text3)",
-      y = i._enSortie ? '<span style="font-size:8.5px;font-weight:800;letter-spacing:.06em;color:#F59E0B">OUT</span>' : (i._toursChrono || 0) > 0 ? '<span style="font-size:10px;color:var(--text3)">' + i._toursChrono + "</span>" : '<span style="font-size:10px;color:var(--border)">—</span>',
+      y = (i._toursChrono || 0) > 0 ? '<span style="font-size:10px;color:var(--text3)">' + i._toursChrono + "</span>" : '<span style="font-size:10px;color:var(--border)">—</span>',
       b = driverBadge(i.team, i.nat, 16),
       A = i.isPlayer ? (G.pilot.prenom ? G.pilot.prenom + " " : "") + G.pilot.nom : i.name,
       w = "";
@@ -1916,7 +1916,7 @@ function runQualiSession() {
   if (t.forEach(function(t) {
       var n = r[t],
         a = 1 === e ? 2 : 1,
-        i = 1 === e ? 3 : 2; /* Le joueur n'avait qu'un seul tour lancé en Q1 : un tour de sortie, un tour chronométré, puis éventuellement un tour de rattrapage. Aucune comparaison possible, donc aucune amélioration visible. On lui accorde un essai supplémentaire par session. */
+        i = 1 === e ? 3 : 2; /* Q1 : deux ou trois tours ; Q2 et Q3 : un ou deux. Même nombre pour le joueur et les rivaux. */
       /* Même règle pour tous : le joueur avait un tour de plus que le maximum des
          rivaux (4 contre 2,3 en moyenne). Depuis que chacun de ses tours compte
          (v279), ce tour de plus, le plus rapide de la séance, lui donnait la pole
@@ -1999,9 +1999,8 @@ function runQualiSession() {
         s = a.scheduledMs / i,
         l = qualiDriverTime(o, e, a.lap, a.totalLaps, s);
       o.laps = a.lap;
-      /* v296 : la colonne T compte les tours chronométrés ; un tour de sortie s'affiche OUT */
-      var _sortie = a.lap === 1 && a.totalLaps > 1 && !a.isRescue && G.cat !== "Karting Junior" && G.cat !== "Karting Senior";
-      o._toursChrono = (o._toursChrono || 0) + (_sortie ? 0 : 1); o._enSortie = _sortie;
+      /* v314 : tous les tours sont chronométrés, le premier compris (il passait en tour de sortie, hors karting, et ne comptait pour personne). */
+      o._toursChrono = (o._toursChrono || 0) + 1;
       var _bestBefore = o.bestTime; // Appliquer impact pneus si joueur
       if (o.isPlayer && !QUALI_STATE.spectatorMode) {
         _qualiWarmupTyres();
@@ -2014,9 +2013,7 @@ function runQualiSession() {
       /* La séquence du tour chaud (trois micro-choix) n'existe pas en karting : y réserver les tours 2 et plus
          les jetait, le joueur ne s'améliorait jamais et ses secteurs (calculés quand même) viraient au violet. */
       var _willUseSeq = o.isPlayer && !QUALI_STATE.spectatorMode && G.cat !== "Karting Junior" && G.cat !== "Karting Senior" && (a.lap > 1 || a.totalLaps === 1) && !a.isRescue && window.RJ_SEQUENCE_QUALIF === true && typeof _qualiHotLapSequence === "function";   /* v296 : micro-choix retirés (retour joueur) */
-      // Tour de sortie (1er tour d'un relais de plusieurs tours, hors karting) : jamais chronométré.
-      var _horsTour = a.lap === 1 && a.totalLaps > 1 && !a.isRescue && G.cat !== "Karting Junior" && G.cat !== "Karting Senior";
-      if (!_willUseSeq && !_horsTour) {
+      if (!_willUseSeq) {
         o.improved = null !== o.bestTime && l < o.bestTime;
         (null === o.bestTime || l < o.bestTime) && (o.bestTime = l);
         o.lastTime = l;
@@ -2024,7 +2021,7 @@ function runQualiSession() {
       var c, d = splitLapIntoSectors(l, QUALI_STATE.circuitName || "", .003);
       o.lastSectors = d, o.bestSectors || (o.bestSectors = [null, null, null]), QUALI_STATE.bestSectors || (QUALI_STATE.bestSectors = [null, null, null]), QUALI_STATE.bestSectorsHolder || (QUALI_STATE.bestSectorsHolder = [null, null, null]);
       // le tour chaud passe par la séquence, qui pose elle-même ses secteurs sur le temps final
-      for (var p = [0, 0, 0], u = 0; u < (_horsTour || _willUseSeq ? 0 : 3); u++) {
+      for (var p = [0, 0, 0], u = 0; u < (_willUseSeq ? 0 : 3); u++) {
         var f = d[u];
         if (null === QUALI_STATE.bestSectors[u] || f < QUALI_STATE.bestSectors[u]) {
           QUALI_STATE.bestSectors[u] = f;
@@ -2036,8 +2033,8 @@ function runQualiSession() {
           QUALI_STATE.bestSectorsHolder[u] = a.driverIdx, p[u] = 2
         }(null === o.bestSectors[u] || f < o.bestSectors[u]) && (o.bestSectors[u] = f, p[u] < 2 && (p[u] = 1))
       }
-      /* v294 : un tour de sortie n'a pas de secteurs chronométrés (avant : [0,0,0], soit trois secteurs jaunes au premier tour de chaque pilote) ; le tour chaud garde ses couleurs précédentes jusqu'au temps final posé par la séquence. */
-      _horsTour ? (o.lastSectorFlags = null) : _willUseSeq || (o.lastSectorFlags = p), renderTimingBoard(e, t, !1);
+      // le tour chaud garde ses couleurs jusqu'au temps final posé par la séquence
+      _willUseSeq || (o.lastSectorFlags = p), renderTimingBoard(e, t, !1);
       var h = document.getElementById("quali-status");
       if (h) {
         var v, x = t.slice().sort(function(e, t) {
@@ -2091,15 +2088,13 @@ function runQualiSession() {
                 renderTimingBoard(e, t, false);
               });
             })(l, d, x, _bestBefore);
-          } else if (!_horsTour) {
+          } else {
             try {
               _showQualiPlayerLapModal(o, e, a.lap, a.totalLaps, l, d, x, _bestBefore);
             } catch (_e) {}
           }
         }
-        if (o.isPlayer && _horsTour) {
-          h.innerHTML = '<span style="color:#F59E0B">' + G.pilot.nom + " — tour de sortie : pneus en température, le tour lancé arrive.</span>";
-        } else if (o.isPlayer) {
+        if (o.isPlayer) {
           var y = x <= n ? "#4ADE80" : "var(--red-light)",
             b = o.improved ? " ↗ Amélioration !" : a.lap > 1 ? " → Pas d'amélioration" : "";
           h.innerHTML = '<span style="color:' + y + '">' + G.pilot.nom + " (T" + a.lap + ") : P" + x + " — " + formatQualiTime(l) + b + (x <= n ? " " : e < 3 ? " " : "") + "<span style='font-size:9px;color:var(--text3);font-style:italic;margin-left:4px'>(provisoire)</span>" + "</span>"

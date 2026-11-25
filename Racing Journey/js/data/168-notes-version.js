@@ -10,6 +10,9 @@
   "use strict";
 
   var NOTES = [
+    { v: "v314", titre: "Presse, messages et qualifs",
+      plus: ["70 nouvelles questions de conférence de presse : saison, résultats, qualifs, écurie, voiture, catégorie, circuit, marché…"],
+      fix: ["Conférences : plus de question en double, ni dans une conférence, ni d'une conférence à l'autre.", "Team principal, ingénieur, coéquipier : une conversation par personne, neuve quand tu changes d'écurie.", "Le message d'une écurie qui veut te promouvoir arrive avec son offre, jamais après ta signature.", "À partir de la F4, le premier tour des qualifs compte : temps, secteurs et classement, pour toi comme pour les rivaux."] },
     { v: "v313", titre: "Week-ends avec sprint",
       fix: ["Après le sprint, la course principale ne démarre plus toute seule : elle part au bouton Départ.", "Une course en cours ne se quitte plus par erreur et ne tourne plus en arrière-plan.", "Le sprint d'une manche ne peut plus être couru deux fois."] },
     { v: "v312", titre: "Course plus réaliste",
