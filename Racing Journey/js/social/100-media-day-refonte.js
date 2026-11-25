@@ -1027,15 +1027,32 @@
    * ================================================================== */
   var etat = { ctx: null, journaliste: null, questions: [], idx: 0, effets: [], repondu: false };
 
+  /* v314 : le thème regroupe les questions qui se répètent sous d'autres mots. */
+  var THEMES = { victoire_ressenti: "resultat", victoire_suite: "resultat", podium: "resultat", abandon: "resultat", serie_noire: "resultat",
+    titre_leader: "titre", titre_poursuivant: "titre", contrat_fin: "marche", rumeur_transfert: "marche", promotion: "marche", transfert_arrivee: "marche", independant: "marche",
+    coequipier_devant: "coequipier", coequipier_derriere: "coequipier", rival_forme: "rival", rival_resultat: "rival", voiture: "voiture", confiance_basse: "ecurie",
+    champion_constructeur: "ecurie", nouvelle_categorie: "categorie", champion_sortant: "titre", palmares: "titre", circuit_suivant: "circuit", objectifs: "saison",
+    premiere_saison: "saison", jeunesse: "vie", veteran: "vie", pression: "vie", fans: "vie", media_perso: "vie" };
+  function theme(q) { return q.theme || THEMES[q.id] || q.id; }
+  var MEMOIRE = 30;                                   // dix conférences
+
   function tirerQuestions(c) {
-    var eligibles = QUESTIONS.filter(function (q) {
+    var G = G_(), vues = Array.isArray(G._rjPresseVues) ? G._rjPresseVues : [];
+    var valides = QUESTIONS.filter(function (q) {
       try { return q.quand(c); } catch (e) { return false; }
+    });
+    var eligibles = valides.filter(function (q) { return vues.indexOf(q.id) < 0; });
+    /* Trop peu de neuf : on rouvre les plus anciennes, jamais celles de la dernière conférence. */
+    vues.slice(0, -NB_QUESTIONS).forEach(function (id) {
+      if (themesDe(eligibles) >= NB_QUESTIONS) return;
+      var q = valides.filter(function (x) { return x.id === id; })[0];
+      if (q) eligibles.push(q);
     });
     /* Repli : si le contexte est trop pauvre, on garde les questions
        toujours valides plutôt que d'ouvrir un écran vide. */
     if (eligibles.length < NB_QUESTIONS) {
       QUESTIONS.forEach(function (q) {
-        if (eligibles.indexOf(q) < 0 && q.poids <= 2) eligibles.push(q);
+        if (eligibles.indexOf(q) < 0 && q.poids <= 2 && vues.slice(-NB_QUESTIONS).indexOf(q.id) < 0 && (!q.theme || valides.indexOf(q) >= 0)) eligibles.push(q);
       });
     }
 
@@ -1051,10 +1068,12 @@
         if (tirage <= 0) { pick = reste[i]; break; }
       }
       choisies.push(pick);
-      reste.splice(reste.indexOf(pick), 1);
+      reste = reste.filter(function (q) { return q !== pick && theme(q) !== theme(pick); });
     }
+    G._rjPresseVues = vues.concat(choisies.map(function (q) { return q.id; })).slice(-MEMOIRE);
     return choisies;
   }
+  function themesDe(L) { var t = {}; L.forEach(function (q) { t[theme(q)] = 1; }); return Object.keys(t).length; }
 
   /* ==================================================================
    * 6. LA MISE EN SCÈNE
@@ -1311,8 +1330,8 @@
     etat.idx++;
     etat.repondu = false;
     /* Un journaliste différent par question, comme dans une vraie salle. */
-    var autres = JOURNALISTES.filter(function (j) { return j !== etat.journaliste; });
-    etat.journaliste = au_hasard(autres);
+    etat.passes.push(etat.journaliste);
+    etat.journaliste = au_hasard(JOURNALISTES.filter(function (j) { return etat.passes.indexOf(j) < 0; }));
     afficherQuestion();
     try { document.getElementById("S-mediaday").querySelector(".scroll").scrollTop = 0; } catch (e) {}
   }
@@ -1531,6 +1550,7 @@
     injecterCSS();
     etat.ctx = contexte();
     etat.journaliste = au_hasard(JOURNALISTES);
+    etat.passes = [];
     etat.questions = tirerQuestions(etat.ctx);
     etat.idx = 0;
     etat.effets = [];
@@ -1584,7 +1604,7 @@
     })();
 
     window._rj100 = {
-      ouvrir: ouvrir, contexte: contexte, questions: QUESTIONS,
+      ouvrir: ouvrir, contexte: contexte, questions: QUESTIONS, tirer: tirerQuestions, theme: theme,
       presse: injecterPresse,
       declarations: function () { var G = G_(); return (G && G._rjDeclarations) || []; },
       journalistes: JOURNALISTES,

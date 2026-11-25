@@ -4220,9 +4220,9 @@ async function suiteRetoursCarriere() {
     S.verifier("le bilan rouvert trois fois garde une seule ligne pour la saison", r.lignes === 1 && r.apresNettoyage === 1, JSON.stringify(r));
     S.verifier("la fiche d'un rival montre ses saisons passées, pas seulement l'année en cours", r.fiche && r.fiche.lignes >= 3, JSON.stringify(r.fiche));
 
-    // 4-5. Qualif F4 : pas de micro-choix ; le tour de sortie s'affiche OUT, puis les tours chronométrés
+    // 4-5. Qualif F4 : pas de micro-choix ; v314 : le premier tour compte pour tous
     const q = await page.evaluate(async () => {
-      const a = ms => new Promise(x => setTimeout(x, ms)), out = { sequence: false, out: false, compte: false };
+      const a = ms => new Promise(x => setTimeout(x, ms)), out = { sequence: false, out: false, vus: {}, sans: [] };
       G.cat = "Formule 4"; G.currentTeam = TEAM_OFFERS["Formule 4"][3].team; initRivals();
       window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[1].week; CAL_RACES.forEach(c => c.done = c.week < G.semaine);
       SETTINGS.simSpeed = "instant"; RACE_WEEKEND_STATE.fpDone = true; G._fpSkipping = true; G._startQualInProgress = false;
@@ -4231,7 +4231,7 @@ async function suiteRetoursCarriere() {
         if (document.getElementById("quali-hotlap-seq-modal")) out.sequence = true;
         const t = (document.getElementById("quali-timing-board") || {}).innerText || "";
         if (/OUT/.test(t)) out.out = true;
-        if (QUALI_STATE.drivers.some(d => d._toursChrono >= 1 && d.lastTime)) out.compte = true;
+        QUALI_STATE.drivers.forEach(d => { if (d.laps !== 1 || out.vus[d.name]) return; out.vus[d.name] = 1; if (!(d.bestTime > 0 && d.bestTime === d.lastTime && d._toursChrono === 1 && Array.isArray(d.lastSectorFlags) && d.bestSectors.every(x => x > 0))) out.sans.push(d.name); if (d.isPlayer) out.moi = true; });
         const m = document.getElementById("quali-player-lap-modal"); if (m) _closeQualiPlayerLapModal();
       }, 30);
       runQualiSession();
@@ -4240,7 +4240,7 @@ async function suiteRetoursCarriere() {
       return out;
     });
     S.verifier("qualif : plus de micro-choix pendant le tour lancé", q.sequence === false, JSON.stringify(q));
-    S.verifier("qualif F4 : le tour de sortie s'affiche OUT, les tours chronométrés se comptent", q.out && q.compte, JSON.stringify(q));
+    S.verifier("qualif F4 : le premier tour compte (temps et secteurs), joueur et rivaux", !q.out && q.moi && Object.keys(q.vus).length > 5 && !q.sans.length, JSON.stringify(q));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -5036,6 +5036,77 @@ async function suiteSprint313() {
   } finally { await navigateur.close(); }
 }
 
+/* v314 : presse, interlocuteurs par écurie, promotion interne */
+async function suiteRetours314() {
+  S.suite("v314 : presse, contacts et promotion interne");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const p = await page.evaluate(() => {
+      const o = { ko: [], themes: [], redites: [], ton: [], vides: [] };
+      G._rjPresseVues = [];
+      const cats = ["Formule 4", "Formula Regional", "Formule 3", "Formule 2", "Formule 1"];
+      cats.forEach(cat => {
+        G.cat = cat; initRivals(); G.currentTeam = TEAM_OFFERS[cat][0].team; window.CAL_RACES = []; buildCalendar(); G.pendingTransfer = null;
+        G.races = [1, 2, 3, 4, 5, 6].map(i => ({ pos: (i * 5) % 14 + 1, qualiPos: (i * 3) % 12 + 1, circuit: "Monza", weather: i % 2 ? "wet" : "dry", tmPos: i + 3, pts: 2 })); G.champPts = 40; G.rivals.forEach((r, i) => r.pts = 60 - i * 3);
+        CAL_RACES.forEach((c, i) => c.done = i < 6);
+        let avant = [];
+        for (let k = 0; k < 8; k++) {
+          const c = _rj100.contexte(), Q = _rj100.tirer(c);
+          if (Q.length !== 3) o.vides.push(cat + Q.length);
+          if (new Set(Q.map(q => _rj100.theme(q))).size !== Q.length) o.themes.push(Q.map(q => q.id));
+          Q.forEach(q => { if (avant.includes(q.id)) o.redites.push(cat + ":" + q.id); const tx = q.texte(c); if (!tx || /undefined|null|NaN|\[object/.test(tx)) o.ko.push(q.id + ":" + tx); if (q.reponses.length < 3 || q.reponses.some(r => !r.texte || !r.effets || !r.retour)) o.ton.push(q.id); });
+          avant = Q.map(q => q.id);
+        }
+      });
+      // toutes les questions de la banque, dans toutes les catégories
+      o.total = _rj100.questions.length; o.uniques = new Set(_rj100.questions.map(q => q.id)).size;
+      cats.forEach(cat => { G.cat = cat; const c = _rj100.contexte(); _rj100.questions.forEach(q => { try { if (q.quand(c)) { const tx = q.texte(c); if (/undefined|NaN|null/.test(tx)) o.ko.push(q.id + ":" + tx); } } catch (e) { o.ko.push(q.id + "!" + e.message); } }); });
+      const vues = G._rjPresseVues; G._rjPresseVues = []; saveGame(0, { silencieux: true }); G._rjPresseVues = vues;
+      return o;
+    });
+    S.verifier("au moins 100 questions, sans doublon", p.total >= 100 && p.uniques === p.total, JSON.stringify([p.total, p.uniques]));
+    S.verifier("trois questions par conférence, jamais deux du même thème", !p.vides.length && !p.themes.length, JSON.stringify([p.vides, p.themes]));
+    S.verifier("aucune question de la conférence précédente ne revient", !p.redites.length, p.redites.join(","));
+    S.verifier("textes et réponses complets", !p.ko.length && !p.ton.length, JSON.stringify([p.ko.slice(0, 5), p.ton]));
+
+    const c = await page.evaluate(() => {
+      const o = {}; G.cat = "Formule 3"; initRivals(); G._contacts = {};
+      const [A, B] = TEAM_OFFERS["Formule 3"].map(t => t.team);
+      G.currentTeam = A; const nA = getContactDef("tp").getName(), dA = getContactList().find(x => x.id === "tp");
+      startContactChat("tp", getContactDef("tp").topics[0].id); o.chezA = getContactState("tp").threads.length;
+      G.currentTeam = B; const nB = getContactDef("tp").getName(); o.chezB = getContactState("tp").threads.length; o.noms = [nA, nB, dA.name];
+      G.currentTeam = A; o.retourA = getContactState("tp").threads.length;
+      // partie d'avant : l'échange d'une saison passée n'est pas repris
+      G._contacts = { tp: { lastInteractionSaison: G.saison - 1, lastInteractionWeek: 3, threads: [{ messages: [] }] }, agent: { lastInteractionSaison: 1, lastInteractionWeek: 1, threads: [1] } };
+      o.ancien = getContactState("tp").threads.length; o.agent = getContactState("agent").threads.length;
+      G.currentTeam = A; o.tpAutre = _getTPSender(B).from; o.tpMoi = _getTPSender(A).from;
+      return o;
+    });
+    S.verifier("team principal : conversation neuve dans la nouvelle écurie, gardée dans l'ancienne", c.chezA === 1 && c.chezB === 0 && c.retourA === 1 && c.noms[0] !== c.noms[1] && c.noms[0] === c.noms[2], JSON.stringify(c));
+    S.verifier("partie d'avant : l'ancien échange ne suit pas ; l'agent garde le sien", c.ancien === 0 && c.agent === 1, JSON.stringify(c));
+    S.verifier("un message d'une autre écurie porte le nom de SON patron", c.tpAutre !== c.tpMoi && c.tpAutre.split(" · ")[0] !== c.tpMoi.split(" · ")[0], JSON.stringify([c.tpAutre, c.tpMoi]));
+
+    const m = await page.evaluate(() => {
+      const o = {}, nb = () => getMailbox().filter(x => /Promotion interne/.test(x.subject)).length;
+      G.cat = "Formula Regional"; initRivals(); G.pendingTransfer = null; G.offers = []; G.mailbox = []; G._rjMailLog = {};
+      const eq = TEAMS_BY_CAT["Formula Regional"].find(t => findSisterTeamInNextCat(t, G.cat)); G.currentTeam = eq; const s = findSisterTeamInNextCat(eq, G.cat);
+      annoncerPromotionInterne(); o.sansOffre = nb();
+      G.offers = [{ team: s.teamData.team, cat: s.nextCat, duration: 2 }]; annoncerPromotionInterne(); annoncerPromotionInterne(); o.avecOffre = nb();
+      G.mailbox = []; G._rjMailLog = {}; G.offers = [{ team: s.teamData.team, cat: s.nextCat, duration: 2 }]; G.pendingTransfer = { team: s.teamData.team, cat: s.nextCat }; annoncerPromotionInterne(); o.signe = nb();
+      G.pendingTransfer = null; G.offers = [{ team: s.teamData.team, cat: s.nextCat, duration: 2, _accord: {} }]; annoncerPromotionInterne(); o.accord = nb();
+      // chemin réel : une course de plus, l'offre et son message sortent ensemble
+      G.mailbox = []; G._rjMailLog = {}; G.offers = []; window.CAL_RACES = []; buildCalendar(); G.races = CAL_RACES.slice(0, Math.ceil(CAL_RACES.length / 2)).map(() => ({ pos: 1, pts: 25 })); G.champPts = 400; G.rivals.forEach(r => r.pts = 10); G.contractDur = 1; G.reputation = 60;
+      const hz = Math.random; Math.random = () => .01; generateTeamOffers(1); Math.random = hz; o.offre = G.offers.some(x => x.team === s.teamData.team && x.cat === s.nextCat); o.mail = nb();
+      return o;
+    });
+    S.verifier("promotion interne : pas de message sans offre, un seul avec elle", m.sansOffre === 0 && m.avecOffre === 1, JSON.stringify(m));
+    S.verifier("aucun message après signature ou accord", m.signe === 0 && m.accord === 0, JSON.stringify(m));
+    S.verifier("en jeu : le message part si et seulement si l'offre est là", m.offre && m.mail === 1, JSON.stringify(m));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5485,7 +5556,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314
 };
 
 async function principal() {

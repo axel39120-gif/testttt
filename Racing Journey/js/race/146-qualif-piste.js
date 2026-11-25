@@ -136,12 +136,10 @@
     if (p.eliminated) { carte.etat.textContent = "Éliminé"; return; }
     /* Un tour est rejoué quand son chrono arrive (lastTime nouveau) : il n'est
        écrit qu'une fois, à la fin du tour chaud (après la séquence de choix),
-       alors que les secteurs passent par une valeur provisoire. Le tour de
-       sortie n'a pas de chrono : il s'annonce seulement. */
+       alors que les secteurs passent par une valeur provisoire. */
     var ok = typeof p.lastTime === "number" && Array.isArray(p.lastSectors) && p.lastSectors.every(function (x) { return typeof x === "number"; });
     var sig = ok ? p.lastTime.toFixed(4) : "";
     if (vusTours === -1) vusTours = sig;    // à l'ouverture : on ne rejoue pas un ancien tour
-    if (!ok && (p.laps || 0) >= 1 && !rejeu && carte.etat.textContent !== "Tour de sortie") { carte.etat.textContent = "Tour de sortie"; }
     if (ok && sig !== vusTours) {
       vusTours = sig;
       var s = p.lastSectors, cumul = [0, s[0], s[0] + s[1], s[0] + s[1] + s[2]];

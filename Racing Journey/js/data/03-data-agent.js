@@ -234,7 +234,39 @@ var EV_CATS = {
   ALL: ["Karting Junior", "Karting Senior", "Formule 4", "Formula Regional", "Formule 3", "Formule 2", "Formule 1", "Super Formula", "Endurance WEC", "IndyCar"]
 };
 
+/* Le team principal, l'ingénieur, le coéquipier et le rival changent avec l'écurie : une
+   conversation par personne (avant : une seule, qui suivait le pilote d'une écurie à l'autre). */
+function _cleContact(e) {
+  if (["tp", "engineer", "tm", "rival"].indexOf(e) < 0) return e;
+  var d = CONTACTS_CATALOG.find(function(t) {
+      return t.id === e
+    }),
+    n = "";
+  try {
+    n = d.getName()
+  } catch (t) {}
+  var k = e + "@" + n + ("tp" === e || "engineer" === e ? "@" + (G.currentTeam || "") : ""),
+    v = G._contacts && G._contacts[e];
+  // partie d'avant la v314 : l'échange de cette saison reste à l'interlocuteur actuel, le reste est oublié
+  if (v) {
+    if (v.lastInteractionSaison === G.saison && !G._contacts[k]) G._contacts[k] = v;
+    delete G._contacts[e]
+  }
+  return k
+}
+
+/* Vrai nom du staff de l'écurie actuelle (tp, race_eng), ou le titre à défaut. */
+function _nomStaff(poste, titre) {
+  try {
+    var s = getTeamStaff(G.currentTeam, G.cat);
+    return s && s[poste] && s[poste].name || titre
+  } catch (e) {
+    return titre
+  }
+}
+
 function getContactState(e) {
+  e = _cleContact(e);
   return G._contacts || (G._contacts = {}), G._contacts[e] || (G._contacts[e] = {
     lastInteractionWeek: -99,
     lastInteractionSaison: 0,
@@ -247,12 +279,12 @@ function _ctxLastResult() {
 }
 
 function _ctxWeeksSinceContact(e) {
-  var t = G._contacts && G._contacts[e];
+  var t = G._contacts && G._contacts[_cleContact(e)];
   return t && 0 !== t.lastInteractionSaison ? 50 * (G.saison - t.lastInteractionSaison) + (G.semaine - t.lastInteractionWeek) : 999
 }
 
 function _ctxThreadCount(e) {
-  var t = G._contacts && G._contacts[e];
+  var t = G._contacts && G._contacts[_cleContact(e)];
   return t && t.threads ? t.threads.length : 0
 }
 
@@ -262,7 +294,7 @@ function _ctxSetContactFlag(e, t, r) {
 }
 
 function _ctxGetContactFlag(e, t) {
-  var r = G._contacts && G._contacts[e];
+  var r = G._contacts && G._contacts[_cleContact(e)];
   return r && r.flags ? r.flags[t] : null
 }
 
@@ -1906,7 +1938,7 @@ var CONTACTS_CATALOG = [{
       return G.currentTeam && "Indépendant" !== G.currentTeam
     },
     getName: function() {
-      return "Team Principal"
+      return _nomStaff("tp", "Team Principal")
     },
     getRole: function() {
       return "team_boss"
@@ -1918,7 +1950,7 @@ var CONTACTS_CATALOG = [{
       return "star"
     },
     getDescription: function() {
-      return G.currentTeam || "Écurie"
+      return "Team principal · " + (G.currentTeam || "Écurie")
     },
     topics: [{
       id: "tp_confidence",
@@ -2151,7 +2183,7 @@ var CONTACTS_CATALOG = [{
       return G.currentTeam && "Indépendant" !== G.currentTeam
     },
     getName: function() {
-      return "Ingénieur de piste"
+      return _nomStaff("race_eng", "Ingénieur de piste")
     },
     getRole: function() {
       return "team"
@@ -14895,7 +14927,9 @@ function _getTPSender(team) {
   var t = team || G.currentTeam || "Indépendant";
   var tpName = null;
   try {
-    if (G.currentTeamStaff && G.currentTeamStaff.tp && G.currentTeamStaff.tp.name) tpName = G.currentTeamStaff.tp.name
+    // le team principal de l'écurie qui écrit, pas celui du joueur
+    var st = getTeamStaff(t, G.cat);
+    if (st && st.tp && st.tp.name) tpName = st.tp.name
   } catch (_e) {}
   return {
     from: tpName ? (tpName + " · TP " + t) : "Team Principal — " + t,
@@ -22577,6 +22611,43 @@ function _closeNegoModal() {
   e && e.parentNode && e.parentNode.removeChild(e), TP_NEGOTIATION = null, "function" == typeof updateUI && updateUI(), "function" == typeof renderMailbox && renderMailbox()
 }
 
+/* Le mot de l'écurie qui veut te garder à l'échelon supérieur part avec son offre, d'où qu'elle
+   vienne (promotion interne, vague d'offres, académie), une seule fois, et jamais après signature. */
+function annoncerPromotionInterne() {
+  if (!_hasTeamStructure() || typeof pushMail !== "function") return;
+  var s = findSisterTeamInNextCat(G.currentTeam, G.cat);
+  if (!s || G.pendingTransfer) return;
+  var o = (G.offers || []).find(function(e) {
+    return e && e.team === s.teamData.team && e.cat === s.nextCat && !e.expired
+  });
+  if (!o || o._accord || o._msgPromo) return;
+  o._msgPromo = true;
+  o._rj62Notified = true; // l'agent ne la réannonce pas
+  var A = o.duration || o.dur || 1;
+  pushMail({
+    from: "Direction sportive — " + o.team,
+    role: "team_boss",
+    subject: "Promotion interne — " + o.cat + " (saison " + (G.saison + 1) + ")",
+    body: "On apprécie tes résultats et on veut te garder dans la famille <strong>" + o.team + "</strong>. Voici notre offre pour que tu poursuives avec nous en <strong>" + o.cat + "</strong>" + (o.isInternalPromotion ? " : droit d'entrée réduit (fidélité), prime sur salaire" : "") + ", durée " + A + " saison" + (A > 1 ? "s" : "") + ". On connaît déjà ton style, tes forces, tes limites — tu démarreras avec une longueur d'avance.",
+    actions: [{
+      label: "Voir l'offre",
+      kind: "link",
+      effect: {
+        type: "nav",
+        data: {
+          target: "S-contracts",
+          tab: "offres"
+        }
+      },
+      responseBody: "Merci pour votre confiance. Je regarde l'offre et on se parle vite."
+    }, {
+      label: "Je vais y réfléchir",
+      kind: "dismiss",
+      responseBody: "Merci pour cette proposition, je prends le temps de l'étudier."
+    }]
+  })
+}
+
 function generateTeamOffers(e) {
   var t = CAL_RACES.length || 10,
     r = G.races.length;
@@ -22658,28 +22729,7 @@ function generateTeamOffers(e) {
                   nextCat: y,
                   isInternalPromotion: !0
                 });
-              G.offers.push(M), g && (g.style.display = "block"), "function" == typeof pushMail && _hasTeamStructure() && pushMail({
-                from: "Direction sportive — " + x.team,
-                role: "team_boss",
-                subject: " Promotion interne — " + y,
-                body: "On veut te garder dans la famille <strong>" + x.team + "</strong>. Ton travail cette saison nous a convaincus. Voici notre offre pour que tu poursuives avec nous en <strong>" + y + "</strong> : droit d'entrée réduit (fidélité), prime sur salaire, durée " + A + " saison" + (A > 1 ? "s" : "") + ". On connaît déjà ton style, tes forces, tes limites — tu démarreras avec une longueur d'avance.",
-                actions: [{
-                  label: "Voir l'offre",
-                  kind: "link",
-                  effect: {
-                    type: "nav",
-                    data: {
-                      target: "S-contracts",
-                      tab: "offres"
-                    }
-                  },
-                  responseBody: "Merci pour votre confiance. Je regarde l'offre et on se parle vite."
-                }, {
-                  label: "Je vais y réfléchir",
-                  kind: "dismiss",
-                  responseBody: "Merci pour cette proposition, je prends le temps de l'étudier."
-                }]
-              })
+              G.offers.push(M), g && (g.style.display = "block")
             }
           }
         }

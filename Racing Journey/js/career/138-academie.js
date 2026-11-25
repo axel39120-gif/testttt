@@ -242,9 +242,10 @@
   function installer() {
     if (typeof rjInscrire !== "function" || typeof window.generateTeamOffers !== "function" || !Array.isArray(window.WEEKLY_TICK_HOOKS) || !Array.isArray(window.RJ_SAVE_HOOKS)) return false;
     rjInscrire("generateTeamOffers", { id: "138-academie:voie-f1", apres: function () { try { proposerF1(); } catch (e) { console.warn(TAG, e && e.message); } try { proposerPromotion(); } catch (e) { console.warn(TAG, e && e.message); } } });
+    rjInscrire("generateTeamOffers", { id: "138-academie:annonce", ordre: -9000, apres: function () { try { annoncerPromotionInterne(); } catch (e) { console.warn(TAG, e && e.message); } } });
     /* La promotion se vérifie aussi chaque semaine : les offres ne sont pas générées à chaque tour de calendrier. */
     if (!window.WEEKLY_TICK_HOOKS.some(function (h) { return h && h.id === "138-academie"; })) {
-      window.WEEKLY_TICK_HOOKS.push({ id: "138-academie", run: function () { try { ouvrirDepart(); inviter(); proposerPromotion(); } catch (e) {} } });
+      window.WEEKLY_TICK_HOOKS.push({ id: "138-academie", run: function () { try { ouvrirDepart(); inviter(); proposerPromotion(); annoncerPromotionInterne(); } catch (e) {} } });
     }
     if (!Array.isArray(window.RJ_SEASON_HOOKS)) window.RJ_SEASON_HOOKS = [];
     if (!window.RJ_SEASON_HOOKS.some(function (h) { return h && h.id === "138-academie"; })) {
