@@ -237,7 +237,7 @@ var EV_CATS = {
 /* Le team principal, l'ingénieur, le coéquipier et le rival changent avec l'écurie : une
    conversation par personne (avant : une seule, qui suivait le pilote d'une écurie à l'autre). */
 function _cleContact(e) {
-  if (["tp", "engineer", "tm", "rival"].indexOf(e) < 0) return e;
+  if (["tp", "engineer", "tm", "rival", "academy_boss"].indexOf(e) < 0) return e;
   var d = CONTACTS_CATALOG.find(function(t) {
       return t.id === e
     }),
@@ -9627,21 +9627,42 @@ var ACADEMIES = {
       minRating: 48,
       reqPos: 8
     },
-    "Haas Driver Academy": {
-      id: "HDA",
-      logo: '<svg viewBox="0 0 40 40" width="40" height="40"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3d42"/><stop offset="1" stop-color="#121315"/></linearGradient><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9bdc3"/></linearGradient></defs><rect width="40" height="40" fill="url(#f)"/><path d="M5 6 h30 v3.6 H5z" fill="#e10600"/><path d="M5 10.8 h30 v3.6 H5z" fill="url(#c)"/><text x="20" y="27.4" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="11.5" font-weight="900" fill="url(#c)">H</text><rect x="5" y="31" width="30" height="4.6" rx="1" fill="#121315" stroke="#e10600" stroke-width=".5"/><text x="20" y="34.45" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="3.3" font-weight="900" fill="#ffffff" letter-spacing=".3">ACADEMY</text></svg>',
-      color: "#B2B2B2",
-      colorBg: "#111",
-      f1Team: "Haas F1 Team",
-      desc: "Haas offre une voie directe et réaliste vers la F1 — moins de concurrence interne, plus d'accès au paddock.",
-      background: "Haas est une des rares équipes F1 à intégrer régulièrement ses juniors sur le baquet principal. L'académie est moins dotée que ses rivaux, mais compense par la proximité : les pilotes Haas côtoient le paddock F1 dès leurs premières saisons.",
-      strengths: ["Accès paddock F1 rapide", "Peu de concurrence interne", "Lien direct avec le team", "Passerelle F1 concrète"],
-      alumni: "Pietro Fittipaldi, Callum Ilott, Santino Ferrucci",
+    "Aston Martin Driver Academy": {
+      id: "AMDA",
+      logo: "<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#0f6b57\"/><stop offset=\"1\" stop-color=\"#022a21\"/></linearGradient><linearGradient id=\"c\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4f6f5\"/><stop offset=\"1\" stop-color=\"#b6ff3c\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M20 12 L17 16 H4 L9 19.5 H15.5 L14 22.5 H18 L20 25 L22 22.5 H26 L24.5 19.5 H31 L36 16 H23 Z\" fill=\"url(#c)\"/><circle cx=\"20\" cy=\"18.5\" r=\"2.4\" fill=\"#022a21\"/><text x=\"20\" y=\"34.5\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"4.2\" font-weight=\"900\" fill=\"#fff\" letter-spacing=\".5\">ACADEMY</text></svg>",
+      color: "#00A88A",
+      colorBg: "#02211a",
+      f1Team: "Aston Martin",
+      desc: "Aston Martin forme peu de pilotes à la fois, avec des moyens d'usine : simulateur, soufflerie et essais privés à Silverstone.",
+      background: "Né avec le retour du constructeur en Formule 1, le programme s'appuie sur le campus de Silverstone. Les juniors roulent beaucoup en essais privés et servent de pilotes de développement, mais les baquets de titulaire y sont rares : il faut s'imposer en F2 pour espérer mieux que la réserve.",
+      strengths: ["Campus de Silverstone", "Essais privés nombreux", "Rôle de développement", "Petit groupe, suivi serré"],
+      alumni: "Felipe Drugovich, Jak Crawford, Jessica Hawkins",
       f1Alt: [],
       affiliates: {
+        "Formule 4": ["PHM Racing", "Xcel Racing"],
+        "Formula Regional": ["Trident", "Cram Motorsport"],
+        "Formule 3": ["DAMS", "Trident"],
+        "Formule 2": ["DAMS", "MP Motorsport"]
+      },
+      minRating: 47,
+      reqPos: 7
+    },
+    "Audi Driver Development": {
+      id: "AUDI",
+      logo: "<svg viewBox=\"0 0 40 40\" width=\"40\" height=\"40\"><defs><linearGradient id=\"f\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#3a3d42\"/><stop offset=\"1\" stop-color=\"#0c0d0f\"/></linearGradient><linearGradient id=\"c\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"1\" stop-color=\"#b9bdc3\"/></linearGradient></defs><rect width=\"40\" height=\"40\" fill=\"url(#f)\"/><path d=\"M6 24 L14 9 H18 L10 24 Z M14 24 L22 9 H26 L18 24 Z\" fill=\"url(#c)\"/><path d=\"M22 24 L30 9 H34 L26 24 Z\" fill=\"#E4002B\"/><text x=\"20\" y=\"34.5\" text-anchor=\"middle\" font-family=\"Arial Black,Impact,sans-serif\" font-size=\"4.2\" font-weight=\"900\" fill=\"#fff\" letter-spacing=\".5\">AUDI JUNIORS</text></svg>",
+      color: "#E4002B",
+      colorBg: "#15090b",
+      f1Team: "Audi",
+      desc: "Arrivée avec le projet F1 de la marque, la filière Audi cherche des pilotes jeunes à faire grandir avec l'équipe.",
+      background: "Dernière-née des académies, elle prolonge l'ancienne filière de Hinwil avec les moyens d'un grand constructeur. Le programme recrute tôt, dès le karting, et garde ses pilotes longtemps. L'écurie étant en construction, un junior qui gagne peut y brûler les étapes.",
+      strengths: ["Recrutement dès le karting", "Projet F1 en construction", "Patience envers les jeunes", "Passerelle endurance"],
+      alumni: "Programme récent : les premiers noms restent à écrire",
+      f1Alt: [],
+      affiliates: {
+        "Karting Senior": ["Kosmic Racing"],
         "Formule 4": ["US Racing"],
         "Formula Regional": ["US Racing", "Bhaitech Racing"],
-        "Formule 3": ["Charouz Racing"],
+        "Formule 3": ["Charouz Racing", "Rodin Motorsport"],
         "Formule 2": ["Campos Racing"]
       },
       minRating: 44,
@@ -20404,7 +20425,7 @@ function getCategoryStatCap(e) {
   var t;
   return {
     "Karting Junior": 52,
-    "Karting Senior": 60,
+    "Karting Senior": 58,
     "Formule 4": 65,
     "Formula Regional": 72,
     "Formule 3": 79,
@@ -20424,7 +20445,7 @@ function _overCapPenalty(e, t) {
 }
 
 function _hardCapForCategory(e) {
-  return Math.min(95, getCategoryStatCap(e) + 8)
+  return Math.min(95, getCategoryStatCap(e) + 4) // v316 : +8 laissait dépasser tout le plateau
 }
 
 function gainSubStat() { return rjAppeler("gainSubStat", _gainSubStatCoeur, this, arguments); }

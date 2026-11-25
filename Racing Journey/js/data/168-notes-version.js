@@ -10,6 +10,9 @@
   "use strict";
 
   var NOTES = [
+    { v: "v316", titre: "Vie privée, académies et réalisme",
+      plus: ["Rencontres et vie de couple : séduction, caractères, situations à trancher (dès 18 ans).", "Académies Aston Martin (à la place de Haas) et Audi ; parcours d'académies dans l'onglet Carrière.", "Le patron de ton académie se contacte, et un baquet partenaire se négocie.", "Logos des écuries sans carré, McLaren redessiné.", "Course : commentaires, safety car et VSC dans le circuit, carte et classement plus grands.", "Sprint ou course principale : indiqué dans tout le week-end, et dans le calendrier."],
+      fix: ["Difficulté : les rivaux vivent aussi des événements et progressent ; réglage et qualifs de karting remis à égalité.", "Classement de course : écarts au dixième, plus de « TÊTE ».", "Essais et qualifs alignés, tout à l'écran.", "L'académie se quitte à l'arrivée en F1 ; la presse y parle surtout des titres majeurs."] },
     { v: "v315", titre: "Formula Regional",
       plus: ["Une 10e manche en Formula Regional : Misano, avant la finale de Monza (dès la saison suivante)."] },
     { v: "v314", titre: "Presse, messages et qualifs",

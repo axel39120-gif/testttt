@@ -3825,7 +3825,7 @@ async function suiteSeances() {
     S.verifier("essais au repos : rien ne défile", repos <= 2, String(repos));
     S.verifier("essais en relais : feuille resserrée (3 premiers + le joueur), « Rentrer au stand » visible", relais.lignes <= 6 && relais.box && relais.defile <= 10, JSON.stringify(relais));
     S.verifier("le bouton de fin de séance se lit (« Terminer l'EL1, passer à l'EL2 »)", /Terminer l.EL\d, passer à l.EL\d/.test(libelle), libelle);
-    S.verifier("qualifs : rien ne défile, statut visible à gauche, feuille resserrée", q.defile <= 2 && q.statut && q.lignes <= 6 && /Classement complet \(20\)/.test(q.bouton || ""), JSON.stringify(q));
+    S.verifier("qualifs : rien ne défile, statut visible à gauche, feuille resserrée", q.defile <= 2 && q.statut && q.lignes <= 12 && /Classement complet \(20\)/.test(q.bouton || ""), JSON.stringify(q));
     S.verifier("classement complet : 20 pilotes en deux colonnes, sans défilement, le joueur repéré", modale && modale.lignes === 20 && modale.colonnes === 2 && !modale.deborde && modale.moi, JSON.stringify(modale));
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
@@ -4077,7 +4077,7 @@ async function suiteEquilibre() {
       out.faute = lr.drivers.map(d => (d._rj81EvtSec || 0) > 0 && !!_rj149.recente(d, lr));
       return out;
     });
-    S.verifier("plafonds de stats alignés sur l'élite (junior 52, senior 60, F4 65)", r.caps.join() === "52,60,65", JSON.stringify(r.caps));
+    S.verifier("plafonds de stats alignés sur l'élite (junior 52, senior 58, F4 65)", r.caps.join() === "52,58,65", JSON.stringify(r.caps));
     S.verifier("au-delà du plafond, l'entraînement rapporte de moins en moins", r.penalite[0] < 1 && r.penalite[1] < r.penalite[0] && r.penalite[2] < r.penalite[1], JSON.stringify(r.penalite));
     S.verifier("bonheur et événements ne valent plus plusieurs places", r.bonheur <= 0.012 && r.evt <= 0.02, JSON.stringify([r.bonheur, r.evt]));
     S.verifier("contrats : chaque onglet affiche sa page", r.onglets.join() === "offres:offres,primes:primes,reseau:reseau", JSON.stringify(r.onglets));
@@ -5107,6 +5107,95 @@ async function suiteRetours314() {
   } finally { await navigateur.close(); }
 }
 
+/* v316 : académies, rencontres, concurrence, course et logos */
+async function suiteLot316() {
+  S.suite("v316 : académies, rencontres, réalisme, affichage");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await S.repondeurAutomatique(page);
+    const a = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      o.noms = Object.keys(ACADEMIES); o.ecuries = o.noms.filter(n => !TEAMS_BY_CAT["Formule 1"].includes(ACADEMIES[n].f1Team));
+      o.affil = []; o.noms.forEach(n => Object.keys(ACADEMIES[n].affiliates).forEach(c => ACADEMIES[n].affiliates[c].forEach(t => { if (!(TEAMS_BY_CAT[c] || []).includes(t)) o.affil.push(n + ":" + c + ":" + t); })));
+      o.caract = o.noms.filter(n => !RJCaracteres.academie(ACADEMIES[n].id)); o.patrons = o.noms.filter(n => !RJParcours.patrons[ACADEMIES[n].id]);
+      G._academies = null; G.decisions = []; PLAYER_ACADEMY.id = null; G.cat = "Formula Regional"; G.gameYear = 2026; initRivals(); G.mailbox = [];
+      joinAcademy("Mercedes Junior Programme"); G.gameYear = 2028; leaveAcademy("Séparation volontaire"); joinAcademy("Alpine Academy"); PLAYER_ACADEMY.relation = 75;
+      o.parcours = RJParcours.liste().map(x => [x.debut, x.fin, x.nom]);
+      navTo("S-pilot", null); renderCareerDetail(); await d(200); o.carte = (document.getElementById("rj173") || {}).innerText; o.svg = document.querySelectorAll("#rj173 svg").length;
+      o.contact = getContactList().some(c => c.id === "academy_boss"); o.patron = getContactDef("academy_boss").getName();
+      // négociation : chances bornées, une offre au bout, pas deux fois de suite
+      G.races = [1, 2, 3, 4].map(() => ({ pos: 1, pts: 25 })); G.champPts = 300; G.rivals.forEach(r => r.pts = 10); G.offers = []; G.pendingTransfer = null; PLAYER_ACADEMY._rj138 = {};
+      o.haute = RJParcours.chance(); PLAYER_ACADEMY.relation = 30; G.champPts = 0; o.basse = RJParcours.chance(); PLAYER_ACADEMY.relation = 75; G.champPts = 300;
+      o.avant = RJParcours.peutNegocier(); const h = Math.random; Math.random = () => 0; startContactChat("academy_boss", "ac_baquet"); Math.random = h;
+      o.offre = G.offers.map(x => [x.cat, isAcademyAffiliate(x.team, x.cat)]); o.apres = RJParcours.peutNegocier();
+      saveGame(0, { silencieux: true }); G._academies = []; loadSave(0); await d(1500); o.recharge = RJParcours.liste().length;
+      // F1 : diplômé, sans pénalité
+      const pad = G.rep.paddock; G.cat = "Formule 1"; RJParcours.diplomer(); const der = RJParcours.liste().slice(-1)[0]; o.f1 = [PLAYER_ACADEMY.id, der.fin != null, der.diplome, G.rep.paddock === pad];
+      PLAYER_ACADEMY.id = "HDA"; RJParcours.migrer(); o.haas = PLAYER_ACADEMY.id; PLAYER_ACADEMY.id = null;
+      return o;
+    });
+    S.verifier("Aston Martin et Audi, plus de Haas ; écuries, partenaires, caractères et patrons valides", a.noms.length === 8 && a.noms.includes("Aston Martin Driver Academy") && a.noms.includes("Audi Driver Development") && !a.noms.some(n => /Haas/.test(n)) && !a.ecuries.length && !a.affil.length && !a.caract.length && !a.patrons.length, JSON.stringify([a.noms, a.ecuries, a.affil, a.caract, a.patrons]));
+    S.verifier("parcours : dates, logos, affiché dans Carrière, gardé au rechargement", a.parcours.length === 2 && a.parcours[0].join().startsWith("2026,2028") && a.parcours[1][1] === null && /2026 – 2028/.test(a.carte) && a.svg === 2 && a.recharge === 2, JSON.stringify([a.parcours, a.carte, a.svg, a.recharge]));
+    S.verifier("patron joignable ; baquet négocié : possible mais pas facile", a.contact && /\s/.test(a.patron) && a.haute <= .45 && a.haute > a.basse && a.basse <= .06 && a.avant && a.offre.length === 1 && a.offre[0][1] && !a.apres, JSON.stringify(a));
+    S.verifier("arrivée en F1 : académie quittée, sans pénalité ; Haas devient Aston Martin", a.f1.join() === ",true,true,true" && a.haas === "AMDA", JSON.stringify([a.f1, a.haas]));
+
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      G.age = 16; getRelations().partner = null; G._rj174 = null; RJRencontres.renouveler(true); o.mineur = RJRencontres.etat().liste.length; navTo("S-lifestyle", null); document.getElementById("ls-vieperso").style.display = "block"; renderVieperso(); o.blocMineur = !!document.getElementById("rj174");
+      G.age = 22; G.reputation = 10; RJRencontres.renouveler(true); RJRencontres.preference("f"); o.liste = RJRencontres.etat().liste.length; o.fem = RJRencontres.etat().liste.every(p => p.fem); o.ages = RJRencontres.etat().liste.every(p => p.age >= 18); o.inconnus = RJRencontres.etat().liste.every(p => p.noto === 0);
+      G.reputation = 80; const N = []; for (let i = 0; i < 60; i++) N.push(RJRencontres.nouvelle()); o.celebre = N.some(p => p.noto === 2);
+      renderVieperso(); await d(200); o.bloc = document.querySelectorAll("#rj174 .rj174-c").length; o.deborde = document.getElementById("rj174").scrollWidth > document.getElementById("rj174").clientWidth + 1;
+      const p = RJRencontres.etat().liste[0]; G.pa = 9; G.budget = 100000; p.caractere = "romantique"; p.lien = 40; const h = Math.random; Math.random = () => .5;
+      const v1 = RJRencontres.faire("diner", p.id), v2 = RJRencontres.faire("paddock", p.id), v3 = RJRencontres.faire("cadeau", p.id); Math.random = h; o.gestes = [v1 > 0, v2 < 0, v3 === null, G.pa, G.budget];
+      o.tot = RJRencontres.demander(p.id); p.lien = 90; Math.random = () => .01; o.oui = RJRencontres.demander(p.id); Math.random = h; o.couple = getRelations().partner && getRelations().partner.name === p.nom;
+      const q = getRelations().partner; G.mailbox = []; q.sitSem = -999; q.sits = []; Math.random = () => .01; o.sit = RJRencontres.situation(); Math.random = h; const m = getMailbox()[0]; const av = q.closeness; if (m) handleMailAction(m.id, 0); o.effet = m && q.closeness !== av;
+      o.encore = (RJRencontres.etat().liste.length === 0); o.bonnes = RJRencontres.SITUATIONS.every(s => { const x = s.mail(q); return x.subject && x.body && x.actions.length >= 2 && x.actions.every(y => y.label && y.rj127); });
+      renderVieperso(); await d(150); o.ecranCouple = /Votre couple|VOTRE COUPLE/i.test(document.getElementById("rj174").innerText);
+      const b = () => document.querySelector("#rj174 [data-rompre]"); b().click(); o.pasDirect = !!getRelations().partner; b().click(); o.rupture = !getRelations().partner;
+      return o;
+    });
+    S.verifier("rencontres : jamais avant 18 ans, entre adultes", r.mineur === 0 && !r.blocMineur && r.ages && r.liste > 0, JSON.stringify(r));
+    S.verifier("préférence respectée ; notoriété selon la réputation", r.fem && r.inconnus && r.celebre && r.bloc > 0 && !r.deborde, JSON.stringify(r));
+    S.verifier("gestes : goûts du caractère, coût, deux par semaine", r.gestes[0] && r.gestes[1] && r.gestes[2] && r.gestes[3] === 7 && r.gestes[4] === 100000 - 350 - 800, JSON.stringify(r.gestes));
+    S.verifier("couple : pas trop tôt, puis possible ; situations avec effet", r.tot === null && r.oui && r.couple && !!r.sit && r.effet && r.encore && r.bonnes && r.ecranCouple, JSON.stringify(r));
+    S.verifier("rupture : demande confirmation", r.pasDirect && r.rupture, JSON.stringify(r));
+
+    const c = await page.evaluate(async () => {
+      const o = {}; G.cat = "Karting Senior"; G.saison = 3; initRivals(); const av = G.rivals.map(r => r.skill); for (let i = 0; i < 40; i++) RJConcurrence.progres(); const g = G.rivals.map((r, i) => r.skill - av[i]);
+      o.progres = [Math.max(...g), g.filter(x => x > 0).length, G.rivals.length]; o.esp = [RJConcurrence.esperance({ choices: [{ mod: .035, chance: { fail: .3, failMod: -.065 } }, { mod: .008 }] }), RJConcurrence.esperance(null)];
+      o.dur = _hardCapForCategory("Karting Senior") - getCategoryStatCap("Karting Senior"); o.ech = rjEchelleQualif();
+      o.logos = Object.keys(TEAM_LOGOS).filter(t => /<rect width="40" height="40"/.test(TEAM_LOGOS[t])); o.mcl = /<path/.test(TEAM_LOGOS.McLaren);
+      return o;
+    });
+    S.verifier("concurrence : les rivaux de devant progressent (3 au plus), événements partagés", c.progres[0] === 3 && c.progres[1] <= Math.ceil(c.progres[2] / 2) + 3 && c.esp[0] > 0 && c.esp[0] <= 3 && c.esp[1] === 0 && c.dur === 4 && c.ech > .03, JSON.stringify(c));
+    S.verifier("logos d'écuries sans carré, McLaren redessiné", c.logos.length === 0 && c.mcl, c.logos.join());
+
+    const j = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {}; SETTINGS.simSpeed = "normal"; G.cat = "Formule 1"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.semaine = 6; CAL_RACES.forEach(x => x.done = x.week < 6); const n = getNextRace();
+      RACE_STATE.circuit = n.name; RACE_STATE.circuitData = getCircuitData(n.name); RACE_STATE.weather = generateWeather(0); RACE_STATE.qualiPos = 6; G.races = []; navTo("S-race", null); rtab("course", true); window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null }; runRaceLive(); for (let k = 0; k < 120 && LIVE_RACE.cur < 2; k++) await d(200); await d(1500);
+      const E = [...document.querySelectorAll(".rj111-tour li .e")].map(x => x.textContent.trim()); o.tete = E[0]; o.mille = E.filter(x => /\.\d{2,}/.test(x)); o.n = E.length;
+      const b = document.getElementById("rj145-bandeau"), s = document.querySelector(".rj111-scene"), rb = b && b.getBoundingClientRect(), rs = s.getBoundingClientRect(); o.dans = !!b && s.contains(b) && rb.bottom <= rs.bottom + 1 && rb.top > rs.top + rs.height / 2; LIVE_RACE._rjNeutral = { active: true, type: "vsc", endLap: LIVE_RACE.cur + 2 }; await d(900); const nn = s.querySelector(".rj111-neutre"); o.vv = nn && [nn.hidden, nn.textContent, LIVE_RACE.cur, LIVE_RACE.finished, LIVE_RACE.paused]; o.vsc = !!nn && !nn.hidden && /VSC/.test(nn.textContent) && nn.getBoundingClientRect().top > rs.top; LIVE_RACE._rjNeutral = null; o.haut = Math.round(document.getElementById("rj111-carte").getBoundingClientRect().height);
+      LIVE_RACE.finished = true; clearInterval(LIVE_RACE.interval); G.raceLocked = false; G.racePhase = ""; return o;
+    });
+    S.verifier("course : « - » en tête, écarts au dixième, commentaires au bas du circuit", j.tete === "-" && !j.mille.length && j.n > 10 && j.dans && j.vsc && j.haut >= 300, JSON.stringify(j));
+    const sp = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {}; window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null }; G.cat = "Formule 3"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[0].week; G.races = []; G._sprintFait = ""; G.raceLocked = false; goToRaceWeekend(); await d(400);
+      const p = () => document.getElementById("race-title").getAttribute("data-rj175") || "", tab = () => document.getElementById("race-tab-course").textContent.trim(), b = () => document.getElementById("race-btn").textContent;
+      o.prep = p(); Object.assign(RACE_WEEKEND_STATE, { essaisDone: true, qualifDone: true, strategyDone: true }); RACE_STATE.qualiPos = 4; document.getElementById("race-btn").disabled = false; document.getElementById("race-btn").textContent = "Départ !"; rtab("course", true); await d(400); o.sprint = [p(), tab(), b()];
+      RACE_WEEKEND_STATE.sprintDone = true; document.getElementById("race-btn").disabled = false; rtab("course", true); await d(400); o.course = [p(), tab(), b()];
+      o.f3 = RJSprint.melange(); RACE_WEEKEND_STATE.sprintDone = false; G.raceLocked = false; G.racePhase = ""; navTo("S-home", "ni-home"); updateUI(); o.accueil = document.getElementById("h-race-s").textContent;
+      G.cat = "Formule 1"; initRivals(); window.CAL_RACES = []; buildCalendar(); navTo("S-cal", null); renderCal(); await d(300); o.cal = [document.querySelectorAll("#S-cal .rjcal-b.sprint").length, document.querySelectorAll("#S-cal .rjcal-b.classique").length, CAL_RACES.filter(RJSprint.est).length, CAL_RACES.length];
+      G.cat = "Formule 4"; window.CAL_RACES = []; buildCalendar(); renderCal(); await d(200); o.f4 = document.querySelectorAll("#S-cal .rjcal-b.sprint, #S-cal .rjcal-b.classique").length; o.vide = RJSprint.manche();
+      return o;
+    });
+    S.verifier("sprint et course principale nommés dans le week-end et à l'accueil", sp.prep === "Week-end sprint" && sp.sprint.join() === "Sprint 1/2,Sprint,Départ du sprint !" && sp.course.join() === "Course 2/2,Course,Départ de la course !" && /Week-end sprint/.test(sp.accueil) && sp.vide === "", JSON.stringify(sp));
+    S.verifier("calendrier : week-ends sprint et classiques indiqués, rien sans sprint", sp.cal[0] >= sp.cal[2] && sp.cal[1] >= sp.cal[3] - sp.cal[2] && sp.cal[2] > 0 && sp.f4 === 0, JSON.stringify(sp.cal));
+    const f1 = await page.evaluate(() => { const q = id => _rj100.questions.find(x => x.id === id); G.cat = "Formule 1"; CAREER_HISTORY.length = 0; CAREER_HISTORY.push({ saison: 1, cat: "Karting Junior", pos: 1 }, { saison: 2, cat: "Karting Senior", pos: 1 }); let c = _rj100.contexte(); const o = { pal: q("palmares").quand(c), jr: q("f1_junior").quand(c), pj: q("f1_junior").poids }; CAREER_HISTORY.push({ saison: 8, cat: "Formule 1", pos: 1 }, { saison: 9, cat: "Formule 1", pos: 1 }); c = _rj100.contexte(); o.pal2 = q("palmares").quand(c); o.ch = q("f1_champion").quand(c); o.tx = q("palmares").texte(c); return o; });
+    S.verifier("presse en F1 : petits titres très rares, titres majeurs mis en avant", !f1.pal && f1.jr && f1.pj < .5 && f1.pal2 && f1.ch && /2 titres majeurs/.test(f1.tx), JSON.stringify(f1));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5556,7 +5645,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316
 };
 
 async function principal() {

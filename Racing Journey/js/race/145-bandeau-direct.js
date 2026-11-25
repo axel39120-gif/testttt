@@ -1,5 +1,5 @@
 /* =====================================================================
- * 145-bandeau-direct.js — UN COMMENTAIRE À LA FOIS, EN HAUT DE L'ÉCRAN
+ * 145-bandeau-direct.js — UN COMMENTAIRE À LA FOIS, EN BAS DU CIRCUIT
  *
  * POURQUOI (v282, demande du joueur)
  * Le fil « Direct » empilait des messages répétitifs dans une colonne, à
@@ -175,14 +175,20 @@
 
   function bandeau() {
     var b = document.getElementById("rj145-bandeau");
-    if (b) return b;
-    var ecran = document.getElementById("race-screen");
+    if (b) {
+      // la carte se reconstruit à chaque course : le bandeau la suit
+      var sc = document.querySelector("#rj111-carte:not([hidden]) .rj111-scene");
+      if (sc && b.parentNode !== sc) sc.appendChild(b);
+      return b;
+    }
+    // v316 : en bas du carré de course ; à défaut de carte (pas de tracé), en tête de l'écran
+    var scene = document.querySelector("#rj111-carte:not([hidden]) .rj111-scene"), ecran = scene || document.getElementById("race-screen");
     if (!ecran) return null;
     b = document.createElement("div");
     b.id = "rj145-bandeau";
     b.setAttribute("aria-live", "polite");
     b.innerHTML = '<span class="rj145-direct">Direct</span><span class="rj145-txt"></span>';
-    ecran.insertBefore(b, ecran.firstChild);
+    if (scene) ecran.appendChild(b); else ecran.insertBefore(b, ecran.firstChild);
     return b;
   }
 

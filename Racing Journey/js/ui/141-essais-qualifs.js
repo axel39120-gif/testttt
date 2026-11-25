@@ -50,7 +50,11 @@
     var L = lignes(tab); if (L.length <= TETE + 3) return;
     var nom = nomJoueur(), moi = -1;
     for (var i = 0; i < L.length; i++) if (nom && L[i].textContent.indexOf(nom) >= 0) { moi = i; break; }
-    var tete = moi >= 0 && moi < 4 ? 4 : TETE;   // joueur devant : les quatre premiers tiennent
+    // v316 : autant de lignes que la hauteur de l'écran en laisse (en-tête, bouton complet, et « rentrer au stand » sous la feuille des essais)
+    var zone = document.querySelector("#S-race > .scroll"), hauteur = L[0].offsetHeight || 30, sous = tab.id === "fpl-board-body" ? 92 : 48;
+    var dispo = zone && tab.offsetParent ? Math.floor((zone.getBoundingClientRect().bottom - tab.getBoundingClientRect().top - (tab.id === "fpl-board-body" ? 0 : 28) - sous) / hauteur) : 6;
+    dispo = Math.max(5, Math.min(12, dispo));
+    var tete = moi >= 0 && moi < dispo - 1 ? dispo : Math.max(TETE, dispo - 3);
     L.forEach(function (l, i) {
       var garde = i < tete || (moi >= 0 && Math.abs(i - moi) <= 1);
       l.classList.toggle("rj141-cache", !garde);

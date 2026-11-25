@@ -77,8 +77,10 @@
       texte: "Accueille largement, avec une porte vers l'endurance." },
     MDD: { place: 10, relation: 20, renvoi: 2, baquet: 3, labels: ["Recrute le talent", "Multi-disciplines"],
       texte: "Juge sur le talent, et ouvre aussi l'IndyCar." },
-    HDA: { place: 14, relation: 15, renvoi: 2, baquet: 5, labels: ["Peu de concurrence", "Accès F1 rapide"],
-      texte: "Peu de pilotes dans le programme : un top 5 en F2 suffit pour un baquet chez Haas." },
+    AMDA: { place: 9, relation: 25, renvoi: 2, baquet: 2, labels: ["Petit groupe", "Moyens d'usine"],
+      texte: "Peu de pilotes, beaucoup de moyens : il faut être deuxième en F2 pour un baquet, la réserve sinon." },
+    AUDI: { place: 14, relation: 15, renvoi: 3, baquet: 4, labels: ["Recrute jeune", "Patiente", "Projet en construction"],
+      texte: "Laisse trois saisons pour grandir ; un top 4 en F2 ouvre un baquet chez Audi." },
     WRA: { place: 14, relation: 15, renvoi: 3, baquet: 3, labels: ["Patiente", "Réseau britannique"],
       texte: "Laisse du temps et s'appuie sur les championnats britanniques." }
   };

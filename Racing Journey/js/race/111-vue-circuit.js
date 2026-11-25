@@ -318,7 +318,7 @@
     if (!donnees || !donnees.path) { c.hidden = true; return null; }
     c.hidden = false;
     c.innerHTML = '<div class="rj111-tete"><span class="rj111-nom">' + esc(circuit) + "</span>" +
-      '<span class="rj111-neutre" hidden></span></div><div class="rj111-corps"><div class="rj111-colonne" data-theme="' + theme().id + '">' +
+      '</div><div class="rj111-corps"><div class="rj111-colonne" data-theme="' + theme().id + '">' +
       '<div class="rj111-entete"><b>' + (window.RJLogoCat && G.cat ? RJLogoCat.svg(G.cat, 14) : theme().sigle) + '</b><span class="rj111-mode"></span></div><ol class="rj111-tour"></ol></div></div>';
     var corps = c.querySelector(".rj111-corps");
     var colonne = c.querySelector(".rj111-colonne");
@@ -329,6 +329,7 @@
     var scene = document.createElement("div");
     scene.className = "rj111-scene";
     corps.appendChild(scene);
+    scene.insertAdjacentHTML("beforeend", '<span class="rj111-neutre" hidden></span>');   // v316 : SC, VSC, drapeau rouge et feux, dans le circuit
     var svg = element("svg", { "class": "rj111-svg", role: "img", "aria-label": "Course en direct sur " + circuit });
     scene.appendChild(svg);
     svg.addEventListener("click", basculerZoom);
@@ -519,8 +520,8 @@
       var i = vivants.indexOf(v);
       var tete = i === 0 || vivants[i - 1].autreCategorie !== v.autreCategorie;
       var x = mode === "intervalle" && !tete ? v.ecart - vivants[i - 1].ecart : v.ecart;
-      var ecart = tete ? "TÊTE" : avantDepart ? ""
-        : x >= e.tempsTour ? "+" + Math.floor(x / e.tempsTour) + " T" : "+" + Math.max(Math.pow(10, -th.dec), x).toFixed(th.dec);
+      var ecart = tete ? "-" : avantDepart ? ""
+        : x >= e.tempsTour ? "+" + Math.floor(x / e.tempsTour) + " T" : "+" + Math.max(.1, x).toFixed(1);
       var sv = suivi[v.nom], fleche = sv && sv.d && maintenant - sv.t < 4000 ? (sv.d > 0 ? '<span class="g monte">▲' + sv.d + "</span>" : '<span class="g descend">▼' + (-sv.d) + "</span>") : '<span class="g"></span>';
       var faute = window._rj149 ? _rj149.recente(d, lr) : null;
       var pod = !v.autreCategorie && v.pos <= 3 ? " pod" + v.pos : "";
@@ -607,6 +608,7 @@
       return '<div class="d ' + cls + (x < 1 ? " proche" : "") + '"><span>' + esc(abrege(v.nom)) + "</span><b>" + signe + ec(x) + "</b></div>";
     };
     vue.hud.innerHTML = '<div class="p"><b>P' + moi.pos + '</b><span>/' + vivants.length + "</span></div>" +
+      (window.RJSprint && RJSprint.manche() ? '<div class="m ' + RJSprint.manche() + '">' + (RJSprint.manche() === "sprint" ? "SPRINT" : "COURSE") + "</div>" : "") +
       '<div class="t">' + (lr.finished ? "ARRIVÉE" : "TOUR " + tour + (total ? "/" + total : "")) + "</div>" +
       duel(av, "−", "av") + duel(ar, "+", "ar");
   }
@@ -691,7 +693,11 @@
     var n = lr._rjNeutral && lr._rjNeutral.active ? lr._rjNeutral : null;
     vue.neutre.hidden = !n && !e.feux;
     if (e.feux) vue.neutre.innerHTML = '<span class="rj111-feux">' + [1, 2, 3, 4, 5].map(function (i) { return "<i" + (i <= e.feux ? ' class="on"' : "") + "></i>"; }).join("") + "</span>";
-    else if (n) vue.neutre.textContent = String(n.type || "SC").toUpperCase();
+    else if (n) {
+      var nt = { sc: "Safety car", vsc: "VSC · Voiture de sécurité virtuelle", rf: "Drapeau rouge" }[n.type] || "Safety car", rt = Math.max(0, (n.endLap || 0) - (lr.cur || 0));
+      vue.neutre.className = "rj111-neutre " + (n.type || "sc");
+      vue.neutre.textContent = nt + (rt ? " · " + rt + " tour" + (rt > 1 ? "s" : "") : "");
+    }
 
     if (!e.fini) boucle = requestAnimationFrame(image);
   }
