@@ -511,13 +511,7 @@
           }
         });
         
-        // Appliquer les effets de la neutralisation en cours
-        if (LIVE_RACE._rjNeutral && LIVE_RACE._rjNeutral.active) {
-          _rjApplyNeutralizationLap();
-        } else if (!LIVE_RACE.paused) {
-          // Tenter un déclenchement
-          _rjMaybeTrigger();
-        }
+        // déclenchement et déroulement : module 170, à chaque tour (cette boucle ne passe qu'au lancement)
       }
       
       // Mettre à jour le badge persistant

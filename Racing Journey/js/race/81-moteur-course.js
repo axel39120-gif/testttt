@@ -129,7 +129,12 @@
         var seuil = c.seuil * st.seuil * (premier ? 0.5 : 1);
         // sur un tracé où l'on ne double pas (Monaco), le sillage ne suffit pas non plus
         var chance = Math.min(0.8, Math.max(0, (avance - 0.03) / seuil) * 0.9 + st.chance * Math.max(.2, 1.15 - c.seuil * .6));
-        if (neutre || (d._rj81Gele || 0) >= lr.cur || Math.random() >= chance) {
+        // niveau des deux pilotes, DRS, pression, relance (170)
+        var elan = window.RJIncidents && !premier ? RJIncidents.elan(d, devant, d._t - devant._t, lr) : null;
+        if (elan) chance = Math.min(0.8, chance * elan.f + elan.plus);
+        var bloque = neutre || (d._rj81Gele || 0) >= lr.cur, passe = !bloque && Math.random() < chance;
+        if (elan && !bloque) RJIncidents.attaque(d, devant, passe, lr);
+        if (!passe) {
           arrivee = Math.max(arrivee, devant._arrivee + st.aller + Math.random() * (AIR_SALE[1] - AIR_SALE[0]));
         } else if (st.chance) arrivee = Math.min(arrivee, devant._arrivee - .05 - Math.random() * .15);   // il passe vraiment
       }

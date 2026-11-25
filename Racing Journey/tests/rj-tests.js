@@ -4946,6 +4946,61 @@ async function suiteRetours311() {
   } finally { await navigateur.close(); }
 }
 
+/* v312 : incidents, neutralisations, attaques et risques */
+async function suiteRealisme312() {
+  S.suite("v312 : course plus réaliste");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    await page.evaluate(() => {
+      window.__r = { neutres: [], doubles: 0, groupe: [] };
+      window.RJ_LAP_HOOKS.push({ id: "__312", run: function (t, lr) {
+        const n = lr._rjNeutral;
+        if (n && n.active && n.startLap === t) window.__r.neutres.push({ t, type: n.type, dnf: lr.drivers.some(d => d.dnf && Math.abs((d._dnfAtLap || 0) - t) <= 1), nom: n.cause.split(" — ")[0] });
+        if (n && n.active && n.type !== "vsc" && n.startLap < t) { const D = lr.drivers.filter(d => !d.dnf && !d._mc); window.__r.groupe.push(Math.max(...D.map(d => d.gap || 0)) / D.length); }
+      } });
+    });
+    for (let k = 0; k < 2; k++) await S.courirUneCourse(page, { categorie: "IndyCar", grille: 5, rang: 1 + k });
+    /* Un abandon par accident sous safety car forcée : le peloton se regroupe. */
+    const force = await page.evaluate(() => {
+      const lr = LIVE_RACE; lr.finished = false; lr.cur = 30; lr._rjNeutral = null; const v = lr.drivers.find(d => !d.isPlayer && !d.dnf && !d._mc); v.dnf = true; v._rj170Cause = { type: "accident", texte: "Dans le mur" };
+      const ok = RJIncidents.demarrer("sc", lr, v), act = lr._rjNeutral.active, tard = (lr.cur = lr.total - 1, RJIncidents.demarrer("sc", lr, v)); lr.finished = true; return { ok, act, tard, cause: lr._rjNeutral.cause, nom: v.name };
+    });
+    const R = await page.evaluate(() => window.__r);
+    S.verifier("chaque neutralisation suit un abandon", R.neutres.length > 0 && R.neutres.every(n => n.dnf), JSON.stringify(R.neutres));
+    S.verifier("safety car : le peloton est regroupé", R.groupe.length === 0 || R.groupe.every(g => g < 1.5), JSON.stringify(R.groupe.slice(0, 6)));
+    S.verifier("la neutralisation nomme le pilote sorti, et pas dans le dernier tour", force.ok && force.act && !force.tard && force.cause.includes(force.nom), JSON.stringify(force));
+    const r = await page.evaluate(() => {
+      const o = {}, lr = LIVE_RACE, j = lr.drivers.find(d => d.isPlayer), v = lr.drivers.filter(d => !d.isPlayer && !d._mc && typeof d.rivalIdx === "number");
+      o.decor = PASSIVE_EVENTS.filter(e => /safety|vsc|slow_zone|red_flag/i.test(e.id)).length;
+      // sans abandon, jamais de neutralisation
+      lr.finished = false; lr.drivers.forEach(d => { d.dnf = false; d.pos = d.pos || 1; }); lr._rjNeutral = null; lr._rj170Vus = {}; lr.cur = 20; const h = Math.random; Math.random = () => .999;
+      for (let t = 2; t < 40; t++) { lr.cur = t; RJIncidents.surTour(t, lr); } o.vide = lr._rjNeutral; Math.random = h;
+      // jamais d'abandon du joueur par accident tiré au sort
+      Math.random = () => 0; for (let t = 2; t < 6; t++) RJIncidents.contact(j, v[0], lr); Math.random = () => .999; RJIncidents.contact(j, v[1], lr); Math.random = h; o.joueur = !j.dnf;
+      // talent et pression comptent
+      const bon = v.slice().sort((a, b) => G.rivals[b.rivalIdx].skill - G.rivals[a.rivalIdx].skill), fort = bon[0], faible = bon[bon.length - 1];
+      lr.cur = 20; delete lr._rjLastNeutralEndLap; o.talent = RJIncidents.elan(fort, faible, 2, lr).f > RJIncidents.elan(faible, fort, 2, lr).f;
+      const a0 = RJIncidents.elan(fort, faible, 2, lr).f; for (let k = 0; k < 4; k++) RJIncidents.attaque(fort, faible, false, lr); o.pression = RJIncidents.elan(fort, faible, 2, lr).f > a0;
+      G.cat = "Formule 1"; RACE_STATE.weather = { id: "dry" }; o.drsSec = RJIncidents.elan(fort, faible, .5, lr).plus > 0 && RJIncidents.elan(fort, faible, 1.5, lr).plus === 0;
+      RACE_STATE.weather = { id: "wet" }; o.drsPluie = RJIncidents.elan(fort, faible, .5, lr).plus === 0;
+      // risque d'un choix selon le niveau et la pluie
+      const risque = (niv, met) => { Object.keys(G.substats).forEach(k => G.substats[k] = niv); RACE_STATE.weather = { id: met }; const e = { choices: [{ text: "x", chance: { fail: .3 } }] }; RJIncidents.ajuster(e); RJIncidents.ajuster(e); return e.choices[0].chance.fail; };
+      o.risques = [risque(90, "dry"), risque(40, "dry"), risque(90, "wet")];
+      // attaque : une place, une chance tirée de la situation
+      RACE_STATE.weather = { id: "dry" }; j.pos = 5; j.gap = 10; v.forEach((d, i) => { d.pos = i < 4 ? i + 1 : i + 2; d.gap = d.pos === 4 ? 9.4 : d.pos * 2 + 1; });
+      const ch = RJ107.evenement("duel", lr).choices[0]; o.attaque = [ch.posGain, ch.chance.fail, ch.chance.msg];
+      return o;
+    });
+    S.verifier("plus de fausse neutralisation, aucune sans abandon", r.decor === 0 && !r.vide, JSON.stringify([r.decor, r.vide]));
+    S.verifier("le joueur n'abandonne jamais sur un contact tiré au sort", r.joueur, "");
+    S.verifier("dépasser dépend du niveau, de la pression et du DRS (pas sous la pluie)", r.talent && r.pression && r.drsSec && r.drsPluie, JSON.stringify(r));
+    S.verifier("le risque d'un choix dépend du niveau et de la pluie, appliqué une seule fois", r.risques[0] < .3 && r.risques[1] > .3 && r.risques[2] > r.risques[0], JSON.stringify(r.risques));
+    S.verifier("une attaque réussie vaut la place", r.attaque[0] === 1 && r.attaque[1] >= .2 && r.attaque[1] <= .8, JSON.stringify(r.attaque));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5206,7 +5261,7 @@ async function suiteDecisions() {
       r.oserPaie = ["relance", "duel", "fin"].every(k => {
         const [ose, sur] = RJ107.evenement(k, course(base(), { cur: 17 })).choices;
         const esp = ose.mod + ose.chance.fail * ose.chance.failMod;
-        return esp > sur.mod && !sur.chance;
+        return (ose.posGain === 1 ? ose.chance.fail <= .8 && ose.chance.fail >= .2 : esp > sur.mod) && !sur.chance;   // v312 : une attaque réussie prend la place
       });
       const piege = base(); piege[1].name = '<img src=x onerror="window.__rj107xss=1">';
       r.nomsEchappes = !/<img/.test(RJ107.evenement("duel", course(piege)).title);
@@ -5214,7 +5269,7 @@ async function suiteDecisions() {
       r.evenements = ["relance", "duel", "fin"].every(k => {
         const ev = RJ107.evenement(k, course(base(), { cur: 17 }));
         return ev && ev.title && ev.desc && ev.choices.length === 2 &&
-          ev.choices.every(c => c.text && typeof c.mod === "number" && !c.posGain && !c.posLoss) &&
+          ev.choices.every(c => c.text && typeof c.mod === "number" && (!c.posGain || c.chance) && !c.posLoss) &&
           ev.choices.some(c => c.chance && c.chance.fail > 0 && c.chance.failMod < 0 && c.mod + c.chance.failMod > -0.28);
       });
       return r;
@@ -5395,7 +5450,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312
 };
 
 async function principal() {

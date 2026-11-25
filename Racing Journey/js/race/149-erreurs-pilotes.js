@@ -46,10 +46,12 @@
   }
 
   /* Une faute commise ce tour-ci par ce pilote ? Rend la faute ou null. */
-  function fauteDuTour(d, kart) {
+  function fauteDuTour(d, kart, presse) {
     var p = (kart ? BASE_KART : BASE) * Math.max(0.3, (1.25 - regularite(d)) / 0.45);
     if (d.isPlayer && window.RJEssais) p *= RJEssais.risque();   // voiture connue aux essais (163)
-    return Math.random() < p ? tirer() : null;
+    var w = window.RACE_STATE && RACE_STATE.weather;
+    if (w && (w.id === "wet" || w.id === "storm")) p *= 1.7;
+    return Math.random() < p * (presse || 1) ? tirer() : null;
   }
 
   function surTour(tour, lr) {
@@ -59,7 +61,9 @@
     var kart = /karting/i.test((window.G && G.cat) || "");
     lr.drivers.forEach(function (d) {
       if (!d || d.dnf || d._mc || d.auStand || d._pitThisLap) return;
-      var f = fauteDuTour(d, kart);
+      // une voiture collée derrière pousse à la faute
+      var poussee = lr.drivers.some(function (o) { return o !== d && !o.dnf && !o._mc && o.pos === d.pos + 1 && (o.gap || 0) - (d.gap || 0) < 1; });
+      var f = fauteDuTour(d, kart, poussee ? 1.3 : .8);
       if (!f) return;
       var perte = f.perte[0] + Math.random() * (f.perte[1] - f.perte[0]);
       d._rj81EvtSec = (d._rj81EvtSec || 0) + perte;

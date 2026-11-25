@@ -53,6 +53,8 @@
     return "f3";
   }
 
+  function ecartEntre(a, b) { return Math.abs((b.gap || 0) - (a.gap || 0)); }
+
   function contexte() {
     var lr = LR(), cat = (window.G && G.cat) || "";
     var rs = window.RACE_STATE || {}, cd = rs.circuitData || {}, w = rs.weather || {};
@@ -63,6 +65,8 @@
     try { ovale = typeof _isOvalRace === "function" && _isOvalRace(); } catch (e) { }
     return {
       cat: cat, fam: famille(cat), lr: lr, p: p, pos: p ? p.pos : 99, plateau: L.length,
+      colle: i > 0 && ecartEntre(L[i - 1], p) < 1.5, suivi: i >= 0 && i < L.length - 1 && ecartEntre(p, L[i + 1]) < 1.5,
+      leader: L[0] || null, base: (lr && lr.baseRef) || 90, neutre: !!(lr && lr._rjNeutral && lr._rjNeutral.active),
       devant: i > 0 ? L[i - 1] : null, derriere: i >= 0 && i < L.length - 1 ? L[i + 1] : null,
       equipier: p ? L.filter(function (d) { return !d.isPlayer && d.team && d.team === p.team; })[0] || null : null,
       pluie: w.id === "wet" || w.id === "storm", chaud: w.id === "hot", sec: w.id === "dry" || w.id === "hot",
@@ -114,12 +118,12 @@
         moyen("Chercher une ligne propre, à l'extérieur", "Tu touches la tache d'huile : tête-à-queue évité de justesse."),
         fatal("Ne rien changer", "La voiture part dans l'huile : sortie de piste, abandon.", 0.15)
       ]); } },
-    { id: "erreur-devant", quand: [0.2, 0.9], si: function (c) { return !!c.devant; }, gen: function (c) {
+    { id: "erreur-devant", quand: [0.2, 0.9], si: function (c) { return c.colle; }, gen: function (c) {
       return ev(VERT, nom(c.devant) + " commet une erreur", nom(c.devant) + " a bloqué ses roues et sort large. La porte est ouverte… pour une seconde.", [
         ose("Plonger tout de suite à l'intérieur", "Il revient sur la trajectoire au même moment : contact léger, tu perds l'élan.", 0.25),
         sur("Rester derrière et profiter de sa sortie ratée", 0.012)
       ]); } },
-    { id: "freins", fam: ["f4", "f3", "f1", "sf", "wec", "indy"], quand: [0.25, 0.8], si: function (c) { return !c.ovale && !!c.devant; }, gen: function (c) {
+    { id: "freins", fam: ["f4", "f3", "f1", "sf", "wec", "indy"], quand: [0.25, 0.8], si: function (c) { return !c.ovale && c.colle; }, gen: function (c) {
       return ev(ROUGE, "Freins en surchauffe", "Collé à " + nom(c.devant) + ", tu n'as plus d'air frais : les disques avant dépassent les 1 000 °C.", [
         cout("Laisser un trou d'une seconde pour refroidir", -0.004),
         moyen("Décaler la voiture dans les lignes droites", "Pas assez : les freins s'affaiblissent sur trois tours."),
@@ -130,12 +134,12 @@
         sur("Rouler au rythme prévu, sans rien changer", 0.006),
         moyen("Lire le panneau des stands et adapter ton rythme", "Mauvaise lecture du panneau : tu ralentis pour rien.")
       ]); } },
-    { id: "attarde", quand: [0.35, 0.85], si: function (c) { return c.pos <= Math.ceil(c.plateau / 2) && !c.ovale; }, gen: function () {
+    { id: "attarde", quand: [0.35, 0.85], si: function (c) { return !c.ovale && (c.fam === "wec" || (c.lr.drivers || []).some(function (d) { return !d.dnf && !d._mc && (d.gap || 0) - (c.p.gap || 0) > c.base * .85; })); }, gen: function () {
       return ev(BLEU, "Un attardé ne se range pas", "Malgré les drapeaux bleus, la voiture que tu prends un tour reste sur la trajectoire.", [
         sur("Attendre la ligne droite pour passer proprement", 0.004),
         ose("Le passer par l'extérieur dans le virage", "Il ne te voit pas et resserre : tu dois freiner, le temps est perdu.", 0.3)
       ]); } },
-    { id: "bleus", quand: [0.4, 0.9], si: function (c) { return c.pos > Math.ceil(c.plateau * 0.6); }, gen: function () {
+    { id: "bleus", quand: [0.4, 0.9], si: function (c) { return (c.p.gap || 0) > c.base * .85; }, gen: function () {
       return ev(BLEU, "Drapeaux bleus", "Les leaders arrivent pour te prendre un tour. Il faut les laisser passer sans perdre ta propre bagarre.", [
         sur("Te ranger tout de suite, proprement", 0.005),
         penal("Attendre la ligne droite, au risque d'ignorer le drapeau", "Trois drapeaux bleus ignorés : 5 s de pénalité.", 5)
@@ -152,7 +156,7 @@
         cout("Passer les rapports en douceur, sans forcer", -0.004),
         fatal("Ignorer et attaquer", "La boîte casse : abandon.", 0.14)
       ]); } },
-    { id: "equipier", fam: ["f3", "f1", "sf", "indy"], quand: [0.3, 0.85], si: function (c) { return !!c.equipier && Math.abs(c.equipier.pos - c.pos) === 1; }, gen: function (c) {
+    { id: "equipier", fam: ["f3", "f1", "sf", "indy"], quand: [0.3, 0.85], si: function (c) { return !!c.equipier && Math.abs(c.equipier.pos - c.pos) === 1 && ecartEntre(c.equipier, c.p) < 2; }, gen: function (c) {
       var devant = c.equipier.pos < c.pos;
       return devant
         ? ev(VIOLET, "Ton équipier te bloque", nom(c.equipier) + ", juste devant, est plus lent que toi. Le muret hésite à donner une consigne.", [
@@ -190,7 +194,7 @@
         ose("Rouler sur la partie sèche", "Les pneus pluie se détruisent sur le sec : tu perds tout ce que tu as gagné.", 0.3),
         sur("Chercher l'eau dans les lignes droites pour refroidir les pneus", 0.01)
       ]); } },
-    { id: "gerbes", quand: [0.1, 0.7], si: function (c) { return c.pluie && !!c.devant; }, gen: function (c) {
+    { id: "gerbes", quand: [0.1, 0.7], si: function (c) { return c.pluie && c.colle; }, gen: function (c) {
       return ev(BLEU, "Visibilité nulle", "Dans les gerbes d'eau de " + nom(c.devant) + ", tu ne vois plus rien au-delà de son feu arrière.", [
         sur("Décaler la voiture pour sortir des gerbes", 0.008),
         fatal("Rester dans son sillage et viser le dépassement", "Il freine plus tôt que prévu : collision.", 0.12)
@@ -213,7 +217,7 @@
         sur("Enrichir d'un quart de tour : plus sûr", 0.004),
         ose("Appauvrir pour plus de puissance", "Trop pauvre : le moteur serre, tu perds deux secondes.", 0.3)
       ]); } },
-    { id: "kart-spoiler", fam: ["kart"], quand: [0.2, 0.85], si: function (c) { return !!c.devant; }, gen: function (c) {
+    { id: "kart-spoiler", fam: ["kart"], quand: [0.2, 0.85], si: function (c) { return c.colle; }, gen: function (c) {
       return ev(ROUGE, "Contact pare-chocs", "Tu as poussé " + nom(c.devant) + " au freinage : ton carénage avant s'est décroché. En karting, c'est une pénalité automatique.", [
         sur("Lever le pied pour ne pas aggraver", 0.002),
         penal("Continuer, ça passera peut-être", "Carénage décroché à l'arrivée : 5 s de pénalité.", 5)
@@ -223,7 +227,7 @@
         cout("Accélérer en douceur jusqu'au drapeau", -0.006),
         fatal("Rien changer", "La chaîne saute : abandon.", 0.18)
       ]); } },
-    { id: "kart-train", fam: ["kart"], quand: [0.15, 0.7], si: function (c) { return !!c.devant && !!c.derriere; }, gen: function (c) {
+    { id: "kart-train", fam: ["kart"], quand: [0.15, 0.7], si: function (c) { return c.colle && c.suivi; }, gen: function (c) {
       return ev(VIOLET, "Petit train à trois", "Toi, " + nom(c.devant) + " et " + nom(c.derriere) + " roulez roue dans roue. Le premier qui sort de l'aspiration perd.", [
         sur("Rester dans le train et attendre la fin de course", 0.006),
         ose("Sortir de l'aspiration au bout de la ligne droite", "Tu te fais passer des deux côtés.", 0.35)
@@ -234,7 +238,7 @@
         moyen("Garder les trajectoires en V", "L'arrière décroche, tu perds du temps à chaque épingle.")
       ]); } },
     // --- F4 / Regional --------------------------------------------------------
-    { id: "f4-retro", fam: ["f4"], quand: [0.2, 0.7], si: function (c) { return !!c.derriere; }, gen: function (c) {
+    { id: "f4-retro", fam: ["f4"], quand: [0.2, 0.7], si: function (c) { return c.suivi; }, gen: function (c) {
       return ev(VIOLET, "Débutant agressif", nom(c.derriere) + " tente des plongées impossibles depuis trois tours. Il finira par te sortir.", [
         sur("Le laisser s'épuiser derrière en défendant l'intérieur", 0.008),
         cout("Le laisser passer, il sortira tout seul", -0.008),
@@ -297,7 +301,7 @@
         sur("Laisser passer l'Hypercar, puis doubler la GT", 0.006),
         ose("Doubler la GT avant elle", "L'Hypercar plonge aussi : tu es pris en sandwich.", 0.3)
       ]); } },
-    { id: "wec-fcy", fam: ["wec"], quand: [0.2, 0.8], gen: function () {
+    { id: "wec-fcy", fam: ["wec"], quand: [0.2, 0.8], si: function (c) { return c.neutre; }, gen: function () {
       return ev(JAUNE, "Full Course Yellow", "Tout le circuit sous drapeau jaune : 80 km/h imposés. Le moment de ralentir compte au centième.", [
         sur("Ralentir pile au signal", 0.006),
         penal("Ralentir un peu plus tard", "Délégués sévères : excès de vitesse sous FCY, 5 s.", 5)
@@ -351,7 +355,7 @@
    * Calendrier d'une course
    * ---------------------------------------------------------------- */
   var FIN = /Sprint final|Dernière chance|Podium|Championnat/i;
-  var DUEL = /Rivalité|Duel|Bagarre/i;
+  var DUEL = /Rivalité|Duel|Bagarre/i, DECOR = /^(VSC|Drapeau rouge|Incident|Sécurité)$/i;
 
   /* 107 peut jouer « Derniers tours » jusqu'à quatre tours de l'arrivée, avant la
      scène de fin du calendrier : celle-ci s'efface alors. */
@@ -378,6 +382,7 @@
     var garde = sched.filter(function (s) {
       var ph = String(s && s.phase || "");
       if (FIN.test(ph)) { if (vuFin) return false; vuFin = true; sauterSiFinJouee(s); }
+      if (DECOR.test(ph) || /Safety Car/i.test(ph)) return false;        // les vraies neutralisations : module 170
       if (DUEL.test(ph)) { if (vuDuel) return false; vuDuel = true; }
       return true;
     });
@@ -406,7 +411,7 @@
   function generateur(d) {
     return function () {
       var c = contexte();
-      if (!c.p || (d.si && !d.si(c))) return null;
+      if (!c.p || (c.neutre && d.id !== "wec-fcy") || (d.si && !d.si(c))) return null;
       var e = d.gen(c);
       if (e) { e._rj143 = d.id; noter(d.id); }
       return e;
@@ -430,6 +435,7 @@
       else { risque = (100 - f) + " % de réussite"; classe = "ose"; }
     }
     var effet = Math.abs(gain) < 0.25 ? "effet léger" : (gain > 0 ? "≈ " + secondes(gain) + " s gagnées" : "≈ " + secondes(gain) + " s perdues");
+    if (ch.posGain > 0) effet = "une place à prendre";
     if (c && c.fail > 0 && !c.dnf) {
       var perte = (mod + (c.failMod || 0)) * 90;
       effet += perte < -0.25 ? " · raté : ≈ " + secondes(perte) + " s perdues" + (c.penalty ? " + " + c.penalty + " s" : "") : (c.penalty ? " · raté : " + c.penalty + " s de pénalité" : "");
