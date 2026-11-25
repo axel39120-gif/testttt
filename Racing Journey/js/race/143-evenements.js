@@ -382,6 +382,7 @@
     var garde = sched.filter(function (s) {
       var ph = String(s && s.phase || "");
       if (FIN.test(ph)) { if (vuFin) return false; vuFin = true; sauterSiFinJouee(s); }
+      if (/^Départ/i.test(ph)) s.lap = 1;        // v316 : il tombait jusqu'au quatrième tour
       if (DECOR.test(ph) || /Safety Car/i.test(ph)) return false;        // les vraies neutralisations : module 170
       if (DUEL.test(ph)) { if (vuDuel) return false; vuDuel = true; }
       return true;

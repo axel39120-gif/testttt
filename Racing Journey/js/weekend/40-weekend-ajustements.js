@@ -962,6 +962,7 @@
     return d;
   }
 
+  window._rj76Reference = bonusReference;   // la course (04) s'y compare aussi
   window._rj76Delta = delta;   // les essais (18) appliquent le même effet de réglage
   window._rj76Gain = function () {
     var b = bonusReglage(), d = delta();

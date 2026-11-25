@@ -112,3 +112,53 @@ svg.ic { flex: none; }
 #S-mailbox .scroll #mailbox-list.rj124-fil > [style*="sticky"] { margin-left: -14px !important; margin-right: calc(-14px - var(--sd, 0px)) !important; padding-left: 14px !important; padding-right: calc(14px + var(--sd, 0px)) !important; }
 #constructeurs-table > .t-sec:first-child, #team-perf-content > .t-sec:first-child, #team-perf-content > div:first-child:not(.t-sec) { margin-top: 0 !important; }
 #constructeurs-table > .t-sec:first-child, #team-perf-content > .t-sec:first-child { padding-top: 0 !important; }
+
+/* v316 : commentaire en direct au bas du circuit ; la carte prend la place libérée */
+.rj111-scene { position: relative; }
+.rj111-scene > #rj145-bandeau { position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 5; min-height: 28px; padding: 4px 10px; pointer-events: none; background: linear-gradient(90deg, rgba(120, 6, 0, .82), rgba(10, 10, 14, .86) 38%); }
+.rj111-scene > #rj145-bandeau:has(.rj145-txt:empty) { display: none; }
+.rj111-scene > #rj145-bandeau .rj145-txt { font-size: 12px; }
+@container app (min-width: 640px) { #race-screen > #rj111-carte { height: calc(var(--app-h) - var(--bandeau) - 30px) !important; } }
+.rj111-scene > .rj111-mini { bottom: 40px; }
+
+/* v316 : parcours d'académies (173) et rencontres (174) */
+.rj173-l { display: flex; flex-direction: column; gap: 6px; margin: 0 14px 12px; }
+.rj173-a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: var(--r); background: #15151c; border: 1px solid rgba(255, 255, 255, .08); }
+.rj173-a em { min-width: 128px; font: 700 12px/1 var(--font-display); font-style: normal; color: #a9a9b5; }
+.rj173-a b { font: 800 13px/1.2 var(--font-display); color: #fff; }
+.rj173-a i { margin-left: auto; font: 700 10px/1 var(--font-display); font-style: normal; color: #34D399; }
+#rj174 { max-width: 640px; margin: 0 auto; }
+.rj174-pref { display: flex; gap: 6px; margin: 0 0 10px; }
+.rj174-pref button { flex: 1; min-height: 36px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; background: #16161d; color: #cfcfd8; font: 700 12px/1 var(--font-display); }
+.rj174-pref .on { border-color: #EC4899; color: #fff; background: rgba(236, 72, 153, .2); }
+.rj174-c { margin: 0 0 12px; padding: 12px; border-radius: 14px; background: #15151c; border: 1px solid rgba(236, 72, 153, .28); }
+.rj174-c::after { content: ""; display: block; clear: both; }
+.rj174-v { float: left; width: 48px; height: 48px; margin-right: 12px; border-radius: 50%; overflow: hidden; border: 1.5px solid #EC4899; }
+.rj174-v img { width: 100%; height: 100%; }
+.rj174-t { min-height: 48px; } .rj174-t b { display: block; font: 900 15px/1.2 var(--font-display); color: #fff; }
+.rj174-t span { display: block; margin-top: 3px; font-size: 12px; color: #cfcfd8; } .rj174-t i { display: block; margin-top: 4px; font-size: 11.5px; color: #9a9aa6; }
+.rj174-c > .rj174-t:first-child { min-height: 0; }
+.rj174-j { position: relative; clear: both; height: 18px; margin: 10px 0 0; border-radius: 9px; overflow: hidden; background: #0c0c11; }
+.rj174-j u { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #be185d, #EC4899); }
+.rj174-j em { position: relative; display: block; text-align: center; font: 800 10px/18px var(--font-display); font-style: normal; color: #fff; }
+.rj174-m { margin: 8px 0 0; font-size: 12px; font-style: italic; color: #f5b8d5; }
+.rj174-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 6px; margin-top: 10px; }
+.rj174-g button, .rj174-f button { min-height: 44px; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 10px; background: #1b1b24; color: #fff; text-align: left; cursor: pointer; }
+.rj174-g b { display: block; font: 800 12px/1.2 var(--font-display); } .rj174-g span { font-size: 10.5px; color: #a9a9b5; }
+.rj174-f { display: flex; gap: 6px; margin-top: 8px; } .rj174-f button { flex: 1; text-align: center; font: 700 12px/1 var(--font-display); color: #a9a9b5; }
+.rj174-f .oui { flex: 2; background: linear-gradient(135deg, #EC4899, #be185d); border: 0; color: #fff; }
+#rj174 button:disabled { opacity: .4; cursor: default; }
+
+/* v316 : SC / VSC dans le circuit, sprint ou course principale, format du week-end */
+.rj111-tete { display: none; }
+.rj111-corps { margin-top: 0; }
+.rj111-scene > .rj111-neutre { position: absolute; left: 50%; top: 44px; transform: translateX(-50%); z-index: 4; padding: 6px 12px; border-radius: 6px; font: 900 11px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; background: #FFC107; border: 0; color: #141005; pointer-events: none; }
+.rj111-scene > .rj111-neutre.rf { background: #E10600; color: #fff; }
+.rj111-scene > .rj111-neutre:has(.rj111-feux) { background: rgba(8, 8, 12, .82); padding: 7px 10px; }
+#race-title[data-rj175] { white-space: nowrap; }
+#race-title[data-rj175]::after { content: attr(data-rj175); display: inline-block; margin-left: 5px; padding: 3px 4px; border-radius: 4px; vertical-align: 3px; font: 800 8px/1 var(--font-display); letter-spacing: 0; text-transform: uppercase; background: #FFB300; color: #1a1200; }
+#race-title[data-rj175-m="course"]::after { background: #E10600; color: #fff; }
+.rj111-hud .m.sprint { background: #FFB300; color: #1a1200; }
+.rj111-hud .m.course { background: #E10600; color: #fff; }
+.rj111-hud .m { font-weight: 900; border: 0; }
+.rjcal-b.classique { color: #9fb4d6; background: rgba(96, 165, 250, .08); border: 1px solid rgba(96, 165, 250, .28); }

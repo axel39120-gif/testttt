@@ -98,7 +98,7 @@
     if (emb === "sceau") corps += '<text x="20" y="19.300" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-weight="900" font-size="8.500" fill="url(#m)">' + mot.split(" ").map(function (x) { return x[0]; }).join("") + "</text>";
     return '<svg viewBox="0 0 40 40" width="40" height="40"><defs>' + g("f", 0, 1, st(0, k[0]) + st(1, k[1])) + g("m", .25, 1, st(0, k[2]) + st(".46", k[3]) + st(".54", k[3]) + st(1, k[2])) + g("a", 0, 1, st(0, k[4]) + st(1, k[5])) + g("o", 0, 1, st(0, "#00000066") + st(1, "#000000cc")) +
       '<radialGradient id="h" cx=".5" cy=".4" r=".55">' + '<stop offset="0" stop-color="' + k[3] + '" stop-opacity=".38"/><stop offset="1" stop-color="' + k[3] + '" stop-opacity="0"/></radialGradient></defs>' +
-      '<rect width="40" height="40" fill="url(#f)"/><rect width="40" height="40" fill="url(#h)"/><path d="M-4 36L30-4h6L-4 44z" fill="#fff" opacity=".045"/>' +
+      '<rect width="40" height="40" fill="url(#f)"/><rect width="40" height="40" fill="url(#h)"/>' +
       '<g transform="translate(0 1.500)"><g transform="translate(.7 1)" opacity=".35">' + corps.replace(/fill="(?!none)[^"]*"/g, 'fill="#000"').replace(/stroke="(?!none)[^"]*"/g, 'stroke="#000"') + "</g>" + corps + "</g>" +
       '<rect x="4" y="31.300" width="32" height="6" rx="1.200" fill="' + (clair ? "#0f1420" : "#000") + '" opacity="' + (clair ? ".92" : ".5") + '"/><rect x="4" y="31.300" width="32" height="6" rx="1.200" fill="none" stroke="url(#a)" stroke-width=".5"/>' +
       '<text x="20" y="' + (34.300 + t * .36).toFixed(2) + '" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="' + t.toFixed(2) + '" font-weight="900" fill="#fff" letter-spacing=".2">' + mot + "</text></svg>";

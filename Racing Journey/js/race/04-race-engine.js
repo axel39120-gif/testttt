@@ -738,7 +738,7 @@ function getQualiElimCount(e) {
 
 /* Part du tour que vaut un point de niveau. En F4, Regional, F3 et F2 les niveaux sont plus
    serrés : à 0,022 tout le plateau tenait en 0,6 % et le hasard décidait (v310). */
-function rjEchelleQualif() { return /^(Formule [234]|Formula Regional)$/.test(G.cat) ? 0.034 : 0.022; }
+function rjEchelleQualif() { return /^(Formule [234]|Formula Regional|Karting (Junior|Senior))$/.test(G.cat) ? 0.034 : 0.022; }
 function qualiDriverTime() { return rjAppeler("qualiDriverTime", _qualiDriverTimeCoeur, this, arguments); }
 function _qualiDriverTimeCoeur(e, t, r, n, a) {
   var baseRef = QUALI_STATE.baseRef;
@@ -3033,7 +3033,8 @@ function _runRaceLiveCoeur() {
     } [G.cat] || 0),
     c = computeSetupImpact(),
     d = computeStrategyImpact(0),
-    p = c.scoreBonus,
+    /* v316 : le réglage se compare au réglage de base des écuries, comme en qualif, et compte pour moitié */
+    p = .5 * (c.scoreBonus - (typeof window._rj76Reference === "function" ? window._rj76Reference() : 0)),
     u = d.scoreBonus,
     f = d.variance,
     m = G.currentTeam && "Indépendant" !== G.currentTeam ? getEffectiveTeamRating(G.currentTeam) : 72,

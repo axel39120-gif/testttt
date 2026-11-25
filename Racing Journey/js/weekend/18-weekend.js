@@ -2707,7 +2707,7 @@
             '<span class="rjcal-m">M' + m.manche + '</span>' +
             '<span class="rjcal-d">' + raceMiniRange(m) + '</span>' +
             drapeau(m.label, 16) +
-            '<span class="rjcal-nom"><span class="cal-mini-event-title">' + m.label + '</span>' + (r.isSprint ? '<span class="rjcal-b sprint">Sprint</span>' : '') + '</span>' +
+            '<span class="rjcal-nom"><span class="cal-mini-event-title">' + m.label + '</span>' + formatWE(r) + '</span>' +
             '<span class="rjcal-r">' + resultat(r, r === prochaine) + '</span></div>';
         } else {
           A += '<div class="rjcal-l rjcal-ev' + (m.done ? ' fait' : '') + '" style="--c:' + m.color + '">' +
@@ -2723,8 +2723,13 @@
 
     container.innerHTML = A;
 
+    // v316 : week-end sprint ou classique, dans les saisons qui ont des sprints
+    function formatWE(r) {
+      var s = window.RJSprint ? RJSprint.est(r) : r.isSprint;
+      return s ? '<span class="rjcal-b sprint">Sprint</span>' : window.RJSprint && RJSprint.melange() ? '<span class="rjcal-b classique">Classique</span>' : '';
+    }
     function badges(r) {
-      return (r.isSprint ? '<span class="rjcal-b sprint">Sprint</span>' : '') +
+      return formatWE(r) +
         (presse[r.name] ? '<span class="rjcal-b presse">Presse</span>' : '');
     }
   }

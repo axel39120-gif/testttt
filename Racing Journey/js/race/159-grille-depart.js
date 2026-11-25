@@ -55,7 +55,7 @@
       var logo = window.TEAM_LOGOS && TEAM_LOGOS[d.team];
       return '<div class="rj159-place ' + (i % 2 ? "d" : "g") + (d.isPlayer ? " moi" : "") + '"><span class="n">' + (i + 1) + "</span>" + voiture(d) +
         '<span class="i"><b>' + esc(d.name) + "</b><em>" + (logo ? '<i class="l">' + logo + "</i>" : "") + esc(d.team || "Indépendant") + "</em></span><span class=\"t\">" + temps(d) + "</span></div>";
-    }).join("") + '</div><div class="rj159-titre">' + (window.RJLogoCat ? RJLogoCat.svg(G.cat, 18) : "") + "Grille de départ</div>" + '<button type="button" class="rj159-revoir">Passer</button>';
+    }).join("") + '</div><div class="rj159-titre">' + (window.RJLogoCat ? RJLogoCat.svg(G.cat, 18) : "") + "Grille de départ" + (window.RJSprint && RJSprint.libelle() ? " · " + RJSprint.libelle() : "") + "</div>" + '<button type="button" class="rj159-revoir">Passer</button>';
     ecran.insertBefore(vue, ecran.firstChild);
     ecran.classList.add("rj159-on");
     vue.addEventListener("click", function (e) { if (e.target.closest(".rj159-revoir") && vue.classList.contains("fin")) filmer(); else finir(); });

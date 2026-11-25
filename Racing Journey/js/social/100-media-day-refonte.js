@@ -184,6 +184,10 @@
 
     /* Nombre de titres au palmarès. */
     c.titres = hist.filter(function (h) { return h && h.pos === 1; }).length;
+    /* v316 : en F1, la presse parle des titres majeurs ; ceux des petites catégories, presque jamais. */
+    c.titresMajeurs = hist.filter(function (h) { return h && h.pos === 1 && /Formule 1|Endurance WEC|IndyCar|Super Formula/.test(h.cat || ""); }).length;
+    c.titresF1 = hist.filter(function (h) { return h && h.pos === 1 && h.cat === "Formule 1"; }).length;
+    c.titresJuniors = hist.filter(function (h) { return h && h.pos === 1 && /Karting|Formule [234]|Regional/.test(h.cat || ""); });
 
     /* Transfert : écurie différente de la saison précédente. */
     c.nouvelleEcurie = !!(precedente && precedente.team && precedente.team !== c.equipe &&
@@ -971,9 +975,9 @@
     },
     {
       id: "palmares", poids: 3,
-      quand: function (c) { return c.titres >= 2; },
+      quand: function (c) { return (c.cat === "Formule 1" ? c.titresMajeurs : c.titres) >= 2; },
       texte: function (c) {
-        return "Avec " + c.titres + " titres à votre palmarès, qu'est-ce qui vous fait encore lever le matin ?";
+        return "Avec " + (c.enF1 ? c.titresMajeurs : c.titres) + " titres" + (c.enF1 ? " majeurs" : "") + " à votre palmarès, qu'est-ce qui vous fait encore lever le matin ?";
       },
       reponses: [
         { ton: "assure", texte: "Le suivant. Il y en a toujours un suivant.",

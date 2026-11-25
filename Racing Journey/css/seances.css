@@ -127,3 +127,31 @@ div:has(> #fpl-board-body) { padding-bottom: 0 !important; }
   .rja-essais .rja-r { grid-template-columns: 97px 50px minmax(56px, 1fr) 50px; }
   .rja-essais .rja-bornes span { white-space: normal; font-size: 8px; line-height: 1; }
 }
+
+/* --- v316 : qualifs et essais alignés, tout à l'écran ------------------------------- */
+#quali-screen, #race-practice-section { margin-top: 8px !important; }
+#quali-screen > *:not(.rj148-coupe) { margin: 0 0 8px !important; }
+#quali-screen > #quali-timing-board { margin: 0 !important; }
+#quali-btn-zone { padding: 0 !important; }
+#quali-btn-zone:empty, #quali-status:empty { display: none !important; }
+#quali-btn-zone > * { width: 100% !important; margin: 0 0 8px !important; box-sizing: border-box; }
+#quali-btn-zone > *:last-child { margin-bottom: 0 !important; }
+#quali-btn-zone .btn { margin: 0 !important; min-height: 44px !important; white-space: nowrap; font-size: 14px !important; }
+#quali-chrono-bar { padding: 0 !important; }
+#quali-tyre-widget [style*="space-between"] { gap: 6px; white-space: nowrap; }
+#quali-tyre-widget { font-size: 11px; }
+#rj146 { margin: 0 0 8px !important; }
+#quali-status { min-height: 32px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#race-practice-section > .rj84-open { padding: 8px 13px !important; margin-bottom: 8px !important; }
+#race-practice-section > button { margin-bottom: 8px !important; }
+@media (max-height: 370px) {
+  #quali-screen, #race-practice-section { margin-top: 4px !important; }
+  #race-practice-section > div, #race-practice-section > button, #quali-screen > *:not(.rj148-coupe) { margin-bottom: 5px !important; }
+  #race-practice-section > div:has(> [style*="font-style:italic"]):not(:has(button)), #race-practice-section > [style*="font-style:italic"] { display: none !important; }
+  #race-practice-section > button, #fpl-send-btn, #fpl-deleguer-btn { padding-top: 7px !important; padding-bottom: 7px !important; }
+  #race-practice-section .rj84-open .d, #race-practice-section .rj84-open small { display: none !important; }
+  #quali-btn-zone .btn { min-height: 38px !important; }
+}
+#quali-screen #quali-tyre-widget { padding: 0 !important; }
+#quali-screen #quali-tyre-widget > * { margin: 0 !important; }
+@container (max-width: 335px) { #quali-timing-board > div > span:nth-child(6):nth-last-child(2) { display: none !important; } }

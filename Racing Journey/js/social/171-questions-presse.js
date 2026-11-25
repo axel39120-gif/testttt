@@ -201,6 +201,18 @@
   q("debut_f1", "categorie", 5, function (c) { return c.enF1 && c.nouvelleCategorie; }, function (c) { return "Vos premiers Grands Prix en Formule 1 : la marche est-elle plus haute que prévu depuis la " + (c.categoriePrecedente || "formule de promotion") + " ?"; },
     { humble: "Plus haute, oui. Tout va plus vite, partout.", assure: "Je suis à ma place.", mesure: "Elle est haute, mais elle se monte." });
 
+  /* --- Titres, en F1 : les majeurs souvent, les autres presque jamais ---------------------- */
+  q("f1_junior", "titre", .35, function (c) { return c.enF1 && c.titresJuniors && c.titresJuniors.length > 0; }, function (c) { return "On l'oublie souvent : vous aviez gagné en " + c.titresJuniors[c.titresJuniors.length - 1].cat + ". Ça compte encore, en Formule 1 ?"; },
+    { humble: "Ça m'a appris à gagner, rien de plus.", mesure: "Ici, les compteurs repartent à zéro.", assure: "Gagner, ça ne s'oublie pas." });
+  q("f1_champion", "titre", 5, function (c) { return c.enF1 && c.titresF1 >= 1; }, function (c) { return c.titresF1 > 1 ? c.titresF1 + " titres mondiaux. À partir de combien parle-t-on de légende ?" : "Champion du monde de Formule 1 : est-ce que votre vie a vraiment changé ?"; },
+    { humble: "Je reste le même, c'est le regard des autres qui change.", assure: "J'en veux d'autres. Beaucoup.", mesure: "On m'attend partout désormais, il faut l'accepter.", provocateur: "Demandez à ceux que j'ai battus." });
+  q("f1_doublet", "titre", 4, function (c) { return c.enF1 && c.titresF1 >= 1; }, function () { return "Conserver une couronne mondiale, est-ce plus dur que la conquérir ?"; },
+    { mesure: "Oui. On ne surprend plus personne.", assure: "Pour les autres, peut-être.", humble: "On verra si j'en suis capable.", evasif: "Je n'ai pas de comparaison." });
+  q("f1_sans_titre", "titre", 3, function (c) { return c.enF1 && !c.titresMajeurs && c.age >= 24; }, function () { return "Il vous manque un titre majeur. Y pensez-vous chaque hiver ?"; },
+    { assure: "Chaque jour, pas seulement l'hiver.", mesure: "J'y pense, sans m'y perdre.", humble: "Beaucoup de grands pilotes n'en ont jamais eu.", provocateur: "Donnez-moi la voiture, on en reparle." });
+  q("f1_endurance", "titre", 3, function (c) { return c.enF1 && c.titresMajeurs > c.titresF1; }, function () { return "Vous avez déjà gagné un titre majeur hors de la Formule 1. La triple couronne, c'est un objectif ?"; },
+    { assure: "Oui. Je veux tout gagner.", mesure: "Un rêve plutôt qu'un objectif.", humble: "Il reste tant à faire ici d'abord." });
+
   /* --- Circuits ------------------------------------------------------------------------- */
   q("urbain", "circuit", 3, function (c, x) { return x.type === "street" && !!x.suivant; }, function (c, x) { return x.suivant + ", ses murs et aucune marge : un circuit qui vous excite ou qui vous fait peur ?"; },
     { assure: "Il m'excite. C'est là qu'on voit les pilotes.", humble: "Les deux. Et c'est sain.", mesure: "Il faut monter en rythme doucement, toute la semaine." });
