@@ -18352,7 +18352,7 @@ function buildCalendar() {
       "Karting Junior": ["GP Angerville", "GP Salbris", "GP Val d'Argenton", "GP Laval", "GP Varennes", "GP Lavelanet", "GP Ostricourt", "GP Aunay-les-Bois", "GP Valence", "GP Le Mans Kart"],
       "Karting Senior": ["GP Portimao Kart", "GP Zuera", "GP Valencia", "GP Lonato", "GP Franciacorta", "GP Adria", "GP Genk", "GP Wackersdorf", "GP Kristianstad", "GP Sarno"],
       "Formule 4": ["Misano", "Vallelunga", "Imola", "Barcelona", "Mugello", "Paul Ricard", "Spa", "Red Bull Ring", "Hungaroring", "Monza"],
-      "Formula Regional": ["Imola", "Barcelona", "Hungaroring", "Spa", "Mugello", "Paul Ricard", "Zandvoort", "Red Bull Ring", "Monza"],
+      "Formula Regional": ["Imola", "Barcelona", "Hungaroring", "Spa", "Mugello", "Paul Ricard", "Zandvoort", "Red Bull Ring", "Misano", "Monza"],
       "Formule 3": ["Bahrain", "Imola", "Monaco", "Barcelona", "Red Bull Ring", "Silverstone", "Budapest", "Spa", "Zandvoort", "Monza", "Macao GP"],
       "Formule 2": ["Bahrain", "Jeddah", "Melbourne", "Baku", "Monaco", "Silverstone", "Budapest", "Spa", "Monza", "Abu Dhabi"],
       "Formule 1": ["Bahrain", "Jeddah", "Miami", "Imola", "Monaco", "Barcelone", "Silverstone", "Budapest", "Spa", "Zandvoort", "Monza", "Singapore", "Suzuka", "Austin", "Mexico", "Sao Paulo", "Las Vegas", "Abu Dhabi"],
