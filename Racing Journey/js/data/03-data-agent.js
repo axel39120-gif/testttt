@@ -9958,31 +9958,8 @@ function renderAcademyPage(e) {
           var t = e.delta > 0 ? "#4ADE80" : e.delta < 0 ? "#EF4444" : "var(--text3)";
           r += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text2)">' + e.reason + '</span><span style="font-size:12px;font-weight:700;color:' + t + '">' + (e.delta > 0 ? "+" : "") + e.delta + "</span></div>"
         })), PLAYER_ACADEMY.canLeave) {
-        var m = [];
-        Object.keys(ACADEMIES).forEach(function(e) {
-          var t = ACADEMIES[e],
-            r, n;
-          if (t.id !== PLAYER_ACADEMY.id && !(!t.affiliates[G.cat] || !t.affiliates[G.cat].length || ("function" == typeof calcPlayerRating && calcPlayerRating() || 50) < t.minRating)) {
-            var a = [{
-                pts: G.champPts,
-                me: !0
-              }],
-              i;
-            G.rivals.forEach(function(e) {
-              a.push({
-                pts: e.pts,
-                me: !1
-              })
-            }), a.sort(function(e, t) {
-              return t.pts - e.pts
-            }), a.findIndex(function(e) {
-              return e.me
-            }) + 1 > t.reqPos || m.push(e)
-          }
-        }), r += '<div class="t-sec" style="padding:14px 0 8px">Changer d\'académie</div>', r += '<div style="padding:12px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:var(--r);margin-bottom:12px;font-size:12px;color:var(--amber);line-height:1.5">Tu as quitté une équipe affiliée à ' + l + ". Tu es libre de poursuivre ailleurs : quitte l'académie pour candidater à une autre.</div>", m.length ? m.forEach(function(e) {
-          var t = ACADEMIES[e];
-          r += '<div style="padding:14px;background:' + t.colorBg + ";border:1px solid " + t.color + '33;border-radius:var(--r3);margin-bottom:10px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' + acadLogoHtml(t, 40) + '<div style="flex:1"><div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:#fff">' + e + '</div><div style="font-size:11px;color:var(--muted);margin-top:2px">' + t.desc + '</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid ' + t.color + '20"><span style="font-size:11px;color:var(--muted)">F1 : <strong style="color:' + t.color + '">' + t.f1Team + '</strong></span><button style="padding:9px 18px;background:' + t.color + ';color:#fff;border:none;border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;touch-action:manipulation" onclick="switchAcademyUI(\'' + e + "')\">Rejoindre</button></div></div>"
-        }) : r += '<div style="padding:12px;background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);margin-bottom:10px;font-size:12px;color:var(--text3)">Aucune autre académie n\'est accessible actuellement (conditions non remplies). Tu peux néanmoins quitter pour rester libre.</div>', r += '<button style="width:100%;padding:12px;background:transparent;color:#EF4444;border:1px solid #EF4444;border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;margin-top:4px" onclick="leaveAcademyUI()">Quitter l\'académie</button>'
+        r += '<div class="t-sec" style="padding:14px 0 8px">Engagement</div><div style="padding:12px 14px;background:var(--surface2);border-radius:var(--r);margin-bottom:12px;font-size:12px;color:var(--text3);line-height:1.5">On ne change d\'académie que si une autre vient te chercher, avec un baquet à la clé. Quitter la tienne te laisse sans programme pendant plusieurs saisons.</div>';
+        r += '<button style="width:100%;padding:12px;background:transparent;color:#EF4444;border:1px solid #EF4444;border-radius:var(--r);font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;margin-top:4px" onclick="leaveAcademyUI()">Quitter l\'académie</button>'
       }
       r += "</div>"
     } else {
@@ -10035,7 +10012,7 @@ function leaveAcademyUI() {
     var e = getAcademy(PLAYER_ACADEMY.id) || "Académie";
     showConfirmDialog({
       title: "Quitter " + e + " ?",
-      message: "Tu pourras ensuite rejoindre une autre académie si tu es éligible. " + e + " ne te reprendra pas, ta relation est perdue et ta réputation dans le paddock en souffre (−3).",
+      message: "Aucune autre académie ne viendra te chercher avant trois saisons. " + e + " ne te reprendra pas, ta relation est perdue et ta réputation dans le paddock en souffre (−3).",
       confirmText: "Quitter l'académie",
       cancelText: "Rester",
       danger: !0,
@@ -10046,24 +10023,6 @@ function leaveAcademyUI() {
   }
 }
 
-function switchAcademyUI(e) {
-  if (PLAYER_ACADEMY.id && PLAYER_ACADEMY.canLeave) {
-    var t = getAcademy(PLAYER_ACADEMY.id) || "Académie";
-    showConfirmDialog({
-      title: "Transfert d'académie",
-      message: "Quitter " + t + " pour rejoindre " + e + " ? Ta nouvelle relation démarrera à 30/100.",
-      confirmText: "Transférer",
-      cancelText: "Annuler",
-      danger: !1,
-      onConfirm: function() {
-        if (leaveAcademy("Transfert vers " + e), joinAcademy(e)) {
-          var r = ACADEMIES[e];
-          renderAcademyPage("academy-page-container"), pushHomeToast(" Transfert — " + e, "Nouveau départ à 30/100 de relation.", r.color)
-        }
-      }
-    })
-  }
-}
 var RACE_WEEKEND_STATE = {
   essaisDone: !1,
   qualifDone: !1,
@@ -10191,7 +10150,7 @@ function _rjUpdateBroadcastTitles() {
     if (qsub) qsub.textContent = 'Manche ' + manche + ' · ' + (G.cat || "");
     var qc = document.getElementById('rj-quali-counter');
     if (qc && typeof QUALI_STATE !== 'undefined' && QUALI_STATE && QUALI_STATE.session) {
-      qc.textContent = 'Q' + QUALI_STATE.session;
+      qc.textContent = _prefixeQualif() + QUALI_STATE.session;
     } else if (qc) {
       qc.textContent = "";
     }

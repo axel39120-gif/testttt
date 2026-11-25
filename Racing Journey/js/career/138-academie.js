@@ -195,8 +195,13 @@
     if (e.approche) { if (L.indexOf(e.approche.id) < 0) L.push(e.approche.id); delete e.approche; }   // partie d'avant la v311
     return L.filter(function (n) { return ACADEMIES[n] && !fermee(n); });
   }
+  /* v317 : après un départ ou un renvoi, aucune académie ne vient avant trois saisons. */
+  function enRepos() {
+    var L = window.RJParcours ? RJParcours.liste() : [], der = L[L.length - 1];
+    return !!der && der.fin != null && !der.diplome && (G.gameYear || 2024) - der.fin < 3;
+  }
   function approcher(n) {
-    if (PLAYER_ACADEMY.id || !ACADEMIES[n] || fermee(n)) return false;
+    if (PLAYER_ACADEMY.id || enRepos() || !ACADEMIES[n] || fermee(n)) return false;
     approches(); if (etat().approches.indexOf(n) < 0) etat().approches.push(n);
     return true;
   }
@@ -214,7 +219,7 @@
     });
   }
   function inviter() {
-    if (PLAYER_ACADEMY.id || typeof ACADEMIES === "undefined") return null;
+    if (PLAYER_ACADEMY.id || typeof ACADEMIES === "undefined" || enRepos()) return null;
     var e = etat();
     if (e.approcheSaison === G.saison) return null;
     var dispo = eligibles(), chance = CHANCE_SEMAINE / Math.pow(2, place() - 1);   // 12 % en tête, 6 % deuxième, 3 % troisième
@@ -233,7 +238,7 @@
      les académies qui t'ont approché y figurent. */
   function disponibles() {
     if (PLAYER_ACADEMY.id) return [];
-    return approches();
+    return enRepos() ? [] : approches();
   }
 
   /* Être membre permet de partir (contrepartie : réputation et porte fermée, 03). */

@@ -2908,10 +2908,11 @@
   /* Intitulés des formats à élimination, par catégorie et par session. */
   var MULTI = {
     "Formule 1": {
-      badge: function (n) { return "Q" + n; },
+      badge: function (n) { return _prefixeQualif() + n; },
       titre: function (n, elim, restants) {
-        if (n >= 3) return "Q3 — Bataille pour la pole";
-        return "Q" + n + " — Élimination";
+        var p = _prefixeQualif();
+        if (n >= 3) return p + "3 — Bataille pour la pole" + (p === "SQ" ? " du sprint" : "");
+        return p + n + " — Élimination";
       },
       detail: function (n, elim, restants) {
         if (n >= 3) return restants + " pilotes en piste pour la pole";

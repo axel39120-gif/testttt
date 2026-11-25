@@ -102,6 +102,8 @@ async function jouerSaisons(page, options) {
           ["medias", "public", "recruteurs", "paddock"].forEach(k => { const v = (G.rep || {})[k]; if (!(v >= 0 && v <= 100)) note("réputation " + k + " hors bornes : " + v); });
           Object.keys(G.substats || {}).forEach(k => { const v = G.substats[k]; if (!(v >= 0 && v <= 100)) note("sous-statistique " + k + " hors bornes : " + v); });
           advanceToNextMoment(); await dormir(450);
+        } else if (ecran === "S-sponsors") {
+          navTo("S-home", null); await dormir(150);          // les boutons de l'écran ne le quittent jamais
         } else if (ecran === "S-reserve") {
           const b = [...document.querySelectorAll("#S-reserve [data-rj79]")].filter(visible)[0];
           if (b) b.click(); else navTo("S-home", null);

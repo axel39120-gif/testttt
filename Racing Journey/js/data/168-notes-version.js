@@ -10,6 +10,9 @@
   "use strict";
 
   var NOTES = [
+    { v: "v317", titre: "Académies et week-ends sprint",
+      plus: ["Rare : une autre académie peut te proposer un baquet dans la catégorie supérieure, si tu la rejoins. Tu dis oui, l'écurie t'envoie son offre ; la signer engage les deux.", "Week-ends sprint comme en vrai. F1 : une séance d'essais, une qualification pour le sprint, une autre pour le Grand Prix. F2 et F3 : une qualification, les 10 (F2) ou 12 (F3) premiers partent en ordre inverse au sprint."],
+      fix: ["Courir hors des écuries partenaires baisse un peu la relation et ne permet plus de changer d'académie.", "Après un départ, aucune académie ne vient te chercher avant trois saisons.", "F3 : les 10 premiers du sprint marquent (10 à 1 point)."] },
     { v: "v316", titre: "Vie privée, académies et réalisme",
       plus: ["Rencontres et vie de couple : séduction, caractères, situations à trancher (dès 18 ans).", "Académies Aston Martin (à la place de Haas) et Audi ; parcours d'académies dans l'onglet Carrière.", "Le patron de ton académie se contacte, et un baquet partenaire se négocie.", "Logos des écuries sans carré, McLaren redessiné.", "Course : commentaires, safety car et VSC dans le circuit, carte et classement plus grands.", "Sprint ou course principale : indiqué dans tout le week-end, et dans le calendrier."],
       fix: ["Difficulté : les rivaux vivent aussi des événements et progressent ; réglage et qualifs de karting remis à égalité.", "Classement de course : écarts au dixième, plus de « TÊTE ».", "Essais et qualifs alignés, tout à l'écran.", "L'académie se quitte à l'arrivée en F1 ; la presse y parle surtout des titres majeurs."] },
