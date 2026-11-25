@@ -15,7 +15,7 @@
 function _rjForceReactivateRaceButton(raison) {
   console.warn("[RJ] bouton de course réactivé de force :", raison);
   try { var b = document.getElementById("race-btn"); if (b) b.disabled = false; } catch (e) {}
-  try { if (typeof G !== "undefined" && G) G.raceLocked = false; } catch (e) {}
+  try { if (typeof G !== "undefined" && G) { G.raceLocked = false; if (G.racePhase === "live") G.racePhase = "result"; } } catch (e) {}
 }
 
 (function rjInstallFinalizeLiveRaceFix() {

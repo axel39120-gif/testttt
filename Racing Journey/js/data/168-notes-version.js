@@ -10,6 +10,8 @@
   "use strict";
 
   var NOTES = [
+    { v: "v313", titre: "Week-ends avec sprint",
+      fix: ["Après le sprint, la course principale ne démarre plus toute seule : elle part au bouton Départ.", "Une course en cours ne se quitte plus par erreur et ne tourne plus en arrière-plan.", "Le sprint d'une manche ne peut plus être couru deux fois."] },
     { v: "v312", titre: "Course plus réaliste",
       plus: ["Safety car, VSC et drapeau rouge suivent un vrai abandon et regroupent vraiment le peloton.", "Dépassements : niveau des pilotes, DRS, pression, pluie et relance comptent ; ils se concluent en bout de ligne droite.", "Accrochages, sorties de piste et causes d'abandon.", "Une attaque réussie prend vraiment la place ; le risque d'un choix dépend de ton niveau, de la pluie et du circuit."],
       fix: ["Fausses safety cars et faux drapeaux rouges retirés.", "Les événements collent à la situation : plus de « dans son sillage » à dix secondes de lui."] },
