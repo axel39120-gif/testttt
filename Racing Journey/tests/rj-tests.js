@@ -5001,6 +5001,41 @@ async function suiteRealisme312() {
   } finally { await navigateur.close(); }
 }
 
+/* v313 : week-end avec sprint */
+async function suiteSprint313() {
+  S.suite("v313 : sprint puis course principale");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {}, jusqua = async f => { for (let k = 0; k < 150 && !f(); k++) await d(200); return f(); };
+      const ecran = () => document.querySelector(".scr.on").id, bouton = re => [...document.querySelectorAll("#S-race button")].find(b => b.offsetParent && re.test(b.textContent));
+      SETTINGS.simSpeed = "instant"; G.cat = "Formule 3"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.currentTeam = TEAM_OFFERS["Formule 3"][0].team; G.semaine = CAL_RACES[0].week; G.races = [];
+      G.preseason = G.preseason || { done: true }; goToRaceWeekend(); await d(400);
+      Object.assign(RACE_WEEKEND_STATE, { essaisDone: true, qualifDone: true, strategyDone: true }); RACE_STATE.qualiPos = 5; updateRaceTabsVisibility(); rtab("course", true); await d(300);
+      const pts0 = G.champPts; runRaceLive(); o.sprint = await jusqua(() => G.racePhase === "sprint_done"); await d(500);
+      navTo("S-home", "ni-home"); await d(200); o.reste = ecran() === "S-race";
+      goToRaceWeekend(); await d(300); o.sprintGarde = RACE_WEEKEND_STATE.sprintDone && RACE_WEEKEND_STATE.qualifDone && G.races.length === 0;
+      bouton(/course principale/i).click(); await d(1200); o.pasSeule = !(LIVE_RACE.drivers || []).length && !!bouton(/Départ/);
+      SETTINGS.simSpeed = "normal"; bouton(/Départ/).click(); await d(1800);
+      navTo("S-home", "ni-home"); await d(200); o.verrou = ecran() === "S-race" && G.raceLocked && LIVE_RACE._isSprintMode === false;
+      const lr = LIVE_RACE; goToRaceWeekend(); await d(300); o.meme = LIVE_RACE === lr && G.racePhase === "live" && RACE_WEEKEND_STATE.qualifDone;
+      SETTINGS.simSpeed = "instant"; o.fin = await jusqua(() => G.racePhase === "result"); await d(600); o.manches = G.races.length;
+      navTo("S-home", "ni-home"); await d(500); o.accueil = ecran() === "S-home" && !G.raceLocked;
+      await d(1500); o.calme = G.races.length === 1 && LIVE_RACE.finished && !QUALI_STATE.chronoInterval;
+      goToRaceWeekend(); await d(500); o.neuf = !RACE_WEEKEND_STATE.qualifDone && !RACE_WEEKEND_STATE.sprintDone && RACE_STATE.circuit === getNextRace().name;
+      // partie rechargée entre le sprint et la course
+      G.raceLocked = false; G._sprintFait = _cleSprint(); saveGame(0, { silencieux: true }); G._sprintFait = ""; loadSave(0); await d(1200); resetRaceWeekend(); o.rejoue = RACE_WEEKEND_STATE.sprintDone;
+      return o;
+    });
+    const V = (t, k) => S.verifier(t, r[k] === true, JSON.stringify(r));
+    V("le sprint se termine", "sprint"); V("sprint couru : on ne quitte pas l'écran", "reste"); V("rouvrir le week-end garde le sprint et les qualifs", "sprintGarde");
+    V("la course principale attend le bouton Départ", "pasSeule"); V("course principale verrouillée", "verrou"); V("le bouton Course ramène à la même course", "meme");
+    V("la course principale se termine", "fin"); V("retour à l'accueil possible après l'arrivée", "accueil"); V("rien ne se relance à l'accueil", "calme"); V("manche suivante : week-end neuf", "neuf"); V("le sprint ne se rejoue pas après un rechargement", "rejoue");
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5450,7 +5485,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313
 };
 
 async function principal() {

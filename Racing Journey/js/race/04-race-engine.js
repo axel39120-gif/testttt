@@ -183,6 +183,11 @@ function _isSprintWeekendForRace(race) {
   return true;
 }
 
+/* Manche dont le sprint est couru : il ne se rejoue pas si le week-end est rouvert. */
+function _cleSprint() {
+  return G.saison + "#" + G.cat + "#" + (G.races || []).length;
+}
+
 function _isCurrentRaceSprintWeekend() {
   var nextRace = (typeof getNextRace === "function") ? getNextRace() : null;
   return _isSprintWeekendForRace(nextRace);
@@ -2956,6 +2961,10 @@ function declencherHooksDepart(moment, lr) {
 }
 
 function runRaceLive() {
+  // Verrouillé comme après une qualif : la course principale qui suit un sprint se quittait et courait en fond.
+  G.raceLocked = true;
+  G.racePhase = "live";
+  if (typeof applyRaceLockUI === "function") applyRaceLockUI();
   declencherHooksDepart("avant", null);
   var r = _runRaceLiveCoeur.apply(this, arguments);
   declencherHooksDepart("apres", typeof LIVE_RACE !== "undefined" ? LIVE_RACE : null);
@@ -17475,6 +17484,7 @@ function _showSprintResult() {
   // Marquer comme fait
   if (typeof RACE_WEEKEND_STATE !== "undefined") {
     RACE_WEEKEND_STATE.sprintDone = true;
+    G._sprintFait = _cleSprint();
     // IMPORTANT : on remet courseDone à false car la course principale n'a pas eu lieu
     RACE_WEEKEND_STATE.courseDone = false;
   }
@@ -17570,7 +17580,7 @@ function _showSprintResult() {
     var mainBtn = document.createElement("button");
     mainBtn.className = "btn btn-prim";
     mainBtn.style.cssText = "margin-bottom:8px;background:#C8102E";
-    mainBtn.textContent = " Course principale →";
+    mainBtn.textContent = "Passer à la course principale →";
     mainBtn.onclick = function() {
       // Nettoyer LIVE_RACE pour relancer
       if (LIVE_RACE.interval) {
@@ -17595,9 +17605,9 @@ function _showSprintResult() {
       delete LIVE_RACE._relayDone_2;
       LIVE_RACE_FINAL_POS = 0;
       // Repasser sur l'écran de course
+      // La course part au bouton « Départ ! », jamais d'elle-même
+      G.racePhase = "prep";
       if (typeof rtab === "function") rtab("course", true);
-      // Relancer la course
-      if (typeof runRaceLive === "function") setTimeout(runRaceLive, 200);
     };
     i.appendChild(mainBtn);
     // Bouton récap visuel si dispo
@@ -17617,7 +17627,7 @@ function _showSprintResult() {
   }
   // Switch onglet résultat
   if (typeof rtab === "function") rtab("res", true);
-  G.raceLocked = false;
+  G.raceLocked = true; // la course principale reste à courir
   G.racePhase = "sprint_done";
   if (typeof applyRaceLockUI === "function") applyRaceLockUI();
   // Mettre à jour UI

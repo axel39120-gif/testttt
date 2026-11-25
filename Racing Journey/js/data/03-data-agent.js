@@ -9325,7 +9325,7 @@ function navTo(e, t) {
 
 function _navToCoeur(e, t) {
   var _onRace = document.querySelector(".scr.on") && document.querySelector(".scr.on").id === "S-race";
-  var _livePhase = typeof G !== "undefined" && G && (G.racePhase === "live" || G.racePhase === "quali");
+  var _livePhase = typeof G !== "undefined" && G && (G.racePhase === "live" || G.racePhase === "quali" || G.racePhase === "sprint_done");
   if (_onRace && _livePhase && "S-race" !== e) return;
   var r = document.querySelector(".scr.on"),
     n = r ? r.id : "";
@@ -9346,6 +9346,14 @@ function _navToCoeur(e, t) {
 if (!Array.isArray(window.RJ_WEEKEND_ENTRY_HOOKS)) window.RJ_WEEKEND_ENTRY_HOOKS = [];
 
 function goToRaceWeekend() {
+  // Course en cours, ou sprint couru sans la course principale : on y revient, sans rien remettre à zéro.
+  var enCours = G.raceLocked && LIVE_RACE && LIVE_RACE.interval && !LIVE_RACE.finished;
+  if (enCours || G.raceLocked && G.racePhase === "sprint_done") {
+    navTo("S-race", null);
+    rtab(enCours ? "course" : "res", !0);
+    applyRaceLockUI();
+    return;
+  }
   var L = window.RJ_WEEKEND_ENTRY_HOOKS
     .map(function (h, i) { return { h: h, i: i }; })
     .filter(function (x) { return !!x.h; })
@@ -10017,7 +10025,7 @@ function resetRaceWeekend() {
     essaisDone: !hasPracticeSystem(),
     qualifDone: !1,
     strategyDone: !1,
-    sprintDone: !1,
+    sprintDone: G._sprintFait === _cleSprint(),
     courseDone: !1,
     sprintAvailable: !1
   };

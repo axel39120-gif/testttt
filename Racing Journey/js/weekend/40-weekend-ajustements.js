@@ -1359,6 +1359,10 @@
         if (onglet === "course" && !courseEnCoursOuFinie()) vider();
       } });
     }
+    if (!Array.isArray(window.RJ_SAVE_HOOKS)) window.RJ_SAVE_HOOKS = [];
+    if (!window.RJ_SAVE_HOOKS.some(function (h) { return h && h.cle === "rj313"; })) {
+      window.RJ_SAVE_HOOKS.push({ cle: "rj313", ecrire: function (g) { return g._sprintFait || ""; }, lire: function (b, g) { g._sprintFait = b || ""; } });
+    }
     if (!Array.isArray(window.RJ_RACE_START_HOOKS)) window.RJ_RACE_START_HOOKS = [];
     if (!window.RJ_RACE_START_HOOKS.some(function (h) { return h && h.id === "40-course-vierge"; })) {
       window.RJ_RACE_START_HOOKS.push({ id: "40-course-vierge", apres: function (lr) { if (lr) lr._rjCourse = cleCourse(); } });
