@@ -38,6 +38,8 @@
   var ALLEE = 0.92;          // l'arrêt se fait à 92 % du tour, dans l'allée des stands
   var ESPACE = 0.15;         // deux voitures passent la ligne à 0,15 s au moins d'écart
 
+  var ZONES = [0.12, 0.55, 0.78];   // bouts de ligne droite, en part du tour
+
   var course = null;         // { lr, traces: { nom: [{ t, d }] }, dernier, temps }
 
   function LR() { return (typeof window.LIVE_RACE !== "undefined") ? window.LIVE_RACE : null; }
@@ -68,7 +70,8 @@
         return tr ? Math.max(1, k * T + Math.max(0, d.gap || 0) - tr[tr.length - 1].t) : T;
       }).filter(function (x, i) { return L[i]._lastPitLap !== k; }).sort(function (a, b) { return a - b; });
       var normal = tours.length ? tours[tours.length >> 1] : T;       // tour médian sans arrêt
-      var precedent = -Infinity;
+      var precedent = -Infinity, departs = {};
+      L.forEach(function (d) { var tr = course.traces[d.name]; if (tr) departs[d.name] = tr[tr.length - 1].t; });
       L.forEach(function (d) {
         var tr = course.traces[d.name] || (course.traces[d.name] = [{ t: 0, d: 0 }]);
         var depuis = tr[tr.length - 1];
@@ -87,8 +90,24 @@
         }
         tr.push({ t: passage, d: k });
       });
+      if (!autre && k > 1) zonesDePassage(L, departs, k);
     });
     course.dernier = k;
+  }
+
+  /* Un dépassement simple (un seul doublé) se conclut au bout d'une ligne droite :
+     la voiture suit jusque-là, puis passe. */
+  function zonesDePassage(L, departs, k) {
+    L.forEach(function (d, i) {
+      var o = L[i + 1];
+      if (!o || d._lastPitLap === k || o._lastPitLap === k || departs[d.name] == null || !(departs[d.name] > departs[o.name])) return;
+      if (L.some(function (x) { return x !== d && x !== o && ((departs[x.name] > departs[d.name]) !== (L.indexOf(x) > i)); })) return;
+      var a = course.traces[d.name], b = course.traces[o.name], fin = a[a.length - 1], deb = a[a.length - 2];
+      if (a.length < 2 || deb.d !== k - 1) return;
+      var z = ZONES[(k + i) % ZONES.length], A = { d: k - 1 + z - .05 }, B = { d: k - 1 + z + .02 };
+      A.t = instant(b, A.d) + .2; B.t = instant(b, B.d) - .1;
+      if (A.t > deb.t && B.t > A.t && fin.t > B.t) a.splice(a.length - 1, 0, A, B);
+    });
   }
 
   /* Où en est une trace à l'instant t (interpolation linéaire). */

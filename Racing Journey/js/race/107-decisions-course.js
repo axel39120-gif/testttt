@@ -20,8 +20,8 @@
  * (RJ_RACE_START_HOOKS, RJ_LAP_HOOKS, RJ_LEADERBOARD_HOOKS) et pose ses
  * décisions par le chemin natif (pendingEvent + showLiveEvent). Les effets
  * sont appliqués par resolveLiveEvent, qui gère déjà le risque (chance) et
- * convertit le gain en rythme : pas de posGain, qui s'appliquerait même en
- * cas d'échec.
+ * convertit le gain en rythme. Une attaque réussie vaut une place (posGain, que
+ * le moteur retire en cas d'échec depuis la v301).
  *
  * Réversible : window._rj107Uninstall().
  * =================================================================== */
@@ -82,7 +82,7 @@
     if (lr._rjNeutral && lr._rjNeutral.active) return null; // pas de duel derrière la voiture de sécurité
 
     var finNeutre = lr._rjLastNeutralEndLap;
-    if (finNeutre && finNeutre !== st.neutreVu && cur - finNeutre <= 1) return "relance";
+    if (!st.faits.relance && finNeutre && finNeutre !== st.neutreVu && cur - finNeutre <= 1) return "relance";
 
     var reste = total - cur;
     var sousPression = (v.devant && v.ecartDevant < 2) || (v.derriere && v.ecartDerriere < 2);
@@ -111,6 +111,7 @@
     if (c === "IndyCar") return { attaque: "Push-to-pass et plongée à l'intérieur", fin: "Tout le push-to-pass restant, maintenant" };
     if (c === "Endurance WEC") return { attaque: "Profiter d'un GT à doubler pour le surprendre", fin: "Attaquer dans le trafic des GT" };
     if (c === "Formule 4") return { attaque: "Aspiration puis freinage tardif", fin: "Tout donner jusqu'au drapeau" };
+    if (window.RJIncidents && LR() && !RJIncidents.drs(LR())) return { attaque: "Plonger au freinage, à l'intérieur", fin: "Freiner à la limite jusqu'au drapeau" };
     return { attaque: "DRS ouvert, freinage tardif au bout de la ligne droite", fin: "DRS et freinage à la limite jusqu'au drapeau" };
   }
   function auHasard(L) { return L[Math.floor(Math.random() * L.length)]; }
@@ -125,6 +126,16 @@
     return { text: text, mod: 0.06, chance: { fail: 0.3, failMod: -0.1, msg: msg } };
   }
   function sur(text) { return { text: text, mod: 0.012 }; }
+  /* Attaque : réussie, la place est prise ; manquée, l'élan est perdu et celui de
+     derrière peut en profiter. La chance dépend des deux pilotes, de l'écart et du circuit. */
+  function attaque(text, msg, v, lr) {
+    var ecart = v.ecartDevant == null ? 2 : v.ecartDevant;
+    if (!window.RJIncidents || ecart > 1.5) return ose(text, msg);
+    var c = (window.RACE_STATE && RACE_STATE.circuitData) || {}, e = RJIncidents.elan(v.joueur, v.devant, ecart, lr);
+    var p = Math.max(.2, Math.min(.8, (.3 + .5 * Math.min(.8, c.overtake == null ? .4 : c.overtake)) * Math.sqrt(e.f) + e.plus - Math.max(0, ecart - .5) * .2));
+    var expose = v.ecartDerriere != null && v.ecartDerriere < 1;
+    return { text: text, mod: 0.006, posGain: 1, _rj170Reel: true, chance: { fail: 1 - p, failMod: -0.036, msg: msg + (expose ? " Tu perds une place." : "") } };
+  }
 
   function evenement(moment, lr) {
     var v = voisins(lr);
@@ -137,7 +148,7 @@
           icon: "flag", color: "#34D399", title: "Relance de la course",
           desc: "La neutralisation prend fin. Le peloton est groupé : c'est le moment de surprendre.",
           choices: [
-            ose("Relancer très tôt pour surprendre " + nomDevant, "Relance mal calée : on te reprend dans l'aspiration."),
+            attaque("Relancer très tôt pour surprendre " + nomDevant, "Relance mal calée : on te reprend dans l'aspiration.", v, lr),
             sur("Assurer la relance, pneus en température")
           ]
         };
@@ -147,10 +158,10 @@
           desc: auHasard([
             "Tu es dans l'aileron de " + nomDevant + " depuis plusieurs tours. Une ouverture se dessine.",
             nomDevant + " défend l'intérieur à chaque freinage. Il faudra le surprendre ailleurs.",
-            "Tu reprends deux dixièmes par tour sur " + nomDevant + " : ses pneus arrière souffrent."
+            "Tu es plus rapide que " + nomDevant + " en sortie de virage. Reste à conclure."
           ]),
           choices: [
-            ose(outil().attaque, "Manœuvre mal calée : tu élargis et perds du temps."),
+            attaque(outil().attaque, "Manœuvre mal calée : tu élargis et perds du temps.", v, lr),
             sur("Patienter et mettre la pression")
           ]
         };
@@ -160,7 +171,7 @@
             icon: "flag", color: "#EF4444", title: "Derniers tours : l'attaque",
             desc: nomDevant + " est à portée, à " + v.ecartDevant.toFixed(1).replace(".", ",") + " s. Il reste quelques tours pour aller le chercher.",
             choices: [
-              ose(outil().fin, "Tu forces trop : erreur dans le dernier secteur."),
+              attaque(outil().fin, "Tu forces trop : erreur dans le dernier secteur.", v, lr),
               sur("Gérer et ramener la voiture")
             ]
           };

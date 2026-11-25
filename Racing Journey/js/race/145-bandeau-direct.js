@@ -254,7 +254,7 @@
     // abandons et arrêts aux stands
     e.voitures.forEach(function (c) {
       if (c.autreCategorie) return;
-      if (c.abandon && !avant.out[c.nom]) { avant.out[c.nom] = 1; poser(remplir(hasard(P.abandon), { nom: court(c.nom) }), c.joueur ? 9 : 4); }
+      if (c.abandon && !avant.out[c.nom]) { avant.out[c.nom] = 1; if (c.joueur || !window.RJIncidents) poser(remplir(hasard(P.abandon), { nom: court(c.nom) }), c.joueur ? 9 : 4); }
       if (c.auStand && !avant.stand[c.nom]) {
         avant.stand[c.nom] = 1;
         if (c.joueur) poser(remplir(hasard(P.moiStand), v), 6);

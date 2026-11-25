@@ -10,6 +10,9 @@
   "use strict";
 
   var NOTES = [
+    { v: "v312", titre: "Course plus réaliste",
+      plus: ["Safety car, VSC et drapeau rouge suivent un vrai abandon et regroupent vraiment le peloton.", "Dépassements : niveau des pilotes, DRS, pression, pluie et relance comptent ; ils se concluent en bout de ligne droite.", "Accrochages, sorties de piste et causes d'abandon.", "Une attaque réussie prend vraiment la place ; le risque d'un choix dépend de ton niveau, de la pluie et du circuit."],
+      fix: ["Fausses safety cars et faux drapeaux rouges retirés.", "Les événements collent à la situation : plus de « dans son sillage » à dix secondes de lui."] },
     { v: "v311", titre: "Académies et messagerie",
       fix: ["Une académie qui te contacte est toujours ouverte : plus d'expiration ni de niveau exigé.", "Stage d'académie réussi : une vraie place t'est offerte.", "Une discussion s'ouvre sur le dernier message.", "Le bandeau du contact occupe toute la largeur.", "Classements Constructeurs et Performances : espace en trop sous l'en-tête retiré."] },
     { v: "v310", titre: "Nouvelles icônes",

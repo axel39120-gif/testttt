@@ -10119,7 +10119,7 @@ function _buildLiveEventScheduleCoeur(e) {
         i = null !== t;
       return {
         icon: "[INC]",
-        title: i ? "Dépassement sous DRS" : "Défense agressive",
+        title: i ? (m && !d && !u ? "Dépassement sous DRS" : "Dépassement au freinage") : "Défense agressive",
         desc: i ? a + " défend fort à l'intérieur. La trajectoire est serrée, mais tu es plus rapide." : a + " te talonne. Tu peux changer de trajectoire plusieurs fois pour compliquer son dépassement.",
         choices: [{
           text: "Jouer propre — pas de risque",
