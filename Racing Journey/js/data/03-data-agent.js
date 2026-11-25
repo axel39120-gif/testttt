@@ -6665,10 +6665,10 @@ var SCHEDULED_EVENTS = [{
   cat: 'team',
   cats: EV_CATS.JUNIOR,
   weightFn: function(e) {
-    return e.cat && (e.cat.indexOf('4') >= 0 || e.cat.indexOf('Reg') >= 0) ? 1.5 : 0
+    return !PLAYER_ACADEMY.id && e.cat && (e.cat.indexOf('4') >= 0 || e.cat.indexOf('Reg') >= 0) ? 1.5 : 0
   },
   gen: function(e) {
-    var t = ['Red Bull Junior', 'Ferrari Driver Academy', 'Mercedes Junior', 'Williams Academy', 'McLaren Young Driver'][Math.floor(5 * Math.random())];
+    var noms = Object.keys(ACADEMIES), t = noms[Math.floor(noms.length * Math.random())];
     return {
       cat: 'team',
       title: 'Stage Académie F1',
@@ -6694,9 +6694,12 @@ var SCHEDULED_EVENTS = [{
           }, {
             type: 'mental',
             value: 2
+          }, {
+            type: 'custom',
+            fn: function() { return RJAcademie.approcher(t) ? 'Place offerte' : ''; }
           }],
-          feedbackTitle: 'Marqué pour suivre',
-          feedback: 'Le directeur académique te dit qu\'ils gardent un œil sur toi. Première étape réussie.'
+          feedbackTitle: 'Place offerte',
+          feedback: 'Le directeur est convaincu : <strong>' + t + '</strong> t\'ouvre ses portes. Tu peux rejoindre le programme dans Pilote › Académie.'
         }, {
           weight: 4,
           label: 'Performance correcte',
@@ -15482,30 +15485,24 @@ function _renderMailThread(e, t) {
         x;
       o += '<div style="display:flex;justify-content:flex-end;margin-top:4px">', o += '<div style="max-width:78%;display:flex;flex-direction:column;align-items:flex-end">', o += '<div style="background:linear-gradient(135deg,#34D399 0%,#10B981 100%);color:#fff;border-radius:' + "18px 18px 4px 18px" + ';padding:8px 13px;font-size:14px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 4px rgba(16,185,129,0.30)">' + _ppEscMailBody(v) + "</div>", t === c && (o += '<div style="font-family:var(--font-display);font-size:9px;font-weight:600;color:var(--text3);letter-spacing:.06em;margin:3px 6px 0">Lu</div>'), o += "</div>", o += "</div>", s = "out"
     }
-  }), o += "</div>", e.innerHTML = o, "function" == typeof updateMailBadge && updateMailBadge(), setTimeout(function() {
-    var e = document.querySelector("#S-mailbox .scroll");
-    e && (e.scrollTop = 0)
-  }, 0)
+  }), o += "</div>", e.innerHTML = o, "function" == typeof updateMailBadge && updateMailBadge(), _mailAuDernier()
 }
 
-/* Ouvrir une conversation la montre au début de son dernier échange (avant :
-   tout en bas de la page) ; revenir à la liste rend la position qu'on avait. */
+/* Le dernier message à l'écran, à l'ouverture comme après une réponse (62 et 124 habillent le fil juste après). */
+function _mailAuDernier() {
+  var bas = function() {
+    var t = document.querySelector("#S-mailbox .scroll");
+    t && _MAIL_OPEN_THREAD && (t.scrollTop = t.scrollHeight)
+  };
+  requestAnimationFrame(bas), setTimeout(bas, 50)
+}
+
+/* Revenir à la liste rend la position qu'on avait. */
 var _MAIL_LIST_SCROLL = 0;
 function openMailThread(e) {
   var t = document.querySelector("#S-mailbox .scroll");
   if (t && !_MAIL_OPEN_THREAD) _MAIL_LIST_SCROLL = t.scrollTop;
-  _MAIL_OPEN_THREAD = e, renderMailbox();
-  if (t) {
-    var placer = function() {
-      var jours = t.querySelectorAll(".rj-mail-jour"), dernier = jours[jours.length - 1];
-      var tete = t.querySelector("[style*='position:sticky']");
-      if (!dernier) { t.scrollTop = 0; return; }
-      var haut = dernier.getBoundingClientRect().top - t.getBoundingClientRect().top + t.scrollTop - (tete ? tete.offsetHeight : 0) - 6;
-      t.scrollTop = Math.max(0, haut);
-    };
-    requestAnimationFrame(placer);
-    setTimeout(placer, 50);
-  }
+  _MAIL_OPEN_THREAD = e, renderMailbox()
 }
 
 function backToMailList() {

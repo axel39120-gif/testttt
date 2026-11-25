@@ -10,6 +10,8 @@
   "use strict";
 
   var NOTES = [
+    { v: "v311", titre: "Académies et messagerie",
+      fix: ["Une académie qui te contacte est toujours ouverte : plus d'expiration ni de niveau exigé.", "Stage d'académie réussi : une vraie place t'est offerte.", "Une discussion s'ouvre sur le dernier message.", "Le bandeau du contact occupe toute la largeur.", "Classements Constructeurs et Performances : espace en trop sous l'en-tête retiré."] },
     { v: "v310", titre: "Nouvelles icônes",
       plus: ["Toutes les icônes du jeu redessinées dans un seul style : pictogrammes pleins.", "Icônes du menu principal bien plus grandes dans leurs carrés."],
       fix: ["Drapeau du pays affiché pour tous les circuits.", "Essais délégués : séances et réglages repartent de zéro à chaque course.", "Qualifs : moins de hasard, ton niveau et ta préparation comptent davantage."] },
