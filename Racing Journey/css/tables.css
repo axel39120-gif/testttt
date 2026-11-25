@@ -105,3 +105,10 @@
 svg.ic { flex: none; }
 #S-home > .scroll .apex-actions-grid .apex-action-icon > svg { width: 76% !important; height: 76% !important; max-width: none !important; stroke: none !important; }
 #S-home > .scroll .apex-actions-grid .apex-action-icon .apex-action-badge { top: -8px !important; right: -8px !important; left: auto !important; }
+
+/* v311 : bande du contact d'un bord à l'autre ; Constructeurs et Performances collés à l'en-tête */
+#S-mailbox > .scroll { margin-right: calc(-1 * var(--sd, 0px)) !important; padding-right: calc(14px + var(--sd, 0px)) !important; }
+#S-mailbox > .tabs { padding-right: 14px !important; }
+#S-mailbox .scroll #mailbox-list.rj124-fil > [style*="sticky"] { margin-left: -14px !important; margin-right: calc(-14px - var(--sd, 0px)) !important; padding-left: 14px !important; padding-right: calc(14px + var(--sd, 0px)) !important; }
+#constructeurs-table > .t-sec:first-child, #team-perf-content > .t-sec:first-child, #team-perf-content > div:first-child:not(.t-sec) { margin-top: 0 !important; }
+#constructeurs-table > .t-sec:first-child, #team-perf-content > .t-sec:first-child { padding-top: 0 !important; }

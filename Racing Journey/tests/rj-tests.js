@@ -4898,6 +4898,54 @@ async function suiteRetours310() {
   } finally { await navigateur.close(); }
 }
 
+/* v311 : académie qui contacte, fil au dernier message, bande pleine largeur, onglets du classement */
+async function suiteRetours311() {
+  S.suite("v311 : académies et messagerie");
+  const { navigateur, page, journal } = await S.ouvrirJeu({ viewport: { width: 852, height: 393 }, mobile: true });
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(r => setTimeout(r, ms)), o = {}, st = document.documentElement.style;
+      st.setProperty("--sg", "59px"); st.setProperty("--sd", "59px"); st.setProperty("--sb", "21px");
+      // académie : contactée, puis le temps passe et le niveau ne suit plus
+      PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; window.CAL_RACES = []; buildCalendar(); G.age = 17; calcPlayerRating = () => 60; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = CAL_RACES.slice(0, Math.ceil(CAL_RACES.length / 2));
+      const h = Math.random; Math.random = () => 0; const n = RJAcademie.inviter(); Math.random = h;
+      G.semaine += 30; G.champPts = 0; G.reputation = 0; G.saison += 1;
+      saveGame(0, { silencieux: true }); PLAYER_ACADEMY._rj138 = {}; loadSave(0); await d(1500);
+      o.n = n; o.dispo = getAvailableAcademies();
+      renderAcademyPage("academy-page-container"); o.ecran = document.getElementById("academy-page-container").textContent;
+      // stage réussi
+      PLAYER_ACADEMY._rj138 = {}; const ev = SCHEDULED_EVENTS.find(e => e.id === "ev_youth_academy_invite"); const def = ev.gen(G);
+      o.nom = !!ACADEMIES[def.from]; const c = def.choices[0].outcomes[0].effects.find(e => e.type === "custom"); c.fn(); o.stage = getAvailableAcademies()[0] === def.from;
+      o.ancienne = (PLAYER_ACADEMY._rj138 = { approche: { id: n, quand: 1 } }, getAvailableAcademies().join());
+      o.rejoint = joinAcademy(n) && PLAYER_ACADEMY.id === ACADEMIES[n].id;
+      // fil
+      G.mailbox = []; for (let k = 0; k < 9; k++) G.mailbox.push({ id: "z" + k, from: "Ton agent", role: "agent", subject: "S" + k, body: "Un texte assez long pour deux lignes. ".repeat(4), week: k + 1, saison: 8, read: true, actions: k === 8 ? [{ label: "D'accord", kind: "dismiss", responseBody: "Entendu, merci pour tout." }] : undefined });
+      navTo("S-mailbox", null); await d(400); openMailThread(_getMailThreads()[0].key); await d(500);
+      const sc = document.querySelector("#S-mailbox .scroll"), reste = () => Math.round(sc.scrollHeight - sc.clientHeight - sc.scrollTop);
+      o.bas = [sc.scrollTop > 100, reste()];
+      const a = G.mailbox.find(m => m.actions && m.actions.length); handleMailAction(a.id, 0); await d(600); o.apresReponse = reste();
+      const b = document.querySelector("#mailbox-list > [style*='sticky']").getBoundingClientRect(), s = sc.getBoundingClientRect();
+      o.bande = [Math.round(b.left - s.left), Math.round(s.left + sc.clientWidth - b.right), sc.scrollWidth - sc.clientWidth, Math.round(innerWidth - b.right)];
+      // classement
+      o.ecarts = {};
+      for (const t of ["Constructeurs", "Performances"]) {
+        navTo("S-champ", null); [...document.querySelectorAll("#S-champ button")].find(x => new RegExp(t, "i").test(x.textContent)).click(); await d(500);
+        const hd = document.querySelector("#S-champ > .hdr").getBoundingClientRect().bottom, e = document.querySelector((t === "Constructeurs" ? "#constructeurs-table" : "#team-perf-content") + " > :first-child");
+        o.ecarts[t] = Math.round(e.getBoundingClientRect().top + (parseFloat(getComputedStyle(e).borderLeftWidth) ? 0 : parseFloat(getComputedStyle(e).paddingTop)) - hd);
+      }
+      return o;
+    });
+    S.verifier("une académie qui t'a contacté reste ouverte malgré le temps, le classement et un rechargement", r.dispo.length === 1 && r.dispo[0] === r.n && /Académies disponibles/.test(r.ecran) && !/non remplies/.test(r.ecran), JSON.stringify([r.n, r.dispo]));
+    S.verifier("stage réussi : une vraie académie ouvre sa porte", r.nom && r.stage, JSON.stringify([r.nom, r.stage]));
+    S.verifier("approche d'une partie d'avant la v311 : rouverte, et on peut rejoindre", r.ancienne === r.n && r.rejoint, JSON.stringify([r.ancienne, r.rejoint]));
+    S.verifier("discussion : ouverte tout en bas, et encore après une réponse", r.bas[0] && r.bas[1] <= 2 && r.apresReponse <= 2, JSON.stringify([r.bas, r.apresReponse]));
+    S.verifier("bande du contact d'un bord à l'autre, sans défilement latéral", r.bande.every(x => Math.abs(x) <= 1), JSON.stringify(r.bande));
+    S.verifier("Constructeurs et Performances proches de l'en-tête", r.ecarts.Constructeurs <= 14 && r.ecarts.Performances <= 14, JSON.stringify(r.ecarts));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5347,7 +5395,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311
 };
 
 async function principal() {
