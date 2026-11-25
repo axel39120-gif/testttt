@@ -3542,7 +3542,7 @@ async function suiteAcademie() {
       // invitation par message, une fois par saison
       CAREER_HISTORY.length = 0; histo.forEach(h => CAREER_HISTORY.push(h));
       // v286 : une académie t'approche (pas toutes), une fois par saison ; hasard figé pour le test
-      PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = [1, 2, 3, 4, 5, 6];
+      G._academies = []; PLAYER_ACADEMY.id = null; PLAYER_ACADEMY._rj138 = {}; G.cat = "Formule 3"; initRivals(); G.rivals.forEach((x, i) => x.pts = 200 - i * 10); G.champPts = 999; G.races = [1, 2, 3, 4, 5, 6];
       const nb = () => getMailbox().filter(m => /Nous t'avons repéré/.test(m.subject)).length, m0 = nb();
       const hasard = Math.random; Math.random = () => 0;
       RJAcademie.inviter(); RJAcademie.inviter(); out.invitations = nb() - m0;
@@ -5188,10 +5188,99 @@ async function suiteLot316() {
       G.cat = "Formule 4"; window.CAL_RACES = []; buildCalendar(); renderCal(); await d(200); o.f4 = document.querySelectorAll("#S-cal .rjcal-b.sprint, #S-cal .rjcal-b.classique").length; o.vide = RJSprint.manche();
       return o;
     });
-    S.verifier("sprint et course principale nommés dans le week-end et à l'accueil", sp.prep === "Week-end sprint" && sp.sprint.join() === "Sprint 1/2,Sprint,Départ du sprint !" && sp.course.join() === "Course 2/2,Course,Départ de la course !" && /Week-end sprint/.test(sp.accueil) && sp.vide === "", JSON.stringify(sp));
+    S.verifier("sprint et course principale nommés dans le week-end et à l'accueil", sp.prep === "Sprint" && sp.sprint.join() === "Sprint 1/2,Sprint,Départ du sprint !" && sp.course.join() === "Course 2/2,Course,Départ de la course !" && /Week-end sprint/.test(sp.accueil) && sp.vide === "", JSON.stringify(sp));
     S.verifier("calendrier : week-ends sprint et classiques indiqués, rien sans sprint", sp.cal[0] >= sp.cal[2] && sp.cal[1] >= sp.cal[3] - sp.cal[2] && sp.cal[2] > 0 && sp.f4 === 0, JSON.stringify(sp.cal));
     const f1 = await page.evaluate(() => { const q = id => _rj100.questions.find(x => x.id === id); G.cat = "Formule 1"; CAREER_HISTORY.length = 0; CAREER_HISTORY.push({ saison: 1, cat: "Karting Junior", pos: 1 }, { saison: 2, cat: "Karting Senior", pos: 1 }); let c = _rj100.contexte(); const o = { pal: q("palmares").quand(c), jr: q("f1_junior").quand(c), pj: q("f1_junior").poids }; CAREER_HISTORY.push({ saison: 8, cat: "Formule 1", pos: 1 }, { saison: 9, cat: "Formule 1", pos: 1 }); c = _rj100.contexte(); o.pal2 = q("palmares").quand(c); o.ch = q("f1_champion").quand(c); o.tx = q("palmares").texte(c); return o; });
     S.verifier("presse en F1 : petits titres très rares, titres majeurs mis en avant", !f1.pal && f1.jr && f1.pj < .5 && f1.pal2 && f1.ch && /2 titres majeurs/.test(f1.tx), JSON.stringify(f1));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* v317 : changer d'académie, rarement */
+async function suiteDebauchage317() {
+  S.suite("v317 : changer d'académie");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      const prep = () => { G.cat = "Formula Regional"; G.currentTeam = "ART Grand Prix"; G._seasonTeam = "ART Grand Prix"; G.saison = 6; G.gameYear = 2030; G.age = 17; initRivals(); window.CAL_RACES = []; buildCalendar(); G.races = CAL_RACES.slice(0, 6).map(() => ({ pos: 1, pts: 25 })); G.champPts = 300; G.rivals.forEach(x => x.pts = 10); G.pendingTransfer = null; G.offers = []; G.mailbox = []; G._rjMailLog = {}; G._rj124 = null; G.seasonOver = false; G.contractDur = 1; G.budget = 5e6; G._entityMemory = {}; G.semaine = 20; G._debauche = null; G._academies = null; G.decisions = []; PLAYER_ACADEMY.id = null; Object.keys(G.substats).forEach(k => G.substats[k] = 80); calcPlayerRating = () => 80; joinAcademy("Mercedes Junior Programme"); RJParcours.liste()[0].debut = 2027; PLAYER_ACADEMY.relation = 60; };
+      const mail = re => getMailbox().filter(m => re.test(m.subject))[0], A = RJDebauchage;
+      // conditions : rares
+      prep(); o.ok = A.possible(); RJParcours.liste()[0].debut = 2029; o.recent = A.possible(); RJParcours.liste()[0].debut = 2027;
+      G.champPts = 0; o.loin = A.possible(); G.champPts = 300; G.races = G.races.slice(0, 2); o.tot = A.possible(); prep(); let n = 0; for (let k = 0; k < 3000; k++) { const h = G._debauche; G._debauche = null; if (A.approcher()) n++; G.mailbox = []; G._rjMailLog = {}; G._rj124 = null; G._debauche = null; } o.taux = n / 3000;
+      // non : on reste, relation en hausse, pas de seconde offre avant trois saisons
+      prep(); A.approcher(true); o.mail = !!mail(/Un baquet en Formule 3/); handleMailAction(mail(/Un baquet en/).id, 1); o.non = [getAcademy(PLAYER_ACADEMY.id), PLAYER_ACADEMY.relation, G.offers.length]; o.encore = A.possible(); G.saison = 8; o.encore2 = A.possible(); G.saison = 9; o.apres3 = A.possible();
+      // oui : l'offre de l'écurie part, rien ne change sans signature
+      prep(); A.approcher(true); const p = A.etat().projet; handleMailAction(mail(/Un baquet en/).id, 0); o.offre = G.offers.map(x => [x.team === p.team, x.cat]); o.mailEcurie = !!mail(/Notre offre/); o.toujours = getAcademy(PLAYER_ACADEMY.id);
+      saveGame(0, { silencieux: true }); const av = JSON.stringify(G._debauche); G._debauche = null; loadSave(0); await d(1200); o.sauve = JSON.stringify(G._debauche) === av;
+      G.offers = []; A.suivre(); A.nouvelleSaison(); o.sansSigner = getAcademy(PLAYER_ACADEMY.id);
+      // signée : écurie ET académie la saison suivante
+      prep(); A.approcher(true); const q = A.etat().projet; handleMailAction(mail(/Un baquet en/).id, 0); G.age = 17; if (G.pilot.dob) G.pilot.dob.year = 2012; G.offers.forEach(x => x.cost = 0); signContract(G.offers.findIndex(x => x._debauche)); A.suivre(); o.signe = [A.etat().projet && A.etat().projet.etat, G.pendingTransfer && G.pendingTransfer.team === q.team]; o.pendant = getAcademy(PLAYER_ACADEMY.id);
+      G.currentTeam = q.team; G.cat = q.cat; G.saison++; G.gameYear++; A.nouvelleSaison(); o.final = [getAcademy(PLAYER_ACADEMY.id) === q.acad, RJParcours.liste().map(x => x.nom).length, RJParcours.liste()[0].fin];
+      // écurie non partenaire : la relation baisse un peu, pas de porte ouverte
+      prep(); G.currentTeam = "Trident"; A.nouvelleSaison(); o.malus = PLAYER_ACADEMY.relation; o.dispo = getAvailableAcademies().length; G.currentTeam = "ART Grand Prix"; A.nouvelleSaison(); o.sansMalus = PLAYER_ACADEMY.relation;
+      const h = document.createElement("div"); h.id = "t317"; document.body.appendChild(h); renderAcademyPage("t317"); o.page = h.textContent; o.sw = typeof window.switchAcademyUI;
+      // départ volontaire : personne avant trois saisons
+      leaveAcademy("Séparation volontaire"); o.repos = [RJAcademie.approcher("Alpine Academy"), getAvailableAcademies().length]; G.gameYear += 3; o.reposFini = RJAcademie.approcher("Alpine Academy");
+      return o;
+    });
+    const J = JSON.stringify(r);
+    S.verifier("rare : ancienneté, top 3, seconde moitié de saison, moins de 2 % par semaine", r.ok && !r.recent && !r.loin && !r.tot && r.taux > .002 && r.taux < .022, J);
+    S.verifier("refus : on reste, relation en hausse, rien avant trois saisons", r.mail && r.non[0] === "Mercedes Junior Programme" && r.non[1] === 65 && r.non[2] === 0 && !r.encore && !r.encore2 && r.apres3, JSON.stringify([r.non, r.encore, r.encore2, r.apres3]));
+    S.verifier("accord : l'écurie envoie son offre, l'académie ne change pas encore ; gardé au rechargement", r.offre.length === 1 && r.offre[0][0] && r.offre[0][1] === "Formule 3" && r.mailEcurie && r.toujours === "Mercedes Junior Programme" && r.sauve, JSON.stringify([r.offre, r.mailEcurie, r.toujours, r.sauve]));
+    S.verifier("sans signature, rien ne change", r.sansSigner === "Mercedes Junior Programme", r.sansSigner);
+    S.verifier("signée : écurie et académie dès la saison suivante", r.signe[0] === "signe" && r.signe[1] && r.pendant === "Mercedes Junior Programme" && r.final[0] && r.final[1] === 2 && r.final[2] === 2031, JSON.stringify([r.signe, r.pendant, r.final]));
+    S.verifier("écurie non partenaire : −5, sans ouvrir d'autre académie", r.malus === 55 && r.sansMalus === 55 && r.dispo === 0 && !/Changer d'académie/i.test(r.page) && /Engagement/.test(r.page) && r.sw === "undefined", JSON.stringify([r.malus, r.sansMalus, r.dispo, r.sw]));
+    S.verifier("après un départ, aucune académie avant trois saisons", r.repos[0] === false && r.repos[1] === 0 && r.reposFini === true, JSON.stringify([r.repos, r.reposFini]));
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* v317 : formats réels des week-ends sprint */
+async function suiteFormats317() {
+  S.suite("v317 : qualifs et grilles des week-ends sprint");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {}, jusqua = async f => { for (let k = 0; k < 150 && !f(); k++) await d(200); return f(); };
+      const bouton = re => [...document.querySelectorAll("#S-race button")].find(b => b.offsetParent && re.test(b.textContent));
+      const entrer = cat => { G.raceLocked = false; G.racePhase = "prep"; window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null }; G.cat = cat; G._sprintFait = ""; initRivals(); window.CAL_RACES = []; buildCalendar(); G.currentTeam = TEAM_OFFERS[cat][0].team; G.races = []; G.preseason = G.preseason || { done: true }; };
+      SETTINGS.simSpeed = "instant";
+      // F2, F3 : tête de grille inversée au sprint, pas à la course principale
+      for (const [cat, n] of [["Formule 2", 10], ["Formule 3", 12]]) {
+        entrer(cat); G.semaine = CAL_RACES[0].week; goToRaceWeekend(); await d(300);
+        G._startQualInProgress = false; goToQualifStep(); await d(400); QUALI_STATE.drivers.forEach((x, i) => x.bestTime = 100 + i * .1); finishQuali(false, 1);
+        const q = QUALI_STATE.drivers.map(x => x.name), inv = q.slice(0, n).reverse().concat(q.slice(n)), g = () => RJGrille.ordre().map(x => x.name), x = o[cat] = {};
+        x.n = q.length; x.sprint = q.length > 15 && g().join() === inv.join(); x.place = _placeDepart() === n; x.note = _noteGrilleSprint(1); x.prefixe = _prefixeQualif();
+        RACE_WEEKEND_STATE.strategyDone = true; rtab("course", true); SETTINGS.simSpeed = "normal"; runRaceLive();
+        x.depart = LIVE_RACE.drivers.slice().sort((a, b) => a.startPos - b.startPos).map(z => z.name).join() === inv.join(); x.moi = LIVE_RACE.drivers.find(z => z.isPlayer).startPos; x.sp = LIVE_RACE._isSprintMode;
+        SETTINGS.simSpeed = "instant"; await jusqua(() => G.racePhase === "sprint_done"); await d(400);
+        bouton(/course principale/i).click(); await d(500); x.qualifGardee = RACE_WEEKEND_STATE.qualifDone; x.feature = g().join() === q.join() && _placeDepart() === 1; x.pts = _getSprintPtsTable().length;
+        SETTINGS.simSpeed = "normal"; runRaceLive(); x.depart2 = LIVE_RACE.drivers.slice().sort((a, b) => a.startPos - b.startPos).map(z => z.name).join() === q.join(); SETTINGS.simSpeed = "instant"; await jusqua(() => G.racePhase === "result"); await d(1500);
+      }
+      // F1 : deux qualifications
+      SETTINGS.simSpeed = "instant"; entrer("Formule 1"); CAL_RACES.forEach((c, i) => c.isSprint = i === 0); G.semaine = CAL_RACES[0].week; G.pilot.age = 22; goToRaceWeekend(); await d(300);
+      const f = o.f1 = {}; f.essais = getPracticeMaxSessions(); goToQualifStep(); await d(400); f.titre = document.getElementById("quali-session-header").textContent; f.pastille = document.getElementById("race-title").getAttribute("data-rj175"); f.duree = _qualiFormatForCat("Formule 1").duration[1];
+      const histo = G.rivals.map(x => (x.qualiHistory || []).length).join(), mails = (G.socialFeed || []).length; QUALI_STATE.drivers.forEach((x, i) => x.bestTime = 80 + i * .1); finishQuali(true, 1); await d(300); f.sansHisto = G.rivals.map(x => (x.qualiHistory || []).length).join() === histo; f.grille = _placeDepart();
+      RACE_WEEKEND_STATE.strategyDone = true; rtab("course", true); runRaceLive(); await jusqua(() => G.racePhase === "sprint_done"); await d(400);
+      const b = bouton(/qualification du Grand Prix/i); f.bouton = !!b; b.click(); await d(800);
+      f.apres = [RACE_WEEKEND_STATE.qualifDone, RACE_WEEKEND_STATE.sprintDone, QUALI_STATE.drivers.length > 15, QUALI_STATE.drivers.every(x => !x.bestTime), document.querySelector("#S-race .tab.on").getAttribute("data-tab")]; f.titre2 = document.getElementById("quali-session-header").textContent; f.pastille2 = document.getElementById("race-title").getAttribute("data-rj175"); f.duree2 = _qualiFormatForCat("Formule 1").duration[1];
+      QUALI_STATE.drivers.forEach((x, i) => x.bestTime = 80 + i * .1); finishQuali(false, 7); await d(400); f.grille2 = _placeDepart(); rtab("course", true); await d(300); f.dep = !!bouton(/Départ de la course/); runRaceLive(); f.start = LIVE_RACE.drivers.find(z => z.isPlayer).startPos; f.pasSprint = LIVE_RACE._isSprintMode === false;
+      await jusqua(() => G.racePhase === "result"); await d(500); f.res = [G.races.length, (G.races[0] || {}).qualiPos, (G.races[0] || {}).pole];
+      // F1, week-end classique : rien ne change
+      G.raceLocked = false; G.racePhase = "prep"; CAL_RACES.forEach(c => c.isSprint = false); RACE_WEEKEND_STATE.sprintDone = false; f.classique = [_prefixeQualif(), getPracticeMaxSessions(), _qualiFormatForCat("Formule 1").duration[1], _noteGrilleSprint(3)];
+      return o;
+    });
+    for (const c of ["Formule 2", "Formule 3"]) { const x = r[c], J = JSON.stringify(x);
+      S.verifier(c + " : grille du sprint inversée, écran et moteur d'accord", x.sprint && x.place && x.depart && x.sp && x.moi === (c === "Formule 2" ? 10 : 12) && /ordre inverse/.test(x.note) && x.prefixe === "Q", J);
+      S.verifier(c + " : une seule qualif, course principale dans son ordre", x.qualifGardee && x.feature && x.depart2 && x.pts === (c === "Formule 2" ? 8 : 10), J); }
+    const f = r.f1, J = JSON.stringify(f);
+    S.verifier("F1 : une séance d'essais, puis qualif sprint SQ1", f.essais === 1 && /SQ1/.test(f.titre) && f.pastille === "Qualif SQ" && f.duree === 12 && f.sansHisto && f.grille === 1, J);
+    S.verifier("F1 : après le sprint, nouvelle qualification complète pour le Grand Prix", f.bouton && f.apres.join() === "false,true,true,true,qualif" && /Q1/.test(f.titre2) && !/SQ/.test(f.titre2) && f.pastille2 === "Qualif GP" && f.duree2 === 18, J);
+    S.verifier("F1 : le Grand Prix part de sa propre qualif, pole du sprint non comptée", f.grille2 === 7 && f.dep && f.start === 7 && f.pasSprint && f.res.join() === "1,7,false", J);
+    S.verifier("F1 : week-end classique inchangé", f.classique.join() === "Q,3,18,", J);
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -5645,7 +5734,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317
 };
 
 async function principal() {

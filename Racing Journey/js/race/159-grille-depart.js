@@ -24,7 +24,7 @@
     var L = Q.filter(function (d) { return !d.isPlayer; }).slice().sort(function (a, b) { return (a.bestTime || 9999) - (b.bestTime || 9999); });
     var moi = Q.filter(function (d) { return d.isPlayer; })[0];
     if (moi) L.splice(Math.min(L.length, RACE_STATE.qualiPos - 1), 0, moi);
-    return L;
+    return _inverserGrille(L);            // F2, F3 : tête de grille inversée au sprint
   }
   function couleur(d) {
     var c = null; try { c = typeof couleurEcurie === "function" && couleurEcurie(d.team); } catch (e) {}
@@ -46,7 +46,7 @@
   function montrer() {
     var ecran = document.getElementById("race-screen"), L = ordre();
     if (!ecran || !avantCourse() || !L.length) return retirer();
-    var k = RACE_STATE.circuit + "|" + G.saison + "|" + L.map(function (d) { return d.name; }).join();
+    var k = RACE_STATE.circuit + "|" + RACE_WEEKEND_STATE.sprintDone + "|" + G.saison + "|" + L.map(function (d) { return d.name; }).join();
     if (vue && k === cle && ecran.contains(vue)) return;
     retirer(); cle = k;
     vue = document.createElement("div"); vue.id = "rj159"; vue.setAttribute("data-rj-noround", "1");   // 04q arrondit les nombres de la page : les millièmes disparaissaient

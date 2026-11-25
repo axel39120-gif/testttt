@@ -180,7 +180,9 @@
       window[f] = function (x) {
         reconstituer();
         if (f === "leaveAcademy") { sortir(); return orig.apply(this, arguments); }
-        var r = orig.apply(this, arguments); if (r) entrer(x); return r;
+        var r = orig.apply(this, arguments);
+        if (r) { entrer(x); if (PLAYER_ACADEMY._rj138) PLAYER_ACADEMY._rj138.approches = []; }      // les autres approches tombent
+        return r;
       };
     });
     inscrirePatron();

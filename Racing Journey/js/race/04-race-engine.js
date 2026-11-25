@@ -110,6 +110,7 @@ function _qualiFormatForCat(cat) {
     }
   };
   var result = f[cat] || f["Formule 1"];
+  if (cat === "Formule 1" && _estQualifSprint()) result = { maxSessions: 3, duration: { 1: 12, 2: 10, 3: 8 }, singleSession: false };   // SQ1, SQ2, SQ3
   // #9 — IndyCar oval : single-car run (pas de Q1/Q2/Q3, juste un classement par chrono).
   // En IndyCar réel, les qualifs ovales se font pilote par pilote en solo. On modélise par singleSession.
   if (cat === "IndyCar" && typeof _isIndyOval === "function") {
@@ -161,7 +162,7 @@ function _getSprintPtsTable() {
   var _c = (typeof G !== "undefined" && G.cat) || "";
   if (_c === "Formule 1") return [8, 7, 6, 5, 4, 3, 2, 1];
   if (_c === "Formule 2") return [10, 8, 6, 5, 4, 3, 2, 1];
-  if (_c === "Formule 3") return [6, 5, 4, 3, 2, 1];
+  if (_c === "Formule 3") return [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
   return [8, 7, 6, 5, 4, 3, 2, 1];
 }
 var SPRINT_PTS_TABLE = [8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // F1 : top 8 marquent
@@ -198,6 +199,36 @@ function _shouldRunSprintNow() {
   if (typeof RACE_WEEKEND_STATE === "undefined") return false;
   // Quali doit être faite mais sprint pas encore
   return RACE_WEEKEND_STATE.qualifDone && !RACE_WEEKEND_STATE.sprintDone;
+}
+/* v317 — Formats réels. F1 : une qualification pour le sprint, une autre pour le Grand Prix.
+   F2 et F3 : une seule qualification, dont les 10 (F2) ou 12 (F3) premiers partent en ordre inverse au sprint. */
+function _estQualifSprint() {
+  return G.cat === "Formule 1" && _isCurrentRaceSprintWeekend() && !RACE_WEEKEND_STATE.sprintDone;
+}
+
+function _prefixeQualif() {
+  return _estQualifSprint() ? "SQ" : "Q";
+}
+
+function _grilleInversee() {
+  var n = !_isCurrentRaceSprintWeekend() || RACE_WEEKEND_STATE.sprintDone ? 0 : { "Formule 2": 10, "Formule 3": 12 }[G.cat] || 0;
+  return Math.min(n, 1 + (G.rivals || []).filter(rivalAuDepart).length);
+}
+
+function _inverserGrille(L) {
+  var n = _grilleInversee();
+  return L.slice(0, n).reverse().concat(L.slice(n));
+}
+/* Place sur la grille de la course à courir ou en cours, et non en qualification. */
+function _placeDepart() {
+  var p = RACE_STATE && RACE_STATE.qualiPos || 5, n = _grilleInversee();
+  return p <= n ? n + 1 - p : p;
+}
+
+function _noteGrilleSprint(pos) {
+  var n = _grilleInversee();
+  if (_estQualifSprint()) return '<div class="rj-note-grille" style="font-size:12px;color:var(--text2);text-align:center;margin-bottom:8px">Cette séance fixe la grille du sprint. Une autre qualification fixera celle du Grand Prix.</div>';
+  return n ? '<div class="rj-note-grille" style="font-size:12px;color:var(--text2);text-align:center;margin-bottom:8px">Sprint : les ' + n + " premiers partent en ordre inverse (départ P" + (pos <= n ? n + 1 - pos : pos) + "). Course principale : départ P" + pos + ".</div>" : "";
 }
 /* COURSES SPRINT — fin */
 function _qualiDurationFor(cat, session) {
@@ -900,7 +931,7 @@ function _showQualiPlayerLapModal(driver, session, lap, totalLaps, lapTime, sect
     return m + ":" + (n < 10 ? "0" : "") + n + "." + (a < 100 ? (a < 10 ? "00" : "0") : "") + a;
   }
   var lapLabel = lap + "/" + totalLaps;
-  var sessLabel = "Q" + session;
+  var sessLabel = _prefixeQualif() + session;
   var lapTypeLabel = lap === totalLaps ? "Dernière tentative" : "Tour lancé";
   // Build modal HTML
   var html = '<div style="background:linear-gradient(180deg,#0a0a0a 0%,#0d0d12 100%);border:1px solid #1a1a24;border-left:3px solid #FF1801;border-radius:var(--r);max-width:430px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,24,1,.12)">';
@@ -1727,7 +1758,7 @@ function _renderTimingChoice(session) {
      démarrer. On le pose donc ici, directement. */
   return '<button class="btn btn-prim" onclick="runQualiSession()">' +
     (typeof svgPlay === "function" ? svgPlay(16) : "") +
-    'Lancer Q' + QUALI_STATE.session + '</button>';
+    'Lancer ' + _prefixeQualif() + QUALI_STATE.session + '</button>';
   var weather = RACE_STATE.weather || {
     id: "dry"
   };
@@ -1763,7 +1794,7 @@ function __qualiPickTimingCoeur(id) {
     zone.innerHTML = '<div style="margin-bottom:8px;padding:8px 10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:var(--r);font-size:11px;color:#34D399">' +
       chosen.icon + ' <strong>' + chosen.label + '</strong> — ' + chosen.desc +
       '</div>' +
-      '<button class="btn btn-prim" onclick="runQualiSession()">' + svgPlay(16) + 'Lancer Q' + QUALI_STATE.session + '</button>';
+      '<button class="btn btn-prim" onclick="runQualiSession()">' + svgPlay(16) + 'Lancer ' + _prefixeQualif() + QUALI_STATE.session + '</button>';
   }
 }
 
@@ -1793,8 +1824,8 @@ function _renderQualiSessionCoeur() {
     3: "#F59E0B"
   };
   var i = e < 3 ? getQualiElimCount(e) : 0;
-  var o = 3 === e ? "Q3 — Bataille pour la pole (" + t.length + " pilotes)" : "Q" + e + " — Élimination (" + i + " pilote" + (i > 1 ? "s" : "") + " éliminé" + (i > 1 ? "s" : "") + ")";
-  document.getElementById("quali-session-header").innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px"><div><div style="font-size:16px;font-weight:800;color:' + a[e] + '">' + o + '</div><div style="font-size:11px;color:var(--text3);margin-top:1px">' + t.length + " pilotes · " + (RACE_STATE.circuit || G.cat) + " · " + n + ' minutes</div></div><span class="badge ' + (3 === e ? "b-gold" : 2 === e ? "b-amber" : "b-blue") + '">Q' + e + "</span></div>";
+  var o = 3 === e ? _prefixeQualif() + "3 — Bataille pour la pole (" + t.length + " pilotes)" : _prefixeQualif() + e + " — Élimination (" + i + " pilote" + (i > 1 ? "s" : "") + " éliminé" + (i > 1 ? "s" : "") + ")";
+  document.getElementById("quali-session-header").innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px"><div><div style="font-size:16px;font-weight:800;color:' + a[e] + '">' + o + '</div><div style="font-size:11px;color:var(--text3);margin-top:1px">' + t.length + " pilotes · " + (RACE_STATE.circuit || G.cat) + " · " + n + ' minutes</div></div><span class="badge ' + (3 === e ? "b-gold" : 2 === e ? "b-amber" : "b-blue") + '">' + _prefixeQualif() + e + "</span></div>";
   var l = document.getElementById("quali-chrono-bar");
   l && (l.style.display = "none");
   renderTimingBoard(e, t, false);
@@ -1805,7 +1836,7 @@ function _renderQualiSessionCoeur() {
       // Widget pneus + choix timing
       btnZone.innerHTML = '<div id="quali-tyre-widget">' + _renderQualiTyreIndicator() + '</div>' + _renderTimingChoice(e);
     } else {
-      btnZone.innerHTML = '<button class="btn btn-prim" onclick="runQualiSession()">' + svgPlay(16) + "Lancer Q" + e + " (spectateur)</button>";
+      btnZone.innerHTML = '<button class="btn btn-prim" onclick="runQualiSession()">' + svgPlay(16) + "Lancer " + _prefixeQualif() + e + " (spectateur)</button>";
     }
   }
   if (QUALI_STATE.spectatorMode) {
@@ -1825,7 +1856,7 @@ function renderChronoBar(e, t, r) {
       i, o = e % 60,
       s = Math.floor(e / 60) + ":" + (o < 10 ? "0" : "") + o,
       l = a > 33 ? "var(--teal,#34D399)" : a > 15 ? "var(--amber)" : "var(--red)";
-    n.innerHTML = '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:7px 12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Temps restant — Q' + r + '</span><span style="font-size:16px;font-weight:900;color:' + l + ';font-variant-numeric:tabular-nums">' + s + '</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:' + a + "%;background:" + l + ';border-radius:2px;transition:width .9s linear"></div></div></div>'
+    n.innerHTML = '<div style="background:linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:7px 12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Temps restant — ' + _prefixeQualif() + r + '</span><span style="font-size:16px;font-weight:900;color:' + l + ';font-variant-numeric:tabular-nums">' + s + '</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:' + a + "%;background:" + l + ';border-radius:2px;transition:width .9s linear"></div></div></div>'
   }
 }
 
@@ -2130,32 +2161,32 @@ function concludeQualiSession(e, t, r) {
     c = a.indexOf(s) + 1,
     d = document.getElementById("quali-status");
   var _maxSesEarly = (typeof _qualiMaxSessions === "function") ? _qualiMaxSessions(G.cat) : 3;
-  if (e < _maxSesEarly) d.innerHTML = l ? '<span style="color:var(--red-light)">' + renderIcon('alert', 14, '#EF4444') + ' Éliminé en Q' + e + " — P" + c + "</span>" : '<span style="color:#4ADE80">Qualifié Q' + (e + 1) + " — actuellement P" + c + "</span>";
+  if (e < _maxSesEarly) d.innerHTML = l ? '<span style="color:var(--red-light)">' + renderIcon('alert', 14, '#EF4444') + ' Éliminé en ' + _prefixeQualif() + e + " — P" + c + "</span>" : '<span style="color:#4ADE80">Qualifié ' + _prefixeQualif() + (e + 1) + " — actuellement P" + c + "</span>";
   else {
     var p = 1 === c ? "#F59E0B" : "var(--text2)";
     d.innerHTML = '<span style="color:' + p + '">' + (1 === c ? "POLE POSITION !" : "P" + c + " sur la grille") + "</span>"
   }
   var u = document.getElementById("quali-btn-zone"); /* #2 — _maxSes : nombre max de sessions selon cat. Pour cats à session unique, on saute direct à la grille. */
   var _maxSes = _maxSesEarly;
-  if (e < _maxSes && !l) QUALI_STATE.nextSurvived = i, u.innerHTML = '<button class="btn btn-prim" onclick="advanceQuali()">Q' + (e + 1) + svgArrowRight(16) + "</button>";
+  if (e < _maxSes && !l) QUALI_STATE.nextSurvived = i, u.innerHTML = '<button class="btn btn-prim" onclick="advanceQuali()">' + _prefixeQualif() + (e + 1) + svgArrowRight(16) + "</button>";
   else if (e < _maxSes && l) {
     var f = c,
       m;
     f = r + 1 + o.indexOf(s), f = Math.max(1, Math.min(QUALI_STATE.drivers.length, f)), RACE_STATE.qualiPos = f, G.qualiPos = f, QUALI_STATE.nextSurvived = i, QUALI_STATE.playerFinalPos = f, QUALI_STATE.playerElimSes = e;
     var g = e + 1;
-    u.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sec" onclick="watchNextQuali(' + g + ')">' + svgEye() + "Regarder Q" + g + (g < 3 ? " & Q3" : "") + ' →</button><button class="btn btn-prim" onclick="finishQuali(false,' + f + ')">' + svgFlag() + "P" + f + " sur la grille — Départ !</button></div>"
+    u.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sec" onclick="watchNextQuali(' + g + ')">' + svgEye() + "Regarder " + _prefixeQualif() + g + (g < 3 ? " & " + _prefixeQualif() + "3" : "") + ' →</button><button class="btn btn-prim" onclick="finishQuali(false,' + f + ')">' + svgFlag() + "P" + f + " sur la grille — Départ !</button></div>"
   } else {
     var f;
     if (QUALI_STATE.spectatorMode) {
       if (f = QUALI_STATE.playerFinalPos || Math.ceil(.7 * QUALI_STATE.drivers.length), 2 === e && 1 === QUALI_STATE.playerElimSes) {
         QUALI_STATE.nextSurvived = i;
         var h = f;
-        return u.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sec" onclick="watchNextQuali(3)">' + svgEye() + 'Regarder Q3 →</button><button class="btn btn-prim" onclick="finishQuali(false,' + h + ')">' + svgFlag() + "P" + h + " sur la grille — Départ !</button></div>", void(d && (d.innerHTML = '<span style="color:#9CA3AF">Mode spectateur · P' + h + " sur la grille</span>"))
+        return u.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sec" onclick="watchNextQuali(3)">' + svgEye() + 'Regarder ' + _prefixeQualif() + '3 →</button><button class="btn btn-prim" onclick="finishQuali(false,' + h + ')">' + svgFlag() + "P" + h + " sur la grille — Départ !</button></div>", void(d && (d.innerHTML = '<span style="color:#9CA3AF">Mode spectateur · P' + h + " sur la grille</span>"))
       }
     } else f = c;
     f = Math.max(1, Math.min(QUALI_STATE.drivers.length || 20, f)), /* fix : cap au nombre réel de pilotes (le cap à 10 datait de l'époque où seule la F1 existait et où on assumait Q3 top 10) */ RACE_STATE.qualiPos = f, G.qualiPos = f;
     var v = !QUALI_STATE.spectatorMode && 1 === f;
-    u.innerHTML = '<button class="btn btn-prim" style="background:' + (v ? "#b8860b" : "var(--red)") + '" onclick="finishQuali(' + (v ? "true" : "false") + "," + f + ')">' + (v ? svgFlag(16) + "Pole position — Départ P1 !" : svgFlag(16) + "P" + f + " sur la grille — Départ !") + "</button>", QUALI_STATE.spectatorMode && d && (d.innerHTML = '<span style="color:#9CA3AF">Qualifications terminées · P' + f + " sur la grille</span>")
+    u.innerHTML = _noteGrilleSprint(f) + '<button class="btn btn-prim" style="background:' + (v ? "#b8860b" : "var(--red)") + '" onclick="finishQuali(' + (v ? "true" : "false") + "," + f + ')">' + (v ? svgFlag(16) + (_grilleInversee() ? "Pole position — P1 en qualif" : "Pole position — Départ P1 !") : svgFlag(16) + "P" + f + (_grilleInversee() ? " en qualif — Continuer" : " sur la grille — Départ !")) + "</button>", QUALI_STATE.spectatorMode && d && (d.innerHTML = '<span style="color:#9CA3AF">Qualifications terminées · P' + f + " sur la grille</span>")
   }
 }
 
@@ -2187,10 +2218,11 @@ function advanceQuali() {
 }
 
 function finishQuali(e, t) {
+  var qualifSprint = _estQualifSprint();
   if (RACE_STATE.qualiPos = t, G.qualiPos = t, QUALI_STATE.spectatorMode = !1, QUALI_STATE.playerElimSes = 0, QUALI_STATE.playerFinalPos = void 0, (function() {
       try {
         var _drv = QUALI_STATE.drivers || [];
-        if (!_drv.length || !G.rivals) return;
+        if (qualifSprint || !_drv.length || !G.rivals) return;
         var _sorted = _drv.map(function(d, i) {
           return {
             i: i,
@@ -2213,7 +2245,7 @@ function finishQuali(e, t) {
           }
         })
       } catch (_e) {}
-    })(), void 0 !== RACE_WEEKEND_STATE && (RACE_WEEKEND_STATE.qualifDone = !0, "function" == typeof updateRaceTabsVisibility && updateRaceTabsVisibility()), e && "function" == typeof _addFeedPost) {
+    })(), void 0 !== RACE_WEEKEND_STATE && (RACE_WEEKEND_STATE.qualifDone = !0, "function" == typeof updateRaceTabsVisibility && updateRaceTabsVisibility()), e && !qualifSprint && "function" == typeof _addFeedPost) {
     var r = (G.pilot.prenom ? G.pilot.prenom + " " : "") + (G.pilot.nom || ""),
       n = G.currentTeam || "",
       a = RACE_STATE.circuitData && RACE_STATE.circuitData.name || RACE_STATE.circuit || "";
@@ -2886,7 +2918,7 @@ var CRISIS_EVENTS = {
     title: 'Départ catastrophique',
     phase: 'early',
     text: function(ctx) {
-      var gridPos = RACE_STATE.qualiPos || 5;
+      var gridPos = _placeDepart();
       var curPos = ctx.playerPos || gridPos + 6;
       return 'Tu es à <strong>P' + curPos + '</strong> alors que tu partais <strong>P' + gridPos + '</strong>. ' +
         'Le départ a tout compromis. Il reste encore beaucoup de tours — mais chaque décision compte maintenant.';
@@ -2989,7 +3021,7 @@ function _runRaceLiveCoeur() {
   var n = RACE_STATE.circuitData,
     a = RACE_STATE.weather,
     i = G.totalLaps || 20,
-    o = RACE_STATE.qualiPos || 5,
+    o = _placeDepart(),
     s, /* #14 — Modulateur de nombre de tours par circuit. Adapte la longueur de course selon le circuit réel. */ _circuitLapsMul = (function() {
       var name = String(RACE_STATE.circuit || "").toLowerCase();
       if (!name) return 1;
@@ -3178,6 +3210,11 @@ function _runRaceLiveCoeur() {
     y.sort(function(e, t) {
       return t.score - e.score
     })
+  }
+  if (_grilleInversee()) {
+    var _moi = {}, _grille = y.slice();
+    _grille.splice(Math.max(0, (RACE_STATE.qualiPos || 5) - 1), 0, _moi);
+    y = _inverserGrille(_grille).filter(function(d) { return d !== _moi });
   }
   for (var b = [], A = 1; A <= x.length; A++) A !== o && b.push(A);
   y.forEach(function(e, t) {
@@ -6431,7 +6468,7 @@ var CHOICE_RACE_EVENTS = [{
     return ["Formule 1", "Formule 2", "Formule 3", "Formula Regional", "Formule 4", "Super Formula", "IndyCar"].indexOf(cat) >= 0 ? 3.0 : 0;
   },
   gen: function(e) {
-    var startPos = RACE_STATE.qualiPos || e.playerPos || 5;
+    var startPos = RACE_STATE.qualiPos ? _placeDepart() : e.playerPos || 5;
     return {
       phase: "depart",
       lap: 0,
@@ -6627,7 +6664,7 @@ function _tryTriggerChoiceRaceEventCoeur() {
           var _trust = typeof TEAM_TRUST !== "undefined" ? TEAM_TRUST.value : 100;
           var _mm = typeof _getMomentum === "function" ? _getMomentum() : "neutral";
           var _hasTeam = G.currentTeam && G.currentTeam !== "Indépendant";
-          var _gridP = RACE_STATE && RACE_STATE.qualiPos || 5;
+          var _gridP = _placeDepart();
 
           // 1. CONFIANCE CRITIQUE — entre 35% et 50% de course, confiance < 25
           if (!LIVE_RACE._crisisHistory.trust && _pct >= .35 && _pct <= .52 && _trust < 25 && _hasTeam) {
@@ -15541,7 +15578,7 @@ function _tickRaceCoeur() {
               // Tour 1 : radio position de grille
               if (_lap === 1 && !LIVE_RACE._gridRadioDone) {
                 LIVE_RACE._gridRadioDone = true;
-                var _qPos = RACE_STATE.qualiPos || 5;
+                var _qPos = _placeDepart();
                 var _team = typeof _getTeamPersonality === "function" ? _getTeamPersonality() : null;
                 var _eng = _team && _team.engineer ? _team.engineer : "L'ingénieur";
                 if (_qPos === 1 && typeof pushRadioMsg === "function") pushRadioMsg(
@@ -15590,7 +15627,7 @@ function _tickRaceCoeur() {
                 var _pp2 = LIVE_RACE.drivers && LIVE_RACE.drivers.find(function(d) {
                   return d.isPlayer
                 });
-                var _gridP = RACE_STATE.qualiPos || 5;
+                var _gridP = _placeDepart();
                 if (_pp2 && !_pp2.dnf && (_pp2.pos - _gridP) >= 5) {
                   LIVE_RACE._posDropRadioDone = true;
                   var _trust = typeof TEAM_TRUST !== "undefined" ? TEAM_TRUST.value : 50;
@@ -17576,7 +17613,7 @@ function _showSprintResult() {
     var mainBtn = document.createElement("button");
     mainBtn.className = "btn btn-prim";
     mainBtn.style.cssText = "margin-bottom:8px;background:#C8102E";
-    mainBtn.textContent = "Passer à la course principale →";
+    mainBtn.textContent = G.cat === "Formule 1" ? "Passer à la qualification du Grand Prix →" : "Passer à la course principale →";
     mainBtn.onclick = function() {
       // Nettoyer LIVE_RACE pour relancer
       if (LIVE_RACE.interval) {
@@ -17603,6 +17640,13 @@ function _showSprintResult() {
       // Repasser sur l'écran de course
       // La course part au bouton « Départ ! », jamais d'elle-même
       G.racePhase = "prep";
+      if (G.cat === "Formule 1") {                       // le Grand Prix a sa propre qualification
+        RACE_WEEKEND_STATE.qualifDone = RACE_WEEKEND_STATE.strategyDone = false;
+        RACE_STATE.qualiPos = G.qualiPos = 0;
+        QUALI_STATE.drivers = [];
+        goToQualifStep();
+        return;
+      }
       if (typeof rtab === "function") rtab("course", true);
     };
     i.appendChild(mainBtn);
@@ -19440,23 +19484,6 @@ function _startNextSeasonCoeur(e) {
       saison: G.saison,
       course: 0
     }), PILOT_MENTAL.history.length > 50 && (PILOT_MENTAL.history = PILOT_MENTAL.history.slice(-50)))
-  }
-  if (PLAYER_ACADEMY.id && r && "Indépendant" !== r && r !== G.currentTeam) {
-    var P = getPlayerAcademy();
-    if (P) {
-      var F = !1,
-        B = P.affiliates || {};
-      for (var I in B)
-        if (B[I] && B[I].indexOf(r) >= 0) {
-          F = !0;
-          break
-        } F || (P.f1Team === r || P.f1Alt && P.f1Alt.indexOf(r) >= 0) && (F = !0), F && (PLAYER_ACADEMY.canLeave = !0, PLAYER_ACADEMY.history || (PLAYER_ACADEMY.history = []), PLAYER_ACADEMY.history.push({
-        delta: 0,
-        reason: "Départ de " + r + " : tu peux désormais quitter l'académie",
-        relation: PLAYER_ACADEMY.relation,
-        saison: G.saison
-      }))
-    }
   }
   if (PLAYER_ACADEMY.id && (PLAYER_ACADEMY._pendingF1Offer = !1), generateSeasonObjectives(), TEAM_TRUST.history = [], TEAM_TRUST.weeklyChecked = {}, TEAM_TRUST.contextual = null, maybeGenerateContextualObjective(), G.pa = 3, G.races = [], G.champPts = 0, G.champPos = 0, G.offers = [], G._contractExpired = !1, G._saisonBlanche = !1, G._demoted = !1, recomputeGlobalRep(), "Formule 1" === G.cat) {
     var O = [{
