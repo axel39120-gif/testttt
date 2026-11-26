@@ -5180,7 +5180,7 @@ async function suiteLot316() {
     S.verifier("course : « - » en tête, écarts au dixième, commentaires au bas du circuit", j.tete === "-" && !j.mille.length && j.n > 10 && j.dans && j.vsc && j.haut >= 300, JSON.stringify(j));
     const sp = await page.evaluate(async () => {
       const d = ms => new Promise(x => setTimeout(x, ms)), o = {}; window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null }; G.cat = "Formule 3"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.semaine = CAL_RACES[0].week; G.races = []; G._sprintFait = ""; G.raceLocked = false; goToRaceWeekend(); await d(400);
-      const p = () => document.getElementById("race-title").getAttribute("data-rj175") || "", tab = () => document.getElementById("race-tab-course").textContent.trim(), b = () => document.getElementById("race-btn").textContent;
+      const p = () => RJSprint.etape(), tab = () => document.getElementById("race-tab-course").textContent.trim(), b = () => document.getElementById("race-btn").textContent;
       o.prep = p(); Object.assign(RACE_WEEKEND_STATE, { essaisDone: true, qualifDone: true, strategyDone: true }); RACE_STATE.qualiPos = 4; document.getElementById("race-btn").disabled = false; document.getElementById("race-btn").textContent = "Départ !"; rtab("course", true); await d(400); o.sprint = [p(), tab(), b()];
       RACE_WEEKEND_STATE.sprintDone = true; document.getElementById("race-btn").disabled = false; rtab("course", true); await d(400); o.course = [p(), tab(), b()];
       o.f3 = RJSprint.melange(); RACE_WEEKEND_STATE.sprintDone = false; G.raceLocked = false; G.racePhase = ""; navTo("S-home", "ni-home"); updateUI(); o.accueil = document.getElementById("h-race-s").textContent;
@@ -5262,11 +5262,11 @@ async function suiteFormats317() {
       }
       // F1 : deux qualifications
       SETTINGS.simSpeed = "instant"; entrer("Formule 1"); CAL_RACES.forEach((c, i) => c.isSprint = i === 0); G.semaine = CAL_RACES[0].week; G.pilot.age = 22; goToRaceWeekend(); await d(300);
-      const f = o.f1 = {}; f.essais = getPracticeMaxSessions(); goToQualifStep(); await d(400); f.titre = document.getElementById("quali-session-header").textContent; f.pastille = document.getElementById("race-title").getAttribute("data-rj175"); f.duree = _qualiFormatForCat("Formule 1").duration[1];
+      const f = o.f1 = {}; f.essais = getPracticeMaxSessions(); goToQualifStep(); await d(400); f.titre = document.getElementById("quali-session-header").textContent; f.pastille = RJSprint.etape(); f.duree = _qualiFormatForCat("Formule 1").duration[1];
       const histo = G.rivals.map(x => (x.qualiHistory || []).length).join(), mails = (G.socialFeed || []).length; QUALI_STATE.drivers.forEach((x, i) => x.bestTime = 80 + i * .1); finishQuali(true, 1); await d(300); f.sansHisto = G.rivals.map(x => (x.qualiHistory || []).length).join() === histo; f.grille = _placeDepart();
       RACE_WEEKEND_STATE.strategyDone = true; rtab("course", true); runRaceLive(); await jusqua(() => G.racePhase === "sprint_done"); await d(400);
       const b = bouton(/qualification du Grand Prix/i); f.bouton = !!b; b.click(); await d(800);
-      f.apres = [RACE_WEEKEND_STATE.qualifDone, RACE_WEEKEND_STATE.sprintDone, QUALI_STATE.drivers.length > 15, QUALI_STATE.drivers.every(x => !x.bestTime), document.querySelector("#S-race .tab.on").getAttribute("data-tab")]; f.titre2 = document.getElementById("quali-session-header").textContent; f.pastille2 = document.getElementById("race-title").getAttribute("data-rj175"); f.duree2 = _qualiFormatForCat("Formule 1").duration[1];
+      f.apres = [RACE_WEEKEND_STATE.qualifDone, RACE_WEEKEND_STATE.sprintDone, QUALI_STATE.drivers.length > 15, QUALI_STATE.drivers.every(x => !x.bestTime), document.querySelector("#S-race .tab.on").getAttribute("data-tab")]; f.titre2 = document.getElementById("quali-session-header").textContent; f.pastille2 = RJSprint.etape(); f.duree2 = _qualiFormatForCat("Formule 1").duration[1];
       QUALI_STATE.drivers.forEach((x, i) => x.bestTime = 80 + i * .1); finishQuali(false, 7); await d(400); f.grille2 = _placeDepart(); rtab("course", true); await d(300); f.dep = !!bouton(/Départ de la course/); runRaceLive(); f.start = LIVE_RACE.drivers.find(z => z.isPlayer).startPos; f.pasSprint = LIVE_RACE._isSprintMode === false;
       await jusqua(() => G.racePhase === "result"); await d(500); f.res = [G.races.length, (G.races[0] || {}).qualiPos, (G.races[0] || {}).pole];
       // F1, week-end classique : rien ne change
@@ -5281,6 +5281,48 @@ async function suiteFormats317() {
     S.verifier("F1 : après le sprint, nouvelle qualification complète pour le Grand Prix", f.bouton && f.apres.join() === "false,true,true,true,qualif" && /Q1/.test(f.titre2) && !/SQ/.test(f.titre2) && f.pastille2 === "Qualif GP" && f.duree2 === 18, J);
     S.verifier("F1 : le Grand Prix part de sa propre qualif, pole du sprint non comptée", f.grille2 === 7 && f.dep && f.start === 7 && f.pasSprint && f.res.join() === "1,7,false", J);
     S.verifier("F1 : week-end classique inchangé", f.classique.join() === "Q,3,18,", J);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
+/* v318 : retours de week-end */
+async function suiteRetours318() {
+  S.suite("v318 : bouton Signer, auto-réglage, tours, onglet sprint, rivaux");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      const lum = c => { const m = c.match(/\d+/g).map(Number); return (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255; };
+      // Signer : lisible sur la couleur de DAMS
+      G.cat = "Formule 3"; initRivals(); G.offers = ["DAMS", "Trident"].map(t => buildOffer({ team: t, cat: "Formule 3", cost: 0, salary: 0, duration: 1, expire: 10 })); navTo("S-contracts", null); await d(900);
+      o.signer = [...document.querySelectorAll("#offers-list [onclick^='signContract']")].map(b => { const c = getComputedStyle(b); return Math.abs(lum(c.color) - (c.backgroundImage !== "none" ? .2 : lum(c.backgroundColor))); });
+      // auto-réglage : remis à zéro au week-end suivant
+      G._autoSetup = true; const ab = document.getElementById("auto-setup-btn"); ab.textContent = "Désactiver"; resetRaceWeekend(); o.auto = [G._autoSetup, ab.textContent];
+      // tours : sprint court, course entière, et rien qui s'accumule
+      G.cat = "Formule 3"; initRivals(); window.CAL_RACES = []; buildCalendar(); G.currentTeam = TEAM_OFFERS["Formule 3"][0].team; G.races = []; G.semaine = CAL_RACES[0].week; G.totalLaps = getCatLaps("Formule 3"); G._toursBase = G._toursCourus = 0;
+      goToRaceWeekend(); await d(300); Object.assign(RACE_WEEKEND_STATE, { essaisDone: true, qualifDone: true, strategyDone: true }); RACE_STATE.qualiPos = 3; SETTINGS.simSpeed = "normal";
+      const tours = () => { runRaceLive(); const n = LIVE_RACE.total; clearInterval(LIVE_RACE.interval); LIVE_RACE.interval = null; return n; };
+      const sp = tours(); RACE_WEEKEND_STATE.sprintDone = true; G._sprintFait = _cleSprint(); const c1 = tours(), c2 = tours(); RACE_WEEKEND_STATE.sprintDone = false; G._sprintFait = ""; const sp2 = tours();
+      o.tours = [sp, c1, c2, sp2]; G.totalLaps = 5; o.fixe = tours();
+      // onglet orange au sprint, rouge à la course ; plus de pastille
+      window.LIVE_RACE = { drivers: [], cur: 0, total: 0, finished: false, paused: false, interval: null }; G.raceLocked = false; G.racePhase = "prep"; rtab("course", true); await d(300);
+      const tab = document.getElementById("race-tab-course"), fond = () => getComputedStyle(tab).backgroundImage;
+      o.sprint = [tab.textContent.trim(), tab.classList.contains("rj175-sprint"), /245, 158, 11|255, 194, 51/.test(fond()), document.getElementById("race-title").hasAttribute("data-rj175")];
+      RACE_WEEKEND_STATE.sprintDone = true; rtab("course", true); await d(300);
+      o.course = [tab.textContent.trim(), tab.classList.contains("rj175-sprint"), /208, 16, 0|255, 58, 36/.test(fond())];
+      o.titre = (RJGrille && document.querySelector(".rj159-titre") || {}).textContent || "";
+      // rivalités : seuls les pilotes de la catégorie
+      G._rivalries = [{ name: "Ancien Rival", active: true, intensity: 9, history: [{ myPos: 1, rivalPos: 2 }] }, { name: G.rivals[0].name, active: true, intensity: 3, history: [] }];
+      o.rivaux = getActiveRivalries().map(x => x.name).join() === G.rivals[0].name;
+      return o;
+    });
+    const J = JSON.stringify(r);
+    S.verifier("Signer lisible sur chaque écurie, DAMS compris", r.signer.length === 2 && r.signer.every(x => x > .4), J);
+    S.verifier("l'auto-réglage se désactive au week-end suivant", r.auto.join() === "false,Activer", J);
+    S.verifier("tours : sprint plus court, course entière, rien ne s'accumule", r.tours[0] < r.tours[1] && r.tours[1] === r.tours[2] && r.tours[3] === r.tours[0] && r.fixe < r.tours[0], J);
+    S.verifier("onglet Sprint orange, Course rouge, plus de pastille", r.sprint.join() === "Sprint,true,true,false" && r.course.join() === "Course,false,true", J);
+    S.verifier("les rivaux partis dans une autre catégorie ne se manifestent plus", r.rivaux, J);
     S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
   } finally { await navigateur.close(); }
 }
@@ -5734,7 +5776,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317, retours318: suiteRetours318
 };
 
 async function principal() {

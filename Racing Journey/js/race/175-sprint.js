@@ -35,14 +35,18 @@
     var resultat = window.G && G.racePhase === "result", m = resultat ? "" : manche(), w = window.RACE_WEEKEND_STATE || {};
     var onglet = document.querySelector("#S-race .tab.on"), k = onglet && onglet.getAttribute("data-tab");
     var tab = document.getElementById("race-tab-course");
-    if (tab) { var t = m === "sprint" ? "Sprint" : "Course"; if (tab.textContent.trim().replace(/\s*✓$/, "") !== t) tab.textContent = t; }
+    if (tab) { var t = m === "sprint" ? "Sprint" : "Course"; if (tab.textContent.trim().replace(/\s*✓$/, "") !== t) tab.textContent = t; tab.classList.toggle("rj175-sprint", m === "sprint"); }
     var b = document.getElementById("race-btn");
     if (b && !b.disabled && /^\s*Départ/.test(b.textContent)) { var d = m === "sprint" ? "Départ du sprint !" : m === "course" ? "Départ de la course !" : "Départ !"; if (b.textContent !== d) b.textContent = d; }
-    if (!titre) return;
-    if (!m) { titre.removeAttribute("data-rj175"); return; }
+    if (titre) titre.removeAttribute("data-rj175");
+  }
+  /* Où en est le week-end sprint (tests). */
+  function etape() {
+    var m = G.racePhase === "result" ? "" : manche(), w = window.RACE_WEEKEND_STATE || {}, onglet = document.querySelector("#S-race .tab.on"), k = onglet && onglet.getAttribute("data-tab");
+    if (!m) return "";
     var gp = G.cat === "Formule 1" && !w.qualifDone && w.essaisDone;
     var texte = m === "course" ? (gp && !(window.LIVE_RACE && LIVE_RACE.interval) ? "Qualif GP" : "Course 2/2") : gp && k === "qualif" ? "Qualif SQ" : k === "course" || k === "res" || w.qualifDone ? "Sprint 1/2" : "Sprint";
-    titre.setAttribute("data-rj175", texte); titre.setAttribute("data-rj175-m", m);   // pastille en CSS : le titre est réécrit à chaque rendu
+    return texte;
   }
   function accueil() {
     var h = document.getElementById("h-race-s");
@@ -57,7 +61,7 @@
     window.RJ_RESULT_HOOKS.push({ id: ID, apres: sur });
     if (typeof updateUI === "function") rjInscrire("updateUI", { id: ID, apres: function () { try { accueil(); } catch (e) {} sur(); } });
     if (typeof getPracticeMaxSessions === "function") rjInscrire("getPracticeMaxSessions", { id: ID, ordre: -9500, remplace: function (args, suite) { return G.cat === "Formule 1" && estSprint(getNextRace()) ? 1 : suite(); } });   // F1 : une seule séance d'essais
-    window.RJSprint = { est: estSprint, melange: melange, manche: manche, libelle: libelle, poser: poser, accueil: accueil };
+    window.RJSprint = { etape: etape, est: estSprint, melange: melange, manche: manche, libelle: libelle, poser: poser, accueil: accueil };
     window._rj175Uninstall = function () {
       ["RJ_RACE_TAB_HOOKS", "RJ_RACE_START_HOOKS", "RJ_RESULT_HOOKS"].forEach(function (k) { window[k] = window[k].filter(function (h) { return !h || h.id !== ID; }); });
       rjDesinscrire([ID], "updateUI"); rjDesinscrire([ID], "getPracticeMaxSessions"); delete window.RJSprint;

@@ -10033,6 +10033,11 @@ var RACE_WEEKEND_STATE = {
 };
 
 function resetRaceWeekend() {
+  if (G._autoSetup) {                                   // un choix par week-end, comme les réglages
+    G._autoSetup = false;
+    var _ab = document.getElementById("auto-setup-btn");
+    _ab && (_ab.textContent = "Activer", _ab.style.background = "var(--bg3)", _ab.style.color = "var(--text3)", _ab.style.borderColor = "var(--border-hi)");
+  }
   RACE_WEEKEND_STATE = {
     essaisDone: !hasPracticeSystem(),
     qualifDone: !1,

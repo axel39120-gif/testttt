@@ -728,7 +728,10 @@
       if (sign) { sign.style.flex = '1 1 auto'; sign.style.width = 'auto'; sign.style.minWidth = '104px'; }
       if (neg) { neg.style.flex = '1 1 auto'; neg.style.width = 'auto'; neg.style.minWidth = '104px'; }
       if (ref) { ref.style.flex = '0 0 46px'; ref.style.width = '46px'; ref.style.minWidth = '46px'; ref.style.padding = '0'; }
-      if (sign && c) { sign.style.background = c; sign.style.borderColor = c; sign.style.color = '#fff'; }
+      if (sign && c) {
+        var lum = (0.299 * parseInt(c.substr(1, 2), 16) + 0.587 * parseInt(c.substr(3, 2), 16) + 0.114 * parseInt(c.substr(5, 2), 16)) / 255;
+        sign.style.background = c; sign.style.borderColor = c; sign.style.color = lum > .62 ? '#111' : '#fff';   // DAMS : blanc sur blanc
+      }
 
       cleanMoney(card);
     }
