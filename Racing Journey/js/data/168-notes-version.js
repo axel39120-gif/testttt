@@ -10,6 +10,9 @@
   "use strict";
 
   var NOTES = [
+    { v: "v318", titre: "Retours de week-end",
+      plus: ["Week-ends sprint : l'onglet Sprint est orange, il devient Course en rouge. Les pastilles SPRINT/COURSE de l'en-tête et du circuit sont retirées."],
+      fix: ["Le bouton Signer de DAMS (et des écuries aux couleurs claires) est lisible.", "L'auto-réglage se désactive à chaque nouveau week-end.", "Nombre de tours : le sprint et le circuit précédent ne changent plus la longueur des courses suivantes.", "Plus de messages de rivaux qui ne courent plus dans ta catégorie."] },
     { v: "v317", titre: "Académies et week-ends sprint",
       plus: ["Rare : une autre académie peut te proposer un baquet dans la catégorie supérieure, si tu la rejoins. Tu dis oui, l'écurie t'envoie son offre ; la signer engage les deux.", "Week-ends sprint comme en vrai. F1 : une séance d'essais, une qualification pour le sprint, une autre pour le Grand Prix. F2 et F3 : une qualification, les 10 (F2) ou 12 (F3) premiers partent en ordre inverse au sprint."],
       fix: ["Courir hors des écuries partenaires baisse un peu la relation et ne permet plus de changer d'académie.", "Après un départ, aucune académie ne vient te chercher avant trois saisons.", "F3 : les 10 premiers du sprint marquent (10 à 1 point)."] },

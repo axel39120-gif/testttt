@@ -3020,7 +3020,9 @@ function _runRaceLiveCoeur() {
   }, 50), RACE_STATE.circuitData = getCircuitData(r), RACE_STATE.weather || (RACE_STATE.weather = generateWeather(RACE_STATE.circuitData && RACE_STATE.circuitData.rain || 0))), RACE_STATE.circuitData || (RACE_STATE.circuitData = getCircuitData(r)), RACE_STATE.weather || (RACE_STATE.weather = generateWeather(RACE_STATE.circuitData && RACE_STATE.circuitData.rain || 0));
   var n = RACE_STATE.circuitData,
     a = RACE_STATE.weather,
-    i = G.totalLaps || 20,
+    /* G.totalLaps reçoit les tours de la course courue (sprint, circuit) : on repart de la base,
+       sauf si quelqu'un l'a fixé depuis (essais, changement de catégorie). */
+    i = (G.totalLaps === G._toursCourus && G._toursBase) || G.totalLaps || 20,
     o = _placeDepart(),
     s, /* #14 — Modulateur de nombre de tours par circuit. Adapte la longueur de course selon le circuit réel. */ _circuitLapsMul = (function() {
       var name = String(RACE_STATE.circuit || "").toLowerCase();
@@ -3042,6 +3044,7 @@ function _runRaceLiveCoeur() {
       if (name.indexOf("zandvoort") >= 0) return 1.1;
       return 1; // défaut
     })();
+  G._toursBase = i;
   i = Math.max(5, Math.round(i * _circuitLapsMul));
   G.totalLaps = i; // synchronise pour les autres systèmes (UI, etc.)
   /* SPRINT — Si on est en sprint weekend et que la sprint n'a pas encore été faite,
@@ -3051,6 +3054,7 @@ function _runRaceLiveCoeur() {
     i = Math.max(5, Math.round(i * 0.33));
     G.totalLaps = i;
   }
+  G._toursCourus = i;
   var l = .02 * ({
       "Karting Junior": 0,
       "Karting Senior": 1,
@@ -11725,8 +11729,9 @@ function _cooldownRivalries() {
 }
 
 function getActiveRivalries() {
+  var ici = (G.rivals || []).map(function(r) { return r.name });   // un rival parti dans une autre catégorie ne se manifeste plus
   return getRivalries().filter(function(e) {
-    return e.active
+    return e.active && ici.indexOf(e.name) >= 0
   }).sort(function(e, t) {
     return (t.intensity || 0) - (e.intensity || 0)
   })

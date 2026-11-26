@@ -608,7 +608,6 @@
       return '<div class="d ' + cls + (x < 1 ? " proche" : "") + '"><span>' + esc(abrege(v.nom)) + "</span><b>" + signe + ec(x) + "</b></div>";
     };
     vue.hud.innerHTML = '<div class="p"><b>P' + moi.pos + '</b><span>/' + vivants.length + "</span></div>" +
-      (window.RJSprint && RJSprint.manche() ? '<div class="m ' + RJSprint.manche() + '">' + (RJSprint.manche() === "sprint" ? "SPRINT" : "COURSE") + "</div>" : "") +
       '<div class="t">' + (lr.finished ? "ARRIVÉE" : "TOUR " + tour + (total ? "/" + total : "")) + "</div>" +
       duel(av, "−", "av") + duel(ar, "+", "ar");
   }
