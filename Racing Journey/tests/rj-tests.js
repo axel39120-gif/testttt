@@ -5327,6 +5327,38 @@ async function suiteRetours318() {
   } finally { await navigateur.close(); }
 }
 
+/* v319 : onglet Carrière */
+async function suiteCarriere319() {
+  S.suite("v319 : onglet Carrière et biographie");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    await S.repondeurAutomatique(page);
+    const r = await page.evaluate(async () => {
+      const d = ms => new Promise(x => setTimeout(x, ms)), o = {};
+      G.cat = "Formule 1"; G.currentTeam = "Williams"; initRivals(); G.pilot.startYear = 2024; G.pilot.nat = "France"; G.pilot.dob = { day: 14, month: 3, year: 2009 }; G.age = 22;
+      const H = [["Karting Junior", 3, 0, 2, "Indépendant"], ["Karting Junior", 1, 6, 9, "Indépendant"], ["Karting Senior", 2, 4, 8, "Tony Kart"], ["Formule 4", 4, 1, 4, "Prema Racing"], ["Formule 4", 1, 7, 11, "Prema Racing"], ["Formule 3", 5, 1, 3, "Trident"], ["Formule 3", 2, 3, 7, "ART Grand Prix"]];
+      const longue = H.map((h, i) => ({ saison: i + 1, cat: h[0], pos: h[1], wins: h[2], pods: h[3], poles: 0, races: 10, team: h[4] }));
+      o.longue = RJBiographie.texte(longue); o.courte = RJBiographie.texte(longue.slice(0, 2));
+      CAREER_HISTORY.length = 0; longue.forEach(x => CAREER_HISTORY.push(x)); joinAcademy("Mercedes Junior Programme");
+      navTo("S-pilot", null); await d(400); [...document.querySelectorAll("#S-pilot .tab")].find(b => /carri/i.test(b.textContent)).click(); await d(900);
+      const bord = e => { const r = e && e.getBoundingClientRect(); return r ? Math.round(r.left) + "-" + Math.round(r.right) : "?"; };
+      const evo = [...document.querySelectorAll("#pt-rep div")].find(x => /^Évolution carrière/.test(x.textContent.trim()) && /margin:10px 0 12px/.test(x.getAttribute("style") || ""));
+      o.bords = [".rj112-carte", ".rj173-a", "#career-filter-dd"].map(q => bord(document.querySelector(q))).concat(bord(evo));
+      o.titres = [...document.querySelectorAll("#pt-rep .t-sec")].map(x => x.textContent.trim());
+      o.contrat = !!document.querySelector('#S-pilot [data-w="contrat"]');
+      return o;
+    });
+    const J = JSON.stringify(r);
+    S.verifier("académies, filtre et évolution carrière alignés sur la carte Super Licence", new Set(r.bords).size === 1 && !r.bords.includes("?"), J);
+    const i = r.titres.indexOf("Historique de carrière");
+    S.verifier("sous-titre « Historique de carrière » entre les académies et le filtre", i > r.titres.indexOf("Académies") && i < r.titres.indexOf("Biographie"), J);
+    S.verifier("Palmarès seul, sans Trophées ; plus de carré Contrat actuel", r.titres.includes("Palmarès") && !r.titres.includes("Trophées") && !r.contrat, J);
+    S.verifier("biographie : les catégories anciennes résumées, les récentes racontées", /Avant cela : Karting Junior \(deux saisons, champion\) et Karting Senior/.test(r.longue) && /Il passe ensuite en Formule 4 de 2027 à 2028, chez Prema Racing\. Il y décroche le titre/.test(r.longue) && /Il grimpe ensuite en Formule 3 de 2029 à 2030, chez Trident et ART Grand Prix/.test(r.longue) && /pilote français/.test(r.longue) && /Né en 2009/.test(r.longue), r.longue);
+    S.verifier("biographie courte : portrait détaillé, pas de résumé", /Né le 14 mars 2009/.test(r.courte) && !/Avant cela|se résument/.test(r.courte) && /Il fait ses armes en Karting Junior/.test(r.courte), r.courte);
+    S.verifier("aucune erreur", journal.erreurs.length === 0, journal.erreurs[0] || "");
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5776,7 +5808,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317, retours318: suiteRetours318
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317, retours318: suiteRetours318, carriere319: suiteCarriere319
 };
 
 async function principal() {

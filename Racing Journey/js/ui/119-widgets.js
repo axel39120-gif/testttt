@@ -29,8 +29,7 @@
      « Contrat » ne vit plus que dans Pilote › Carrière, et « Super Licence »
      n'est plus un widget : l'onglet Carrière a déjà sa carte (112). */
   var WIDGETS_PAR_ECRAN = {
-    "S-lifestyle": ["budget"],
-    "S-pilot": ["contrat"]
+    "S-lifestyle": ["budget"]
   };
   /* Écran à onglets : le widget ne s'affiche que dans cet onglet. */
   var ONGLET = { "S-pilot": "pt-rep" };
