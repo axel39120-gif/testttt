@@ -5359,6 +5359,31 @@ async function suiteCarriere319() {
   } finally { await navigateur.close(); }
 }
 
+/* v320 : exporter sa partie */
+async function suiteExport320() {
+  S.suite("v320 : exporter sa partie");
+  const { navigateur, page, journal } = await S.ouvrirJeu();
+  try {
+    const r = await page.evaluate(async () => {
+      const o = {};
+      saveGame(1, { silencieux: true });
+      o.v2 = texteExport(1) === localStorage.getItem(SAVE_KEYS[1]);
+      // ancien format : les extras rangés à part sont joints
+      const v1 = JSON.parse(localStorage.getItem(SAVE_KEYS[1])); delete v1._v; delete v1.extras;
+      localStorage.setItem(SAVE_KEYS[2], JSON.stringify(v1)); localStorage.setItem("rj_extra_slot_2", JSON.stringify({ a: 1 }));
+      o.v1 = JSON.parse(texteExport(2)).extras.a === 1;
+      localStorage.setItem(SAVE_KEYS[0], "{abîmé"); o.illisible = texteExport(0) === null && exporterPartie(0) === false;
+      o.nom = nomExport({ pilot: { prenom: "Élodie", nom: "Le Gall" }, saison: 3 });
+      navTo("S-save", null); renderSaveSlots(); o.boutons = document.querySelectorAll("#save-slots .rj-exporter").length;
+      return o;
+    });
+    const J = JSON.stringify(r);
+    S.verifier("l'export reprend la partie enregistrée, extras de l'ancien format compris", r.v2 && r.v1, J);
+    S.verifier("un emplacement endommagé ne s'exporte pas, et le joueur est prévenu", r.illisible, J);
+    S.verifier("nom de fichier propre et un bouton Exporter par partie", r.nom === "racing-journey-elodie-legall-s3.json" && r.boutons === 2, J);
+  } finally { await navigateur.close(); }
+}
+
 /* v303 : iPhone à encoche — les séances tiennent dans l'écran, et rien ne contrarie le doigt */
 async function suiteDefilement303() {
   S.suite("Séances : plus de remontée (v303)");
@@ -5808,7 +5833,7 @@ const SUITES = {
   reperesgp: suiteReperesGP,
   retours301: suiteRetours301,
   contacts301: suiteContacts301,
-  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317, retours318: suiteRetours318, carriere319: suiteCarriere319
+  retours302: suiteRetours302, defilement303: suiteDefilement303, apostrophe303: suiteApostrophe303, essais304: suiteEssais304, retours306: suiteRetours306, notes308: suiteNotes308, cloche309: suiteCloche309, icones310: suiteIcones310, retours310: suiteRetours310, retours311: suiteRetours311, realisme312: suiteRealisme312, sprint313: suiteSprint313, retours314: suiteRetours314, lot316: suiteLot316, debauchage317: suiteDebauchage317, formats317: suiteFormats317, retours318: suiteRetours318, carriere319: suiteCarriere319, export320: suiteExport320
 };
 
 async function principal() {

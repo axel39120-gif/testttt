@@ -19804,6 +19804,11 @@ function renderSaveSlots() {
       p.textContent = "Jouer", p.style.cssText = "padding:6px 10px;background:var(--red);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0";
       var u = document.createElement("button");
       u.textContent = "×", u.style.cssText = "padding:6px 8px;background:none;border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;color:var(--text3);font-family:inherit;flex-shrink:0;margin-left:4px", d.appendChild(p), d.appendChild(u), a.appendChild(d);
+      /* v320 : exporter la partie dans un fichier (pour la version Unity). */
+      var x = document.createElement("button");
+      x.textContent = "Exporter", x.className = "rj-exporter", x.style.cssText = "padding:6px 8px;background:none;border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;color:var(--text2);font-family:inherit;flex-shrink:0;margin-left:4px";
+      (function(slot) { x.addEventListener("click", function(ev) { ev.stopPropagation(); exporterPartie(slot); }); })(r);
+      d.insertBefore(x, u);
       var f = document.createElement("div");
       f.style.cssText = "display:none;align-items:center;gap:8px;padding:8px 14px;background:#1a0000;border-top:1px solid #DC2626", f.innerHTML = '<span style="flex:1;font-size:12px;color:#FCA5A5">Supprimer cette sauvegarde ?</span>';
       var m = document.createElement("button");
