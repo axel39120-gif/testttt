@@ -10,6 +10,8 @@
   "use strict";
 
   var NOTES = [
+    { v: "v320", titre: "Exporter sa partie",
+      plus: ["Sauvegardes : un bouton « Exporter » enregistre la partie dans un fichier, pour la retrouver dans la future version du jeu."] },
     { v: "v319", titre: "Onglet Carrière",
       plus: ["Biographie réécrite comme un récit : les catégories anciennes se résument en une ligne, les plus récentes sont racontées, avec les académies et la vie privée.", "Sous-titre « Historique de carrière » au-dessus du filtre."],
       fix: ["Carrés Académies et Évolution carrière alignés sur les autres.", "Palmarès et Trophées réunis sous « Palmarès ».", "Le carré « Contrat actuel » est retiré de l'onglet."] },

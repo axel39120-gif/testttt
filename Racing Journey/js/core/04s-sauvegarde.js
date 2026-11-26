@@ -213,6 +213,46 @@ function saveGame(e, options) {
 }
 
 /* ------------------------------------------------------------------
+ * Export (v320) : la partie telle qu'elle est enregistrée, dans un fichier
+ * .json que la version Unity sait importer. Un ancien format reçoit ses
+ * extras, rangés à part dans le stockage.
+ * ---------------------------------------------------------------- */
+function texteExport(slot) {
+  var brut = null;
+  try { brut = localStorage.getItem(SAVE_KEYS[slot]); } catch (e) {}
+  if (!brut || !estLisible(brut)) return null;
+  var o = JSON.parse(brut);
+  if (!o._v && o.extras === undefined) {
+    try { var x = localStorage.getItem(cleExtrasAncienne(slot)); if (x) o.extras = JSON.parse(x); } catch (e) {}
+  }
+  return JSON.stringify(o);
+}
+
+function nomExport(o) {
+  var nom = ((o.pilot && (o.pilot.prenom + "-" + o.pilot.nom)) || "pilote").normalize("NFD").replace(/[^A-Za-z0-9-]+/g, "").toLowerCase();
+  return "racing-journey-" + nom + "-s" + (o.saison || 1) + ".json";
+}
+
+function exporterPartie(slot) {
+  var texte = texteExport(slot);
+  if (!texte) { signalerEchecSauvegarde("Export impossible", "Cet emplacement est vide ou endommagé."); return false; }
+  var nom = nomExport(JSON.parse(texte)), fichier = null;
+  try { fichier = new File([texte], nom, { type: "application/json" }); } catch (e) {}
+  /* Sur téléphone, la feuille de partage ; ailleurs, un téléchargement. */
+  if (fichier && navigator.canShare && navigator.canShare({ files: [fichier] })) {
+    navigator.share({ files: [fichier], title: "Partie Racing Journey" }).catch(function () {});
+    return true;
+  }
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([texte], { type: "application/json" }));
+  a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  try { if (typeof showFb === "function") showFb("save-fb", "ok", "Partie exportée", nom); } catch (e) {}
+  return true;
+}
+
+/* ------------------------------------------------------------------
  * Lecture
  * ---------------------------------------------------------------- */
 
