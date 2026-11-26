@@ -10,6 +10,9 @@
   "use strict";
 
   var NOTES = [
+    { v: "v319", titre: "Onglet Carrière",
+      plus: ["Biographie réécrite comme un récit : les catégories anciennes se résument en une ligne, les plus récentes sont racontées, avec les académies et la vie privée.", "Sous-titre « Historique de carrière » au-dessus du filtre."],
+      fix: ["Carrés Académies et Évolution carrière alignés sur les autres.", "Palmarès et Trophées réunis sous « Palmarès ».", "Le carré « Contrat actuel » est retiré de l'onglet."] },
     { v: "v318", titre: "Retours de week-end",
       plus: ["Week-ends sprint : l'onglet Sprint est orange, il devient Course en rouge. Les pastilles SPRINT/COURSE de l'en-tête et du circuit sont retirées."],
       fix: ["Le bouton Signer de DAMS (et des écuries aux couleurs claires) est lisible.", "L'auto-réglage se désactive à chaque nouveau week-end.", "Nombre de tours : le sprint et le circuit précédent ne changent plus la longueur des courses suivantes.", "Plus de messages de rivaux qui ne courent plus dans ta catégorie."] },

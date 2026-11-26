@@ -122,7 +122,7 @@ svg.ic { flex: none; }
 .rj111-scene > .rj111-mini { bottom: 40px; }
 
 /* v316 : parcours d'académies (173) et rencontres (174) */
-.rj173-l { display: flex; flex-direction: column; gap: 6px; margin: 0 14px 12px; }
+.rj173-l { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; }
 .rj173-a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: var(--r); background: #15151c; border: 1px solid rgba(255, 255, 255, .08); }
 .rj173-a em { min-width: 128px; font: 700 12px/1 var(--font-display); font-style: normal; color: #a9a9b5; }
 .rj173-a b { font: 800 13px/1.2 var(--font-display); color: #fff; }
