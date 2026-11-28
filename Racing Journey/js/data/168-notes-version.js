@@ -10,6 +10,8 @@
   "use strict";
 
   var NOTES = [
+    { v: "v321", titre: "Copier sa partie pour l'appli",
+      plus: ["Sauvegardes : « Copier pour l'appli » met ta partie dans le presse-papiers, pour la reprendre dans la future appli du jeu."] },
     { v: "v320", titre: "Exporter sa partie",
       plus: ["Sauvegardes : un bouton « Exporter » enregistre la partie dans un fichier, pour la retrouver dans la future version du jeu."] },
     { v: "v319", titre: "Onglet Carrière",

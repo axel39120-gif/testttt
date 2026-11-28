@@ -5375,12 +5375,17 @@ async function suiteExport320() {
       localStorage.setItem(SAVE_KEYS[0], "{abîmé"); o.illisible = texteExport(0) === null && exporterPartie(0) === false;
       o.nom = nomExport({ pilot: { prenom: "Élodie", nom: "Le Gall" }, saison: 3 });
       navTo("S-save", null); renderSaveSlots(); o.boutons = document.querySelectorAll("#save-slots .rj-exporter").length;
+      o.copier = document.querySelectorAll("#save-slots .rj-copier").length;
+      let copie = null; try { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: t => { copie = t; return Promise.resolve(); } } }); } catch (e) {}
+      o.copieOk = (await copierPartie(1)) === true && copie === localStorage.getItem(SAVE_KEYS[1]);
+      o.copieVide = (await copierPartie(0)) === false;
       return o;
     });
     const J = JSON.stringify(r);
     S.verifier("l'export reprend la partie enregistrée, extras de l'ancien format compris", r.v2 && r.v1, J);
     S.verifier("un emplacement endommagé ne s'exporte pas, et le joueur est prévenu", r.illisible, J);
     S.verifier("nom de fichier propre et un bouton Exporter par partie", r.nom === "racing-journey-elodie-legall-s3.json" && r.boutons === 2, J);
+    S.verifier("v321 : « Copier pour l'appli » copie la partie telle qu'enregistrée, et refuse un emplacement endommagé", r.copier === 2 && r.copieOk && r.copieVide, J);
   } finally { await navigateur.close(); }
 }
 
