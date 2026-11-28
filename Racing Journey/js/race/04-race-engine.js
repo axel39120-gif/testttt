@@ -19809,6 +19809,11 @@ function renderSaveSlots() {
       x.textContent = "Exporter", x.className = "rj-exporter", x.style.cssText = "padding:6px 8px;background:none;border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;color:var(--text2);font-family:inherit;flex-shrink:0;margin-left:4px";
       (function(slot) { x.addEventListener("click", function(ev) { ev.stopPropagation(); exporterPartie(slot); }); })(r);
       d.insertBefore(x, u);
+      /* v321 : copier la partie pour l'appli Unity (elle se colle depuis son écran titre). */
+      var cp = document.createElement("button");
+      cp.textContent = "Copier pour l'appli", cp.className = "rj-copier", cp.style.cssText = x.style.cssText;
+      (function(slot) { cp.addEventListener("click", function(ev) { ev.stopPropagation(); copierPartie(slot); }); })(r);
+      d.insertBefore(cp, u);
       var f = document.createElement("div");
       f.style.cssText = "display:none;align-items:center;gap:8px;padding:8px 14px;background:#1a0000;border-top:1px solid #DC2626", f.innerHTML = '<span style="flex:1;font-size:12px;color:#FCA5A5">Supprimer cette sauvegarde ?</span>';
       var m = document.createElement("button");

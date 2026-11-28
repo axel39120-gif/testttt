@@ -252,6 +252,30 @@ function exporterPartie(slot) {
   return true;
 }
 
+/* v321 : la partie dans le presse-papiers, pour la coller dans l'appli Unity sur le
+   même téléphone (Unity n'a pas de sélecteur de fichier simple sur Android). */
+function copierPartie(slot) {
+  var texte = texteExport(slot);
+  if (!texte) { signalerEchecSauvegarde("Copie impossible", "Cet emplacement est vide ou endommagé."); return Promise.resolve(false); }
+  function ok() {
+    try { if (typeof showFb === "function") showFb("save-fb", "ok", "Partie copiée", "Ouvre l'appli Racing Journey et touche « Coller » sur un emplacement libre."); } catch (e) {}
+    return true;
+  }
+  function secours() {
+    var t = document.createElement("textarea");
+    t.value = texte; t.setAttribute("readonly", ""); t.style.cssText = "position:fixed;left:-9999px;top:0";
+    document.body.appendChild(t); t.select();
+    var reussi = false;
+    try { reussi = document.execCommand("copy"); } catch (e) {}
+    t.remove();
+    if (reussi) return ok();
+    signalerEchecSauvegarde("Copie impossible", "Le presse-papiers est bloqué sur cet appareil : utilise « Exporter » à la place.");
+    return false;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(texte).then(ok, secours);
+  return Promise.resolve(secours());
+}
+
 /* ------------------------------------------------------------------
  * Lecture
  * ---------------------------------------------------------------- */
